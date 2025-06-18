@@ -1,0 +1,433 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
+		6657F6982E0313200016F333 /* 32x32.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67D2E0313200016F333 /* 32x32.png */; };
+		6657F6992E0313200016F333 /* 128x128.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67E2E0313200016F333 /* 128x128.png */; };
+		6657F69A2E0313200016F333 /* 128x128@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67F2E0313200016F333 /* 128x128@2x.png */; };
+		6657F69B2E0313200016F333 /* icon-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* icon-active.png */; };
+		6657F69C2E0313200016F333 /* icon-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* icon-idle.png */; };
+		6657F69D2E0313200016F333 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6822E0313200016F333 /* icon.icns */; };
+		6657F69E2E0313200016F333 /* icon.ico in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6832E0313200016F333 /* icon.ico */; };
+		6657F69F2E0313200016F333 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6842E0313200016F333 /* icon.png */; };
+		6657F6A02E0313200016F333 /* placeholder-logo.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6852E0313200016F333 /* placeholder-logo.icns */; };
+		6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6882E0313200016F333 /* AppDelegate.swift */; };
+		6657F6A32E0313200016F333 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6892E0313200016F333 /* Assets.xcassets */; };
+		6657F6A42E0313200016F333 /* DashboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68A2E0313200016F333 /* DashboardViewController.swift */; };
+		6657F6A72E0313200016F333 /* IconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68D2E0313200016F333 /* IconManager.swift */; };
+		6657F6A92E0313200016F333 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68F2E0313200016F333 /* main.swift */; };
+		6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6902E0313200016F333 /* MenuManager.swift */; };
+		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
+		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
+		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
+		66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
+		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		6657F67D2E0313200016F333 /* 32x32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 32x32.png; sourceTree = "<group>"; };
+		6657F67E2E0313200016F333 /* 128x128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 128x128.png; sourceTree = "<group>"; };
+		6657F67F2E0313200016F333 /* 128x128@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "128x128@2x.png"; sourceTree = "<group>"; };
+		6657F6802E0313200016F333 /* icon-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-active.png"; sourceTree = "<group>"; };
+		6657F6812E0313200016F333 /* icon-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-idle.png"; sourceTree = "<group>"; };
+		6657F6822E0313200016F333 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
+		6657F6832E0313200016F333 /* icon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; path = icon.ico; sourceTree = "<group>"; };
+		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		6657F6852E0313200016F333 /* placeholder-logo.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "placeholder-logo.icns"; sourceTree = "<group>"; };
+		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6657F68A2E0313200016F333 /* DashboardViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardViewController.swift; sourceTree = "<group>"; };
+		6657F68D2E0313200016F333 /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconManager.swift; sourceTree = "<group>"; };
+		6657F68E2E0313200016F333 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6657F68F2E0313200016F333 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		6657F6902E0313200016F333 /* MenuManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MenuManager.swift; sourceTree = "<group>"; };
+		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
+		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
+		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
+		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
+		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
+		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1234567890123456789012I /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6657F6872E0313200016F333 /* icons */ = {
+			isa = PBXGroup;
+			children = (
+				6657F67D2E0313200016F333 /* 32x32.png */,
+				6657F67E2E0313200016F333 /* 128x128.png */,
+				6657F67F2E0313200016F333 /* 128x128@2x.png */,
+				6657F6802E0313200016F333 /* icon-active.png */,
+				6657F6812E0313200016F333 /* icon-idle.png */,
+				6657F6822E0313200016F333 /* icon.icns */,
+				6657F6832E0313200016F333 /* icon.ico */,
+				6657F6842E0313200016F333 /* icon.png */,
+				6657F6852E0313200016F333 /* placeholder-logo.icns */,
+			);
+			path = icons;
+			sourceTree = "<group>";
+		};
+		6657F6932E0313200016F333 /* Juju */ = {
+			isa = PBXGroup;
+			children = (
+				66E0B07E2E033E4D0029121D /* dashboard-web */,
+				66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */,
+				66E0B0702E033A160029121D /* ProjectsTabView.swift */,
+				6657F6882E0313200016F333 /* AppDelegate.swift */,
+				66109E1B2E031720000B7182 /* SessionManager.swift */,
+				6657F6892E0313200016F333 /* Assets.xcassets */,
+				6657F68A2E0313200016F333 /* DashboardViewController.swift */,
+				6657F68D2E0313200016F333 /* IconManager.swift */,
+				6657F68E2E0313200016F333 /* Info.plist */,
+				6657F68F2E0313200016F333 /* main.swift */,
+				6657F6902E0313200016F333 /* MenuManager.swift */,
+				6657F6912E0313200016F333 /* Project.swift */,
+				6657F6922E0313200016F333 /* ShortcutManager.swift */,
+			);
+			path = Juju;
+			sourceTree = "<group>";
+		};
+		6657F6952E0313200016F333 /* juju-swift */ = {
+			isa = PBXGroup;
+			children = (
+				6657F6872E0313200016F333 /* icons */,
+				6657F6932E0313200016F333 /* Juju */,
+				6657F6942E0313200016F333 /* Juju.xcodeproj */,
+			);
+			name = "juju-swift";
+			sourceTree = "<group>";
+		};
+		6657F6962E0313200016F333 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1234567890123456789012K /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1234567890123456789012G /* Juju.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1234567890123456789012L = {
+			isa = PBXGroup;
+			children = (
+				6657F6952E0313200016F333 /* juju-swift */,
+				A1234567890123456789012K /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1234567890123456789012M /* Juju */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1234567890123456789012N /* Build configuration list for PBXNativeTarget "Juju" */;
+			buildPhases = (
+				A1234567890123456789012O /* Sources */,
+				A1234567890123456789012I /* Frameworks */,
+				A1234567890123456789012P /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Juju;
+			productName = Juju;
+			productReference = A1234567890123456789012G /* Juju.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1234567890123456789012Q /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					A1234567890123456789012M = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A1234567890123456789012R /* Build configuration list for PBXProject "Juju" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1234567890123456789012L;
+			productRefGroup = A1234567890123456789012K /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 6657F6962E0313200016F333 /* Products */;
+					ProjectRef = 6657F6942E0313200016F333 /* Juju.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				A1234567890123456789012M /* Juju */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1234567890123456789012P /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6657F6992E0313200016F333 /* 128x128.png in Resources */,
+				6657F69D2E0313200016F333 /* icon.icns in Resources */,
+				66E0B07F2E033E4D0029121D /* dashboard-web in Resources */,
+				6657F69F2E0313200016F333 /* icon.png in Resources */,
+				6657F69E2E0313200016F333 /* icon.ico in Resources */,
+				6657F69B2E0313200016F333 /* icon-active.png in Resources */,
+				6657F6A02E0313200016F333 /* placeholder-logo.icns in Resources */,
+				6657F69C2E0313200016F333 /* icon-idle.png in Resources */,
+				6657F69A2E0313200016F333 /* 128x128@2x.png in Resources */,
+				6657F6982E0313200016F333 /* 32x32.png in Resources */,
+				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1234567890123456789012O /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */,
+				6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */,
+				66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */,
+				66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */,
+				6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */,
+				6657F6A72E0313200016F333 /* IconManager.swift in Sources */,
+				6657F6A92E0313200016F333 /* main.swift in Sources */,
+				6657F6A42E0313200016F333 /* DashboardViewController.swift in Sources */,
+				66109E1C2E031720000B7182 /* SessionManager.swift in Sources */,
+				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1234567890123456789012S /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1234567890123456789012T /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A1234567890123456789012U /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1234567890123456789012V /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1234567890123456789012N /* Build configuration list for PBXNativeTarget "Juju" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1234567890123456789012U /* Debug */,
+				A1234567890123456789012V /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1234567890123456789012R /* Build configuration list for PBXProject "Juju" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1234567890123456789012S /* Debug */,
+				A1234567890123456789012T /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1234567890123456789012Q /* Project object */;
+}

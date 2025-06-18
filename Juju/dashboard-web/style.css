@@ -1,0 +1,574 @@
+/* Global Box Sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Variables for consistent values */
+:root {
+    --background-dark: #1E1E1E;
+    --background-light: rgba(255, 255, 255, 0.03);
+    --border-color: #444;
+    --text-light: #E0E0E0;
+    --text-muted: #888;
+    --primary-blue: #4E79A7;
+    --danger-red: #E15759;
+    --card-padding: 1.5rem;
+    --border-radius: 8px;
+}
+
+/* Base styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 18px;
+    font-weight: 200;
+    color: var(--text-light);
+    background-color: var(--background-dark);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+#juju-logo {
+    max-width: 60px;
+    height: auto;
+}
+
+h1, h2, h3 {
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    color: #F5F5F5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+h1 {
+    font-size: 24px;
+    margin: 0;
+    padding: 20px;
+    background-color: #333333;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0;
+    padding: 0 1rem;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 400;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease; /* More specific transition */
+}
+
+.tab:hover {
+    color: var(--text-light);
+}
+
+.tab.active {
+    border-bottom-color: var(--primary-blue);
+    color: #F5F5F5;
+}
+
+.tab-content {
+    display: none;
+    padding: 1rem;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Table styles - consolidated */
+.table-container {
+    background: var(--background-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-light);
+    font-size: 0.8em;
+}
+
+th {
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+
+td {
+    padding: 0.2rem 0.3rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.editable {
+    cursor: pointer;
+}
+
+.editable:hover {
+    background: rgba(78, 121, 167, 0.1);
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #444;
+    color: var(--text-light);
+}
+
+/* Chart styles - consolidated */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    margin-bottom: 2rem;
+    align-items: stretch;
+}
+
+.chart-row.single-chart {
+    display: block;
+    width: 100%;
+    margin-bottom: 2rem; /* Add spacing for single-chart rows */
+}
+
+.chart-container {
+    background: var(--background-light);
+    border-radius: var(--border-radius);
+    padding: var(--card-padding);
+    position: relative;
+    min-width: 0;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+/* Special height handling for different chart types */
+.yearly-chart {
+    height: 50vh;
+}
+
+.chart-row .chart-container:not(.comparison-charts-container) {
+    height: 350px; /* Set fixed height for regular charts in rows */
+}
+
+.comparison-charts-container {
+    height: 350px; /* Match the height of the pie chart */
+    padding: calc(var(--card-padding) / 2);
+}
+
+.no-data {
+    text-align: center;
+    padding: 50px 0;
+    color: var(--text-muted);
+}
+
+/* Canvas settings */
+canvas {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+/* Styling specifically for the notes editing textarea */
+#recent-sessions-body td .inline-edit-input[type="textarea"] {
+    display: block;
+    width: 400px;
+    max-width: 100%;
+    height: 5em;
+    padding: 6px 8px;
+    margin: 0;
+    border: 1px solid #555;
+    background-color: #333;
+    color: var(--text-light);
+    border-radius: 3px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.4;
+}
+
+/* Optional: Make table header sticky when scrolling */
+#recent-sessions-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #2a2a2a; /* Header background */
+    z-index: 1;
+    color: var(--text-light);
+}
+
+/* Project Management Styles */
+.projects-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background-light);
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+#projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 200px;
+}
+
+.project-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+}
+
+.project-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.project-color {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.project-color input[type="color"] {
+    width: 40px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+}
+
+.project-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#add-project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 300px;
+}
+
+#add-project-form input {
+    padding: 0.4rem;
+    font-size: 0.9em;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+}
+
+#add-project-form button {
+    padding: 0.5rem 1rem;
+    background: var(--primary-blue);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+#add-project-form button:hover {
+    background: #5989b7;
+}
+
+.delete-project { /* Kept selector for potential JS targeting */ }
+
+/* Date Filter Controls Styles */
+.date-filter-controls {
+    background: var(--background-light);
+    border-radius: var(--border-radius);
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.date-filter-title-container {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+#chart-range-title {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.date-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+/* .date-filter-btn styles moved to .btn-filter */
+.date-filter-btn { /* Kept selector for potential JS targeting */ }
+
+.date-filter-custom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.date-filter-custom label {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+/* .date-filter-custom input[type="date"] styles moved to .input-base and input[type="date"].input-base */
+.date-filter-custom input[type="date"] { /* Kept selector for potential JS targeting */ }
+
+/* #apply-custom-date styles moved to .btn and .btn-primary */
+#apply-custom-date { /* Kept selector for potential JS targeting */ }
+
+
+/* --- Base Component Styles --- */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    color: white;
+}
+.btn-primary:hover:not(:disabled) {
+    background: #5989b7;
+}
+
+.btn-danger {
+    background: var(--danger-red);
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #e86b6d;
+}
+
+.btn-filter {
+    padding: 0.4rem 1rem; /* Keep specific padding */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+}
+.btn-filter:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-light);
+}
+.btn-filter.active {
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+}
+
+.btn-icon {
+    padding: 0.25rem;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+.input-base {
+    padding: 0.4rem;
+    font-size: 0.9em;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+    font-family: inherit;
+}
+
+/* Specific input type adjustments if needed */
+input[type="date"].input-base {
+    padding: 0.3rem 0.5rem; /* Keep specific padding */
+    color-scheme: dark;
+}
+
+select.input-base {
+    /* Add specific select styles if needed */
+    padding-right: 1.5rem; /* Space for dropdown arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* --- End Base Component Styles --- */
+
+
+/* --- Comparison Chart Styles --- */
+.comparison-charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: auto;
+    padding: 0.5rem;
+    justify-content: space-between;
+}
+
+.comparison-chart-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.comparison-chart-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.comparison-title {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.chart-wrapper {
+    height: 110px; /* Increased height for better visibility */
+    width: 100%;
+    position: relative;
+    margin: 0.25rem 0; /* Reduced margins to use more vertical space */
+}
+
+.comparison-text-details {
+    display: none; /* Hide the details text */
+}
+
+/* --- Session Tab Specific Styles --- */
+.sessions-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem; /* Space between controls and table */
+    padding: 0.5rem 0; /* Padding around the controls */
+}
+
+.sessions-controls label {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+#project-filter-select {
+    min-width: 150px; /* Give the dropdown a minimum width */
+    flex-grow: 0; /* Don't let it grow excessively */
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem; 
+    padding: 0.5rem 0; 
+}
+
+.pagination-controls span {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+#recent-sessions-table-container {
+    /* overflow-x: auto; */
+}
+
+/* Add specific styling for the delete button in tables */
+td.actions {
+    width: 40px;
+    text-align: center;
+    padding: 0.25rem;
+}
+
+.btn-delete {
+    padding: 0.25rem;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    background: var(--danger-red);
+    color: white;
+    opacity: 0.8;
+}
+
+.btn-delete:hover {
+    opacity: 1;
+    background: #e86b6d;
+}

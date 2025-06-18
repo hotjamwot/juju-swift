@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Juju Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <img src="assets/placeholder-logo.png" alt="Juju Logo" id="juju-logo">
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="charts">Juju</div>
+            <div class="tab" data-tab="sessions">Sessions</div>
+            <div class="tab" data-tab="projects">Projects</div>
+        </div>
+
+        <!-- Charts Tab Content -->
+        <div id="charts" class="tab-content active">
+
+            <!-- First row -->
+            <div class="chart-container yearly-chart">
+                <canvas id="yearly-chart"></canvas>
+            </div>
+
+            <!-- Second row (weekly chart only) -->
+            <div class="chart-row single-chart">
+                <div class="chart-container">
+                    <canvas id="weekly-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Third row -->
+            <div class="chart-row">
+                <!-- Container for the 3 comparison charts -->
+                <div class="chart-container comparison-charts-container">
+
+                    <div class="comparison-chart-item">
+                        <h4 class="comparison-title" id="day-comparison-title">Compared to usual DAY</h4>
+                        <div class="chart-wrapper"> 
+                             <canvas id="day-comparison-bar-chart"></canvas>
+                        </div>
+                        <div class="comparison-text-details" id="day-comparison-details">Loading...</div>
+                    </div>
+
+                    <div class="comparison-chart-item">
+                        <h4 class="comparison-title" id="week-comparison-title">Compared to usual WEEK</h4>
+                         <div class="chart-wrapper">
+                             <canvas id="week-comparison-bar-chart"></canvas>
+                         </div>
+                         <div class="comparison-text-details" id="week-comparison-details">Loading...</div>
+                    </div>
+
+                    <div class="comparison-chart-item">
+                        <h4 class="comparison-title" id="month-comparison-title">Compared to usual MONTH</h4>
+                         <div class="chart-wrapper">
+                             <canvas id="month-comparison-bar-chart"></canvas>
+                         </div>
+                         <div class="comparison-text-details" id="month-comparison-details">Loading...</div>
+                    </div>
+
+                </div>
+                <!-- Pie chart container -->
+                <div class="chart-container">
+                    <canvas id="pie-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Date Filter Controls -->
+            <div class="date-filter-controls">
+                <div class="date-filter-title-container">
+                    <h2 id="chart-range-title">Showing data for: This Year</h2>
+                </div>
+                <div class="date-filter-buttons">
+                    <button class="btn btn-filter" data-range="7d">Last 7 Days</button>
+                    <button class="btn btn-filter" data-range="1m">Last Month</button>
+                    <button class="btn btn-filter" data-range="3m">Last Quarter</button>
+                    <button class="btn btn-filter active" data-range="1y">This Year</button> <!-- Added active class here too -->
+                    <button class="btn btn-filter" data-range="all">All Time</button>
+                </div>
+                <div class="date-filter-custom">
+                    <label for="date-from">From:</label>
+                    <input type="date" id="date-from" class="input-base">
+                    <label for="date-to">To:</label>
+                    <input type="date" id="date-to" class="input-base">
+                    <button id="apply-custom-date" class="btn btn-primary">Apply</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Tab Content -->
+        <div id="sessions" class="tab-content">
+            <div class="sessions-controls">
+                 <label for="project-filter-select">Filter by Project:</label>
+                 <select id="project-filter-select" class="input-base">
+                     <option value="All">All Projects</option>
+                     <!-- Options will be populated by JavaScript -->
+                 </select>
+            </div>
+            <div id="recent-sessions-table-container">
+                <table id="recent-sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Project</th>
+                            <th>Duration</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Notes</th>
+                            <th>Actions</th>  <!-- New column -->
+                        </tr>
+                    </thead>
+                    <tbody id="recent-sessions-body">
+                        <!-- Sessions will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+             <div class="pagination-controls">
+                 <button id="prev-page-btn" class="btn btn-primary" disabled>< Previous</button>
+                 <span id="page-info">Page 1 of 1</span>
+                 <button id="next-page-btn" class="btn btn-primary" disabled>Next ></button>
+             </div>
+        </div>
+
+        <!-- Projects Tab Content -->
+        <div id="projects" class="tab-content">
+            <div class="projects-grid">
+                <div id="projects-list"></div>
+                <form id="add-project-form">
+                    <input type="text" id="new-project-name" class="input-base" placeholder="Project Name" required>
+                    <input type="color" id="new-project-color" value="#4E79A7"> <!-- Color input kept separate styling -->
+                    <button type="submit" class="btn btn-primary">Add Project</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Chart.js first -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load your app scripts after Chart.js -->
+    <script src="dashboard.bundle.js"></script>
+</body>
+</html>
