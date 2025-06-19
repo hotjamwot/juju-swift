@@ -8,7 +8,7 @@ async function loadProjects() {
     const now = Date.now();
     if (!cachedProjects || (now - lastProjectLoad) > CACHE_TIMEOUT) {
         try {
-            cachedProjects = await window.api.loadProjects();
+            cachedProjects = await window.jujuApi.loadProjects();
             lastProjectLoad = now;
         } catch (error) {
             console.warn('Error loading projects:', error);

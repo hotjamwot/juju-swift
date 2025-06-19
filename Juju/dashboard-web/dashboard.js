@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- WKWebView Data Bridge Receivers ---
         window.onSessionsLoaded = function(sessions) {
+            console.log('[Dashboard] onSessionsLoaded called', sessions);
             if (typeof sessions === 'string') {
                 try { sessions = JSON.parse(sessions); } catch (e) { console.error('Failed to parse sessions JSON', e); sessions = []; }
             }
@@ -313,6 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- Project Management ---
         async function initProjectManagement() {
+            console.log('[DEBUG] initProjectManagement called');
             const projectsList = document.getElementById('projects-list');
             const addProjectForm = document.getElementById('add-project-form');
 
@@ -333,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!nameInput || !colorInput) return;
                 
                 try {
-                    const result = await window.api.addProject({
+                    const result = await window.jujuApi.addProject({
                         name: nameInput.value.trim(),
                         color: colorInput.value
                     });
@@ -371,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </div>
                         <div class="project-actions">
-                            <button class="delete-project" data-project-id="${project.id}">Delete</button>
+                            <button class="btn btn-delete" data-id="${project.id}" title="Delete Project" aria-label="Delete Project">&times;</button>
                         </div>
                     `;
                     // Add color change handler
@@ -379,28 +381,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (colorInput) {
                         colorInput.addEventListener('change', async (e) => {
                             try {
-                                await window.api.updateProjectColor(project.id, e.target.value);
-                                window.api.loadProjects(); // Reload projects after color change
-                                window.api.loadSessions(); // Reload sessions in case color affects charts
+                                await window.jujuApi.updateProjectColor(project.id, e.target.value);
+                                window.jujuApi.loadProjects(); // Reload projects after color change
+                                window.jujuApi.loadSessions(); // Reload sessions in case color affects charts
                             } catch (error) {
                                 console.error('Error updating project color:', error);
                                 alert('Failed to update color: ' + error.message);
-                            }
-                        });
-                    }
-                    // Add delete handler
-                    const deleteButton = projectElement.querySelector('.delete-project');
-                    if (deleteButton) {
-                        deleteButton.addEventListener('click', async () => {
-                            if (confirm(`Are you sure you want to delete ${project.name}?`)) {
-                                try {
-                                    await window.api.deleteProject(project.id);
-                                    window.api.loadProjects(); // Reload projects after delete
-                                    window.api.loadSessions(); // Reload sessions in case project is removed from sessions
-                                } catch (error) {
-                                    console.error('Error deleting project:', error);
-                                    alert('Failed to delete project: ' + error.message);
-                                }
                             }
                         });
                     }
@@ -445,12 +431,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Attach event delegation for project delete buttons ONCE
+        document.getElementById('projects-list').addEventListener('click', async function(e) {
+            if (e.target.classList.contains('btn-delete')) {
+                const btn = e.target;
+                const projectId = btn.dataset.id;
+                const project = allProjects.find(p => String(p.id) === String(projectId));
+                if (!project) return;
+                if (!confirm(`Are you sure you want to delete ${project.name}?`)) return;
+                // Visual feedback: disable button and show spinner
+                btn.disabled = true;
+                const oldHtml = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner"></span>';
+                try {
+                    const result = await window.jujuApi.deleteProject(projectId);
+                    if (result && result.success) {
+                        await refreshProjectsList();
+                        await refreshDashboardData();
+                    } else {
+                        const errorMsg = result && result.error ? result.error : 'Unknown error';
+                        alert('Failed to delete project: ' + errorMsg);
+                        console.error('Error deleting project:', errorMsg);
+                        btn.disabled = false;
+                        btn.innerHTML = oldHtml;
+                    }
+                } catch (error) {
+                    alert('Failed to delete project: ' + (error && error.message ? error.message : error));
+                    console.error('Error deleting project:', error);
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
+            }
+        });
 
         // --- Initialization ---
         setupTabs();
-        console.log('Calling window.api.loadProjects and loadSessions');
-        window.api.loadProjects();
-        window.api.loadSessions();
+        console.log('Calling window.jujuApi.loadProjects and loadSessions');
+        window.jujuApi.loadProjects();
+        window.jujuApi.loadSessions();
         await initProjectManagement();
         await refreshDashboardData();
 

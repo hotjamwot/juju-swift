@@ -148,8 +148,9 @@ class SessionManager {
         guard let dataFile = dataFile else { return }
         do {
             try content.write(to: dataFile, atomically: true, encoding: .utf8)
+            print("✅ Successfully wrote to CSV file at: \(dataFile.path)")
         } catch {
-            print("❌ Error writing to CSV file: \(error)")
+            print("❌ Error writing to CSV file at \(dataFile.path): \(error)")
         }
     }
     
@@ -160,8 +161,9 @@ class SessionManager {
             fileHandle.seekToEndOfFile()
             fileHandle.write(content.data(using: .utf8)!)
             fileHandle.closeFile()
+            print("✅ Successfully appended to CSV file at: \(dataFile.path)")
         } catch {
-            print("❌ Error appending to CSV file: \(error)")
+            print("❌ Error appending to CSV file at \(dataFile.path): \(error)")
         }
     }
     

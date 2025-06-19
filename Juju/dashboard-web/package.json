@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "esbuild": "^0.25.5"
+  },
+  "scripts": {
+    "build": "esbuild dashboard.js --bundle --outfile=dashboard.bundle.js --minify"
+  }
+}

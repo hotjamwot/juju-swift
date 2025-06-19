@@ -572,3 +572,90 @@ td.actions {
     opacity: 1;
     background: #e86b6d;
 }
+
+/* Modern session table editing styles */
+.inline-edit-input,
+.editable input,
+.editable textarea,
+.editable select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid #666;
+  padding: 6px 10px;
+  font-size: 1em;
+  background: #454545;
+  color: #E0E0E0;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.inline-edit-input:focus {
+  border-color: #4E79A7;
+  box-shadow: 0 0 0 2px #4E79A733;
+}
+
+.inline-edit-input[type="textarea"], .editable textarea {
+  resize: none;
+  min-height: 32px;
+  max-height: 80px;
+  line-height: 1.4;
+}
+
+.saving {
+  background: #f5f5f5 !important;
+  position: relative;
+}
+.saving .spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid #ccc;
+  border-top: 2px solid #4E79A7;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.success {
+  background: #e6ffe6 !important;
+  transition: background 0.4s;
+}
+.error {
+  background: #ffe6e6 !important;
+  transition: background 0.4s;
+}
+
+/* Table row hover for better UX */
+#recent-sessions-table tbody tr:hover {
+  background: #2a3a4d !important; /* Elegant blue-tinted dark background for hover */
+  color: #E0E0E0;
+  transition: background 0.2s;
+}
+
+/* Clean up old table styles if present */
+#recent-sessions-table td, #recent-sessions-table th {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+#recent-sessions-table th {
+  background: #f8f9fb;
+  font-weight: 500;
+  color: #4E79A7;
+}
+
+/* Remove clunky outlines and default button styles */
+.btn-delete {
+  background: none;
+  border: none;
+  color: #E15759;
+  font-size: 1.2em;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.btn-delete:hover {
+  background: #ffe6e6;
+}

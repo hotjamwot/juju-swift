@@ -11,6 +11,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         print("Juju app launching...")
         
+        // Enable Web Inspector for WKWebView
+        UserDefaults.standard.set(true, forKey: "WebKitDeveloperExtras")
+        
         // Load projects
         projects = ProjectManager.shared.loadProjects()
         

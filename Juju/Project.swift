@@ -56,9 +56,9 @@ class ProjectManager {
                 encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
                 let data = try encoder.encode(projects)
                 try data.write(to: projectsFile)
-                print("Saved \(projects.count) projects to \(projectsFile.path)")
+                print("✅ Saved \(projects.count) projects to \(projectsFile.path)")
             } catch {
-                print("Error saving projects: \(error)")
+                print("❌ Error saving projects to \(projectsFile.path): \(error)")
             }
         }
     }

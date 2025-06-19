@@ -131,7 +131,7 @@ async function handleCellClick(refreshDashboardDataCallback) {
 
         try {
             // Get project names from the API
-            const projectNames = await window.api.getProjectNames();
+            const projectNames = await window.jujuApi.getProjectNames();
             
             // Clear loading option
             inputElement.innerHTML = '';
@@ -173,6 +173,15 @@ async function handleCellClick(refreshDashboardDataCallback) {
         inputElement.value = currentValue;
     }
     inputElement.classList.add('inline-edit-input');
+    inputElement.style.width = '100%';
+    inputElement.style.boxSizing = 'border-box';
+    if (inputElement.tagName === 'TEXTAREA') {
+      inputElement.rows = 1;
+      inputElement.style.resize = 'none';
+      inputElement.style.minHeight = '32px';
+      inputElement.style.maxHeight = '80px';
+      inputElement.style.lineHeight = '1.4';
+    }
 
     this.innerHTML = '';
     this.appendChild(inputElement);
@@ -213,15 +222,14 @@ async function handleInputKeydown(refreshDashboardDataCallback, event) { // Rece
 }
 
 // Handles the update logic when an input field blurs or Enter is pressed
-async function handleCellUpdate(refreshDashboardDataCallback) { // Receive callback
-    // 'this' refers to the input/textarea element
+async function handleCellUpdate(refreshDashboardDataCallback) {
     const cell = this.parentElement;
     if (!cell || !cell.dataset) {
-         console.warn("[UI] handleCellUpdate called on detached or invalid element.");
-         this.removeEventListener('blur', this._boundBlurHandler);
-         this.removeEventListener('keydown', this._boundKeydownHandler);
-         try { this.remove(); } catch(e) {} // Try removing input
-         return;
+        console.warn("[UI] handleCellUpdate called on detached or invalid element.");
+        this.removeEventListener('blur', this._boundBlurHandler);
+        this.removeEventListener('keydown', this._boundKeydownHandler);
+        try { this.remove(); } catch(e) {}
+        return;
     }
 
     const newValue = this.value.trim();
@@ -229,38 +237,36 @@ async function handleCellUpdate(refreshDashboardDataCallback) { // Receive callb
     const id = cell.dataset.id;
     const field = cell.dataset.field;
 
-    // --- Important: Remove listeners before potential async call or UI change ---
     this.removeEventListener('blur', this._boundBlurHandler);
     this.removeEventListener('keydown', this._boundKeydownHandler);
 
     if (newValue === originalValue) {
         cell.textContent = originalValue;
-        console.log("[UI] Value unchanged, edit cancelled.");
         cell.removeAttribute('data-original-value');
         return;
     }
 
-    console.log(`[UI] Attempting update: ID=${id}, Field=${field}, NewValue=${newValue}`);
-    cell.textContent = 'Saving...'; // Indicate saving state
+    // Show spinner while saving
+    cell.classList.add('saving');
+    cell.innerHTML = '<span class="spinner"></span>';
 
     try {
-        // Use window.api exposed by preload script
-        await window.api.updateSession(id, field, newValue);
-        console.log(`[UI] Update successful for ID=${id}, Field=${field}. Refreshing data.`);
-        // Call the refresh callback provided by dashboard.js
-        if (typeof refreshDashboardDataCallback === 'function') {
+        const result = await window.jujuApi.updateSession(Number(id), field, newValue);
+        cell.classList.remove('saving');
+        cell.classList.add('success');
+        setTimeout(() => cell.classList.remove('success'), 1000);
+        if (window.jujuApi && typeof window.jujuApi.loadSessions === 'function') {
+            window.jujuApi.loadSessions();
+        } else if (typeof refreshDashboardDataCallback === 'function') {
             refreshDashboardDataCallback();
-        } else {
-            console.warn('[UI] refreshDashboardDataCallback is not a function!');
         }
-
     } catch (error) {
-        console.error(`[UI] Error updating session (ID=${id}, Field=${field}):`, error);
-        alert(`Failed to update session: ${error.message || 'Unknown error'}`);
-        // Revert the cell display to original value on error
+        cell.classList.remove('saving');
+        cell.classList.add('error');
+        setTimeout(() => cell.classList.remove('error'), 1200);
         cell.textContent = originalValue;
     } finally {
-         cell.removeAttribute('data-original-value');
+        cell.removeAttribute('data-original-value');
     }
 }
 
@@ -273,8 +279,8 @@ function addDeleteListeners(refreshDashboardDataCallback) {
 
             if (confirm('Are you sure you want to delete this session? This cannot be undone.')) {
                 try {
-                    await window.api.deleteSession(id);
-                    console.log(`[UI] Session deleted successfully: ${id}`);
+                    const result = await window.jujuApi.deleteSession(Number(id));
+                    console.log(`[UI] Session deleted successfully: ${id}. Result:`, result);
                     if (typeof refreshDashboardDataCallback === 'function') {
                         refreshDashboardDataCallback();
                     }
