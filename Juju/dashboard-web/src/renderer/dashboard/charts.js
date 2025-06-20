@@ -56,7 +56,7 @@ export async function updateCharts(filteredSessions, allSessions, rangeTitle) {
         // Update comparison stats first
         try {
             console.log('[Charts] Fetching comparison stats...');
-            const comparisonStats = await window.api.getComparisonStats();
+            const comparisonStats = await window.jujuApi.getComparisonStats();
             
             if (comparisonStats) {
                 // --- Day Comparison ---

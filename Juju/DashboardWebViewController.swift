@@ -14,16 +14,38 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         // Inject window.jujuApi polyfill with debug logs
         let apiPolyfill = """
         console.log('Polyfill injected');
+        window.api = window.api || {};
+        window.api.getComparisonStats = function() {
+            console.log('window.api.getComparisonStats called');
+            return Promise.resolve(null);
+        };
         window.jujuApi = {
             loadSessions: function() {
                 console.log('window.jujuApi.loadSessions called');
-                window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadSessions' });
+                return new Promise((resolve, reject) => {
+                    const callbackName = 'onSessionsLoaded';
+                    const original = window[callbackName];
+                    window[callbackName] = function(sessions) {
+                        if (typeof original === 'function') original(sessions);
+                        resolve(sessions);
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadSessions' });
+                });
             },
             loadProjects: function() {
                 console.log('window.jujuApi.loadProjects called');
-                window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadProjects' });
+                return new Promise((resolve, reject) => {
+                    const callbackName = 'onProjectsLoaded';
+                    const original = window[callbackName];
+                    window[callbackName] = function(projects) {
+                        if (typeof original === 'function') original(projects);
+                        resolve(projects);
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadProjects' });
+                });
             },
             updateSession: function(id, field, value) {
+                console.log('window.jujuApi.updateSession called', id, field, value);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -38,6 +60,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             deleteSession: function(id) {
+                console.log('window.jujuApi.deleteSession called', id);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -52,6 +75,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             getProjectNames: function() {
+                console.log('window.jujuApi.getProjectNames called');
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -69,6 +93,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 console.log('window.jujuApi.testLog called');
             },
             addProject: function(project) {
+                console.log('window.jujuApi.addProject called', project);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -83,6 +108,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             updateProjectColor: function(id, color) {
+                console.log('window.jujuApi.updateProjectColor called', id, color);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -97,6 +123,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             deleteProject: function(id) {
+                console.log('window.jujuApi.deleteProject called', id);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -109,6 +136,10 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                         id, callbackId
                     });
                 });
+            },
+            getComparisonStats: function() {
+                console.log('window.jujuApi.getComparisonStats called');
+                return Promise.resolve(null);
             }
         };
         """
@@ -245,6 +276,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: sessionDicts, options: [])
             if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("[DashboardWebViewController] Sending sessions to JS: \(jsonString)")
                 sendToJS(function: "window.onSessionsLoaded", argument: jsonString)
             }
         } catch {
@@ -257,6 +289,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         do {
             let jsonData = try JSONEncoder().encode(projects)
             if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("[DashboardWebViewController] Sending projects to JS: \(jsonString)")
                 sendToJS(function: "window.onProjectsLoaded", argument: jsonString)
             }
         } catch {
