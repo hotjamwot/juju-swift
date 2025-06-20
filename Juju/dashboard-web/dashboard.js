@@ -432,9 +432,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Attach event delegation for project delete buttons ONCE
-        document.getElementById('projects-list').addEventListener('click', async function(e) {
+        // Attach event delegation for project delete buttons (must be after DOM is ready)
+        document.getElementById('projects-list').addEventListener('click', function(e) {
             if (e.target.classList.contains('btn-delete')) {
+                console.log('[Dashboard] Project delete button clicked', e.target.dataset.id);
                 const btn = e.target;
                 const projectId = btn.dataset.id;
                 const project = allProjects.find(p => String(p.id) === String(projectId));
@@ -444,24 +445,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.disabled = true;
                 const oldHtml = btn.innerHTML;
                 btn.innerHTML = '<span class="spinner"></span>';
-                try {
-                    const result = await window.jujuApi.deleteProject(projectId);
-                    if (result && result.success) {
-                        await refreshProjectsList();
-                        await refreshDashboardData();
-                    } else {
-                        const errorMsg = result && result.error ? result.error : 'Unknown error';
-                        alert('Failed to delete project: ' + errorMsg);
-                        console.error('Error deleting project:', errorMsg);
-                        btn.disabled = false;
-                        btn.innerHTML = oldHtml;
-                    }
-                } catch (error) {
-                    alert('Failed to delete project: ' + (error && error.message ? error.message : error));
-                    console.error('Error deleting project:', error);
+                console.log('[Dashboard] Entering deleteProject .then() block');
+                if (typeof window.jujuApi.deleteProject !== 'function') {
+                    alert('window.jujuApi.deleteProject is not a function!');
                     btn.disabled = false;
                     btn.innerHTML = oldHtml;
+                    return;
                 }
+                window['jujuApi']['deleteProject'](projectId)
+                    .then(result => {
+                        console.log('[Dashboard] window.jujuApi.deleteProject returned', result);
+                        if (result && result.success) {
+                            refreshProjectsList();
+                            refreshDashboardData();
+                        } else {
+                            const errorMsg = result && result.error ? result.error : 'Unknown error';
+                            alert('Failed to delete project: ' + errorMsg);
+                            console.error('Error deleting project:', errorMsg);
+                            btn.disabled = false;
+                            btn.innerHTML = oldHtml;
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error calling window.jujuApi.deleteProject: ' + (error && error.message ? error.message : error));
+                        console.error('[Dashboard] Error in deleteProject handler:', error);
+                        btn.disabled = false;
+                        btn.innerHTML = oldHtml;
+                    });
             }
         });
 

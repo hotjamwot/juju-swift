@@ -43,15 +43,14 @@ export function destroyCharts() {
 export async function updateCharts(filteredSessions, allSessions, rangeTitle) {
     try {
         checkChartJs();
-
         // Update the title display
         const titleElement = document.getElementById('chart-range-title');
         if (titleElement) {
             titleElement.textContent = `Showing data for: ${rangeTitle}`;
         }
-
-        // Destroy existing charts
+        // Always destroy existing charts before creating new ones
         destroyCharts();
+        console.log('[Charts] Called destroyCharts before creating new charts.');
 
         // Update comparison stats first
         try {

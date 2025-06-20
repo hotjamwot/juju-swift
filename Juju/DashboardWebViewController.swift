@@ -162,7 +162,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             deleteSession: function(id) {
-                console.log('window.jujuApi.deleteSession called', id);
+                console.log('window.jujuApi.deleteSession called', id, 'type:', typeof id);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -170,6 +170,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                         if (result && result.success) resolve(result);
                         else reject(result && result.error ? result.error : 'Unknown error');
                     };
+                    console.log('[Polyfill] About to postMessage to Swift: type=deleteSession, id=', id, 'type:', typeof id, 'callbackId:', callbackId);
                     window.webkit.messageHandlers.jujuBridge.postMessage({
                         type: 'deleteSession',
                         id, callbackId
@@ -225,7 +226,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 });
             },
             deleteProject: function(id) {
-                console.log('window.jujuApi.deleteProject called', id);
+                console.log('[Polyfill] window.jujuApi.deleteProject called with id', id);
                 return new Promise((resolve, reject) => {
                     const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
                     window[callbackId] = (result) => {
@@ -233,10 +234,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                         if (result && result.success) resolve(result);
                         else reject(result && result.error ? result.error : 'Unknown error');
                     };
-                    window.webkit.messageHandlers.jujuBridge.postMessage({
-                        type: 'deleteProject',
-                        id, callbackId
-                    });
+                    const msg = { type: 'deleteProject', id, callbackId };
+                    console.log('[Polyfill] About to postMessage to Swift:', msg);
+                    window.webkit.messageHandlers.jujuBridge.postMessage(msg);
                 });
             }
         };
@@ -280,9 +280,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             case "updateSession":
                 print("[DashboardWebViewController] Handling updateSession with dict: \(dict)")
                 let idValue = dict["id"]
-                let id: Int? = {
-                    if let intId = idValue as? Int { return intId }
-                    if let strId = idValue as? String, let intId = Int(strId) { return intId }
+                let id: String? = {
+                    if let strId = idValue as? String { return strId }
+                    if let intId = idValue as? Int { return String(intId) }
                     return nil
                 }()
                 if let id = id,
@@ -297,9 +297,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             case "deleteSession":
                 print("[DashboardWebViewController] Handling deleteSession with dict: \(dict)")
                 let idValue = dict["id"]
-                let id: Int? = {
-                    if let intId = idValue as? Int { return intId }
-                    if let strId = idValue as? String, let intId = Int(strId) { return intId }
+                let id: String? = {
+                    if let strId = idValue as? String { return strId }
+                    if let intId = idValue as? Int { return String(intId) }
                     return nil
                 }()
                 if let id = id,
@@ -397,7 +397,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     }
     
     // MARK: - Session Editing
-    private func handleUpdateSession(id: Int, field: String, value: String, callbackId: String) {
+    private func handleUpdateSession(id: String, field: String, value: String, callbackId: String) {
         print("[DashboardWebViewController] handleUpdateSession called with id=\(id), field=\(field), value=\(value), callbackId=\(callbackId)")
         // Load all sessions
         var sessions = SessionManager.shared.loadAllSessions()
@@ -426,9 +426,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         sessions[idx] = session
         // Save all sessions back to CSV
-        let header = "date,start_time,end_time,duration_minutes,project,notes\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
         let rows = sessions.map { s in
-            "\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {
@@ -449,9 +449,10 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     }
     
     // MARK: - Session Deletion
-    private func handleDeleteSession(id: Int, callbackId: String) {
-        print("[DashboardWebViewController] handleDeleteSession called with id=\(id), callbackId=\(callbackId)")
+    private func handleDeleteSession(id: String, callbackId: String) {
+        print("[DashboardWebViewController] handleDeleteSession called with id=\(id) (type: \(type(of: id))), callbackId=\(callbackId)")
         var sessions = SessionManager.shared.loadAllSessions()
+        print("[DashboardWebViewController] Loaded session ids:", sessions.map { $0.id })
         guard let idx = sessions.firstIndex(where: { $0.id == id }) else {
             print("[DashboardWebViewController] deleteSession: id not found: id=\(id)")
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Session not found")
@@ -459,9 +460,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         sessions.remove(at: idx)
         // Save all sessions back to CSV
-        let header = "date,start_time,end_time,duration_minutes,project,notes\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
         let rows = sessions.map { s in
-            "\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {

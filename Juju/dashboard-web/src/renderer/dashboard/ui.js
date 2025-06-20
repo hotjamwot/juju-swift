@@ -273,13 +273,23 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
 // Add this new function for delete functionality
 function addDeleteListeners(refreshDashboardDataCallback) {
     document.querySelectorAll('#recent-sessions-body .btn-delete').forEach(button => {
-        button.addEventListener('click', async (e) => {
+        // Remove any previous click listeners
+        if (button._boundDeleteHandler) {
+            button.removeEventListener('click', button._boundDeleteHandler);
+        }
+        // Create a new handler
+        const handler = async (e) => {
             const id = e.target.dataset.id;
             if (!id) return;
-
+            console.log('[UI] Delete button clicked for session id:', id, 'type:', typeof id);
             if (confirm('Are you sure you want to delete this session? This cannot be undone.')) {
                 try {
-                    const result = await window.jujuApi.deleteSession(Number(id));
+                    if (!window.jujuApi || typeof window.jujuApi.deleteSession !== 'function') {
+                        alert('Delete function not available.');
+                        return;
+                    }
+                    console.log('[UI] Calling window.jujuApi.deleteSession with id:', String(id), 'type:', typeof String(id));
+                    const result = await window.jujuApi.deleteSession(String(id));
                     console.log(`[UI] Session deleted successfully: ${id}. Result:`, result);
                     if (typeof refreshDashboardDataCallback === 'function') {
                         refreshDashboardDataCallback();
@@ -289,7 +299,10 @@ function addDeleteListeners(refreshDashboardDataCallback) {
                     alert('Failed to delete session. Please try again.');
                 }
             }
-        });
+        };
+        button.addEventListener('click', handler);
+        button._boundDeleteHandler = handler;
+        console.log('[UI] Delete handler attached for session id:', button.dataset.id);
     });
 }
 

@@ -10,7 +10,7 @@ struct SessionData {
 
 // MARK: - Data Structures
 struct SessionRecord: Identifiable {
-    let id: Int
+    let id: String
     let date: String
     let startTime: String
     let endTime: String
@@ -111,20 +111,21 @@ class SessionManager {
         let date = dateFormatter.string(from: sessionData.startTime)
         let startTime = timeFormatter.string(from: sessionData.startTime)
         let endTime = timeFormatter.string(from: sessionData.endTime)
+        let id = String(Int(Date().timeIntervalSince1970 * 1000)) + String(Int.random(in: 100...999))
         
-        let csvRow = "\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\"\n"
+        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\"\n"
         
         // Check if file exists and needs header
         let needsHeader = !fileExists() || isFileEmpty()
         
         if needsHeader {
-            let header = "date,start_time,end_time,duration_minutes,project,notes\n"
+            let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
             let fullContent = header + csvRow
             writeToFile(fullContent)
-            print("✅ Created new CSV file with header and session data")
+            print("✅ Created new CSV file with header and session data (with IDs)")
         } else {
             appendToFile(csvRow)
-            print("✅ Appended session data to existing CSV file")
+            print("✅ Appended session data to existing CSV file (with ID)")
         }
     }
     
@@ -245,30 +246,44 @@ extension SessionManager {
             let rows = splitCSVRows(content)
             print("🔍 Parsed \(rows.count) rows from CSV")
             guard rows.count > 1 else { print("❌ No session data lines"); return [] }
+            let header = rows[0]
+            let hasIdColumn = header.first?.lowercased() == "id"
             let dataRows = rows.dropFirst()
-            print("🔍 Processing \(dataRows.count) data rows")
+            print("🔍 Processing \(dataRows.count) data rows (ID column: \(hasIdColumn))")
             var sessions: [SessionRecord] = []
+            var needsRewrite = false
             for (idx, fields) in dataRows.enumerated() {
-                if fields.count >= 4 { // allow notes to be optional
-                    let safeFields = fields + Array(repeating: "", count: max(0, 6 - fields.count))
-                    let record = SessionRecord(
-                        id: idx,
-                        date: cleanField(safeFields[0]),
-                        startTime: cleanField(safeFields[1]),
-                        endTime: cleanField(safeFields[2]),
-                        durationMinutes: Int(cleanField(safeFields[3])) ?? 0,
-                        projectName: cleanField(safeFields[4]),
-                        notes: cleanField(safeFields[5])
-                    )
-                    sessions.append(record)
-                    if idx < 3 { // Debug first few records
-                        print("🔍 Record \(idx): date=\(record.date), project=\(record.projectName), duration=\(record.durationMinutes)")
-                    }
+                var safeFields = fields + Array(repeating: "", count: max(0, 7 - fields.count))
+                var id: String
+                if hasIdColumn {
+                    id = cleanField(safeFields[0])
                 } else {
-                    print("❌ Skipping row \(idx+2) due to insufficient fields: \(fields)")
+                    // No ID column, generate one
+                    id = String(Int(Date().timeIntervalSince1970 * 1000)) + String(Int.random(in: 100...999))
+                    needsRewrite = true
+                    print("[SessionManager] Assigned new ID \(id) to row \(idx+2)")
+                    safeFields.insert(id, at: 0)
+                }
+                let record = SessionRecord(
+                    id: id,
+                    date: cleanField(safeFields[1]),
+                    startTime: cleanField(safeFields[2]),
+                    endTime: cleanField(safeFields[3]),
+                    durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
+                    projectName: cleanField(safeFields[5]),
+                    notes: cleanField(safeFields[6])
+                )
+                sessions.append(record)
+                if idx < 3 { // Debug first few records
+                    print("🔍 Record \(idx): id=\(record.id), date=\(record.date), project=\(record.projectName), duration=\(record.durationMinutes)")
                 }
             }
             print("🔍 Successfully loaded \(sessions.count) sessions")
+            // If any IDs were assigned, rewrite the CSV with IDs
+            if needsRewrite {
+                print("[SessionManager] Rewriting CSV to add IDs to all rows...")
+                saveAllSessions(sessions)
+            }
             return sessions
         } catch {
             print("❌ Error loading sessions: \(error)")
@@ -279,5 +294,16 @@ extension SessionManager {
     // Clean field by removing quotes and trimming whitespace
     private func cleanField(_ field: String) -> String {
         return field.trimmingCharacters(in: CharacterSet(charactersIn: "\"")).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // Save all sessions (with IDs) to CSV
+    func saveAllSessions(_ sessions: [SessionRecord]) {
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        let rows = sessions.map { s in
+            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+        }
+        let csv = header + rows.joined(separator: "\n") + "\n"
+        writeToFile(csv)
+        print("[SessionManager] Rewritten CSV with IDs for all sessions.")
     }
 } 
