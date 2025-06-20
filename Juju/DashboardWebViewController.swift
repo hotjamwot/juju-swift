@@ -17,7 +17,109 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         window.api = window.api || {};
         window.api.getComparisonStats = function() {
             console.log('window.api.getComparisonStats called');
-            return Promise.resolve(null);
+            const sessions = window.allSessions && Array.isArray(window.allSessions) ? window.allSessions : [];
+            if (!sessions.length) {
+                console.warn('getComparisonStats: No session data available.');
+                return Promise.resolve(null);
+            }
+            // Helper: parse date string to Date object
+            function parseDate(dateStr) {
+                return new Date(dateStr + 'T00:00:00');
+            }
+            // Helper: get ISO week number and year
+            function getWeekYear(date) {
+                const d = new Date(date);
+                d.setHours(0,0,0,0);
+                d.setDate(d.getDate() + 4 - (d.getDay()||7));
+                const yearStart = new Date(d.getFullYear(),0,1);
+                const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return { year: d.getFullYear(), week: weekNo };
+            }
+            // Helper: get YYYY-MM for month key
+            function getMonthKey(date) {
+                return date.getFullYear() + '-' + (date.getMonth()+1).toString().padStart(2,'0');
+            }
+            // --- DAY COMPARISON ---
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const weekday = today.getDay();
+            // Find last 3 same weekdays (e.g., last 3 Fridays)
+            const pastDays = [];
+            for (let i = 1; i <= 3; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - 7*i);
+                pastDays.push(d);
+            }
+            // Helper: sum duration for a given date
+            function sumDay(date) {
+                const key = date.toISOString().slice(0,10);
+                return sessions.filter(s => s.date === key).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
+            }
+            const dayPast = pastDays.map(d => ({
+                label: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+                value: +sumDay(d).toFixed(1)
+            }));
+            const dayCurrentValue = +sumDay(today).toFixed(1);
+            const dayAvg = dayPast.length ? dayPast.reduce((sum, d) => sum + d.value, 0) / dayPast.length : 0;
+            const dayRange = dayAvg ? ((dayCurrentValue - dayAvg) >= 0 ? '+' : '') + (dayCurrentValue - dayAvg).toFixed(1) + 'h vs avg' : '';
+            const dayCurrent = { label: today.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), value: dayCurrentValue, range: dayRange };
+            // --- WEEK COMPARISON ---
+            // This week: Monday to today
+            const thisMonday = new Date(today);
+            thisMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+            function sumWeekRange(start, end) {
+                return sessions.filter(s => {
+                    const d = parseDate(s.date);
+                    return d >= start && d <= end;
+                }).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
+            }
+            const weekPast = [];
+            for (let i = 3; i >= 1; i--) {
+                const pastMonday = new Date(thisMonday);
+                pastMonday.setDate(thisMonday.getDate() - 7*i);
+                const pastEnd = new Date(pastMonday);
+                pastEnd.setDate(pastMonday.getDate() + (today.getDay()));
+                weekPast.push({
+                    label: pastMonday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '–' + pastEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    value: +sumWeekRange(pastMonday, pastEnd).toFixed(1)
+                });
+            }
+            const weekCurrentValue = +sumWeekRange(thisMonday, today).toFixed(1);
+            const weekAvg = weekPast.length ? weekPast.reduce((sum, d) => sum + d.value, 0) / weekPast.length : 0;
+            const weekRange = weekAvg ? ((weekCurrentValue - weekAvg) >= 0 ? '+' : '') + (weekCurrentValue - weekAvg).toFixed(1) + 'h vs avg' : '';
+            const weekCurrent = { label: thisMonday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '–' + today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), value: weekCurrentValue, range: weekRange };
+            // --- MONTH COMPARISON ---
+            // This month: 1st to today
+            const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            function sumMonthRange(start, end) {
+                return sessions.filter(s => {
+                    const d = parseDate(s.date);
+                    return d >= start && d <= end;
+                }).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
+            }
+            const monthPast = [];
+            for (let i = 3; i >= 1; i--) {
+                const pastMonthStart = new Date(thisMonthStart);
+                pastMonthStart.setMonth(thisMonthStart.getMonth() - i);
+                const pastEnd = new Date(pastMonthStart);
+                pastEnd.setDate(Math.min(today.getDate(), new Date(pastMonthStart.getFullYear(), pastMonthStart.getMonth() + 1, 0).getDate()));
+                monthPast.push({
+                    label: pastMonthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
+                    value: +sumMonthRange(pastMonthStart, pastEnd).toFixed(1)
+                });
+            }
+            const monthCurrentValue = +sumMonthRange(thisMonthStart, today).toFixed(1);
+            const monthAvg = monthPast.length ? monthPast.reduce((sum, d) => sum + d.value, 0) / monthPast.length : 0;
+            const monthRange = monthAvg ? ((monthCurrentValue - monthAvg) >= 0 ? '+' : '') + (monthCurrentValue - monthAvg).toFixed(1) + 'h vs avg' : '';
+            const monthCurrent = { label: thisMonthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }), value: monthCurrentValue, range: monthRange };
+            // Compose result
+            const result = {
+                day: { past: dayPast, current: dayCurrent },
+                week: { past: weekPast, current: weekCurrent },
+                month: { past: monthPast, current: monthCurrent }
+            };
+            console.log('getComparisonStats result:', result);
+            return Promise.resolve(result);
         };
         window.jujuApi = {
             loadSessions: function() {
@@ -136,12 +238,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                         id, callbackId
                     });
                 });
-            },
-            getComparisonStats: function() {
-                console.log('window.jujuApi.getComparisonStats called');
-                return Promise.resolve(null);
             }
         };
+        window.jujuApi.getComparisonStats = window.api.getComparisonStats;
         """
         let apiScript = WKUserScript(source: apiPolyfill, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         userContentController.addUserScript(apiScript)

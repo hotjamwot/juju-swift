@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (typeof sessions === 'string') {
                 try { sessions = JSON.parse(sessions); } catch (e) { console.error('Failed to parse sessions JSON', e); sessions = []; }
             }
+            window.allSessions = sessions;
             allSessions = sessions;
             refreshDashboardData();
         };
