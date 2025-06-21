@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Import modules
         const { updateCharts, destroyCharts } = await import('./src/renderer/dashboard/charts.js'); // <-- Import updateCharts
         const { setupTabs, updateSessionsTable } = await import('./src/renderer/dashboard/ui.js');
+        const eventSystem = await import('./src/renderer/dashboard/event-system.js').then(m => m.default);
 
         // --- Global Variables ---
         let allSessions = [];
@@ -154,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 customStart = dateFromInput.value;
                 customEnd = dateToInput.value;
                 if (!customStart || !customEnd) {
-                    alert("Please select both 'From' and 'To' dates for custom range.");
+                    eventSystem.showNotification('warning', 'Invalid Range', 'Please select both "From" and "To" dates for custom range.');
                     return; // Don't proceed if custom dates are missing
                 }
             }
@@ -187,116 +188,85 @@ document.addEventListener('DOMContentLoaded', async () => {
                  });
             }
 
-
             // Update charts with the filtered data
             try {
                 await updateCharts(filteredSessionsForChart, allSessions, rangeTitle); // Pass filtered and all sessions
             } catch (error) {
                 console.error(`[Dashboard] Error updating charts for range ${range}:`, error);
+                eventSystem.showNotification('error', 'Chart Error', 'Failed to update charts');
             }
         }
 
         // --- Data Refresh ---
         async function refreshDashboardData() {
-            console.log('[Dashboard] Refreshing dashboard data...');
-            try {
-                // Use allSessions, which is set by the bridge.
-                if (projectFilterSelect.options.length <= 1) {
-                    populateProjectFilter();
-                }
-                refreshSessionDisplay();
-                let initialStartDate, initialEndDate;
-                if (currentChartFilter === 'custom') {
-                    ({ startDate: initialStartDate, endDate: initialEndDate } = getDatesForRange(currentChartFilter, dateFromInput.value, dateToInput.value));
-                } else {
-                    ({ startDate: initialStartDate, endDate: initialEndDate } = getDatesForRange(currentChartFilter));
-                }
-                const initialFilteredSessionsForChart = filterSessionsByDate(initialStartDate, initialEndDate);
-                await updateCharts(initialFilteredSessionsForChart, allSessions, currentChartRangeTitle);
-            } catch (error) {
-                console.error('[Dashboard] Error refreshing dashboard data:', error);
+            // Use allSessions, which is set by the bridge.
+            if (!allSessions) {
+                console.log('[Dashboard] No sessions data available, skipping refresh');
+                return;
             }
+
+            const { startDate, endDate } = getDatesForRange(currentChartFilter);
+            const filteredSessionsForChart = filterSessionsByDate(startDate, endDate);
+
+            try {
+                await updateCharts(filteredSessionsForChart, allSessions, currentChartRangeTitle);
+            } catch (error) {
+                console.error('[Dashboard] Error updating charts:', error);
+                eventSystem.showNotification('error', 'Chart Error', 'Failed to update charts');
+            }
+
+            refreshSessionDisplay();
         }
 
-
-        // --- Session Table Filtering & Pagination Logic ---
-
-        /**
-         * Populates the project filter dropdown with unique project names from allSessions.
-         */
+        // --- Session Table Management ---
         function populateProjectFilter() {
             if (!projectFilterSelect) return;
-
-            const projects = [...new Set(allSessions.map(s => s.project || 'N/A'))].sort();
-            // Clear existing options except the "All" default
+            
+            const currentValue = projectFilterSelect.value;
             projectFilterSelect.innerHTML = '<option value="All">All Projects</option>';
-
-            projects.forEach(project => {
-                if (project) { // Ensure project name is not empty/null
+            
+            if (allProjects && allProjects.length > 0) {
+                allProjects.forEach(project => {
                     const option = document.createElement('option');
-                    option.value = project;
-                    option.textContent = project;
+                    option.value = project.name;
+                    option.textContent = project.name;
+                    if (project.name === currentValue) {
+                        option.selected = true;
+                    }
                     projectFilterSelect.appendChild(option);
-                }
-            });
-            projectFilterSelect.value = currentProjectFilter; // Set dropdown to current filter
-            console.log('[Dashboard] Project filter populated.');
+                });
+            }
         }
 
-        /**
-         * Calculates the sessions to display based on current filters and pagination.
-         * @returns {{ visibleSessions: Array<Object>, currentPage: number, totalPages: number }}
-         */
         function calculateVisibleSessions() {
-            // 1. Filter by Project
-            let filtered = allSessions;
-            if (currentProjectFilter !== 'All') {
-                filtered = allSessions.filter(session => (session.project || 'N/A') === currentProjectFilter);
+            if (!allSessions) return { visibleSessions: [], totalPages: 1 };
+
+            let filteredSessions = [...allSessions];
+
+            // Apply project filter
+            if (currentProjectFilter && currentProjectFilter !== 'All') {
+                filteredSessions = filteredSessions.filter(session => 
+                    session.project === currentProjectFilter
+                );
             }
 
-            // 2. Sort by Date (most recent first - already done in ui.js, but good to ensure here too)
-            // Let's keep the sorting logic primarily in ui.js for consistency when editing,
-            // but we need the *full* sorted list here for pagination.
-             filtered.sort((a, b) => {
-                 const dateA = new Date(`${a.date || ''}T${a.start_time || ''}`).getTime();
-                 const dateB = new Date(`${b.date || ''}T${b.start_time || ''}`).getTime();
-                 // Handle potential NaN values robustly
-                 const valA = isNaN(dateA) ? -Infinity : dateA;
-                 const valB = isNaN(dateB) ? -Infinity : dateB;
-                 return valB - valA; // Descending order
-             });
+            // Sort by date (newest first)
+            filteredSessions.sort((a, b) => {
+                const dateA = new Date(a.date + 'T00:00:00');
+                const dateB = new Date(b.date + 'T00:00:00');
+                return dateB - dateA;
+            });
 
-
-            // 3. Paginate
-            const totalItems = filtered.length;
-            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize)); // Ensure at least 1 page
-
-            // Adjust currentPage if it's out of bounds (e.g., after filtering)
-            // Default to last page if current page is invalid
-            if (currentPage > totalPages) {
-                currentPage = totalPages;
-            }
-            if (currentPage < 1) {
-                currentPage = 1;
-            }
-
+            const totalPages = Math.ceil(filteredSessions.length / pageSize);
             const startIndex = (currentPage - 1) * pageSize;
             const endIndex = startIndex + pageSize;
-            const visibleSessions = filtered.slice(startIndex, endIndex);
+            const visibleSessions = filteredSessions.slice(startIndex, endIndex);
 
-            return { visibleSessions, currentPage, totalPages };
+            return { visibleSessions, totalPages };
         }
 
-        /**
-         * Updates the session table display, pagination controls, and info text.
-         */
         function refreshSessionDisplay() {
-            const { visibleSessions, currentPage: adjustedCurrentPage, totalPages } = calculateVisibleSessions();
-
-            // Update state (currentPage might have been adjusted)
-            currentPage = adjustedCurrentPage;
-
-            // Update the table in the UI
+            const { visibleSessions, totalPages } = calculateVisibleSessions();
             updateSessionsTable(visibleSessions, refreshDashboardData); // Pass only the visible sessions
 
             // Update pagination controls
@@ -311,7 +281,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             console.log(`[Dashboard] Session display refreshed. Page: ${currentPage}/${totalPages}, Filter: ${currentProjectFilter}`);
         }
-
 
         // --- Project Management ---
         async function initProjectManagement() {
@@ -346,10 +315,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         colorInput.value = '#4E79A7';
                         await refreshProjectsList();
                         await refreshDashboardData();
+                        eventSystem.showNotification('success', 'Project Added', `Project "${nameInput.value.trim()}" created successfully`);
                     }
                 } catch (error) {
                     console.error('Error adding project:', error);
-                    alert('Failed to add project: ' + error.message);
+                    eventSystem.showNotification('error', 'Add Failed', `Failed to add project: ${error.message}`);
                 }
             });
         }
@@ -374,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </div>
                         <div class="project-actions">
-                            <button class="btn btn-delete" data-id="${project.id}" title="Delete Project" aria-label="Delete Project">&times;</button>
+                            <button class="btn btn-delete" data-id="${project.id}" data-name="${project.name}" title="Delete Project" aria-label="Delete Project">&times;</button>
                         </div>
                     `;
                     // Add color change handler
@@ -385,9 +355,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 await window.jujuApi.updateProjectColor(project.id, e.target.value);
                                 window.jujuApi.loadProjects(); // Reload projects after color change
                                 window.jujuApi.loadSessions(); // Reload sessions in case color affects charts
+                                eventSystem.showNotification('success', 'Color Updated', `Project "${project.name}" color updated`);
                             } catch (error) {
                                 console.error('Error updating project color:', error);
-                                alert('Failed to update color: ' + error.message);
+                                eventSystem.showNotification('error', 'Update Failed', `Failed to update color: ${error.message}`);
                             }
                         });
                     }
@@ -396,6 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (error) {
                 console.error('Error loading projects:', error);
                 projectsList.innerHTML = '<div class="error">Failed to load projects</div>';
+                eventSystem.showNotification('error', 'Load Failed', 'Failed to load projects');
             }
         }
 
@@ -432,46 +404,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Attach event delegation for project delete buttons (must be after DOM is ready)
-        document.getElementById('projects-list').addEventListener('click', function(e) {
+        // Enhanced project deletion using event system
+        document.getElementById('projects-list').addEventListener('click', async function(e) {
             if (e.target.classList.contains('btn-delete')) {
-                console.log('[Dashboard] Project delete button clicked', e.target.dataset.id);
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const btn = e.target;
                 const projectId = btn.dataset.id;
-                const project = allProjects.find(p => String(p.id) === String(projectId));
-                if (!project) return;
-                if (!confirm(`Are you sure you want to delete ${project.name}?`)) return;
-                // Visual feedback: disable button and show spinner
-                btn.disabled = true;
-                const oldHtml = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner"></span>';
-                console.log('[Dashboard] Entering deleteProject .then() block');
-                if (typeof window.jujuApi.deleteProject !== 'function') {
-                    alert('window.jujuApi.deleteProject is not a function!');
-                    btn.disabled = false;
-                    btn.innerHTML = oldHtml;
+                const projectName = btn.dataset.name || `Project ${projectId}`;
+                
+                if (!projectId) {
+                    eventSystem.showNotification('error', 'Error', 'Project ID not found');
                     return;
                 }
-                window['jujuApi']['deleteProject'](projectId)
-                    .then(result => {
-                        console.log('[Dashboard] window.jujuApi.deleteProject returned', result);
-                        if (result && result.success) {
-                            refreshProjectsList();
-                            refreshDashboardData();
-                        } else {
-                            const errorMsg = result && result.error ? result.error : 'Unknown error';
-                            alert('Failed to delete project: ' + errorMsg);
-                            console.error('Error deleting project:', errorMsg);
-                            btn.disabled = false;
-                            btn.innerHTML = oldHtml;
-                        }
-                    })
-                    .catch(error => {
-                        alert('Error calling window.jujuApi.deleteProject: ' + (error && error.message ? error.message : error));
-                        console.error('[Dashboard] Error in deleteProject handler:', error);
-                        btn.disabled = false;
-                        btn.innerHTML = oldHtml;
-                    });
+                
+                console.log('[Dashboard] Project delete button clicked', projectId, projectName);
+                
+                try {
+                    // Use the event system's enhanced deletion with fallback
+                    const result = await eventSystem.deleteProjectWithFallback(projectId, projectName);
+                    
+                    if (result.success) {
+                        // Refresh the projects list and dashboard data
+                        await refreshProjectsList();
+                        await refreshDashboardData();
+                    } else if (!result.cancelled) {
+                        // Error was already handled by the event system
+                        console.error('[Dashboard] Project deletion failed:', result.error);
+                    }
+                } catch (error) {
+                    console.error('[Dashboard] Unexpected error during project deletion:', error);
+                    eventSystem.showNotification('error', 'Delete Failed', 'An unexpected error occurred while deleting the project');
+                }
             }
         });
 
@@ -486,10 +451,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Initial display is handled by refreshDashboardData calling refreshSessionDisplay,
         // which uses the default currentPage = 1. No extra setting needed here.
 
+        // Set up event listeners for dashboard updates
+        eventSystem.on('sessionDeleted', () => {
+            console.log('[Dashboard] Session deleted event received, refreshing data');
+            refreshDashboardData();
+        });
+
+        eventSystem.on('projectDeleted', () => {
+            console.log('[Dashboard] Project deleted event received, refreshing data');
+            refreshProjectsList();
+            refreshDashboardData();
+        });
 
     } catch (error) {
         console.error('[Dashboard] Error initializing dashboard:', error);
-        // Display a user-friendly error message?
+        // Display a user-friendly error message using the event system
+        if (eventSystem) {
+            eventSystem.showNotification('error', 'Initialization Failed', 'Failed to initialize dashboard. Please check console for details.');
+        }
+        // Fallback error display
         const chartsDiv = document.getElementById('charts');
         if (chartsDiv) {
             chartsDiv.innerHTML = `<div class="error-message">Failed to initialize dashboard. Please check console for details. Error: ${error.message}</div>`;

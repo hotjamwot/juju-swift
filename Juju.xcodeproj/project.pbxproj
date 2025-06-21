@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
+		661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661564842E06159D006D14F6 /* NotesModalViewController.swift */; };
 		662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6627709F2E0451AD002D6859 /* JujuUtils.swift */; };
 		6657F6982E0313200016F333 /* 32x32.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67D2E0313200016F333 /* 32x32.png */; };
 		6657F6992E0313200016F333 /* 128x128.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67E2E0313200016F333 /* 128x128.png */; };
@@ -32,6 +33,7 @@
 
 /* Begin PBXFileReference section */
 		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
 		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
 		6657F67D2E0313200016F333 /* 32x32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 32x32.png; sourceTree = "<group>"; };
 		6657F67E2E0313200016F333 /* 128x128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 128x128.png; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 		6657F6932E0313200016F333 /* Juju */ = {
 			isa = PBXGroup;
 			children = (
+				661564842E06159D006D14F6 /* NotesModalViewController.swift */,
 				6627709F2E0451AD002D6859 /* JujuUtils.swift */,
 				66E0B07E2E033E4D0029121D /* dashboard-web */,
 				66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */,
@@ -225,6 +228,7 @@
 				66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */,
 				66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */,
 				6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */,
+				661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */,
 				662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */,
 				6657F6A72E0313200016F333 /* IconManager.swift in Sources */,
 				6657F6A92E0313200016F333 /* main.swift in Sources */,

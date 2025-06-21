@@ -1,4 +1,5 @@
 import { formatMinutesToHoursMinutes } from './utils.js'; // Import necessary utils
+import eventSystem from './event-system.js'; // Import the event system
 
 // Store reference to table body - assume it exists in the DOM when functions are called
 const recentSessionsBody = document.getElementById('recent-sessions-body');
@@ -43,7 +44,7 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
     // Check if there are sessions to display for the current page/filter
     if (!visibleSessions || visibleSessions.length === 0) {
         recentSessionsBody.innerHTML = `
-            <tr><td colspan="6" class="no-data">No sessions match the current filter or page.</td></tr>`;
+            <tr><td colspan="7" class="no-data">No sessions match the current filter or page.</td></tr>`;
         // Do not add edit listeners if there's no data
         console.log('[UI] Sessions table updated with no data message.');
         return;
@@ -70,6 +71,7 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
         const endTime = typeof session.end_time === 'string' ? session.end_time.slice(0, 5) : '??:??';
         const projectName = session.project || 'N/A';
         const notes = session.notes || '';
+        const sessionInfo = `${projectName} on ${formattedDate}`;
 
         row.innerHTML = `
             <td class="editable" data-field="date" data-id="${session.id}">${formattedDate}</td>
@@ -79,7 +81,7 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
             <td class="editable" data-field="end_time" data-id="${session.id}">${endTime}</td>
             <td class="editable" data-field="notes" data-id="${session.id}">${notes}</td>
             <td class="actions">
-                <button class="btn btn-delete" data-id="${session.id}" title="Delete Session">×</button>
+                <button class="btn btn-delete" data-id="${session.id}" data-info="${sessionInfo}" title="Delete Session">×</button>
             </td>
         `;
         recentSessionsBody.appendChild(row);
@@ -104,7 +106,6 @@ function addEditListeners(refreshDashboardDataCallback) {
         cell._boundHandleCellClick = boundHandleCellClick;
     });
 }
-
 
 // Handles the click on an editable cell
 async function handleCellClick(refreshDashboardDataCallback) {
@@ -154,6 +155,7 @@ async function handleCellClick(refreshDashboardDataCallback) {
             });
         } catch (error) {
             console.error('Failed to load project names:', error);
+            eventSystem.showNotification('error', 'Error', 'Failed to load project names');
         }
     } else if (field === 'start_time' || field === 'end_time') {
         inputElement = document.createElement('input');
@@ -255,6 +257,10 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
         cell.classList.remove('saving');
         cell.classList.add('success');
         setTimeout(() => cell.classList.remove('success'), 1000);
+        
+        // Show success notification
+        eventSystem.showNotification('success', 'Updated', `Session ${field} updated successfully`);
+        
         if (window.jujuApi && typeof window.jujuApi.loadSessions === 'function') {
             window.jujuApi.loadSessions();
         } else if (typeof refreshDashboardDataCallback === 'function') {
@@ -265,44 +271,59 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
         cell.classList.add('error');
         setTimeout(() => cell.classList.remove('error'), 1200);
         cell.textContent = originalValue;
+        
+        // Show error notification
+        eventSystem.showNotification('error', 'Update Failed', `Failed to update session: ${error.message}`);
     } finally {
         cell.removeAttribute('data-original-value');
     }
 }
 
-// Add this new function for delete functionality
+// Enhanced delete functionality using the event system
 function addDeleteListeners(refreshDashboardDataCallback) {
     document.querySelectorAll('#recent-sessions-body .btn-delete').forEach(button => {
         // Remove any previous click listeners
         if (button._boundDeleteHandler) {
             button.removeEventListener('click', button._boundDeleteHandler);
         }
-        // Create a new handler
+        
+        // Create a new handler using the event system
         const handler = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const id = e.target.dataset.id;
-            if (!id) return;
-            console.log('[UI] Delete button clicked for session id:', id, 'type:', typeof id);
-            if (confirm('Are you sure you want to delete this session? This cannot be undone.')) {
-                try {
-                    if (!window.jujuApi || typeof window.jujuApi.deleteSession !== 'function') {
-                        alert('Delete function not available.');
-                        return;
-                    }
-                    console.log('[UI] Calling window.jujuApi.deleteSession with id:', String(id), 'type:', typeof String(id));
-                    const result = await window.jujuApi.deleteSession(String(id));
-                    console.log(`[UI] Session deleted successfully: ${id}. Result:`, result);
+            const sessionInfo = e.target.dataset.info || `Session ${id}`;
+            
+            if (!id) {
+                eventSystem.showNotification('error', 'Error', 'Session ID not found');
+                return;
+            }
+            
+            console.log('[UI] Delete button clicked for session:', id, sessionInfo);
+            
+            try {
+                // Use the event system's enhanced deletion with fallback
+                const result = await eventSystem.deleteSessionWithFallback(id, sessionInfo);
+                
+                if (result.success) {
+                    // Refresh the dashboard data
                     if (typeof refreshDashboardDataCallback === 'function') {
                         refreshDashboardDataCallback();
                     }
-                } catch (error) {
-                    console.error('[UI] Error deleting session:', error);
-                    alert('Failed to delete session. Please try again.');
+                } else if (!result.cancelled) {
+                    // Error was already handled by the event system
+                    console.error('[UI] Session deletion failed:', result.error);
                 }
+            } catch (error) {
+                console.error('[UI] Unexpected error during session deletion:', error);
+                eventSystem.showNotification('error', 'Delete Failed', 'An unexpected error occurred while deleting the session');
             }
         };
+        
         button.addEventListener('click', handler);
         button._boundDeleteHandler = handler;
-        console.log('[UI] Delete handler attached for session id:', button.dataset.id);
+        console.log('[UI] Enhanced delete handler attached for session id:', button.dataset.id);
     });
 }
 

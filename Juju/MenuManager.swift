@@ -106,18 +106,21 @@ class MenuManager {
     }
     
     @objc private func endCurrentSession() {
-        print("Ending current session")
-        
-        // Stop the update timer
+        print("[MenuManager] endCurrentSession called")
         stopUpdateTimer()
         
-        // For now, end session without notes
-        // TODO: Add notes dialog later
-        sessionManager.endSession()
+        print("[MenuManager] Creating NotesModalWindowController")
+        let notesWindow = NotesModalWindowController { [weak self] (note: String?) in
+            print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>")")
+            self?.sessionManager.endSession(notes: note ?? "")
+            self?.appDelegate?.updateMenuBarIcon(isActive: false)
+            self?.refreshMenu()
+        }
         
-        // Update UI
-        appDelegate?.updateMenuBarIcon(isActive: false)
-        refreshMenu()
+        // Show the WKWebView-based modal
+        print("[MenuManager] Calling showWindow on NotesModalWindowController")
+        notesWindow.showWindow(nil)
+        print("[MenuManager] showWindow call completed")
     }
     
     @objc private func addNewProject() {
