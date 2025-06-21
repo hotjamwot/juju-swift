@@ -165,6 +165,7 @@ export function createMultiBarComparisonChart(canvasId, labels, values, highligh
                 backgroundColor: backgroundColors,
                 borderColor: borderColors,
                 borderWidth: 1,
+                borderRadius: 4,
                 barPercentage: 1, // Full height bars
                 categoryPercentage: 0.9 // Almost full category width
             }]

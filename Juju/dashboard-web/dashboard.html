@@ -4,21 +4,20 @@
     <title>Juju Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="dashboard-header">
             <img src="assets/placeholder-logo.png" alt="Juju Logo" id="juju-logo">
+            <div class="tabs">
+                <div class="tab active" data-tab="charts">Juju</div>
+                <div class="tab" data-tab="sessions">Sessions</div>
+                <div class="tab" data-tab="projects">Projects</div>
+            </div>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" data-tab="charts">Juju</div>
-            <div class="tab" data-tab="sessions">Sessions</div>
-            <div class="tab" data-tab="projects">Projects</div>
-        </div>
-
         <!-- Charts Tab Content -->
         <div id="charts" class="tab-content active">
 
@@ -83,11 +82,17 @@
                     <button class="btn btn-filter" data-range="all">All Time</button>
                 </div>
                 <div class="date-filter-custom">
-                    <label for="date-from">From:</label>
-                    <input type="date" id="date-from" class="input-base">
-                    <label for="date-to">To:</label>
-                    <input type="date" id="date-to" class="input-base">
-                    <button id="apply-custom-date" class="btn btn-primary">Apply</button>
+                    <div class="inputs-row">
+                        <div class="date-group">
+                            <label for="date-from">From:</label>
+                            <input type="date" id="date-from" class="input-base">
+                        </div>
+                        <div class="date-group">
+                            <label for="date-to">To:</label>
+                            <input type="date" id="date-to" class="input-base">
+                        </div>
+                        <button id="apply-custom-date" class="btn btn-primary">Apply</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -111,7 +116,7 @@
                             <th>Start Time</th>
                             <th>End Time</th>
                             <th>Notes</th>
-                            <th>Actions</th>  <!-- New column -->
+                            <th></th>  <!-- Empty header for actions column -->
                         </tr>
                     </thead>
                     <tbody id="recent-sessions-body">
@@ -130,11 +135,20 @@
         <div id="projects" class="tab-content">
             <div class="projects-grid">
                 <div id="projects-list"></div>
-                <form id="add-project-form">
-                    <input type="text" id="new-project-name" class="input-base" placeholder="Project Name" required>
-                    <input type="color" id="new-project-color" value="#4E79A7"> <!-- Color input kept separate styling -->
-                    <button type="submit" class="btn btn-primary">Add Project</button>
-                </form>
+                <div class="add-project-section">
+                    <h3>Add New Project</h3>
+                    <form id="add-project-form">
+                        <div class="form-group">
+                            <label for="new-project-name">Project Name:</label>
+                            <input type="text" id="new-project-name" class="input-base" placeholder="Enter project name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-project-color">Color:</label>
+                            <input type="color" id="new-project-color" value="#4E79A7">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Project</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

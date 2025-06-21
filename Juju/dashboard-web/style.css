@@ -6,7 +6,7 @@
 /* Variables for consistent values */
 :root {
     --background-dark: #181A1B;
-    --background-light: #23272A;
+    --background-light: #1b1d1f;
     --border-color: #2C2C2C;
     --text-light: #F5F5F7;
     --text-muted: #A0A0A0;
@@ -15,15 +15,15 @@
     --danger-red: #B32D3F;
     --success-green: #4CAF50;
     --warning-orange: #FF9800;
-    --card-padding: 2rem;
-    --border-radius: 16px;
+    --card-padding: 1rem;
+    --border-radius: 8px;
     --shadow-soft: 0 2px 16px rgba(0,0,0,0.25);
     --shadow-modal: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 /* Base styles */
 body {
-    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Poppins', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 24px;
     font-weight: 400;
@@ -31,70 +31,73 @@ body {
     background-color: var(--background-dark);
 }
 
+/* Typography */
+h1, h2, h3, h4 {
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text-light);
+    text-transform: none;
+    letter-spacing: 0.2px;
+    margin: 0;
+}
+
+h1 { font-size: 28px; padding: 24px 0 12px 0; }
+h2 { font-size: 1.2em; }
+h3 { font-size: 1.3em; }
+h4 { font-size: 1em; font-weight: 600; }
+
+/* Layout */
 .container {
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: 1rem;
     padding: 0;
     min-height: 100vh;
     background: var(--background-dark);
 }
 
+/* Header */
 .dashboard-header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 0 0.5rem 0;
+    padding: 1.5rem 1.5rem 0.5rem 1.5rem;
 }
 
 #juju-logo {
-    max-width: 70px;
+    max-width: 50px;
     height: auto;
+    flex-shrink: 0;
 }
 
-h1, h2, h3 {
-    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-weight: 500;
-    color: var(--text-light);
-    text-transform: none;
-    letter-spacing: 0.2px;
-}
-
-h1 {
-    font-size: 28px;
-    margin: 0;
-    padding: 24px 0 12px 0;
-    background-color: transparent;
-    border-bottom: none;
-}
-
+/* Tabs - Centered */
 .tabs {
     display: flex;
     gap: 1.5rem;
-    margin-bottom: 0;
-    padding: 0 1.5rem;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    justify-content: center;
 }
 
 .tab {
     padding: 0.9rem 2rem;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    border-bottom: 1px solid transparent;
     color: var(--text-muted);
     font-weight: 500;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     background: none;
-    transition: color 0.2s, border-bottom-color 0.2s, background 0.2s;
+    transition: color 0.2s, border-bottom-color 0.2s;
 }
 
 .tab:hover {
     color: var(--primary-blue);
-    background: #23272A;
 }
 
 .tab.active {
     border-bottom-color: var(--primary-blue);
-    color: var(--primary-blue);
-    background: #23272A;
+    color: var(--text-light);
 }
 
 .tab-content {
@@ -107,7 +110,7 @@ h1 {
     display: block;
 }
 
-/* Table styles - consolidated */
+/* Cards and Containers */
 .table-container, .chart-container, .comparison-charts-container {
     background: var(--background-light);
     border-radius: var(--border-radius);
@@ -117,20 +120,20 @@ h1 {
     margin-bottom: 2.5rem;
 }
 
+/* Tables */
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     color: var(--text-light);
     font-size: 0.9em;
-    background: var(--background-light);
+    background: transparent;
     border-radius: var(--border-radius);
     overflow: hidden;
-    box-shadow: var(--shadow-soft);
 }
 
 th, td {
-    padding: 1.1rem 1.2rem;
+    padding: 0.3rem 0.8rem;
     border-bottom: 1px solid var(--border-color);
     background: none;
     font-size: 0.9em;
@@ -139,7 +142,7 @@ th, td {
 
 th {
     font-weight: 600;
-    background: #23272A;
+    background: var(--background-light);
     color: var(--text-light);
 }
 
@@ -148,6 +151,51 @@ tr:hover {
     transition: background 0.15s;
 }
 
+/* Table Column Specific Styling */
+#recent-sessions-table th:first-child,
+#recent-sessions-table td:first-child {
+    min-width: 100px;
+    white-space: nowrap;
+    width: 9%; /* Date column */
+}
+
+#recent-sessions-table th:nth-child(2),
+#recent-sessions-table td:nth-child(2) {
+    min-width: 100px;
+    width: 9%; /* Project column - reduced from 140px */
+}
+
+#recent-sessions-table th:nth-child(3),
+#recent-sessions-table td:nth-child(3) {
+    min-width: 50x;
+    text-align: center;
+    width: 6%; /* Duration column - reduced */
+}
+
+#recent-sessions-table th:nth-child(4),
+#recent-sessions-table td:nth-child(4),
+#recent-sessions-table th:nth-child(5),
+#recent-sessions-table td:nth-child(5) {
+    min-width: 50px;
+    text-align: center;
+    width: 6%; /* Time columns - reduced */
+}
+
+#recent-sessions-table th:nth-child(6),
+#recent-sessions-table td:nth-child(6) {
+    min-width: 300px;
+    max-width: none;
+    width: 60%; /* Notes column - increased significantly */
+}
+
+td.actions {
+    text-align: center;
+    width: 50px;
+    padding: 0.5rem;
+    width: 4%; /* Actions column - minimal */
+}
+
+/* Editable Cells */
 .editable {
     cursor: pointer;
     border-radius: 0;
@@ -157,6 +205,7 @@ tr:hover {
     background: #232323;
 }
 
+/* Form Elements */
 input[type="text"], input[type="date"], input[type="time"], textarea, select {
     width: 100%;
     padding: 10px 12px;
@@ -175,11 +224,61 @@ input:focus, textarea:focus, select:focus {
     border-color: var(--primary-blue);
 }
 
-/* Chart styles - consolidated */
+/* Inline Edit Inputs */
+.inline-edit-input,
+.editable input,
+.editable textarea,
+.editable select {
+    width: 100% !important;
+    padding: 8px 10px !important;
+    border: 1px solid var(--primary-blue) !important;
+    border-radius: 4px !important;
+    background: var(--background-light) !important;
+    color: var(--text-light) !important;
+    font-size: 0.9em !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+}
+
+.inline-edit-input:focus {
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 0 0 2px rgba(143, 90, 255, 0.2) !important;
+}
+
+.inline-edit-input[type="textarea"], .editable textarea {
+    resize: none !important;
+    min-height: 32px !important;
+    max-height: 80px !important;
+    line-height: 1.4 !important;
+}
+
+/* Select Styling */
+select.input-base {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-dark);
+    color: var(--text-light);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A0A0A0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+
+input[type="date"].input-base {
+    min-width: 140px;
+}
+
+/* Charts */
 .chart-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
     width: 100%;
     margin-bottom: 2.5rem;
     align-items: stretch;
@@ -191,6 +290,11 @@ input:focus, textarea:focus, select:focus {
     margin-bottom: 2.5rem;
 }
 
+.chart-row:has(.comparison-charts-container) {
+    grid-template-columns: 55% 45%;
+    gap: 1rem;
+}
+
 .yearly-chart {
     height: 50vh;
     border-radius: var(--border-radius);
@@ -198,71 +302,178 @@ input:focus, textarea:focus, select:focus {
     background: var(--background-light);
 }
 
+.chart-container.pie-chart-container {
+    height: 400px;
+    padding: var(--card-padding);
+}
+
+.chart-row.single-chart .chart-container {
+    height: 400px;
+    width: 100%;
+}
+
+.chart-row.single-chart .chart-container canvas {
+    max-height: 100%;
+    width: 100% !important;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Comparison Charts */
 .comparison-charts-container {
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
-    height: auto;
-    min-height: 320px;
-    padding: 0.5rem;
-    justify-content: space-between;
+    gap: 1.5rem;
 }
 
 .comparison-charts-container .chart-wrapper {
-    height: 90px;
-    width: 100%;
+    height: 120px;
     position: relative;
-    margin: 0.15rem 0;
 }
 
-.no-data {
+.comparison-chart-item {
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+}
+
+.comparison-title {
+    margin: 0 0 1rem 0;
     text-align: center;
-    padding: 60px 0;
+}
+
+.comparison-text-details {
+    text-align: center;
     color: var(--text-muted);
+    font-size: 0.9em;
+    margin-top: 0.5rem;
 }
 
-/* Canvas settings */
-canvas {
-    width: 100% !important;
-    max-width: 100%;
-}
-
-/* Styling specifically for the notes editing textarea */
-#recent-sessions-body td .inline-edit-input[type="textarea"] {
-    display: block;
-    width: 400px;
-    max-width: 100%;
-    height: 5em;
-    padding: 6px 8px;
-    margin: 0;
-    border: 1px solid #555;
-    background-color: #333;
+/* Buttons */
+.btn, .btn-primary, .btn-danger, .btn-filter, .btn-icon {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-dark);
     color: var(--text-light);
-    border-radius: 3px;
-    resize: vertical;
-    font-family: inherit;
-    font-size: inherit;
-    line-height: 1.4;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-/* Optional: Make table header sticky when scrolling */
-#recent-sessions-table thead th {
-    position: sticky;
-    top: 0;
-    background-color: #2a2a2a; /* Header background */
-    z-index: 1;
+.btn:hover, .btn-primary:hover, .btn-filter:hover, .btn-icon:hover {
+    background: #2a2a2a;
+    border-color: var(--text-muted);
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--darker-blue);
+    border-color: var(--darker-blue);
+}
+
+.btn-danger {
+    background: var(--danger-red);
+    border-color: var(--danger-red);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #8b2635;
+    border-color: #8b2635;
+}
+
+.btn-filter.active {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+/* Delete Button Styles */
+.btn-delete {
+    background: transparent;
+    border: 1px solid transparent;
+    color: transparent;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-delete:hover {
+    background: var(--danger-red);
+    color: white;
+    border-color: var(--danger-red);
+    opacity: 0.9;
+}
+
+.btn-delete:active {
+    transform: scale(0.95);
+    opacity: 1;
+}
+
+.project-actions .btn-delete {
+    width: 28px;
+    height: 28px;
+    font-size: 1em;
+}
+
+.project-actions .btn-delete:hover {
+    transform: scale(1.1);
+}
+
+/* Input Base */
+.input-base {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-dark);
     color: var(--text-light);
+    font-size: 0.9em;
+    transition: border-color 0.2s;
 }
 
-/* Project Management Styles */
+/* Projects */
 .projects-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 1rem;
-    padding: 1rem;
+    gap: 2rem;
+    padding: 1.5rem;
     background: var(--background-light);
     border-radius: var(--border-radius);
-    margin-top: 1rem;
+    border: 1px solid var(--border-color);
 }
 
 #projects-list {
@@ -276,10 +487,10 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem;
+    padding: 1rem;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-    margin-bottom: 0.25rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
 .project-info {
@@ -299,7 +510,7 @@ canvas {
     height: 30px;
     padding: 0;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     background: none;
     cursor: pointer;
 }
@@ -309,353 +520,172 @@ canvas {
     gap: 0.5rem;
 }
 
+.add-project-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.add-project-section h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-light);
+    font-size: 1.1em;
+}
+
 #add-project-form {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    max-width: 300px;
+    gap: 1rem;
 }
 
-#add-project-form input {
-    padding: 0.4rem;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
     font-size: 0.9em;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--text-light);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+#add-project-form input[type="text"] {
+    width: 100%;
+}
+
+#add-project-form input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    align-self: flex-start;
 }
 
 #add-project-form button {
-    padding: 0.5rem 1rem;
-    background: var(--primary-blue);
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
+    margin-top: 0.5rem;
+    align-self: flex-start;
 }
 
-#add-project-form button:hover {
-    background: #5989b7;
-}
-
-.delete-project { /* Kept selector for potential JS targeting */ }
-
-/* Date Filter Controls Styles */
+/* Date Filter Controls */
 .date-filter-controls {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.7rem 1.2rem;
-    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.95em;
-    background: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding: 0.75rem;
 }
 
 .date-filter-title-container h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-light);
     font-size: 1.1em;
-    margin: 0 0.5rem 0 0;
-    padding: 0;
 }
 
 .date-filter-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    flex-wrap: wrap;
 }
 
 .date-filter-custom {
     display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.date-filter-custom .labels-row {
+    display: flex;
+    gap: 1.5rem;
     align-items: center;
-    gap: 0.3rem;
-    font-size: 0.95em;
+    margin-left: 0.5rem; /* Align with input padding */
 }
 
-/* .date-filter-custom input[type="date"] styles moved to .input-base and input[type="date"].input-base */
-.date-filter-custom input[type="date"] { /* Kept selector for potential JS targeting */ }
-
-/* #apply-custom-date styles moved to .btn and .btn-primary */
-#apply-custom-date { /* Kept selector for potential JS targeting */ }
-
-
-/* --- Base Component Styles --- */
-.btn, .btn-primary, .btn-danger, .btn-filter, .btn-icon {
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 1em;
-    padding: 0.6rem 1.2rem;
-    border: none;
-    background: #23272A;
-    color: var(--primary-blue);
-    transition: background 0.15s, color 0.15s;
-    cursor: pointer;
-    box-shadow: none;
+.date-filter-custom .inputs-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
 }
 
-.btn:hover, .btn-primary:hover, .btn-filter:hover, .btn-icon:hover {
-    background: #2C2C2C;
-    color: #F5F5F7;
-}
-
-.btn-primary {
-    background: var(--primary-blue);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: #3A5D8C;
-    color: #fff;
-}
-
-.btn-danger {
-    background: var(--danger-red);
-    color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background: #e86b6d;
-}
-
-.btn-filter.active {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
-}
-
-.btn-icon {
-    padding: 0.25rem;
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    line-height: 1;
-    border-radius: 8px;
-}
-
-.input-base {
-    padding: 0.6rem;
-    font-size: 1em;
-    border-radius: 8px;
-    background: #23272A;
-    border: 1px solid #2C2C2C;
-    color: var(--text-light);
-    font-family: inherit;
-}
-
-input[type="date"].input-base {
-    color-scheme: dark;
-}
-
-select.input-base {
-    padding-right: 1.5rem;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1em;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-}
-
-/* --- End Base Component Styles --- */
-
-
-/* --- Comparison Chart Styles --- */
-.comparison-chart-item {
+.date-filter-custom .date-group {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    flex: 1;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.comparison-chart-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.comparison-title {
-    font-size: 0.85em;
-    font-weight: 500;
+.date-filter-custom .date-group label {
+    font-size: 0.9em;
     color: var(--text-muted);
     margin: 0;
-    text-align: left;
-    text-transform: none;
-    letter-spacing: normal;
 }
 
-.comparison-text-details {
-    display: none; /* Hide the details text */
-}
-
-/* --- Session Tab Specific Styles --- */
+/* Session Controls */
 .sessions-controls {
     display: flex;
+    gap: 1rem;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem; /* Space between controls and table */
-    padding: 0.5rem 0; /* Padding around the controls */
+    margin-bottom: 1.5rem;
+    padding: 1rem;
 }
 
 .sessions-controls label {
-    font-size: 0.9em;
-    color: var(--text-muted);
+    font-weight: 500;
+    color: var(--text-light);
+    white-space: nowrap;
 }
 
 #project-filter-select {
-    min-width: 150px; /* Give the dropdown a minimum width */
-    flex-grow: 0; /* Don't let it grow excessively */
+    min-width: 200px;
 }
 
 .pagination-controls {
-    margin-top: 1.5rem;
     display: flex;
-    align-items: center;
-    gap: 1.2rem;
     justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: .5rem;
 }
 
 .pagination-controls span {
-    font-size: 0.9em;
     color: var(--text-muted);
+    font-size: 0.9em;
 }
 
 #recent-sessions-table-container {
-    /* overflow-x: auto; */
+    background: transparent;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    border: none;
 }
 
-/* Add specific styling for the delete button in tables */
-td.actions {
-    width: 40px;
-    text-align: center;
-    padding: 0.25rem;
-}
-
-.btn-delete {
-    padding: 0.25rem;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    line-height: 1;
-    background: var(--danger-red);
-    color: white;
-    opacity: 0.8;
-}
-
-.btn-delete:hover {
-    opacity: 1;
-    background: #932527;
-}
-
-/* Modern session table editing styles */
-.inline-edit-input,
-.editable input,
-.editable textarea,
-.editable select {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border-radius: 6px;
-  border: 1px solid #666;
-  padding: 6px 10px;
-  font-size: 1em;
-  background: #454545;
-  color: #E0E0E0;
-  outline: none;
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.inline-edit-input:focus {
-  border-color: #8e4ea7;
-  box-shadow: 0 0 0 2px #824ea733;
-}
-
-.inline-edit-input[type="textarea"], .editable textarea {
-  resize: none;
-  min-height: 32px;
-  max-height: 80px;
-  line-height: 1.4;
-}
-
-.saving {
-  background: #f5f5f5 !important;
-  position: relative;
-}
-.saving .spinner {
-  display: inline-block;
-  width: 18px; height: 18px;
-  border: 2px solid #ccc;
-  border-top: 2px solid var(--darker-blue);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+/* Status States */
 .success {
-  background: #e6ffe6 !important;
-  transition: background 0.4s;
+    background: rgba(76, 175, 80, 0.1) !important;
+    color: var(--success-green) !important;
 }
+
 .error {
-  background: #ffe6e6 !important;
-  transition: background 0.4s;
+    background: rgba(179, 45, 63, 0.1) !important;
+    color: var(--danger-red) !important;
 }
 
-/* Table row hover for better UX */
-#recent-sessions-table tbody tr:hover {
-  background: var(--darker-blue) !important; 
-  color: #E0E0E0;
-  transition: background 0.2s;
+.no-data {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2rem;
 }
 
-/* Clean up old table styles if present */
-#recent-sessions-table td, #recent-sessions-table th {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
-#recent-sessions-table th {
-  background: #f8f9fb;
-  font-weight: 500;
-  color: var(--darker-blue);
-}
-
-/* Remove clunky outlines and default button styles */
-.btn-delete {
-  background: none;
-  border: none;
-  color: var(--danger-red);
-  font-size: 1.2em;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-.btn-delete:hover {
-  background: #864242;
-}
-
-/* Pie chart container (if separate) */
-.chart-container.pie-chart-container {
-  /*  height: 170px; */
-}
-
-.chart-row.single-chart .chart-container {
-    height: 380px;
-    min-height: 0;
-    max-height: 380px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.chart-row.single-chart .chart-container canvas {
-    height: 100% !important;
-    width: 100% !important;
+/* Animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Notification System */
@@ -839,74 +869,6 @@ td.actions {
     justify-content: flex-end;
     padding: 1rem 2rem 1.5rem 2rem;
     border-top: 1px solid var(--border-color);
-}
-
-/* Button Variants */
-.btn-secondary {
-    background: var(--background-dark);
-    border: 1px solid var(--border-color);
-    color: var(--text-light);
-}
-
-.btn-secondary:hover {
-    background: #2a2a2a;
-    border-color: var(--text-muted);
-}
-
-/* Enhanced Delete Button Styles */
-.btn-delete {
-    background: transparent;
-    border: 1px solid var(--danger-red);
-    color: var(--danger-red);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-delete:hover {
-    background: var(--danger-red);
-    color: white;
-    transform: scale(1.1);
-}
-
-.btn-delete:active {
-    transform: scale(0.95);
-}
-
-.btn-delete.loading {
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.btn-delete.loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid currentColor;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* Enhanced Project Delete Button */
-.project-actions .btn-delete {
-    width: 28px;
-    height: 28px;
-    font-size: 1em;
-}
-
-.project-actions .btn-delete:hover {
-    transform: scale(1.15);
 }
 
 /* Loading States */

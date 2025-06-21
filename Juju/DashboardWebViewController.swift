@@ -2,7 +2,7 @@ import Cocoa
 import WebKit
 
 class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
-    private var webView: WKWebView!
+    internal var webView: WKWebView!
     
     override func loadView() {
         let config = WKWebViewConfiguration()
@@ -263,22 +263,18 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         // Load the HTML file, allowing access to its folder for assets
         webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
-        print("[DashboardWebViewController] dashboard.html loaded into WKWebView")
     }
     
     // MARK: - WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "jujuBridge" else { return }
-        print("[DashboardWebViewController] JS message received: \(message.body)")
         if let dict = message.body as? [String: Any], let type = dict["type"] as? String {
-            print("[DashboardWebViewController] Parsed message type: \(type), dict: \(dict)")
             switch type {
             case "loadSessions":
                 handleLoadSessions()
             case "loadProjects":
                 handleLoadProjects()
             case "updateSession":
-                print("[DashboardWebViewController] Handling updateSession with dict: \(dict)")
                 let idValue = dict["id"]
                 let id: String? = {
                     if let strId = idValue as? String { return strId }
@@ -289,13 +285,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                    let field = dict["field"] as? String,
                    let value = dict["value"] as? String,
                    let callbackId = dict["callbackId"] as? String {
-                    print("[DashboardWebViewController] updateSession params: id=\(id), field=\(field), value=\(value), callbackId=\(callbackId)")
                     handleUpdateSession(id: id, field: field, value: value, callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid updateSession params: \(dict)")
                 }
             case "deleteSession":
-                print("[DashboardWebViewController] Handling deleteSession with dict: \(dict)")
                 let idValue = dict["id"]
                 let id: String? = {
                     if let strId = idValue as? String { return strId }
@@ -304,16 +296,11 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 }()
                 if let id = id,
                    let callbackId = dict["callbackId"] as? String {
-                    print("[DashboardWebViewController] deleteSession params: id=\(id), callbackId=\(callbackId)")
                     handleDeleteSession(id: id, callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid deleteSession params: \(dict)")
                 }
             case "getProjectNames":
                 if let callbackId = dict["callbackId"] as? String {
                     handleGetProjectNames(callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid getProjectNames params: \(dict)")
                 }
             case "addProject":
                 if let dictProject = dict["project"] as? [String: Any],
@@ -321,8 +308,6 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                    let color = dictProject["color"] as? String,
                    let callbackId = dict["callbackId"] as? String {
                     handleAddProject(name: name, color: color, callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid addProject params: \(dict)")
                 }
             case "updateProjectColor":
                 let idValue = dict["id"]
@@ -335,8 +320,6 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                    let color = dict["color"] as? String,
                    let callbackId = dict["callbackId"] as? String {
                     handleUpdateProjectColor(id: id, color: color, callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid updateProjectColor params: \(dict)")
                 }
             case "deleteProject":
                 let idValue = dict["id"]
@@ -348,14 +331,12 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 if let id = id,
                    let callbackId = dict["callbackId"] as? String {
                     handleDeleteProject(id: id, callbackId: callbackId)
-                } else {
-                    print("[DashboardWebViewController] Invalid deleteProject params: \(dict)")
                 }
+            case "refreshMenu":
+                handleRefreshMenu()
             default:
-                print("[DashboardWebViewController] Unknown message type: \(type)")
+                break
             }
-        } else {
-            print("[DashboardWebViewController] Could not parse message body as [String: Any]: \(message.body)")
         }
     }
     
@@ -375,7 +356,6 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: sessionDicts, options: [])
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("[DashboardWebViewController] Sending sessions to JS: \(jsonString)")
                 sendToJS(function: "window.onSessionsLoaded", argument: jsonString)
             }
         } catch {
@@ -388,7 +368,6 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         do {
             let jsonData = try JSONEncoder().encode(projects)
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("[DashboardWebViewController] Sending projects to JS: \(jsonString)")
                 sendToJS(function: "window.onProjectsLoaded", argument: jsonString)
             }
         } catch {
@@ -398,11 +377,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     
     // MARK: - Session Editing
     private func handleUpdateSession(id: String, field: String, value: String, callbackId: String) {
-        print("[DashboardWebViewController] handleUpdateSession called with id=\(id), field=\(field), value=\(value), callbackId=\(callbackId)")
         // Load all sessions
         var sessions = SessionManager.shared.loadAllSessions()
         guard let idx = sessions.firstIndex(where: { $0.id == id }) else {
-            print("[DashboardWebViewController] updateSession: id not found: id=\(id)")
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Session not found")
             return
         }
@@ -450,11 +427,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     
     // MARK: - Session Deletion
     private func handleDeleteSession(id: String, callbackId: String) {
-        print("[DashboardWebViewController] handleDeleteSession called with id=\(id) (type: \(type(of: id))), callbackId=\(callbackId)")
         var sessions = SessionManager.shared.loadAllSessions()
-        print("[DashboardWebViewController] Loaded session ids:", sessions.map { $0.id })
         guard let idx = sessions.firstIndex(where: { $0.id == id }) else {
-            print("[DashboardWebViewController] deleteSession: id not found: id=\(id)")
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Session not found")
             return
         }
@@ -574,6 +548,15 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             }
         } catch {
             print("[DashboardWebViewController] Error encoding project callback: \(error)")
+        }
+    }
+    
+    private func handleRefreshMenu() {
+        // Refresh the menu bar to update project lists
+        DispatchQueue.main.async {
+            if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+                appDelegate.refreshMenu()
+            }
         }
     }
 } 

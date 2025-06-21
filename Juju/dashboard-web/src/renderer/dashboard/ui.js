@@ -17,12 +17,9 @@ function setupTabs() {
             const contentElement = document.getElementById(contentId);
             if (contentElement) {
                 contentElement.classList.add('active');
-            } else {
-                console.error(`Tab content not found for ID: ${contentId}`);
             }
         });
     });
-    console.log('[UI] Tabs setup complete.');
 }
 
 // --- Sessions Table ---
@@ -34,7 +31,6 @@ function setupTabs() {
  */
 function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
     if (!recentSessionsBody) {
-        console.error('[UI] Cannot update sessions table: recentSessionsBody element not found.');
         return;
     }
 
@@ -46,7 +42,6 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
         recentSessionsBody.innerHTML = `
             <tr><td colspan="7" class="no-data">No sessions match the current filter or page.</td></tr>`;
         // Do not add edit listeners if there's no data
-        console.log('[UI] Sessions table updated with no data message.');
         return;
     }
 
@@ -90,7 +85,6 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
     // Add both edit and delete listeners
     addEditListeners(refreshDashboardDataCallback);
     addDeleteListeners(refreshDashboardDataCallback);
-    console.log('[UI] Sessions table updated.');
 }
 
 // Add click listeners to editable table cells
@@ -122,28 +116,19 @@ async function handleCellClick(refreshDashboardDataCallback) {
     if (field === 'project') {
         inputElement = document.createElement('select');
         inputElement.classList.add('inline-edit-input');
-        inputElement.style.width = '100%';  // Make dropdown fill cell width
-        inputElement.style.height = '100%'; // Make dropdown fill cell height
+        inputElement.style.width = '100%';
+        inputElement.style.height = '100%';
         
-        // Add loading option
-        const loadingOption = document.createElement('option');
-        loadingOption.text = 'Loading...';
-        inputElement.add(loadingOption);
-
         try {
-            // Get project names from the API
             const projectNames = await window.jujuApi.getProjectNames();
             
-            // Clear loading option
             inputElement.innerHTML = '';
             
-            // Add default empty option
             const emptyOption = document.createElement('option');
             emptyOption.value = '';
             emptyOption.text = '-- Select Project --';
             inputElement.add(emptyOption);
             
-            // Add project options
             projectNames.forEach(name => {
                 const option = document.createElement('option');
                 option.value = name;
@@ -154,7 +139,6 @@ async function handleCellClick(refreshDashboardDataCallback) {
                 inputElement.add(option);
             });
         } catch (error) {
-            console.error('Failed to load project names:', error);
             eventSystem.showNotification('error', 'Error', 'Failed to load project names');
         }
     } else if (field === 'start_time' || field === 'end_time') {
@@ -208,11 +192,8 @@ async function handleInputKeydown(refreshDashboardDataCallback, event) { // Rece
     if (event.key === 'Enter') {
         if (this.tagName === 'TEXTAREA' && event.shiftKey) return;
         event.preventDefault();
-        console.log('[UI] Enter key pressed, saving...');
-        // Use .call to ensure 'this' is the input element inside handleCellUpdate
         await handleCellUpdate.call(this, refreshDashboardDataCallback);
     } else if (event.key === 'Escape') {
-        console.log('[UI] Escape key pressed, cancelling edit.');
         const cellElement = this.parentElement;
         const originalValue = cellElement.getAttribute('data-original-value');
         // Remove listeners before changing content
@@ -227,7 +208,6 @@ async function handleInputKeydown(refreshDashboardDataCallback, event) { // Rece
 async function handleCellUpdate(refreshDashboardDataCallback) {
     const cell = this.parentElement;
     if (!cell || !cell.dataset) {
-        console.warn("[UI] handleCellUpdate called on detached or invalid element.");
         this.removeEventListener('blur', this._boundBlurHandler);
         this.removeEventListener('keydown', this._boundKeydownHandler);
         try { this.remove(); } catch(e) {}
@@ -248,17 +228,11 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
         return;
     }
 
-    // Show spinner while saving
-    cell.classList.add('saving');
-    cell.innerHTML = '<span class="spinner"></span>';
-
     try {
         const result = await window.jujuApi.updateSession(Number(id), field, newValue);
-        cell.classList.remove('saving');
         cell.classList.add('success');
         setTimeout(() => cell.classList.remove('success'), 1000);
         
-        // Show success notification
         eventSystem.showNotification('success', 'Updated', `Session ${field} updated successfully`);
         
         if (window.jujuApi && typeof window.jujuApi.loadSessions === 'function') {
@@ -267,12 +241,10 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
             refreshDashboardDataCallback();
         }
     } catch (error) {
-        cell.classList.remove('saving');
         cell.classList.add('error');
         setTimeout(() => cell.classList.remove('error'), 1200);
         cell.textContent = originalValue;
         
-        // Show error notification
         eventSystem.showNotification('error', 'Update Failed', `Failed to update session: ${error.message}`);
     } finally {
         cell.removeAttribute('data-original-value');
@@ -300,8 +272,6 @@ function addDeleteListeners(refreshDashboardDataCallback) {
                 return;
             }
             
-            console.log('[UI] Delete button clicked for session:', id, sessionInfo);
-            
             try {
                 // Use the event system's enhanced deletion with fallback
                 const result = await eventSystem.deleteSessionWithFallback(id, sessionInfo);
@@ -313,17 +283,15 @@ function addDeleteListeners(refreshDashboardDataCallback) {
                     }
                 } else if (!result.cancelled) {
                     // Error was already handled by the event system
-                    console.error('[UI] Session deletion failed:', result.error);
+                    console.error('Session deletion failed:', result.error);
                 }
             } catch (error) {
-                console.error('[UI] Unexpected error during session deletion:', error);
                 eventSystem.showNotification('error', 'Delete Failed', 'An unexpected error occurred while deleting the session');
             }
         };
         
         button.addEventListener('click', handler);
         button._boundDeleteHandler = handler;
-        console.log('[UI] Enhanced delete handler attached for session id:', button.dataset.id);
     });
 }
 

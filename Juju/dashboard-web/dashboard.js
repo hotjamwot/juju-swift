@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Import modules
-        const { updateCharts, destroyCharts } = await import('./src/renderer/dashboard/charts.js'); // <-- Import updateCharts
+        const { updateCharts, destroyCharts } = await import('./src/renderer/dashboard/charts.js');
         const { setupTabs, updateSessionsTable } = await import('./src/renderer/dashboard/ui.js');
         const eventSystem = await import('./src/renderer/dashboard/event-system.js').then(m => m.default);
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- DOM Elements ---
         // Chart Filters
-        const dateFilterButtons = document.querySelectorAll('.btn-filter'); // Use updated class
+        const dateFilterButtons = document.querySelectorAll('.btn-filter');
         const dateFromInput = document.getElementById('date-from');
         const dateToInput = document.getElementById('date-to');
         const applyCustomDateButton = document.getElementById('apply-custom-date');
@@ -30,9 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- WKWebView Data Bridge Receivers ---
         window.onSessionsLoaded = function(sessions) {
-            console.log('[Dashboard] onSessionsLoaded called', sessions);
             if (typeof sessions === 'string') {
-                try { sessions = JSON.parse(sessions); } catch (e) { console.error('Failed to parse sessions JSON', e); sessions = []; }
+                try { sessions = JSON.parse(sessions); } catch (e) { sessions = []; }
             }
             window.allSessions = sessions;
             allSessions = sessions;
@@ -40,9 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         window.onProjectsLoaded = function(projects) {
             if (typeof projects === 'string') {
-                try { projects = JSON.parse(projects); } catch (e) { console.error('Failed to parse projects JSON', e); projects = []; }
+                try { projects = JSON.parse(projects); } catch (e) { projects = []; }
             }
             allProjects = projects;
+            populateProjectFilter();
             if (typeof refreshProjectsList === 'function') {
                 refreshProjectsList();
             }
@@ -59,15 +59,15 @@ document.addEventListener('DOMContentLoaded', async () => {
          */
         function getDatesForRange(range, customStart = null, customEnd = null) {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize to start of day
+            today.setHours(0, 0, 0, 0);
             let startDate = new Date(today);
             let endDate = new Date(today);
-            endDate.setHours(23, 59, 59, 999); // Normalize to end of day
+            endDate.setHours(23, 59, 59, 999);
             let rangeTitle = '';
 
             switch (range) {
                 case '7d':
-                    startDate.setDate(today.getDate() - 6); // Today + 6 previous days
+                    startDate.setDate(today.getDate() - 6);
                     rangeTitle = 'Last 7 Days';
                     break;
                 case '1m':
@@ -79,12 +79,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     rangeTitle = 'Last Quarter';
                     break;
                 case '1y':
-                    startDate = new Date(today.getFullYear(), 0, 1); // Start of current year
+                    startDate = new Date(today.getFullYear(), 0, 1);
                     rangeTitle = 'This Year';
                     break;
                 case 'all':
-                    startDate = null; // Indicate no start date limit
-                    endDate = null;   // Indicate no end date limit
+                    startDate = null;
+                    endDate = null;
                     rangeTitle = 'All Time';
                     break;
                 case 'custom':
@@ -92,23 +92,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         startDate = customStart ? new Date(customStart + 'T00:00:00') : null;
                         endDate = customEnd ? new Date(customEnd + 'T23:59:59.999') : null;
                         if (startDate && endDate && startDate > endDate) {
-                             alert("Start date cannot be after end date.");
-                             return { startDate: null, endDate: null, rangeTitle: 'Invalid Range' }; // Indicate error
+                             eventSystem.showNotification('warning', 'Invalid Range', 'Start date cannot be after end date.');
+                             return { startDate: null, endDate: null, rangeTitle: 'Invalid Range' };
                         }
                         rangeTitle = `Custom (${customStart || '...'} - ${customEnd || '...'})`;
                     } catch (e) {
-                        console.error("Error parsing custom dates:", e);
-                        alert("Invalid custom date format.");
-                        return { startDate: null, endDate: null, rangeTitle: 'Invalid Range' }; // Indicate error
+                        eventSystem.showNotification('error', 'Invalid Date', 'Invalid custom date format.');
+                        return { startDate: null, endDate: null, rangeTitle: 'Invalid Range' };
                     }
                     break;
-                default: // Default to 'This Year' if range is unknown
+                default:
                     startDate = new Date(today.getFullYear(), 0, 1);
                     rangeTitle = 'This Year';
             }
-             // Ensure startDate is Date object or null
              if (startDate && !(startDate instanceof Date && !isNaN(startDate))) startDate = null;
-             // Ensure endDate is Date object or null
              if (endDate && !(endDate instanceof Date && !isNaN(endDate))) endDate = null;
 
             return { startDate, endDate, rangeTitle };
@@ -123,19 +120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         function filterSessionsByDate(startDate, endDate) {
             if (!allSessions) return [];
             if (startDate === null && endDate === null) {
-                return [...allSessions]; // Return all if range is 'all'
+                return [...allSessions];
             }
 
             return allSessions.filter(session => {
                 try {
-                    const sessionDate = new Date(session.date + 'T00:00:00'); // Use session date only
-                    if (isNaN(sessionDate.getTime())) return false; // Skip invalid session dates
+                    const sessionDate = new Date(session.date + 'T00:00:00');
+                    if (isNaN(sessionDate.getTime())) return false;
 
                     const afterStart = startDate === null || sessionDate >= startDate;
                     const beforeEnd = endDate === null || sessionDate <= endDate;
                     return afterStart && beforeEnd;
                 } catch (e) {
-                    console.warn("Error parsing session date during filter:", session.date, e);
                     return false;
                 }
             });
@@ -147,7 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
          * @param {string} range - '7d', '1m', '3m', '1y', 'all', 'custom'
          */
         async function handleDateFilterChange(range) {
-            console.log(`[Dashboard] Date filter changed to: ${range}`);
             let customStart = null;
             let customEnd = null;
 
@@ -156,21 +151,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 customEnd = dateToInput.value;
                 if (!customStart || !customEnd) {
                     eventSystem.showNotification('warning', 'Invalid Range', 'Please select both "From" and "To" dates for custom range.');
-                    return; // Don't proceed if custom dates are missing
+                    return;
                 }
             }
 
             const { startDate, endDate, rangeTitle } = getDatesForRange(range, customStart, customEnd);
 
-            if (rangeTitle === 'Invalid Range') return; // Stop if date calculation failed
+            if (rangeTitle === 'Invalid Range') return;
 
             const filteredSessionsForChart = filterSessionsByDate(startDate, endDate);
-            console.log(`[Dashboard] Filtered sessions count for chart "${rangeTitle}": ${filteredSessionsForChart.length}`);
 
-            currentChartFilter = range; // Store the current CHART filter type
-            currentChartRangeTitle = rangeTitle; // Store the CHART title
+            currentChartFilter = range;
+            currentChartRangeTitle = rangeTitle;
 
-            // Update CHART filter button active states
             dateFilterButtons.forEach(btn => {
                 if (btn.dataset.range === range) {
                     btn.classList.add('active');
@@ -178,30 +171,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     btn.classList.remove('active');
                 }
             });
-            // If custom CHART range applied, remove active state from predefined buttons
+
             if (range === 'custom') {
                  dateFilterButtons.forEach(btn => {
-                     // Only remove active if it's not a session control button
                      if (btn.closest('.date-filter-buttons')) {
                          btn.classList.remove('active');
                      }
                  });
             }
 
-            // Update charts with the filtered data
             try {
-                await updateCharts(filteredSessionsForChart, allSessions, rangeTitle); // Pass filtered and all sessions
+                await updateCharts(filteredSessionsForChart, allSessions, rangeTitle);
             } catch (error) {
-                console.error(`[Dashboard] Error updating charts for range ${range}:`, error);
                 eventSystem.showNotification('error', 'Chart Error', 'Failed to update charts');
             }
         }
 
         // --- Data Refresh ---
         async function refreshDashboardData() {
-            // Use allSessions, which is set by the bridge.
             if (!allSessions) {
-                console.log('[Dashboard] No sessions data available, skipping refresh');
                 return;
             }
 
@@ -211,10 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await updateCharts(filteredSessionsForChart, allSessions, currentChartRangeTitle);
             } catch (error) {
-                console.error('[Dashboard] Error updating charts:', error);
                 eventSystem.showNotification('error', 'Chart Error', 'Failed to update charts');
             }
 
+            populateProjectFilter();
             refreshSessionDisplay();
         }
 
@@ -243,14 +231,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let filteredSessions = [...allSessions];
 
-            // Apply project filter
             if (currentProjectFilter && currentProjectFilter !== 'All') {
                 filteredSessions = filteredSessions.filter(session => 
                     session.project === currentProjectFilter
                 );
             }
 
-            // Sort by date (newest first)
             filteredSessions.sort((a, b) => {
                 const dateA = new Date(a.date + 'T00:00:00');
                 const dateB = new Date(b.date + 'T00:00:00');
@@ -267,9 +253,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function refreshSessionDisplay() {
             const { visibleSessions, totalPages } = calculateVisibleSessions();
-            updateSessionsTable(visibleSessions, refreshDashboardData); // Pass only the visible sessions
+            updateSessionsTable(visibleSessions, refreshDashboardData);
 
-            // Update pagination controls
             if (pageInfoSpan) {
                 pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
             }
@@ -279,24 +264,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (nextPageBtn) {
                 nextPageBtn.disabled = currentPage >= totalPages;
             }
-            console.log(`[Dashboard] Session display refreshed. Page: ${currentPage}/${totalPages}, Filter: ${currentProjectFilter}`);
         }
 
         // --- Project Management ---
         async function initProjectManagement() {
-            console.log('[DEBUG] initProjectManagement called');
             const projectsList = document.getElementById('projects-list');
             const addProjectForm = document.getElementById('add-project-form');
 
             if (!projectsList || !addProjectForm) {
-                console.error('Project management elements not found');
                 return;
             }
 
-            // Load and display projects
             await refreshProjectsList();
 
-            // Add project form handler
             addProjectForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const nameInput = document.getElementById('new-project-name');
@@ -318,7 +298,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         eventSystem.showNotification('success', 'Project Added', `Project "${nameInput.value.trim()}" created successfully`);
                     }
                 } catch (error) {
-                    console.error('Error adding project:', error);
                     eventSystem.showNotification('error', 'Add Failed', `Failed to add project: ${error.message}`);
                 }
             });
@@ -327,7 +306,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         async function refreshProjectsList() {
             const projectsList = document.getElementById('projects-list');
             if (!projectsList) {
-                console.error('Projects list element not found');
                 return;
             }
             try {
@@ -347,44 +325,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <button class="btn btn-delete" data-id="${project.id}" data-name="${project.name}" title="Delete Project" aria-label="Delete Project">&times;</button>
                         </div>
                     `;
-                    // Add color change handler
+                    
                     const colorInput = projectElement.querySelector('input[type="color"]');
                     if (colorInput) {
                         colorInput.addEventListener('change', async (e) => {
                             try {
                                 await window.jujuApi.updateProjectColor(project.id, e.target.value);
-                                window.jujuApi.loadProjects(); // Reload projects after color change
-                                window.jujuApi.loadSessions(); // Reload sessions in case color affects charts
+                                window.jujuApi.loadProjects();
+                                window.jujuApi.loadSessions();
                                 eventSystem.showNotification('success', 'Color Updated', `Project "${project.name}" color updated`);
                             } catch (error) {
-                                console.error('Error updating project color:', error);
                                 eventSystem.showNotification('error', 'Update Failed', `Failed to update color: ${error.message}`);
                             }
                         });
                     }
                     projectsList.appendChild(projectElement);
                 });
+                populateProjectFilter();
             } catch (error) {
-                console.error('Error loading projects:', error);
                 projectsList.innerHTML = '<div class="error">Failed to load projects</div>';
                 eventSystem.showNotification('error', 'Load Failed', 'Failed to load projects');
             }
         }
 
         // --- Event Listeners ---
-        // Chart Date Filters
         dateFilterButtons.forEach(button => {
-             // Only add listener if it's part of the date filter group
              if (button.closest('.date-filter-buttons')) {
                 button.addEventListener('click', () => handleDateFilterChange(button.dataset.range));
              }
         });
         applyCustomDateButton.addEventListener('click', () => handleDateFilterChange('custom'));
 
-        // Session Table Filters & Pagination
         projectFilterSelect?.addEventListener('change', (e) => {
             currentProjectFilter = e.target.value;
-            currentPage = 1; // Reset to page 1 (most recent) when filter changes
+            currentPage = 1;
             refreshSessionDisplay();
         });
 
@@ -396,7 +370,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         nextPageBtn?.addEventListener('click', () => {
-            // Calculate total pages dynamically in case it changed
             const { totalPages } = calculateVisibleSessions();
             if (currentPage < totalPages) {
                 currentPage++;
@@ -404,7 +377,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Enhanced project deletion using event system
         document.getElementById('projects-list').addEventListener('click', async function(e) {
             if (e.target.classList.contains('btn-delete')) {
                 e.preventDefault();
@@ -419,22 +391,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 
-                console.log('[Dashboard] Project delete button clicked', projectId, projectName);
-                
                 try {
-                    // Use the event system's enhanced deletion with fallback
                     const result = await eventSystem.deleteProjectWithFallback(projectId, projectName);
                     
                     if (result.success) {
-                        // Refresh the projects list and dashboard data
                         await refreshProjectsList();
                         await refreshDashboardData();
+                        if (window.jujuApi && typeof window.jujuApi.refreshMenu === 'function') {
+                            window.jujuApi.refreshMenu();
+                        }
                     } else if (!result.cancelled) {
-                        // Error was already handled by the event system
-                        console.error('[Dashboard] Project deletion failed:', result.error);
+                        console.error('Project deletion failed:', result.error);
                     }
                 } catch (error) {
-                    console.error('[Dashboard] Unexpected error during project deletion:', error);
                     eventSystem.showNotification('error', 'Delete Failed', 'An unexpected error occurred while deleting the project');
                 }
             }
@@ -442,34 +411,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- Initialization ---
         setupTabs();
-        console.log('Calling window.jujuApi.loadProjects and loadSessions');
         window.jujuApi.loadProjects();
         window.jujuApi.loadSessions();
         await initProjectManagement();
         await refreshDashboardData();
 
-        // Initial display is handled by refreshDashboardData calling refreshSessionDisplay,
-        // which uses the default currentPage = 1. No extra setting needed here.
-
-        // Set up event listeners for dashboard updates
         eventSystem.on('sessionDeleted', () => {
-            console.log('[Dashboard] Session deleted event received, refreshing data');
             refreshDashboardData();
         });
 
         eventSystem.on('projectDeleted', () => {
-            console.log('[Dashboard] Project deleted event received, refreshing data');
             refreshProjectsList();
             refreshDashboardData();
         });
 
     } catch (error) {
-        console.error('[Dashboard] Error initializing dashboard:', error);
-        // Display a user-friendly error message using the event system
         if (eventSystem) {
             eventSystem.showNotification('error', 'Initialization Failed', 'Failed to initialize dashboard. Please check console for details.');
         }
-        // Fallback error display
         const chartsDiv = document.getElementById('charts');
         if (chartsDiv) {
             chartsDiv.innerHTML = `<div class="error-message">Failed to initialize dashboard. Please check console for details. Error: ${error.message}</div>`;

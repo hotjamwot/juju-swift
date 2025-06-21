@@ -38,12 +38,6 @@ class MenuManager {
                 projectSubmenu.addItem(projectItem)
             }
             
-            // Add separator and "Add Project" option
-            projectSubmenu.addItem(NSMenuItem.separator())
-            let addProjectItem = NSMenuItem(title: "Add New Project...", action: #selector(addNewProject), keyEquivalent: "n")
-            addProjectItem.target = self
-            projectSubmenu.addItem(addProjectItem)
-            
             startSessionItem.submenu = projectSubmenu
             menu.addItem(startSessionItem)
         }
@@ -76,7 +70,7 @@ class MenuManager {
         createMenu(with: projects)
     }
     
-    private func startUpdateTimer() {
+    func startUpdateTimer() {
         // Clear any existing timer
         updateTimer?.invalidate()
         
@@ -112,25 +106,24 @@ class MenuManager {
         print("[MenuManager] Creating NotesModalWindowController")
         let notesWindow = NotesModalWindowController { [weak self] (note: String?) in
             print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>")")
-            self?.sessionManager.endSession(notes: note ?? "")
-            self?.appDelegate?.updateMenuBarIcon(isActive: false)
-            self?.refreshMenu()
+            
+            // Only end the session if notes are provided (not null)
+            // If cancelled (note is nil), keep the session active
+            if let note = note {
+                self?.sessionManager.endSession(notes: note)
+                self?.appDelegate?.updateMenuBarIcon(isActive: false)
+                self?.refreshMenu()
+            } else {
+                // Session was cancelled, restart the update timer and keep session active
+                print("[MenuManager] Session cancelled, keeping session active")
+                self?.startUpdateTimer()
+            }
         }
         
         // Show the WKWebView-based modal
         print("[MenuManager] Calling showWindow on NotesModalWindowController")
         notesWindow.showWindow(nil)
         print("[MenuManager] showWindow call completed")
-    }
-    
-    @objc private func addNewProject() {
-        print("Add new project clicked")
-        // TODO: Show dialog to add new project
-        // For now, just add a test project
-        let newProject = Project(name: "New Project \(projects.count + 1)")
-        projects.append(newProject)
-        ProjectManager.shared.saveProjects(projects)
-        appDelegate?.refreshMenu()
     }
     
     @objc private func showDashboard() {

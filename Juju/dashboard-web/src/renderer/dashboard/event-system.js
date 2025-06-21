@@ -64,10 +64,8 @@ class EventSystem {
 
         this.notificationContainer.appendChild(notification);
 
-        // Trigger animation
         setTimeout(() => notification.classList.add('show'), 10);
 
-        // Auto-remove after duration
         if (duration > 0) {
             setTimeout(() => {
                 notification.classList.remove('show');
@@ -155,7 +153,6 @@ class EventSystem {
     setupModalListeners() {
         if (!this.modal) return;
 
-        // Close modal on escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('show')) {
                 this.hideModal();
@@ -175,9 +172,6 @@ class EventSystem {
         }
 
         try {
-            // Show loading state
-            this.showNotification('info', 'Deleting...', `Deleting ${type.toLowerCase()} "${name}"...`, 0);
-            
             const result = await deleteFunction(id);
             
             if (result && result.success) {
@@ -190,7 +184,6 @@ class EventSystem {
                 return { success: false, error: errorMsg };
             }
         } catch (error) {
-            console.error(`Error deleting ${type.toLowerCase()}:`, error);
             this.showNotification('error', 'Delete Failed', `An error occurred while deleting the ${type.toLowerCase()}.`);
             return { success: false, error: error.message };
         }
@@ -199,14 +192,12 @@ class EventSystem {
     // Fallback deletion methods
     async deleteSessionWithFallback(sessionId, sessionInfo) {
         const deleteMethods = [
-            // Method 1: Direct API call
             async (id) => {
                 if (window.jujuApi && typeof window.jujuApi.deleteSession === 'function') {
                     return await window.jujuApi.deleteSession(id);
                 }
                 throw new Error('Delete API not available');
             },
-            // Method 2: Manual CSV manipulation (fallback)
             async (id) => {
                 return await this.manualDeleteSession(id);
             }
@@ -228,10 +219,7 @@ class EventSystem {
                 if (result.cancelled) {
                     return result;
                 }
-                
-                console.warn(`Delete method ${i + 1} failed, trying next method...`);
             } catch (error) {
-                console.error(`Delete method ${i + 1} error:`, error);
                 if (i === deleteMethods.length - 1) {
                     throw error;
                 }
@@ -241,14 +229,12 @@ class EventSystem {
 
     async deleteProjectWithFallback(projectId, projectName) {
         const deleteMethods = [
-            // Method 1: Direct API call
             async (id) => {
                 if (window.jujuApi && typeof window.jujuApi.deleteProject === 'function') {
                     return await window.jujuApi.deleteProject(id);
                 }
                 throw new Error('Delete API not available');
             },
-            // Method 2: Manual JSON manipulation (fallback)
             async (id) => {
                 return await this.manualDeleteProject(id);
             }
@@ -270,10 +256,7 @@ class EventSystem {
                 if (result.cancelled) {
                     return result;
                 }
-                
-                console.warn(`Delete method ${i + 1} failed, trying next method...`);
             } catch (error) {
-                console.error(`Delete method ${i + 1} error:`, error);
                 if (i === deleteMethods.length - 1) {
                     throw error;
                 }
@@ -281,22 +264,16 @@ class EventSystem {
         }
     }
 
-    // Manual deletion fallbacks (these would need to be implemented based on your data structure)
+    // Manual deletion fallbacks
     async manualDeleteSession(sessionId) {
-        // This would need to be implemented based on your CSV structure
-        // For now, we'll throw an error to indicate it's not implemented
         throw new Error('Manual session deletion not implemented');
     }
 
     async manualDeleteProject(projectId) {
-        // This would need to be implemented based on your JSON structure
-        // For now, we'll throw an error to indicate it's not implemented
         throw new Error('Manual project deletion not implemented');
     }
 }
 
-// Create global instance
 const eventSystem = new EventSystem();
 
-// Export for use in other modules
 export default eventSystem; 

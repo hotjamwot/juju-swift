@@ -10,15 +10,9 @@
 		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
 		661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661564842E06159D006D14F6 /* NotesModalViewController.swift */; };
 		662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6627709F2E0451AD002D6859 /* JujuUtils.swift */; };
-		6657F6982E0313200016F333 /* 32x32.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67D2E0313200016F333 /* 32x32.png */; };
-		6657F6992E0313200016F333 /* 128x128.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67E2E0313200016F333 /* 128x128.png */; };
-		6657F69A2E0313200016F333 /* 128x128@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F67F2E0313200016F333 /* 128x128@2x.png */; };
 		6657F69B2E0313200016F333 /* icon-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* icon-active.png */; };
 		6657F69C2E0313200016F333 /* icon-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* icon-idle.png */; };
-		6657F69D2E0313200016F333 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6822E0313200016F333 /* icon.icns */; };
-		6657F69E2E0313200016F333 /* icon.ico in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6832E0313200016F333 /* icon.ico */; };
 		6657F69F2E0313200016F333 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6842E0313200016F333 /* icon.png */; };
-		6657F6A02E0313200016F333 /* placeholder-logo.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6852E0313200016F333 /* placeholder-logo.icns */; };
 		6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6882E0313200016F333 /* AppDelegate.swift */; };
 		6657F6A32E0313200016F333 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6892E0313200016F333 /* Assets.xcassets */; };
 		6657F6A72E0313200016F333 /* IconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68D2E0313200016F333 /* IconManager.swift */; };
@@ -26,6 +20,7 @@
 		6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6902E0313200016F333 /* MenuManager.swift */; };
 		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
 		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
+		6697532F2E06C48600D09901 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6697532E2E06C48600D09901 /* Assets.xcassets */; };
 		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
 		66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
@@ -35,15 +30,9 @@
 		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
 		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
-		6657F67D2E0313200016F333 /* 32x32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 32x32.png; sourceTree = "<group>"; };
-		6657F67E2E0313200016F333 /* 128x128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 128x128.png; sourceTree = "<group>"; };
-		6657F67F2E0313200016F333 /* 128x128@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "128x128@2x.png"; sourceTree = "<group>"; };
 		6657F6802E0313200016F333 /* icon-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-active.png"; sourceTree = "<group>"; };
 		6657F6812E0313200016F333 /* icon-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-idle.png"; sourceTree = "<group>"; };
-		6657F6822E0313200016F333 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
-		6657F6832E0313200016F333 /* icon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; path = icon.ico; sourceTree = "<group>"; };
 		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		6657F6852E0313200016F333 /* placeholder-logo.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "placeholder-logo.icns"; sourceTree = "<group>"; };
 		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6657F68D2E0313200016F333 /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconManager.swift; sourceTree = "<group>"; };
@@ -53,6 +42,8 @@
 		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
+		6697532E2E06C48600D09901 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
 		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
 		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
@@ -73,15 +64,9 @@
 		6657F6872E0313200016F333 /* icons */ = {
 			isa = PBXGroup;
 			children = (
-				6657F67D2E0313200016F333 /* 32x32.png */,
-				6657F67E2E0313200016F333 /* 128x128.png */,
-				6657F67F2E0313200016F333 /* 128x128@2x.png */,
 				6657F6802E0313200016F333 /* icon-active.png */,
 				6657F6812E0313200016F333 /* icon-idle.png */,
-				6657F6822E0313200016F333 /* icon.icns */,
-				6657F6832E0313200016F333 /* icon.ico */,
 				6657F6842E0313200016F333 /* icon.png */,
-				6657F6852E0313200016F333 /* placeholder-logo.icns */,
 			);
 			path = icons;
 			sourceTree = "<group>";
@@ -89,6 +74,7 @@
 		6657F6932E0313200016F333 /* Juju */ = {
 			isa = PBXGroup;
 			children = (
+				6697532E2E06C48600D09901 /* Assets.xcassets */,
 				661564842E06159D006D14F6 /* NotesModalViewController.swift */,
 				6627709F2E0451AD002D6859 /* JujuUtils.swift */,
 				66E0B07E2E033E4D0029121D /* dashboard-web */,
@@ -110,6 +96,7 @@
 		6657F6952E0313200016F333 /* juju-swift */ = {
 			isa = PBXGroup;
 			children = (
+				669753322E06CFBE00D09901 /* Juju.entitlements */,
 				6657F6872E0313200016F333 /* icons */,
 				6657F6932E0313200016F333 /* Juju */,
 				6657F6942E0313200016F333 /* Juju.xcodeproj */,
@@ -202,16 +189,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6657F6992E0313200016F333 /* 128x128.png in Resources */,
-				6657F69D2E0313200016F333 /* icon.icns in Resources */,
 				66E0B07F2E033E4D0029121D /* dashboard-web in Resources */,
 				6657F69F2E0313200016F333 /* icon.png in Resources */,
-				6657F69E2E0313200016F333 /* icon.ico in Resources */,
 				6657F69B2E0313200016F333 /* icon-active.png in Resources */,
-				6657F6A02E0313200016F333 /* placeholder-logo.icns in Resources */,
 				6657F69C2E0313200016F333 /* icon-idle.png in Resources */,
-				6657F69A2E0313200016F333 /* 128x128@2x.png in Resources */,
-				6657F6982E0313200016F333 /* 32x32.png in Resources */,
+				6697532F2E06C48600D09901 /* Assets.xcassets in Resources */,
 				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -365,10 +347,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Juju/Info.plist;
@@ -391,10 +375,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Juju/Info.plist;

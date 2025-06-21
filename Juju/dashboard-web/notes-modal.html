@@ -160,7 +160,6 @@
 
         // Save button click
         saveBtn.addEventListener('click', () => {
-            console.log('Save button clicked');
             const notes = notesInput.value.trim();
             window.webkit.messageHandlers.notesBridge.postMessage({
                 type: 'save',
@@ -170,13 +169,12 @@
 
         // Cancel button click
         cancelBtn.addEventListener('click', () => {
-            console.log('Cancel button clicked');
             window.webkit.messageHandlers.notesBridge.postMessage({
                 type: 'cancel'
             });
         });
 
-        // Keyboard shortcuts
+        // Keyboard shortcuts for save/cancel only
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();

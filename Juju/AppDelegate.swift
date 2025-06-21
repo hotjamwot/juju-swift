@@ -9,8 +9,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var projects: [Project] = []
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        print("Juju app launching...")
-        
         // Enable Web Inspector for WKWebView
         UserDefaults.standard.set(true, forKey: "WebKitDeveloperExtras")
         
@@ -37,10 +35,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Register global shortcut
         shortcutManager.registerGlobalShortcut()
-        
-        print("Menu bar icon created successfully!")
-        print("Click the icon in the menu bar to see the menu!")
-        print("Use Shift+Option+Cmd+J to toggle the menu!")
     }
     
     @objc func toggleMenu() {
@@ -52,13 +46,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func showMenuFromShortcut() {
         if let button = statusItem.button {
             NSApp.activate(ignoringOtherApps: true)
-            menuManager.getMenu().popUp(positioning: nil, at: NSPoint.zero, in: button)
-            print("Menu opened from shortcut")
+            let menu = menuManager.getMenu()
+            menu.popUp(positioning: nil, at: NSPoint.zero, in: button)
+            // The first menu item is automatically highlighted when the menu opens
+            // This is the standard macOS behavior for global shortcuts
         }
     }
     
     func showDashboard() {
-        print("Show Dashboard clicked")
         if dashboardWindow == nil {
             createDashboardWindow()
         }
@@ -68,16 +63,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func createDashboardWindow() {
-        print("🔍 Creating dashboard window...")
-        let windowSize = NSSize(width: 1200, height: 800)
+        let windowSize = NSSize(width: 1320, height: 840) // 10% wider (1200 -> 1320), 5% taller (800 -> 840)
         let minWindowSize = NSSize(width: 900, height: 600)
         let screen = NSScreen.main
         let screenFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
         let x = screenFrame.midX - windowSize.width / 2
         let y = screenFrame.midY - windowSize.height / 2
         let windowRect = NSRect(x: x, y: y, width: windowSize.width, height: windowSize.height)
-        print("🔍 Screen frame: \(screenFrame)")
-        print("🔍 Window rect: \(windowRect)")
         dashboardWindow = NSWindow(
             contentRect: windowRect,
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -95,7 +87,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         dashboardWindow?.delegate = self
         let dashboardView = DashboardWebViewController()
         dashboardWindow?.contentViewController = dashboardView
-        print("🔍 Dashboard window created, making key and ordering front...")
         dashboardWindow?.setFrame(windowRect, display: true)
         dashboardWindow?.makeKeyAndOrderFront(nil)
     }
@@ -113,7 +104,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     func applicationWillTerminate(_ aNotification: Notification) {
         shortcutManager.cleanup()
-        print("Juju app terminating...")
     }
     
     // MARK: - Window Delegate Methods
@@ -121,7 +111,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         if let window = notification.object as? NSWindow, window === dashboardWindow {
             dashboardWindow = nil
-            print("Dashboard window closed")
         }
     }
     
@@ -136,5 +125,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     func window(_ window: NSWindow, didDecodeRestorableState state: NSCoder) {
         // Restore window state if needed
+    }
+    
+    // Handle keyboard shortcuts for the dashboard window
+    func window(_ window: NSWindow, performKeyEquivalent event: NSEvent) -> Bool {
+        // Only handle shortcuts for the dashboard window
+        guard window === dashboardWindow else {
+            return false
+        }
+        
+        let commandKey = NSEvent.ModifierFlags.command.rawValue
+        let eventFlags = event.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue
+
+        if event.type == .keyDown && eventFlags == commandKey {
+            switch event.charactersIgnoringModifiers {
+            case "w":
+                window.close()
+                return true
+            case "a":
+                if let dashboardView = window.contentViewController as? DashboardWebViewController {
+                    dashboardView.webView?.evaluateJavaScript("document.execCommand('selectAll');", completionHandler: nil)
+                }
+                return true
+            case "v":
+                if let dashboardView = window.contentViewController as? DashboardWebViewController {
+                    dashboardView.webView?.evaluateJavaScript("document.execCommand('paste');", completionHandler: nil)
+                }
+                return true
+            case "c":
+                if let dashboardView = window.contentViewController as? DashboardWebViewController {
+                    dashboardView.webView?.evaluateJavaScript("document.execCommand('copy');", completionHandler: nil)
+                }
+                return true
+            case "x":
+                if let dashboardView = window.contentViewController as? DashboardWebViewController {
+                    dashboardView.webView?.evaluateJavaScript("document.execCommand('cut');", completionHandler: nil)
+                }
+                return true
+            default:
+                // Don't intercept other shortcuts like Cmd+D, Cmd+Q, etc.
+                break
+            }
+        }
+        return false
     }
 } 

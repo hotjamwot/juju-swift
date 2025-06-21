@@ -73,9 +73,7 @@ export async function updateCharts(filteredSessions, allSessions, rangeTitle) {
                     }
                     const dayTitleEl = document.getElementById('day-comparison-title');
                      if (dayTitleEl) {
-                        // Use the label of the last past entry (e.g., "Last Thursday")
-                        const lastPastLabel = dayData.past.length > 0 ? dayData.past[dayData.past.length - 1].label : 'Previous Day';
-                        dayTitleEl.textContent = `Compared to Previous ${lastPastLabel.split(' ')[1]}s`;
+                        dayTitleEl.textContent = 'Compared to Previous';
                     }
                 } else { console.warn("Day comparison data missing or invalid:", dayData); }
 
