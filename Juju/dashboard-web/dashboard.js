@@ -238,9 +238,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             filteredSessions.sort((a, b) => {
-                const dateA = new Date(a.date + 'T00:00:00');
-                const dateB = new Date(b.date + 'T00:00:00');
-                return dateB - dateA;
+                try {
+                    // Try to sort by full datetime (date + time)
+                    const timeA = a.start_time || '00:00';
+                    const timeB = b.start_time || '00:00';
+                    
+                    const dateTimeA = new Date(`${a.date}T${timeA}`);
+                    const dateTimeB = new Date(`${b.date}T${timeB}`);
+                    
+                    // Check if the dates are valid
+                    if (isNaN(dateTimeA.getTime()) || isNaN(dateTimeB.getTime())) {
+                        // Fallback to date-only sorting
+                        const dateA = new Date(a.date + 'T00:00:00');
+                        const dateB = new Date(b.date + 'T00:00:00');
+                        return dateB - dateA;
+                    }
+                    
+                    // Sort by most recent first (descending order)
+                    return dateTimeB.getTime() - dateTimeA.getTime();
+                } catch (error) {
+                    // If anything goes wrong, fallback to date-only sorting
+                    const dateA = new Date(a.date + 'T00:00:00');
+                    const dateB = new Date(b.date + 'T00:00:00');
+                    return dateB - dateA;
+                }
             });
 
             const totalPages = Math.ceil(filteredSessions.length / pageSize);

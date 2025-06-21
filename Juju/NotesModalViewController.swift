@@ -149,6 +149,11 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
         closeWithResult(nil)
     }
     
+    private func closeWithResult(_ result: String?) {
+        view.window?.close()
+        completion?(result)
+    }
+    
     // MARK: - WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "notesBridge" else { return }
@@ -166,11 +171,6 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
                 print("Unknown message type: \(type)")
             }
         }
-    }
-    
-    private func closeWithResult(_ result: String?) {
-        view.window?.close()
-        completion?(result)
     }
 }
 
