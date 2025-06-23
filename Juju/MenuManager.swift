@@ -120,7 +120,7 @@ class MenuManager {
             }
         }
         
-        // Show the WKWebView-based modal
+        // Show the AppKit-based modal
         print("[MenuManager] Calling showWindow on NotesModalWindowController")
         notesWindow.showWindow(nil)
         print("[MenuManager] showWindow call completed")

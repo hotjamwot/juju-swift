@@ -4,6 +4,7 @@ import WebKit
 class NotesModalViewController: NSViewController, WKScriptMessageHandler {
     private var completion: ((String?) -> Void)?
     internal var webView: WKWebView!
+    private weak var fallbackTextView: NSTextView?
     
     convenience init(completion: @escaping (String?) -> Void) {
         self.init()
@@ -41,6 +42,30 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
         loadNotesModal()
     }
     
+    // MARK: - Responder chain for shortcuts
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(copy(_:)) ||
+           menuItem.action == #selector(paste(_:)) ||
+           menuItem.action == #selector(cut(_:)) ||
+           menuItem.action == #selector(selectAll(_:)) {
+            return true
+        }
+        return false
+    }
+    
+    @objc func copy(_ sender: Any?) {
+        fallbackTextView?.copy(sender)
+    }
+    @objc func paste(_ sender: Any?) {
+        fallbackTextView?.paste(sender)
+    }
+    @objc func cut(_ sender: Any?) {
+        fallbackTextView?.cut(sender)
+    }
+    @objc override func selectAll(_ sender: Any?) {
+        fallbackTextView?.selectAll(sender)
+    }
+    
     private func loadNotesModal() {
         // Look for notes-modal.html in the app bundle
         guard let htmlURL = Bundle.main.url(forResource: "dashboard-web/notes-modal", withExtension: "html") else {
@@ -56,48 +81,78 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
     private func showFallbackTextView() {
         // Remove WKWebView and replace with simple text view
         webView.removeFromSuperview()
-        
+
+        // Modal background color and border
+        let modalBackground = NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1) // #181A1B
+        let modalBorder = NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1) // #2C2C2C
+        let modalShadow = NSShadow()
+        modalShadow.shadowColor = NSColor(calibratedWhite: 0, alpha: 0.4)
+        modalShadow.shadowBlurRadius = 32
+        modalShadow.shadowOffset = NSMakeSize(0, -8)
+
         // Create a container view for better layout
         let containerView = NSView(frame: view.bounds)
+        containerView.wantsLayer = true
+        containerView.layer?.backgroundColor = modalBackground.cgColor
+        containerView.layer?.cornerRadius = 8
+        containerView.layer?.borderColor = modalBorder.cgColor
+        containerView.layer?.borderWidth = 1
+        containerView.layer?.masksToBounds = false
+        containerView.shadow = modalShadow
         containerView.autoresizingMask = [.width, .height]
-        
+
         // Create title label
         let titleLabel = NSTextField(labelWithString: "What did you work on?")
         titleLabel.font = NSFont.systemFont(ofSize: 16, weight: .medium)
-        titleLabel.textColor = NSColor.labelColor
-        titleLabel.frame = NSRect(x: 20, y: view.bounds.height - 40, width: view.bounds.width - 40, height: 20)
+        titleLabel.textColor = NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1) // #F5F5F7
+        titleLabel.backgroundColor = .clear
+        titleLabel.frame = NSRect(x: 20, y: view.bounds.height - 48, width: view.bounds.width - 40, height: 24)
         titleLabel.autoresizingMask = [.width, .minYMargin]
         containerView.addSubview(titleLabel)
-        
-        // Create text view with proper styling
-        let textView = NSTextView(frame: NSRect(x: 20, y: 60, width: view.bounds.width - 40, height: view.bounds.height - 140))
+
+        // Create text view with modern styling
+        let textView = NSTextView(frame: NSRect(x: 20, y: 70, width: view.bounds.width - 40, height: view.bounds.height - 150))
         textView.isEditable = true
         textView.isSelectable = true
-        textView.backgroundColor = NSColor.controlBackgroundColor
-        textView.textColor = NSColor.textColor
+        textView.backgroundColor = NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1) // #181A1B
+        textView.textColor = NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1) // #F5F5F7
         textView.font = NSFont.systemFont(ofSize: 14)
         textView.string = ""
         textView.autoresizingMask = [.width, .height]
-        
+        textView.drawsBackground = true
+        textView.layer?.cornerRadius = 8
+        textView.layer?.masksToBounds = true
+        textView.insertionPointColor = NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 1) // #8F5AFF
+        textView.allowsUndo = true
+        textView.isRichText = false
+        textView.isContinuousSpellCheckingEnabled = true
+        textView.isAutomaticSpellingCorrectionEnabled = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.setSelectedRange(NSRange(location: 0, length: 0))
         // Add placeholder text
         textView.string = "Enter your session notes here..."
-        
+
         let scrollView = NSScrollView(frame: textView.frame)
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
         scrollView.documentView = textView
         scrollView.autoresizingMask = [.width, .height]
-        scrollView.borderType = .lineBorder
-        scrollView.backgroundColor = NSColor.controlBackgroundColor
-        
+        scrollView.borderType = .noBorder
+        scrollView.backgroundColor = NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1)
+        scrollView.layer?.cornerRadius = 8
+        scrollView.layer?.masksToBounds = true
         containerView.addSubview(scrollView)
-        
-        // Add buttons with better styling
-        let buttonHeight: CGFloat = 30
-        let buttonWidth: CGFloat = 80
+
+        // Add buttons with modern styling
+        let buttonHeight: CGFloat = 32
+        let buttonWidth: CGFloat = 90
         let buttonY: CGFloat = 20
-        
+        let buttonSpacing: CGFloat = 12
+        let primaryBlue = NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 1) // #8F5AFF
+        let mutedText = NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1) // #A0A0A0
+
         let saveButton = NSButton(frame: NSRect(x: view.bounds.width - buttonWidth - 20, y: buttonY, width: buttonWidth, height: buttonHeight))
         saveButton.title = "Save"
         saveButton.bezelStyle = .rounded
@@ -105,30 +160,44 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
         saveButton.target = self
         saveButton.action = #selector(saveNotes)
         saveButton.autoresizingMask = [.minXMargin, .minYMargin]
+        saveButton.wantsLayer = true
+        saveButton.layer?.backgroundColor = primaryBlue.cgColor
+        saveButton.layer?.cornerRadius = 8
+        saveButton.layer?.masksToBounds = true
+        saveButton.contentTintColor = .white
+        saveButton.font = NSFont.systemFont(ofSize: 14, weight: .semibold)
         containerView.addSubview(saveButton)
-        
-        let cancelButton = NSButton(frame: NSRect(x: view.bounds.width - buttonWidth * 2 - 30, y: buttonY, width: buttonWidth, height: buttonHeight))
+
+        let cancelButton = NSButton(frame: NSRect(x: view.bounds.width - buttonWidth * 2 - buttonSpacing - 20, y: buttonY, width: buttonWidth, height: buttonHeight))
         cancelButton.title = "Cancel"
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}" // Escape key
         cancelButton.target = self
         cancelButton.action = #selector(cancelNotes)
         cancelButton.autoresizingMask = [.minXMargin, .minYMargin]
+        cancelButton.wantsLayer = true
+        cancelButton.layer?.backgroundColor = modalBackground.cgColor
+        cancelButton.layer?.cornerRadius = 8
+        cancelButton.layer?.masksToBounds = true
+        cancelButton.contentTintColor = mutedText
+        cancelButton.font = NSFont.systemFont(ofSize: 14, weight: .regular)
         containerView.addSubview(cancelButton)
-        
+
         // Add keyboard hint
         let hintLabel = NSTextField(labelWithString: "Press ⌘+Enter to save, or Esc to cancel")
         hintLabel.font = NSFont.systemFont(ofSize: 11)
-        hintLabel.textColor = NSColor.secondaryLabelColor
+        hintLabel.textColor = mutedText
+        hintLabel.backgroundColor = .clear
         hintLabel.frame = NSRect(x: 20, y: buttonY + buttonHeight + 5, width: view.bounds.width - 40, height: 15)
         hintLabel.autoresizingMask = [.width, .minYMargin]
         containerView.addSubview(hintLabel)
-        
+
         view.addSubview(containerView)
-        
+
+        self.fallbackTextView = textView
         // Focus the text view and clear placeholder
         DispatchQueue.main.async {
-            textView.window?.makeFirstResponder(textView)
+            self.view.window?.makeFirstResponder(textView)
             if textView.string == "Enter your session notes here..." {
                 textView.string = ""
             }
