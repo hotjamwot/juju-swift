@@ -2,7 +2,8 @@ import {
     createStackedBarChart,
     createMultiBarComparisonChart, // Updated import
     createPieChart,
-    createWeeklyStreamChart
+    createWeeklyStreamChart,
+    createProjectBarChart
 } from './chart-creators.js';
 import {
     prepareYearlyDailyProjectData,
@@ -17,6 +18,7 @@ let pieChartInstance = null;
 let dayComparisonBarChartInstance = null;
 let weekComparisonBarChartInstance = null;
 let monthComparisonBarChartInstance = null;
+let projectBarChartInstance = null;
 
 // --- Removed formatComparisonText helper function ---
 
@@ -34,9 +36,11 @@ export function destroyCharts() {
     if (dayComparisonBarChartInstance) dayComparisonBarChartInstance.destroy();
     if (weekComparisonBarChartInstance) weekComparisonBarChartInstance.destroy();
     if (monthComparisonBarChartInstance) monthComparisonBarChartInstance.destroy();
+    if (projectBarChartInstance) projectBarChartInstance.destroy();
 
     yearlyChartInstance = weeklyChartInstance = pieChartInstance = null;
     dayComparisonBarChartInstance = weekComparisonBarChartInstance = monthComparisonBarChartInstance = null;
+    projectBarChartInstance = null;
     console.log('[Charts] Destroyed existing chart instances.');
 }
 
@@ -141,11 +145,13 @@ export async function updateCharts(filteredSessions, allSessions, rangeTitle) {
 
             // Weekly Chart
             const weeklyProjectData = prepareWeeklyProjectData(filteredSessions);
-            weeklyChartInstance = await createWeeklyStreamChart('weekly-chart', weeklyProjectData);
+            weeklyChartInstance = await createWeeklyStreamChart('weekly-chart', weeklyProjectData, 'Weekly Hours by Project');
 
             // Pie Chart
             const pieData = preparePieData(filteredSessions);
             pieChartInstance = await createPieChart('pie-chart', pieData.labels, pieData.data);
+            // Project Bar Chart (below pie chart)
+            projectBarChartInstance = await createProjectBarChart('project-bar-chart', pieData.labels, pieData.data);
 
             return {
                 yearlyChart: yearlyChartInstance,

@@ -39,6 +39,11 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             function getMonthKey(date) {
                 return date.getFullYear() + '-' + (date.getMonth()+1).toString().padStart(2,'0');
             }
+            // Helper: sum duration for a given date
+            function sumDay(date) {
+                const key = date.toISOString().slice(0,10);
+                return sessions.filter(s => s.date === key).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
+            }
             // --- DAY COMPARISON ---
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -50,12 +55,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 d.setDate(today.getDate() - 7*i);
                 pastDays.push(d);
             }
-            // Helper: sum duration for a given date
-            function sumDay(date) {
-                const key = date.toISOString().slice(0,10);
-                return sessions.filter(s => s.date === key).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
-            }
-            const dayPast = pastDays.map(d => ({
+            // Reverse so order is: 3 weeks ago, 2 weeks ago, 1 week ago
+            const dayPast = pastDays.reverse().map(d => ({
                 label: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
                 value: +sumDay(d).toFixed(1)
             }));
@@ -71,7 +72,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 return sessions.filter(s => {
                     const d = parseDate(s.date);
                     return d >= start && d <= end;
-                }).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
+                }).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
             }
             const weekPast = [];
             for (let i = 3; i >= 1; i--) {
@@ -95,7 +96,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 return sessions.filter(s => {
                     const d = parseDate(s.date);
                     return d >= start && d <= end;
-                }).reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60;
+                }).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
             }
             const monthPast = [];
             for (let i = 3; i >= 1; i--) {
@@ -384,24 +385,53 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             return
         }
         var session = sessions[idx]
+        var newSession = session
+        var shouldRecalculateDuration = false
         switch field {
-        case "date": session = SessionRecord(id: session.id, date: value, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
-        case "start_time": session = SessionRecord(id: session.id, date: session.date, startTime: value, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
-        case "end_time": session = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: value, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+        case "date":
+            newSession = SessionRecord(id: session.id, date: value, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+        case "start_time":
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: value, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+            shouldRecalculateDuration = true
+        case "end_time":
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: value, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+            shouldRecalculateDuration = true
         case "duration_minutes":
             if let mins = Int(value) {
-                session = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: mins, projectName: session.projectName, notes: session.notes)
+                newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: mins, projectName: session.projectName, notes: session.notes)
             } else {
                 sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Invalid duration")
                 return
             }
-        case "project": session = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: value, notes: session.notes)
-        case "notes": session = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: value)
+        case "project":
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: value, notes: session.notes)
+        case "notes":
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: value)
         default:
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Unknown field")
             return
         }
-        sessions[idx] = session
+        // If start_time or end_time was edited, recalculate duration
+        if shouldRecalculateDuration {
+            let dateStr = newSession.date
+            var startTimeStr = newSession.startTime
+            var endTimeStr = newSession.endTime
+            // Ensure time strings are in HH:mm:ss format
+            if startTimeStr.count == 5 { startTimeStr += ":00" }
+            if endTimeStr.count == 5 { endTimeStr += ":00" }
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let startDate = dateFormatter.date(from: "\(dateStr) \(startTimeStr)")
+            let endDate = dateFormatter.date(from: "\(dateStr) \(endTimeStr)")
+            if let start = startDate, let end = endDate, end > start {
+                let duration = Int(round(end.timeIntervalSince(start) / 60))
+                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: duration, projectName: newSession.projectName, notes: newSession.notes)
+            } else {
+                // If parsing fails or end <= start, set duration to 0
+                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: 0, projectName: newSession.projectName, notes: newSession.notes)
+            }
+        }
+        sessions[idx] = newSession
         // Save all sessions back to CSV
         let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
         let rows = sessions.map { s in

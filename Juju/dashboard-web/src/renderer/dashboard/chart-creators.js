@@ -301,7 +301,7 @@ export async function createPieChart(canvasId, labels, data) {
     });
 }
 
-export async function createWeeklyStreamChart(canvasId, data) {
+export async function createWeeklyStreamChart(canvasId, data, chartTitle = 'Weekly Hours by Project') {
     const ctx = document.getElementById(canvasId).getContext('2d');
     const colors = await generateColors(data.datasets.map(d => d.label));
 
@@ -335,7 +335,7 @@ export async function createWeeklyStreamChart(canvasId, data) {
                     ...sharedAxisConfig,
                     title: {
                         display: true,
-                        text: 'Cumulative Hours',
+                        text: 'Hours',
                         color: '#E0E0E0'
                     }
                 },
@@ -344,7 +344,7 @@ export async function createWeeklyStreamChart(canvasId, data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Cumulative Hours by Project',
+                    text: chartTitle,
                     color: '#E0E0E0',
                     padding: {
                         bottom: 15
@@ -360,9 +360,86 @@ export async function createWeeklyStreamChart(canvasId, data) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                label += context.parsed.y.toFixed(1) + ' total hours';
+                                label += context.parsed.y.toFixed(1) + ' hours';
                             }
                             return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+export async function createProjectBarChart(canvasId, labels, data) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.error(`Canvas element with ID ${canvasId} not found.`);
+        return null;
+    }
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded. Cannot create chart.');
+        return null;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const colors = await generateColors(labels);
+
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Hours',
+                data: data,
+                backgroundColor: colors,
+                borderColor: '#1E1E1E',
+                borderWidth: 1,
+                borderRadius: 6,
+                maxBarThickness: 48
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { top: 10, bottom: 10, left: 10, right: 10 }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: '#E0E0E0',
+                        font: { size: 12 },
+                        autoSkip: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(224, 224, 224, 0.1)' },
+                    title: {
+                        display: true,
+                        text: 'Total Hours',
+                        color: '#E0E0E0'
+                    },
+                    ticks: {
+                        color: '#E0E0E0',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Total Hours by Project',
+                    color: '#E0E0E0',
+                    padding: { bottom: 10 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.parsed.y.toFixed(1)} hours`;
                         }
                     }
                 }

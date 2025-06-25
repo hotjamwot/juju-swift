@@ -97,12 +97,9 @@ export function prepareWeeklyProjectData(filteredSessions) {
     const weekYearLabels = Array.from(weekYearLabelsSet).sort();
     const projectList = Array.from(projects).sort();
 
+    // Per-week (not cumulative) data
     const datasets = projectList.map((project) => {
-        let cumulative = 0;
-        const data = weekYearLabels.map(weekYearKey => {
-            cumulative += projectDataByWeekYear[weekYearKey]?.[project] || 0;
-            return cumulative;
-        });
+        const data = weekYearLabels.map(weekYearKey => projectDataByWeekYear[weekYearKey]?.[project] || 0);
         return {
             label: project,
             data: data,
