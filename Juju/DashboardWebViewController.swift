@@ -13,6 +13,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         userContentController.add(self, name: "jujuBridge")
         // Inject window.jujuApi polyfill with debug logs
         let apiPolyfill = """
+        const today = new Date();
+        today.setHours(0,0,0,0);
         console.log('Polyfill injected');
         window.api = window.api || {};
         window.api.getComparisonStats = function() {
@@ -42,30 +44,24 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             // Helper: sum duration for a given date
             function sumDay(date) {
                 const key = date.toISOString().slice(0,10);
-                return sessions.filter(s => s.date === key).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
+                return sessions.filter(s => s.date === key)
+                    .reduce((sum, s) => sum + (Number(s.duration_minutes ?? s.durationMinutes) || 0), 0) / 60;
             }
-            // --- DAY COMPARISON ---
+            // --- DEFINE TODAY AT THE TOP ---
             const today = new Date();
             today.setHours(0,0,0,0);
-            const weekday = today.getDay();
-            // Find last 3 same weekdays (e.g., last 3 Fridays)
-            const pastDays = [];
-            for (let i = 1; i <= 3; i++) {
+            // --- DAY COMPARISON: Today vs. 7-Day Average ---
+            const last7Days = [];
+            for (let i = 1; i <= 7; i++) {
                 const d = new Date(today);
-                d.setDate(today.getDate() - 7*i);
-                pastDays.push(d);
+                d.setDate(today.getDate() - i);
+                last7Days.push(d);
             }
-            // Reverse so order is: 3 weeks ago, 2 weeks ago, 1 week ago
-            const dayPast = pastDays.reverse().map(d => ({
-                label: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-                value: +sumDay(d).toFixed(1)
-            }));
-            const dayCurrentValue = +sumDay(today).toFixed(1);
-            const dayAvg = dayPast.length ? dayPast.reduce((sum, d) => sum + d.value, 0) / dayPast.length : 0;
-            const dayRange = dayAvg ? ((dayCurrentValue - dayAvg) >= 0 ? '+' : '') + (dayCurrentValue - dayAvg).toFixed(1) + 'h vs avg' : '';
-            const dayCurrent = { label: today.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), value: dayCurrentValue, range: dayRange };
+            const last7DayValues = last7Days.map(d => sumDay(d));
+            const avg7 = last7DayValues.reduce((a, b) => a + b, 0) / last7DayValues.length;
+            const todayValue = sumDay(today);
+            const dayRange = avg7 ? ((todayValue - avg7) >= 0 ? '+' : '') + (todayValue - avg7).toFixed(1) + 'h vs avg' : '';
             // --- WEEK COMPARISON ---
-            // This week: Monday to today
             const thisMonday = new Date(today);
             thisMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
             function sumWeekRange(start, end) {
@@ -90,7 +86,6 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             const weekRange = weekAvg ? ((weekCurrentValue - weekAvg) >= 0 ? '+' : '') + (weekCurrentValue - weekAvg).toFixed(1) + 'h vs avg' : '';
             const weekCurrent = { label: thisMonday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '–' + today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), value: weekCurrentValue, range: weekRange };
             // --- MONTH COMPARISON ---
-            // This month: 1st to today
             const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
             function sumMonthRange(start, end) {
                 return sessions.filter(s => {
@@ -115,7 +110,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             const monthCurrent = { label: thisMonthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }), value: monthCurrentValue, range: monthRange };
             // Compose result
             const result = {
-                day: { past: dayPast, current: dayCurrent },
+                day: { past: [{ label: "7-Day Avg", value: +avg7.toFixed(1) }], current: { label: "Today", value: +todayValue.toFixed(1), range: dayRange } },
                 week: { past: weekPast, current: weekCurrent },
                 month: { past: monthPast, current: monthCurrent }
             };

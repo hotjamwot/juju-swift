@@ -276,31 +276,24 @@ input[type="date"].input-base {
 
 /* Charts */
 .chart-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: row;
     gap: 1.5rem;
     width: 100%;
     margin-bottom: 2.5rem;
     align-items: stretch;
 }
 
-.chart-row.single-chart {
-    display: block;
-    width: 100%;
-    margin-bottom: 2.5rem;
-}
-
-.pie-bar-column {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    height: 100%;
-}
-
-.chart-row:has(.comparison-charts-container) {
-    display: grid;
-    grid-template-columns: 55% 43%;
-    align-items: stretch;
+.chart-container.pie-chart-container,
+.chart-container.bar-chart-container {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 400px;
+    padding: var(--card-padding);
+    background: var(--background-light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-color);
 }
 
 .yearly-chart {
@@ -309,17 +302,6 @@ input[type="date"].input-base {
     overflow: hidden;
     background: var(--background-light);
     margin-bottom: 2.5rem;
-}
-
-.chart-container.pie-chart-container {
-    height: 400px;
-    padding: var(--card-padding);
-}
-
-.chart-container.bar-chart-container {
-    height: 320px;
-    padding: var(--card-padding);
-    margin-top: 1.5rem;
 }
 
 .chart-row.single-chart .chart-container {
@@ -335,35 +317,6 @@ input[type="date"].input-base {
 canvas {
     max-width: 100%;
     height: auto;
-}
-
-/* Comparison Charts */
-.comparison-charts-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.comparison-charts-container .chart-wrapper {
-    height: 120px;
-    position: relative;
-}
-
-.comparison-chart-item {
-    padding: 0.5rem 0;
-    margin-bottom: 0.5rem;
-}
-
-.comparison-title {
-    margin: 0 0 1rem 0;
-    text-align: center;
-}
-
-.comparison-text-details {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.9em;
-    margin-top: 0.5rem;
 }
 
 /* Buttons */
