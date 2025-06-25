@@ -434,8 +434,14 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         sessions[idx] = newSession
         // Save all sessions back to CSV
         let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        // Before writing to CSV, ensure times are in HH:mm:ss format
+        func ensureSeconds(_ time: String) -> String {
+            return time.count == 5 ? time + ":00" : time
+        }
         let rows = sessions.map { s in
-            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            let startTime = ensureSeconds(s.startTime)
+            let endTime = ensureSeconds(s.endTime)
+            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {
@@ -465,8 +471,14 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         sessions.remove(at: idx)
         // Save all sessions back to CSV
         let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        // Before writing to CSV, ensure times are in HH:mm:ss format
+        func ensureSeconds(_ time: String) -> String {
+            return time.count == 5 ? time + ":00" : time
+        }
         let rows = sessions.map { s in
-            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            let startTime = ensureSeconds(s.startTime)
+            let endTime = ensureSeconds(s.endTime)
+            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {

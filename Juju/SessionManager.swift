@@ -111,7 +111,7 @@ class SessionManager {
         let date = dateFormatter.string(from: sessionData.startTime)
         let startTime = timeFormatter.string(from: sessionData.startTime)
         let endTime = timeFormatter.string(from: sessionData.endTime)
-        let id = String(Int(Date().timeIntervalSince1970 * 1000)) + String(Int.random(in: 100...999))
+        let id = UUID().uuidString
         
         let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\"\n"
         
@@ -259,7 +259,7 @@ extension SessionManager {
                     id = cleanField(safeFields[0])
                 } else {
                     // No ID column, generate one
-                    id = String(Int(Date().timeIntervalSince1970 * 1000)) + String(Int.random(in: 100...999))
+                    id = UUID().uuidString
                     needsRewrite = true
                     print("[SessionManager] Assigned new ID \(id) to row \(idx+2)")
                     safeFields.insert(id, at: 0)
