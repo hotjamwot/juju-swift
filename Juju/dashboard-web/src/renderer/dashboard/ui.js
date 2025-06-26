@@ -229,7 +229,7 @@ async function handleCellUpdate(refreshDashboardDataCallback) {
     }
 
     try {
-        const result = await window.jujuApi.updateSession(Number(id), field, newValue);
+        const result = await window.jujuApi.updateSession(id, field, newValue);
         cell.classList.add('success');
         setTimeout(() => cell.classList.remove('success'), 1000);
         

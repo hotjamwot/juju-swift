@@ -4,9 +4,15 @@ import WebKit
 class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     internal var webView: WKWebView!
     
+    private var cmdWMonitor: Any?
+    
     override func loadView() {
         let config = WKWebViewConfiguration()
-        config.preferences.javaScriptEnabled = true
+        if #available(macOS 11.0, *) {
+            config.defaultWebpagePreferences.allowsContentJavaScript = true
+        } else {
+            config.preferences.javaScriptEnabled = true
+        }
         // Explicitly enable developer extras for WKWebView Inspector
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         let userContentController = WKUserContentController()
@@ -246,9 +252,65 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         self.view = webView
     }
     
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        loadDashboardHTML()
+        // Add invisible menu to enable standard shortcuts (Cmd+C, Cmd+V, etc.)
+        if let window = self.view.window {
+            let menu = NSMenu()
+            // App menu (empty, invisible)
+            let appMenuItem = NSMenuItem()
+            menu.addItem(appMenuItem)
+            let appMenu = NSMenu()
+            appMenuItem.submenu = appMenu
+
+            // Edit menu
+            let editMenuItem = NSMenuItem()
+            menu.addItem(editMenuItem)
+            let editMenu = NSMenu(title: "Edit")
+            editMenuItem.submenu = editMenu
+
+            editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+            editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+            editMenu.addItem(NSMenuItem.separator())
+            editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+            editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+            editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+            editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+            // Window menu with Close Window (Cmd+W)
+            let windowMenuItem = NSMenuItem()
+            menu.addItem(windowMenuItem)
+            let windowMenu = NSMenu(title: "Window")
+            windowMenuItem.submenu = windowMenu
+            let closeItem = NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+            closeItem.target = window
+            windowMenu.addItem(closeItem)
+
+            window.menu = menu
+        }
+        // Add local monitor for Cmd+W
+        cmdWMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "w" {
+                self?.view.window?.performClose(nil)
+                return nil // Consume the event
+            }
+            return event
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadDashboardHTML()
+        // Do not call loadDashboardHTML() here anymore
+    }
+    
+    override func viewWillDisappear() {
+        super.viewWillDisappear()
+        // Remove the Cmd+W monitor if it exists
+        if let monitor = cmdWMonitor {
+            NSEvent.removeMonitor(monitor)
+            cmdWMonitor = nil
+        }
     }
     
     private func loadDashboardHTML() {
@@ -379,7 +441,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Session not found")
             return
         }
-        var session = sessions[idx]
+        let session = sessions[idx]
         var newSession = session
         var shouldRecalculateDuration = false
         switch field {

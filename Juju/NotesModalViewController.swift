@@ -19,8 +19,11 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
         config.userContentController = userContentController
         
         // Enable JavaScript and clipboard access
-        config.preferences.javaScriptEnabled = true
-        
+        if #available(macOS 11.0, *) {
+            config.defaultWebpagePreferences.allowsContentJavaScript = true
+        } else {
+            config.preferences.javaScriptEnabled = true
+        }        
         // Enable clipboard access
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
         

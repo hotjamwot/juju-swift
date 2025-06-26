@@ -3,6 +3,8 @@ import Cocoa
 class ProjectsTabView: NSView {
     private let stackView = NSStackView()
     private let projectListStack = NSStackView()
+    // Hold strong references to ClosureSleeve instances
+    private var closureSleeves: [ClosureSleeve] = []
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -81,6 +83,8 @@ class ProjectsTabView: NSView {
     }
     
     public func refresh() {
+        // Clear previous sleeves to avoid memory leaks
+        closureSleeves.removeAll()
         projectListStack.arrangedSubviews.forEach { projectListStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         let projects = ProjectManager.shared.loadProjects()
         if projects.isEmpty {
@@ -124,7 +128,7 @@ class ProjectsTabView: NSView {
             rowStack.addArrangedSubview(deleteButton)
 
             // Color change handler
-            colorWell.target = ClosureSleeve { [weak colorWell, weak self] in
+            let colorSleeve = ClosureSleeve { [weak colorWell, weak self] in
                 guard let colorWell = colorWell else { return }
                 var updatedProjects = ProjectManager.shared.loadProjects()
                 guard idx < updatedProjects.count else { return }
@@ -132,17 +136,21 @@ class ProjectsTabView: NSView {
                 ProjectManager.shared.saveProjects(updatedProjects)
                 self?.refresh()
             }
+            colorWell.target = colorSleeve
             colorWell.action = #selector(ClosureSleeve.invoke)
+            closureSleeves.append(colorSleeve)
 
             // Delete handler
-            deleteButton.target = ClosureSleeve { [weak self] in
+            let deleteSleeve = ClosureSleeve { [weak self] in
                 var updatedProjects = ProjectManager.shared.loadProjects()
                 guard idx < updatedProjects.count else { return }
                 updatedProjects.remove(at: idx)
                 ProjectManager.shared.saveProjects(updatedProjects)
                 self?.refresh()
             }
+            deleteButton.target = deleteSleeve
             deleteButton.action = #selector(ClosureSleeve.invoke)
+            closureSleeves.append(deleteSleeve)
 
             projectListStack.addArrangedSubview(rowStack)
         }
