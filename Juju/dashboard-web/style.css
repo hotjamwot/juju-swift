@@ -5,9 +5,9 @@
 
 /* Variables for consistent values */
 :root {
-    --background-dark: #181A1B;
-    --background-light: #1b1d1f;
-    --border-color: #2C2C2C;
+    --background-dark: #121415;
+    --background-light: #181a1c;
+    --border-color: #373737;
     --text-light: #F5F5F7;
     --text-muted: #A0A0A0;
     --primary-blue: #8F5AFF;
@@ -292,8 +292,6 @@ input[type="date"].input-base {
     padding: var(--card-padding);
     background: var(--background-light);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    border: 1px solid var(--border-color);
 }
 
 .yearly-chart {
@@ -543,86 +541,85 @@ canvas {
 .date-filter-controls {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    padding: 0.75rem;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+    padding: 0.5rem 0;
+    align-items: center;
+    justify-content: center;
 }
 
-.date-filter-title-container h2 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-light);
-    font-size: 1.1em;
+.date-filter-title-container h2,
+#chart-range-title {
+    font-size: 1em;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 0.2rem;
 }
 
 .date-filter-buttons {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.25rem;
     flex-wrap: wrap;
+    justify-content: center;
+}
+
+.date-filter-buttons .btn-filter {
+    font-size: 0.85em;
+    padding: 0.4rem 1.1rem;
+    border-radius: 6px;
+    font-weight: 400;
 }
 
 .date-filter-custom {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
-}
-
-.date-filter-custom .labels-row {
-    display: flex;
-    gap: 1.5rem;
+    gap: 0.3rem;
     align-items: center;
-    margin-left: 0.5rem; /* Align with input padding */
+    width: 100%;
 }
 
 .date-filter-custom .inputs-row {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     align-items: flex-end;
-}
-
-.date-filter-custom .date-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    justify-content: center;
 }
 
 .date-filter-custom .date-group label {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--text-muted);
-    margin: 0;
+    font-weight: 400;
 }
 
-/* Session Controls */
-.sessions-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-}
-
-.sessions-controls label {
-    font-weight: 500;
-    color: var(--text-light);
-    white-space: nowrap;
-}
-
-#project-filter-select {
-    min-width: 200px;
+.date-filter-custom .input-base,
+.date-filter-custom input[type="date"],
+.date-filter-custom button {
+    font-size: 0.85em;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
 }
 
 .pagination-controls {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    padding: .5rem;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.2rem;
 }
 
 .pagination-controls span {
     color: var(--text-muted);
-    font-size: 0.9em;
+    font-size: 0.85em;
+    font-weight: 400;
+}
+
+.pagination-controls .btn {
+    font-size: 0.85em;
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 400;
 }
 
 #recent-sessions-table-container {

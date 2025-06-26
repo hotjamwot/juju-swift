@@ -35,6 +35,33 @@ async function generateColors(projectNames) {
     return colors;
 }
 
+// --- Chart.js Plugin: Soft Shadow/Glow Effect (no gradient overlay) ---
+const shadowPlugin = {
+    id: 'softShadow',
+    beforeDatasetsDraw(chart, args, options) {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.55)'; // Even more pronounced shadow
+        ctx.shadowBlur = 32;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 14;
+    },
+    afterDatasetsDraw(chart, args, options) {
+        chart.ctx.restore();
+    }
+};
+
+// Register the plugin globally
+if (typeof Chart !== 'undefined' && !Chart.registry.plugins.get('softShadow')) {
+    Chart.register(shadowPlugin);
+}
+
+// --- Animation Easing Helper ---
+const animationOptions = {
+    duration: 600,
+    easing: 'easeOutCubic',
+};
+
 export async function createStackedBarChart(canvasId, labels, datasets, yAxisLabel, monthLabels = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
@@ -65,6 +92,7 @@ export async function createStackedBarChart(canvasId, labels, datasets, yAxisLab
     
     visibleDatasets.forEach((dataset, index) => {
         dataset.backgroundColor = colors[index];
+        dataset.borderRadius = 8; // Rounded corners for daily chart
     });
 
     return new Chart(ctx, {
@@ -80,10 +108,13 @@ export async function createStackedBarChart(canvasId, labels, datasets, yAxisLab
             layout: {
                 padding: { top: 0, bottom: 0, left: 0, right: 0 }
             },
+            animation: animationOptions,
             scales: {
                 x: {
                     stacked: true,
                     ...sharedAxisConfig,
+                    grid: { display: false },
+                    border: { color: '#444', width: 2 },
                     ticks: {
                         ...sharedAxisConfig.ticks,
                         callback: function(value, index) {
@@ -108,6 +139,8 @@ export async function createStackedBarChart(canvasId, labels, datasets, yAxisLab
                 y: {
                     stacked: true,
                     ...sharedAxisConfig,
+                    grid: { display: false },
+                    border: { color: '#444', width: 2 },
                     title: {
                         display: true,
                         text: yAxisLabel,
@@ -117,7 +150,8 @@ export async function createStackedBarChart(canvasId, labels, datasets, yAxisLab
             },
             plugins: {
                 legend: sharedLegendConfig,
-                tooltip: sharedTooltipConfig
+                tooltip: sharedTooltipConfig,
+                softShadow: true
             }
         }
     });
@@ -166,6 +200,7 @@ export async function createPieChart(canvasId, labels, data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: animationOptions,
             plugins: {
                 legend: {
                     ...sharedLegendConfig,
@@ -181,6 +216,20 @@ export async function createPieChart(canvasId, labels, data) {
                             return `${label}: ${value.toFixed(1)} hours (${percentage}%)`;
                         }
                     }
+                },
+                softShadow: true
+            },
+            hover: {
+                mode: 'nearest',
+                animationDuration: 400,
+                onHover: (event, chartElement) => {
+                    // handled by default
+                }
+            },
+            elements: {
+                arc: {
+                    hoverOffset: 18, // increased lift
+                    borderWidth: 0
                 }
             }
         }
@@ -215,17 +264,24 @@ export async function createWeeklyStreamChart(canvasId, data, chartTitle = 'Week
                 intersect: false,
                 mode: 'index'
             },
+            animation: animationOptions,
             scales: {
                 y: {
                     stacked: true,
                     ...sharedAxisConfig,
+                    grid: { display: false },
+                    border: { color: '#444', width: 2 },
                     title: {
                         display: true,
                         text: 'Hours',
                         color: '#E0E0E0'
                     }
                 },
-                x: sharedAxisConfig
+                x: {
+                    ...sharedAxisConfig,
+                    grid: { display: false },
+                    border: { color: '#444', width: 2 }
+                }
             },
             plugins: {
                 title: {
@@ -251,7 +307,8 @@ export async function createWeeklyStreamChart(canvasId, data, chartTitle = 'Week
                             return label;
                         }
                     }
-                }
+                },
+                softShadow: true
             }
         }
     });
@@ -291,9 +348,11 @@ export async function createProjectBarChart(canvasId, labels, data) {
             layout: {
                 padding: { top: 10, bottom: 10, left: 10, right: 10 }
             },
+            animation: animationOptions,
             scales: {
                 x: {
                     grid: { display: false },
+                    border: { color: '#444', width: 2 },
                     ticks: {
                         color: '#E0E0E0',
                         font: { size: 12 },
@@ -302,7 +361,8 @@ export async function createProjectBarChart(canvasId, labels, data) {
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: 'rgba(224, 224, 224, 0.1)' },
+                    grid: { display: false },
+                    border: { color: '#444', width: 2 },
                     title: {
                         display: true,
                         text: 'Total Hours',
@@ -328,7 +388,8 @@ export async function createProjectBarChart(canvasId, labels, data) {
                             return `${context.label}: ${context.parsed.y.toFixed(1)} hours`;
                         }
                     }
-                }
+                },
+                softShadow: true
             }
         }
     });
