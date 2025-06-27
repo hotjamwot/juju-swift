@@ -1,101 +1,71 @@
-Juju is a lightweight, always-on system tray application designed to help you track focused deep work sessions by project. It runs quietly in the background and gives you quick access to start/end a work session, log notes, and later visualise your progress in a slick dashboard.
+Juju is a lightweight, always-on macOS menu bar app for tracking focused deep work sessions by project. It runs quietly in the background, giving you instant access to start/end sessions, log notes (and mood!), and visualise your progress in a beautiful, privacy-first dashboard.
 
-It's for people who want clarity over their time, without bloat or constant notifications — something elegant, fast, and local.
+Juju is for people who want clarity over their time—without bloat, cloud lock-in, or constant notifications. It’s elegant, fast, and 100% local.
 
-## ⚙️ What It Does
-
-### ✅ System Tray Interface
-- Lives in the system tray (macOS for now).
-- Dynamic icon state: idle vs. active session.
-- Tray menu options:
-    - Start Session → choose project
-    - End Session → enter optional note
-    - View Dashboard → opens a clean analytics window
-    - Quit
-
-### ⏱ Session Tracking
-- Start/end timestamps recorded with project info.
-- Duration calculated automatically.
-- Notes added post-session.
-- Data saved as simple CSV (for transparency and portability).
-
+---
+## ⚙️ Features
+### ✅ System Tray Interface
+- Lives in your menu bar (macOS).
+- Dynamic icon: shows active/idle state.
+**Quick actions:**
+- Start Session: Choose a project to begin tracking.
+- End Session: Finish your session and log notes and mood.
+- View Dashboard: Open a clean analytics window.
+- Quit: Exit Juju.
+### ⏱ Session Tracking
+- Precise start/end timestamps for each session.
+- Automatic duration calculation.
+- Project association for every session.
+- Post-session notes: Add context or reflections.
+- Mood tracking: Rate your session (0–10) to capture how you felt.
+- All data saved as CSV for transparency and portability.
 ### 📁 Local Storage
-- Sessions: stored in `~/Library/Application Support/juju/data.csv`
-- Projects: `projects.json` in the same folder
-- Flat file system: no cloud, no lock-in.
-
+- Sessions: ~/Library/Application Support/juju/data.csv
+- Projects: projects.json in the same folder.
+- Flat file system: No cloud, no lock-in, no hidden database.
 ### 📊 Dashboard
-- Visual breakdowns of your time:
-    - Bar (daily hours)
-    - Line (weekly)
-    - Pie (total time by project)
-    - Comparisons (e.g. today vs last week)
-- Inline-editable session list with pagination.
-- Project manager with colour picker and delete functionality.
-- Filters by project or date range.
+**Visual analytics:**
+- Bar chart: Daily hours.
+- Line chart: Weekly trends.
+- Pie chart: Total time by project.
+- Bar chart: Total time by project.
+**Session Table:**
+- Inline editing: Edit date, project, times, notes, and mood directly in the table.
+- Mood editing: Update your mood for any session with a simple dropdown.
+- Pagination for large datasets.
+- Delete sessions with confirmation.
+**Project Manager:**
+- Add, edit, and delete projects.
+- Color picker for project color-coding.
+**Powerful Filtering:**
+- Filter sessions by project.
+- Filter by date range (quick presets or custom).
+- Combined filters for precise data views.
+**Export Sessions:**
+- Export filtered sessions to CSV, Markdown, or TXT.
+- Choose export format and save anywhere via native macOS save dialog.
+- Export includes: Date, Project, Start Time, End Time, Duration, Notes, Mood, and a summary of filters used.
+### 🔑 Global Shortcut
+- Press ⇧⌥⌘J from anywhere to quickly launch the app.
 
-### 🔑 Global Shortcut
-- Press ⇧⌥⌘J from anywhere to quickly launch the app.
+---
+## 🛡️ Philosophy
+- Privacy-first: All data stays on your device.
+- Transparency: Data is stored in plain text files you can inspect or analyze.
+- No bloat: No cloud, no accounts, no ads, no tracking.
+- Fast and elegant: Designed for minimal friction and maximum clarity.
 
-## 🗺️ Development Roadmap
+---
+## 🚀 Getting Started
+1. Download and run Juju (macOS only for now).
+2. Start tracking: Use the menu bar icon to start/end sessions.
+3. Open the dashboard to view, filter, edit, and export your data.
 
-### ✅ Phase 1: Swift Backend Core - COMPLETE
-- ✅ Project Setup (Xcode project, Application Support directory)
-- ✅ Session Tracking (Session struct, start/end, CSV save/load)
-- ✅ Project Management (Project struct, JSON load/save)
-- ✅ File/Directory Setup (auto-create directories)
-- ✅ Global App State (SessionManager singleton)
+---
+## 📝 Data Format
+- Sessions: CSV with columns: id, date, start_time, end_time, duration_minutes, project, notes, mood
+- Projects: JSON array with project names and colors.
 
-### ✅ Phase 2: Native Menu Bar - COMPLETE
-- ✅ Menu Bar Setup (NSStatusItem, custom icons, dynamic updates)
-- ✅ Menu Bar Integration (hidden dock, primary interface)
-- ✅ Window management (dashboard show/hide)
-
-### 🔄 Phase 3: WebView Dashboard - IN PROGRESS
-- ✅ WebView Setup (using WKWebView)
-- ✅ UI Shell (Using HTML/CSS/JavaScript)
-- ✅ Charts (implemented, with comparison logic and Chart.js)
-- ✅ Session Table (data loads and displays, editable)
-- ✅ Filters (basic filter UI present)
-- ✅ Project Editor (UI and data load, editing works)
-- ❌ Project Deletion (UI present, but not functional yet)
-- ⚠️ Session Editing/Deletion (editing works, deletion UI present but not functional due to WKWebView bridge issue; manual CSV edit is a workaround)
-
-### ✅ Phase 4: JavaScript Bridge - COMPLETE
-- ✅ JavaScript Interface (NEW: Robust bridge with fallback mechanisms)
-- ✅ Event System (NEW: Comprehensive event system for live updates and error handling)
-
-### 🔄 Phase 5: Dev & Testing - IN PROGRESS
-- ✅ Basic Testing (NEW: Event system test page created)
-- ❌ Build Config
-- ❌ Comprehensive Test Suite
-- ❌ Integration Testing
-
-### ⏳ Phase 6: Polish & Packaging - NOT STARTED
-- ✅ UI/UX Polish (NEW: Modern modals, notifications, enhanced buttons)
-- ✅ Accessibility (NEW: Keyboard navigation, ARIA labels)
-- ✅ Animations (NEW: Smooth transitions and loading states)
-- ❌ Build Targets (release packaging, notarization, etc.)
-- ❌ Performance Optimization
-- ❌ Final UI Polish
-
-## ⚠️ Known Issues
-
-### WKWebView Clipboard Limitations
-The notes modal uses WKWebView for the interface, which has known limitations with clipboard operations in macOS apps:
-
-- **Right-click paste works** ✅
-- **Cmd+V paste does not work** ❌
-- **Voice input tools (VoiceInk) do not work** ❌
-- **Cmd+C copy does not work** ❌
-- **Cmd+A select all works** ✅
-
-This is a platform limitation of WKWebView's security model, not a bug in our implementation. Users can still:
-- Use right-click context menu for copy/paste
-- Type notes manually
-- Use the fallback NSTextView if needed
-
-**Potential solutions for future versions:**
-- Replace WKWebView with native NSTextView for full clipboard support
-- Implement hybrid approach with native text input overlay
-- Add user-friendly UI hints about clipboard limitations
+---
+## 💡 Why Juju?
+Juju is for makers, freelancers, and anyone who wants to understand and improve their deep work habits—without giving up privacy or control.
