@@ -429,7 +429,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 "end_time": s.endTime,
                 "duration_minutes": s.durationMinutes,
                 "project": s.projectName,
-                "notes": s.notes
+                "notes": s.notes,
+                "mood": s.mood as Any
             ]
         }
         do {
@@ -467,24 +468,27 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         var shouldRecalculateDuration = false
         switch field {
         case "date":
-            newSession = SessionRecord(id: session.id, date: value, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+            newSession = SessionRecord(id: session.id, date: value, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes, mood: session.mood)
         case "start_time":
-            newSession = SessionRecord(id: session.id, date: session.date, startTime: value, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: value, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes, mood: session.mood)
             shouldRecalculateDuration = true
         case "end_time":
-            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: value, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes)
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: value, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes, mood: session.mood)
             shouldRecalculateDuration = true
         case "duration_minutes":
             if let mins = Int(value) {
-                newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: mins, projectName: session.projectName, notes: session.notes)
+                newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: mins, projectName: session.projectName, notes: session.notes, mood: session.mood)
             } else {
                 sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Invalid duration")
                 return
             }
         case "project":
-            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: value, notes: session.notes)
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: value, notes: session.notes, mood: session.mood)
         case "notes":
-            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: value)
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: value, mood: session.mood)
+        case "mood":
+            let moodValue: Int? = value.isEmpty ? nil : Int(value)
+            newSession = SessionRecord(id: session.id, date: session.date, startTime: session.startTime, endTime: session.endTime, durationMinutes: session.durationMinutes, projectName: session.projectName, notes: session.notes, mood: moodValue)
         default:
             sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Unknown field")
             return
@@ -503,15 +507,15 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             let endDate = dateFormatter.date(from: "\(dateStr) \(endTimeStr)")
             if let start = startDate, let end = endDate, end > start {
                 let duration = Int(round(end.timeIntervalSince(start) / 60))
-                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: duration, projectName: newSession.projectName, notes: newSession.notes)
+                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: duration, projectName: newSession.projectName, notes: newSession.notes, mood: newSession.mood)
             } else {
                 // If parsing fails or end <= start, set duration to 0
-                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: 0, projectName: newSession.projectName, notes: newSession.notes)
+                newSession = SessionRecord(id: newSession.id, date: newSession.date, startTime: newSession.startTime, endTime: newSession.endTime, durationMinutes: 0, projectName: newSession.projectName, notes: newSession.notes, mood: newSession.mood)
             }
         }
         sessions[idx] = newSession
         // Save all sessions back to CSV
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         // Before writing to CSV, ensure times are in HH:mm:ss format
         func ensureSeconds(_ time: String) -> String {
             return time.count == 5 ? time + ":00" : time
@@ -519,7 +523,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         let rows = sessions.map { s in
             let startTime = ensureSeconds(s.startTime)
             let endTime = ensureSeconds(s.endTime)
-            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            let moodStr = s.mood != nil ? String(s.mood!) : ""
+            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(moodStr)"
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {
@@ -548,7 +553,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         sessions.remove(at: idx)
         // Save all sessions back to CSV
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         // Before writing to CSV, ensure times are in HH:mm:ss format
         func ensureSeconds(_ time: String) -> String {
             return time.count == 5 ? time + ":00" : time
@@ -556,7 +561,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         let rows = sessions.map { s in
             let startTime = ensureSeconds(s.startTime)
             let endTime = ensureSeconds(s.endTime)
-            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            let moodStr = s.mood != nil ? String(s.mood!) : ""
+            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(moodStr)"
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         do {
@@ -745,7 +751,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                     (header: "Start Time", key: "start_time"),
                     (header: "End Time", key: "end_time"),
                     (header: "Duration", key: "duration_minutes"),
-                    (header: "Notes", key: "notes")
+                    (header: "Notes", key: "notes"),
+                    (header: "Mood", key: "mood")
                 ]
                 func formatTime(_ t: Any?) -> String {
                     guard let s = t as? String else { return "" }
@@ -764,29 +771,34 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                     }
                     return ""
                 }
+                func getFieldValue(row: [String: Any], key: String) -> String {
+                    if key == "mood" {
+                        let moodVal = row["mood"]
+                        if let m = moodVal as? Int { return String(m) }
+                        if let s = moodVal as? String, !s.isEmpty { return s }
+                        return ""
+                    }
+                    switch key {
+                    case "start_time", "end_time": return formatTime(row[key])
+                    case "duration_minutes": return formatDuration(row[key])
+                    default: return (row[key] as? String ?? "").replacingOccurrences(of: "\"", with: "\"\"")
+                    }
+                }
                 var output = summary
                 switch format {
                 case "csv":
                     output += exportFields.map { $0.header }.joined(separator: ",") + "\n"
                     for row in sessions {
                         output += exportFields.map { field in
-                            switch field.key {
-                            case "start_time", "end_time": return formatTime(row[field.key])
-                            case "duration_minutes": return formatDuration(row[field.key])
-                            default: return (row[field.key] as? String ?? "").replacingOccurrences(of: "\"", with: "\"\"")
-                            }
-                        }.map { "\"\($0)\"" }.joined(separator: ",") + "\n"
+                            return "\"\(getFieldValue(row: row, key: field.key))\""
+                        }.joined(separator: ",") + "\n"
                     }
                 case "md":
                     output += "| " + exportFields.map { $0.header }.joined(separator: " | ") + " |\n"
                     output += "|" + exportFields.map { _ in " --- " }.joined(separator: "|") + "|\n"
                     for row in sessions {
                         output += "| " + exportFields.map { field in
-                            switch field.key {
-                            case "start_time", "end_time": return formatTime(row[field.key])
-                            case "duration_minutes": return formatDuration(row[field.key])
-                            default: return row[field.key] as? String ?? ""
-                            }
+                            return getFieldValue(row: row, key: field.key)
                         }.joined(separator: " | ") + " |\n"
                     }
                 default:
@@ -794,11 +806,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                     output += exportFields.map { $0.header }.joined(separator: "\t") + "\n"
                     for row in sessions {
                         output += exportFields.map { field in
-                            switch field.key {
-                            case "start_time", "end_time": return formatTime(row[field.key])
-                            case "duration_minutes": return formatDuration(row[field.key])
-                            default: return row[field.key] as? String ?? ""
-                            }
+                            return getFieldValue(row: row, key: field.key)
                         }.joined(separator: "\t") + "\n"
                     }
                 }

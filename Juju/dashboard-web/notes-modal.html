@@ -139,6 +139,15 @@
             autocorrect="on"
             autocapitalize="sentences"
         ></textarea>
+        <div style="margin-bottom: 16px;">
+            <label for="moodSlider" style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">How did you feel about this session?</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:12px; color:var(--text-muted); min-width:60px;">Battling</span>
+                <input type="range" id="moodSlider" min="0" max="10" value="5" style="flex:1;">
+                <span id="moodValue" style="font-size:13px; color:var(--primary-blue); min-width:24px; text-align:center;">5</span>
+                <span style="font-size:12px; color:var(--text-muted); min-width:90px; text-align:right;">Deep in the Juju</span>
+            </div>
+        </div>
         
         <div class="button-container">
             <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
@@ -161,9 +170,11 @@
         // Save button click
         saveBtn.addEventListener('click', () => {
             const notes = notesInput.value.trim();
+            const mood = parseInt(document.getElementById('moodSlider').value, 10);
             window.webkit.messageHandlers.notesBridge.postMessage({
                 type: 'save',
-                notes: notes
+                notes: notes,
+                mood: mood
             });
         });
 
@@ -189,6 +200,13 @@
         notesInput.addEventListener('input', () => {
             notesInput.style.height = 'auto';
             notesInput.style.height = Math.min(notesInput.scrollHeight, 300) + 'px';
+        });
+
+        // Mood slider value display
+        const moodSlider = document.getElementById('moodSlider');
+        const moodValue = document.getElementById('moodValue');
+        moodSlider.addEventListener('input', () => {
+            moodValue.textContent = moodSlider.value;
         });
     </script>
 </body>

@@ -2,11 +2,11 @@ import Cocoa
 import WebKit
 
 class NotesModalViewController: NSViewController, WKScriptMessageHandler {
-    private var completion: ((String?) -> Void)?
+    private var completion: ((String, Int?) -> Void)?
     internal var webView: WKWebView!
     private weak var fallbackTextView: NSTextView?
     
-    convenience init(completion: @escaping (String?) -> Void) {
+    convenience init(completion: @escaping (String, Int?) -> Void) {
         self.init()
         self.completion = completion
     }
@@ -213,17 +213,17 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
            let scrollView = containerView.subviews.first(where: { $0 is NSScrollView }) as? NSScrollView,
            let textView = scrollView.documentView as? NSTextView {
             let notes = textView.string
-            closeWithResult(notes)
+            closeWithResult(notes, nil)
         }
     }
     
     @objc private func cancelNotes() {
-        closeWithResult(nil)
+        closeWithResult("", nil)
     }
     
-    private func closeWithResult(_ result: String?) {
+    private func closeWithResult(_ notes: String, _ mood: Int?) {
         view.window?.close()
-        completion?(result)
+        completion?(notes, mood)
     }
     
     // MARK: - WKScriptMessageHandler
@@ -234,10 +234,11 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
             switch type {
             case "save":
                 let notes = dict["notes"] as? String ?? ""
-                closeWithResult(notes)
+                let mood = dict["mood"] as? Int
+                closeWithResult(notes, mood)
                 
             case "cancel":
-                closeWithResult(nil)
+                closeWithResult("", nil)
                 
             default:
                 print("Unknown message type: \(type)")
@@ -284,7 +285,7 @@ extension NotesModalViewController: WKNavigationDelegate {
 }
 
 class NotesModalWindowController: NSWindowController {
-    convenience init(completion: @escaping (String?) -> Void) {
+    convenience init(completion: @escaping (String, Int?) -> Void) {
         let notesViewController = NotesModalViewController(completion: completion)
         
         // Create window

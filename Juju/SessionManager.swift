@@ -17,6 +17,7 @@ struct SessionRecord: Identifiable {
     let durationMinutes: Int
     let projectName: String
     let notes: String
+    let mood: Int?
 }
 
 class SessionManager {
@@ -51,7 +52,7 @@ class SessionManager {
         sessionStartTime = Date()
     }
     
-    func endSession(notes: String = "") {
+    func endSession(notes: String = "", mood: Int? = nil) {
         guard isSessionActive, let projectName = currentProjectName, let startTime = sessionStartTime else {
             print("⚠️ No active session to end")
             return
@@ -73,7 +74,7 @@ class SessionManager {
         )
         
         // Save to CSV
-        saveSessionToCSV(sessionData)
+        saveSessionToCSV(sessionData, mood: mood)
         
         // Reset state
         isSessionActive = false
@@ -96,7 +97,7 @@ class SessionManager {
     
     // MARK: - CSV Management
     
-    private func saveSessionToCSV(_ sessionData: SessionData) {
+    private func saveSessionToCSV(_ sessionData: SessionData, mood: Int? = nil) {
         // Ensure directory exists
         if let jujuPath = jujuPath {
             try? FileManager.default.createDirectory(at: jujuPath, withIntermediateDirectories: true)
@@ -112,20 +113,21 @@ class SessionManager {
         let startTime = timeFormatter.string(from: sessionData.startTime)
         let endTime = timeFormatter.string(from: sessionData.endTime)
         let id = UUID().uuidString
+        let moodStr = mood.map { String($0) } ?? ""
         
-        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\"\n"
+        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\",\(moodStr)\n"
         
         // Check if file exists and needs header
         let needsHeader = !fileExists() || isFileEmpty()
         
         if needsHeader {
-            let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+            let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
             let fullContent = header + csvRow
             writeToFile(fullContent)
-            print("✅ Created new CSV file with header and session data (with IDs)")
+            print("✅ Created new CSV file with header and session data (with IDs and mood)")
         } else {
             appendToFile(csvRow)
-            print("✅ Appended session data to existing CSV file (with ID)")
+            print("✅ Appended session data to existing CSV file (with ID and mood)")
         }
     }
     
@@ -253,7 +255,7 @@ extension SessionManager {
             var sessions: [SessionRecord] = []
             var needsRewrite = false
             for (idx, fields) in dataRows.enumerated() {
-                var safeFields = fields + Array(repeating: "", count: max(0, 7 - fields.count))
+                var safeFields = fields + Array(repeating: "", count: max(0, 8 - fields.count))
                 var id: String
                 if hasIdColumn {
                     id = cleanField(safeFields[0])
@@ -271,7 +273,8 @@ extension SessionManager {
                     endTime: cleanField(safeFields[3]),
                     durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
                     projectName: cleanField(safeFields[5]),
-                    notes: cleanField(safeFields[6])
+                    notes: cleanField(safeFields[6]),
+                    mood: safeFields[7].isEmpty ? nil : Int(cleanField(safeFields[7]))
                 )
                 sessions.append(record)
                 if idx < 3 { // Debug first few records
@@ -298,9 +301,9 @@ extension SessionManager {
     
     // Save all sessions (with IDs) to CSV
     func saveAllSessions(_ sessions: [SessionRecord]) {
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         let rows = sessions.map { s in
-            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\""
+            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(s.mood.map { String($0) } ?? "")\""
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         writeToFile(csv)

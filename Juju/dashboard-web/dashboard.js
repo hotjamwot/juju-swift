@@ -456,7 +456,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             // Dynamically get all keys except 'id'
-            const keys = Object.keys(filteredSessions[0]).filter(k => k !== 'id');
+            let keys = Object.keys(filteredSessions[0]).filter(k => k !== 'id');
+            // Ensure 'mood' is always included and at the end
+            if (!keys.includes('mood')) {
+                // Check if any session has mood, and add if so
+                if (filteredSessions.some(s => 'mood' in s)) {
+                    keys.push('mood');
+                }
+            }
             // Prepare data as array of objects (for Swift)
             const exportData = filteredSessions.map(s => {
                 const obj = {};

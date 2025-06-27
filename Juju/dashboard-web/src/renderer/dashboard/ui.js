@@ -66,6 +66,7 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
         const endTime = typeof session.end_time === 'string' ? session.end_time.slice(0, 5) : '??:??';
         const projectName = session.project || 'N/A';
         const notes = session.notes || '';
+        const mood = (session.mood !== undefined && session.mood !== null && session.mood !== '') ? String(session.mood) : '';
         const sessionInfo = `${projectName} on ${formattedDate}`;
 
         row.innerHTML = `
@@ -75,6 +76,7 @@ function updateSessionsTable(visibleSessions, refreshDashboardDataCallback) {
             <td class="editable" data-field="start_time" data-id="${session.id}">${startTime}</td>
             <td class="editable" data-field="end_time" data-id="${session.id}">${endTime}</td>
             <td class="editable" data-field="notes" data-id="${session.id}">${notes}</td>
+            <td class="editable" data-field="mood" data-id="${session.id}">${mood}</td>
             <td class="actions">
                 <button class="btn btn-delete" data-id="${session.id}" data-info="${sessionInfo}" title="Delete Session">×</button>
             </td>
@@ -153,6 +155,26 @@ async function handleCellClick(refreshDashboardDataCallback) {
         inputElement = document.createElement('textarea');
         inputElement.value = currentValue;
         inputElement.rows = 2;
+    } else if (field === 'mood') {
+        inputElement = document.createElement('select');
+        inputElement.classList.add('inline-edit-input');
+        inputElement.style.width = '100%';
+        inputElement.style.height = '2em';
+        // Add an empty option for blank/none
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.text = '--';
+        inputElement.appendChild(emptyOption);
+        for (let i = 0; i <= 10; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.text = i;
+            if (String(i) === currentValue) option.selected = true;
+            inputElement.appendChild(option);
+        }
+        this.innerHTML = '';
+        this.appendChild(inputElement);
+        inputElement.focus();
     } else {
         inputElement = document.createElement('input');
         inputElement.type = 'text';

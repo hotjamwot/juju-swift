@@ -162,7 +162,7 @@ tr:hover {
 #recent-sessions-table th:nth-child(2),
 #recent-sessions-table td:nth-child(2) {
     min-width: 100px;
-    width: 9%; /* Project column - reduced from 140px */
+    width: 8%; /* Project column - reduced from 140px */
 }
 
 #recent-sessions-table th:nth-child(3),
@@ -185,7 +185,14 @@ tr:hover {
 #recent-sessions-table td:nth-child(6) {
     min-width: 300px;
     max-width: none;
-    width: 60%; /* Notes column - increased significantly */
+    width: 61%; /* Notes column - increased significantly */
+}
+
+#recent-sessions-table th:nth-child(7),
+#recent-sessions-table td:nth-child(7) {
+    min-width: 70px;
+    width: 7%;
+    text-align: center;
 }
 
 td.actions {
@@ -231,6 +238,29 @@ td.actions {
     min-height: 32px !important;
     max-height: 80px !important;
     line-height: 1.4 !important;
+}
+
+/* Mood slider styles */
+.editable[data-field="mood"] {
+    text-align: center;
+    vertical-align: middle;
+}
+.editable[data-field="mood"] input[type="range"] {
+    width: 90%;
+    margin: 0.2em 0 0 0;
+    accent-color: var(--primary-blue);
+    background: transparent;
+    height: 2.2em;
+}
+.editable[data-field="mood"] div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Charts */

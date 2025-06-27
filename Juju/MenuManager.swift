@@ -104,13 +104,13 @@ class MenuManager {
         stopUpdateTimer()
         
         print("[MenuManager] Creating NotesModalWindowController")
-        let notesWindow = NotesModalWindowController { [weak self] (note: String?) in
-            print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>")")
+        let notesWindow = NotesModalWindowController { [weak self] (note: String?, mood: Int?) in
+            print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>") Mood: \(mood.map { String($0) } ?? "<nil>")")
             
             // Only end the session if notes are provided (not null)
             // If cancelled (note is nil), keep the session active
             if let note = note {
-                self?.sessionManager.endSession(notes: note)
+                self?.sessionManager.endSession(notes: note, mood: mood)
                 self?.appDelegate?.updateMenuBarIcon(isActive: false)
                 self?.refreshMenu()
             } else {
