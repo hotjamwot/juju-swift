@@ -240,6 +240,20 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                     console.log('[Polyfill] About to postMessage to Swift:', msg);
                     window.webkit.messageHandlers.jujuBridge.postMessage(msg);
                 });
+            },
+            exportSessions: function({ sessions, fields, format }) {
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'exportSessions',
+                        sessions, fields, format, callbackId
+                    });
+                });
             }
         };
         window.jujuApi.getComparisonStats = window.api.getComparisonStats;
@@ -392,6 +406,13 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 }
             case "refreshMenu":
                 handleRefreshMenu()
+            case "exportSessions":
+                if let sessions = dict["sessions"] as? [[String: Any]],
+                   let fields = dict["fields"] as? [String],
+                   let format = dict["format"] as? String,
+                   let callbackId = dict["callbackId"] as? String {
+                    handleExportSessions(sessions: sessions, fields: fields, format: format, callbackId: callbackId)
+                }
             default:
                 break
             }
@@ -657,5 +678,148 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 appDelegate.refreshMenu()
             }
         }
+    }
+    
+    // MARK: - Export Sessions Handler
+    private func handleExportSessions(sessions: [[String: Any]], fields: [String], format: String, callbackId: String) {
+        DispatchQueue.main.async {
+            let panel = NSSavePanel()
+            panel.title = "Export Sessions"
+            switch format {
+            case "csv":
+                panel.allowedFileTypes = ["csv"]
+                panel.nameFieldStringValue = "juju-sessions.csv"
+            case "md":
+                panel.allowedFileTypes = ["md"]
+                panel.nameFieldStringValue = "juju-sessions.md"
+            default:
+                panel.allowedFileTypes = ["txt"]
+                panel.nameFieldStringValue = "juju-sessions.txt"
+            }
+            panel.canCreateDirectories = true
+            panel.isExtensionHidden = false
+            panel.begin { [weak self] result in
+                guard result == .OK, let url = panel.url else {
+                    self?.sendExportCallback(callbackId: callbackId, success: false, error: "Export cancelled.")
+                    return
+                }
+                // --- Compose summary ---
+                let projectFilter = sessions.first?["project"] as? String ?? "All"
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let dates = sessions.compactMap { $0["date"] as? String }.compactMap { dateFormatter.date(from: $0) }
+                let minDate = dates.min().map { dateFormatter.string(from: $0) } ?? ""
+                let maxDate = dates.max().map { dateFormatter.string(from: $0) } ?? ""
+                let dateRange = (minDate == maxDate) ? minDate : (minDate.isEmpty && maxDate.isEmpty ? "All" : "\(minDate) to \(maxDate)")
+                let totalSessions = sessions.count
+                let totalMinutes = sessions.compactMap { row in
+                    if let s = row["duration_minutes"] as? String, let m = Int(s) { return m }
+                    if let m = row["duration_minutes"] as? Int { return m }
+                    return nil
+                }.reduce(0, +)
+                let hours = totalMinutes / 60
+                let minutes = totalMinutes % 60
+                let totalDurationStr = "\(hours)h \(minutes)m"
+                var summary = ""
+                switch format {
+                case "md":
+                    summary += "**Project Filter:** \(projectFilter)  \n"
+                    summary += "**Date Range:** \(dateRange)  \n"
+                    summary += "**Total Sessions:** \(totalSessions)  \n"
+                    summary += "**Total Duration:** \(totalDurationStr)\n\n"
+                case "csv":
+                    summary += "Project Filter: \(projectFilter)\n"
+                    summary += "Date Range: \(dateRange)\n"
+                    summary += "Total Sessions: \(totalSessions)\n"
+                    summary += "Total Duration: \(totalDurationStr)\n\n"
+                default:
+                    summary += "Project Filter: \(projectFilter)\n"
+                    summary += "Date Range: \(dateRange)\n"
+                    summary += "Total Sessions: \(totalSessions)\n"
+                    summary += "Total Duration: \(totalDurationStr)\n\n"
+                }
+                // --- Field order and headers ---
+                let exportFields = [
+                    (header: "Date", key: "date"),
+                    (header: "Project", key: "project"),
+                    (header: "Start Time", key: "start_time"),
+                    (header: "End Time", key: "end_time"),
+                    (header: "Duration", key: "duration_minutes"),
+                    (header: "Notes", key: "notes")
+                ]
+                func formatTime(_ t: Any?) -> String {
+                    guard let s = t as? String else { return "" }
+                    let parts = s.split(separator: ":")
+                    if parts.count >= 2 { return "\(parts[0]):\(parts[1])" }
+                    return s
+                }
+                func formatDuration(_ t: Any?) -> String {
+                    if let s = t as? String, let m = Int(s) {
+                        let h = m / 60; let min = m % 60
+                        return h > 0 ? "\(h)h \(min)m" : "\(min)m"
+                    }
+                    if let m = t as? Int {
+                        let h = m / 60; let min = m % 60
+                        return h > 0 ? "\(h)h \(min)m" : "\(min)m"
+                    }
+                    return ""
+                }
+                var output = summary
+                switch format {
+                case "csv":
+                    output += exportFields.map { $0.header }.joined(separator: ",") + "\n"
+                    for row in sessions {
+                        output += exportFields.map { field in
+                            switch field.key {
+                            case "start_time", "end_time": return formatTime(row[field.key])
+                            case "duration_minutes": return formatDuration(row[field.key])
+                            default: return (row[field.key] as? String ?? "").replacingOccurrences(of: "\"", with: "\"\"")
+                            }
+                        }.map { "\"\($0)\"" }.joined(separator: ",") + "\n"
+                    }
+                case "md":
+                    output += "| " + exportFields.map { $0.header }.joined(separator: " | ") + " |\n"
+                    output += "|" + exportFields.map { _ in " --- " }.joined(separator: "|") + "|\n"
+                    for row in sessions {
+                        output += "| " + exportFields.map { field in
+                            switch field.key {
+                            case "start_time", "end_time": return formatTime(row[field.key])
+                            case "duration_minutes": return formatDuration(row[field.key])
+                            default: return row[field.key] as? String ?? ""
+                            }
+                        }.joined(separator: " | ") + " |\n"
+                    }
+                default:
+                    // txt (tab-separated)
+                    output += exportFields.map { $0.header }.joined(separator: "\t") + "\n"
+                    for row in sessions {
+                        output += exportFields.map { field in
+                            switch field.key {
+                            case "start_time", "end_time": return formatTime(row[field.key])
+                            case "duration_minutes": return formatDuration(row[field.key])
+                            default: return row[field.key] as? String ?? ""
+                            }
+                        }.joined(separator: "\t") + "\n"
+                    }
+                }
+                do {
+                    try output.write(to: url, atomically: true, encoding: .utf8)
+                    self?.sendExportCallback(callbackId: callbackId, success: true, error: nil)
+                } catch {
+                    self?.sendExportCallback(callbackId: callbackId, success: false, error: error.localizedDescription)
+                }
+            }
+        }
+    }
+    private func sendExportCallback(callbackId: String, success: Bool, error: String?) {
+        var result: [String: Any] = ["success": success]
+        if let error = error { result["error"] = error }
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: result, options: [])
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                let js = "window['\(callbackId)'](\(jsonString));"
+                webView.evaluateJavaScript(js, completionHandler: nil)
+            }
+        } catch {}
     }
 } 

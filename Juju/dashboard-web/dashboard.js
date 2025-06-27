@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const prevPageBtn = document.getElementById('prev-page-btn');
         const nextPageBtn = document.getElementById('next-page-btn');
         const pageInfoSpan = document.getElementById('page-info');
+        // New: Sessions tab date filter and export
+        const sessionStartDateInput = document.getElementById('session-filter-start-date');
+        const sessionEndDateInput = document.getElementById('session-filter-end-date');
+        const exportSessionsBtn = document.getElementById('export-sessions-btn');
 
         // --- WKWebView Data Bridge Receivers ---
         window.onSessionsLoaded = function(sessions) {
@@ -226,56 +230,61 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function calculateVisibleSessions() {
-            if (!allSessions) return { visibleSessions: [], totalPages: 1 };
+        function getSessionTabDateRange() {
+            // Returns {start: string|null, end: string|null}
+            const start = sessionStartDateInput?.value || null;
+            const end = sessionEndDateInput?.value || null;
+            return { start, end };
+        }
 
-            let filteredSessions = [...allSessions];
-
+        function filterSessionsForTable() {
+            let filtered = [...allSessions];
+            // Project filter
             if (currentProjectFilter && currentProjectFilter !== 'All') {
-                filteredSessions = filteredSessions.filter(session => 
-                    session.project === currentProjectFilter
-                );
+                filtered = filtered.filter(session => session.project === currentProjectFilter);
             }
+            // Date filter
+            const { start, end } = getSessionTabDateRange();
+            if (start) {
+                filtered = filtered.filter(session => session.date >= start);
+            }
+            if (end) {
+                filtered = filtered.filter(session => session.date <= end);
+            }
+            return filtered;
+        }
 
+        function calculateVisibleSessions() {
+            const filteredSessions = filterSessionsForTable();
             filteredSessions.sort((a, b) => {
                 try {
                     // Try to sort by full datetime (date + time)
                     const timeA = a.start_time || '00:00';
                     const timeB = b.start_time || '00:00';
-                    
                     const dateTimeA = new Date(`${a.date}T${timeA}`);
                     const dateTimeB = new Date(`${b.date}T${timeB}`);
-                    
-                    // Check if the dates are valid
                     if (isNaN(dateTimeA.getTime()) || isNaN(dateTimeB.getTime())) {
-                        // Fallback to date-only sorting
                         const dateA = new Date(a.date + 'T00:00:00');
                         const dateB = new Date(b.date + 'T00:00:00');
                         return dateB - dateA;
                     }
-                    
-                    // Sort by most recent first (descending order)
                     return dateTimeB.getTime() - dateTimeA.getTime();
                 } catch (error) {
-                    // If anything goes wrong, fallback to date-only sorting
                     const dateA = new Date(a.date + 'T00:00:00');
                     const dateB = new Date(b.date + 'T00:00:00');
                     return dateB - dateA;
                 }
             });
-
             const totalPages = Math.ceil(filteredSessions.length / pageSize);
             const startIndex = (currentPage - 1) * pageSize;
             const endIndex = startIndex + pageSize;
             const visibleSessions = filteredSessions.slice(startIndex, endIndex);
-
-            return { visibleSessions, totalPages };
+            return { visibleSessions, totalPages, filteredSessions };
         }
 
         function refreshSessionDisplay() {
             const { visibleSessions, totalPages } = calculateVisibleSessions();
             updateSessionsTable(visibleSessions, refreshDashboardData);
-
             if (pageInfoSpan) {
                 pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
             }
@@ -428,6 +437,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                     eventSystem.showNotification('error', 'Delete Failed', 'An unexpected error occurred while deleting the project');
                 }
             }
+        });
+
+        // Add listeners for new date pickers
+        sessionStartDateInput?.addEventListener('change', () => {
+            currentPage = 1;
+            refreshSessionDisplay();
+        });
+        sessionEndDateInput?.addEventListener('change', () => {
+            currentPage = 1;
+            refreshSessionDisplay();
+        });
+        // Export button
+        exportSessionsBtn?.addEventListener('click', () => {
+            const { filteredSessions } = calculateVisibleSessions();
+            if (!filteredSessions.length) {
+                eventSystem.showNotification('warning', 'No Data', 'No sessions to export for the current filter.');
+                return;
+            }
+            // Dynamically get all keys except 'id'
+            const keys = Object.keys(filteredSessions[0]).filter(k => k !== 'id');
+            // Prepare data as array of objects (for Swift)
+            const exportData = filteredSessions.map(s => {
+                const obj = {};
+                keys.forEach(k => { obj[k] = s[k] ?? ''; });
+                return obj;
+            });
+            // Get selected format
+            const formatSelect = document.getElementById('export-format-select');
+            const format = formatSelect ? formatSelect.value : 'txt';
+            window.jujuApi.exportSessions({
+                sessions: exportData,
+                fields: keys,
+                format
+            }).then(result => {
+                if (result && result.success) {
+                    eventSystem.showNotification('success', 'Exported', 'Sessions exported successfully.');
+                } else {
+                    eventSystem.showNotification('error', 'Export Failed', result && result.error ? result.error : 'Unknown error');
+                }
+            }).catch(err => {
+                eventSystem.showNotification('error', 'Export Failed', err && err.message ? err.message : 'Unknown error');
+            });
         });
 
         // --- Initialization ---
