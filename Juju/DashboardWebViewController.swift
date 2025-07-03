@@ -325,6 +325,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             NSEvent.removeMonitor(monitor)
             cmdWMonitor = nil
         }
+        // Cleanup webView in case window is closing
+        cleanupWebView()
     }
     
     private func loadDashboardHTML() {
@@ -829,5 +831,19 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                 webView.evaluateJavaScript(js, completionHandler: nil)
             }
         } catch {}
+    }
+    
+    // MARK: - WebView Cleanup
+    private func cleanupWebView() {
+        print("[DashboardWebViewController] cleanupWebView called")
+        if let webView = self.webView {
+            webView.navigationDelegate = nil
+            webView.uiDelegate = nil
+            webView.removeFromSuperview()
+            // Remove all message handlers
+            webView.configuration.userContentController.removeAllUserScripts()
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: "jujuBridge")
+            self.webView = nil
+        }
     }
 } 

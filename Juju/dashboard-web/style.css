@@ -154,22 +154,22 @@ tr:hover {
 /* Table Column Specific Styling */
 #recent-sessions-table th:first-child,
 #recent-sessions-table td:first-child {
-    min-width: 100px;
-    white-space: nowrap;
-    width: 9%; /* Date column */
+    min-width: 80px;
+   /* white-space: nowrap; */
+    width: 5%; /* Date column */
 }
 
 #recent-sessions-table th:nth-child(2),
 #recent-sessions-table td:nth-child(2) {
-    min-width: 100px;
-    width: 8%; /* Project column - reduced from 140px */
+    min-width: 80px;
+    width: 5%; /* Project column - reduced from 140px */
 }
 
 #recent-sessions-table th:nth-child(3),
 #recent-sessions-table td:nth-child(3) {
-    min-width: 50x;
+    min-width: 50px;
     text-align: center;
-    width: 6%; /* Duration column - reduced */
+    width: 5%; /* Duration column - reduced */
 }
 
 #recent-sessions-table th:nth-child(4),
@@ -190,14 +190,13 @@ tr:hover {
 
 #recent-sessions-table th:nth-child(7),
 #recent-sessions-table td:nth-child(7) {
-    min-width: 70px;
+    min-width: 60px;
     width: 7%;
     text-align: center;
 }
 
 td.actions {
     text-align: center;
-    width: 50px;
     padding: 0.5rem;
     width: 4%; /* Actions column - minimal */
 }

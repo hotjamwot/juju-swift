@@ -3,10 +3,11 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     var statusItem: NSStatusItem!
-    var dashboardWindow: NSWindow?
     var menuManager: MenuManager!
     var shortcutManager: ShortcutManager!
     var projects: [Project] = []
+    var dashboardWindow: NSWindow?
+    var dashboardWindowController: DashboardWindowController?
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Enable Web Inspector for WKWebView
@@ -76,41 +77,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func showDashboard() {
-        if dashboardWindow == nil {
-            createDashboardWindow()
+        if dashboardWindowController == nil {
+            dashboardWindowController = DashboardWindowController()
         }
-        
-        dashboardWindow?.makeKeyAndOrderFront(nil)
+        dashboardWindowController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
-    }
-    
-    func createDashboardWindow() {
-        let windowSize = NSSize(width: 1320, height: 840) // 10% wider (1200 -> 1320), 5% taller (800 -> 840)
-        let minWindowSize = NSSize(width: 900, height: 600)
-        let screen = NSScreen.main
-        let screenFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
-        let x = screenFrame.midX - windowSize.width / 2
-        let y = screenFrame.midY - windowSize.height / 2
-        let windowRect = NSRect(x: x, y: y, width: windowSize.width, height: windowSize.height)
-        dashboardWindow = NSWindow(
-            contentRect: windowRect,
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        dashboardWindow?.title = "Juju Time Tracker"
-        dashboardWindow?.titleVisibility = .hidden
-        dashboardWindow?.titlebarAppearsTransparent = true
-        dashboardWindow?.isMovableByWindowBackground = true
-        dashboardWindow?.backgroundColor = NSColor.windowBackgroundColor
-        dashboardWindow?.isReleasedWhenClosed = false
-        dashboardWindow?.level = .normal
-        dashboardWindow?.contentMinSize = minWindowSize
-        dashboardWindow?.delegate = self
-        let dashboardView = DashboardWebViewController()
-        dashboardWindow?.contentViewController = dashboardView
-        dashboardWindow?.setFrame(windowRect, display: true)
-        dashboardWindow?.makeKeyAndOrderFront(nil)
     }
     
     func updateMenuBarIcon(isActive: Bool) {
@@ -131,64 +102,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Window Delegate Methods
     
     func windowWillClose(_ notification: Notification) {
-        if let window = notification.object as? NSWindow, window === dashboardWindow {
+        print("[AppDelegate] windowWillClose called for dashboard window")
+        if let window = notification.object as? NSWindow, window == dashboardWindow {
             dashboardWindow = nil
         }
-    }
-    
-    func windowShouldClose(_ sender: NSWindow) -> Bool {
-        // Allow the window to close normally
-        return true
-    }
-    
-    func window(_ window: NSWindow, willEncodeRestorableState state: NSCoder) {
-        // Save window state if needed
-    }
-    
-    func window(_ window: NSWindow, didDecodeRestorableState state: NSCoder) {
-        // Restore window state if needed
-    }
-    
-    // Handle keyboard shortcuts for the dashboard window
-    func window(_ window: NSWindow, performKeyEquivalent event: NSEvent) -> Bool {
-        // Only handle shortcuts for the dashboard window
-        guard window === dashboardWindow else {
-            return false
-        }
-        
-        let commandKey = NSEvent.ModifierFlags.command.rawValue
-        let eventFlags = event.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue
-
-        if event.type == .keyDown && eventFlags == commandKey {
-            switch event.charactersIgnoringModifiers {
-            case "w":
-                window.close()
-                return true
-            case "a":
-                if let dashboardView = window.contentViewController as? DashboardWebViewController {
-                    dashboardView.webView?.evaluateJavaScript("document.execCommand('selectAll');", completionHandler: nil)
-                }
-                return true
-            case "v":
-                if let dashboardView = window.contentViewController as? DashboardWebViewController {
-                    dashboardView.webView?.evaluateJavaScript("document.execCommand('paste');", completionHandler: nil)
-                }
-                return true
-            case "c":
-                if let dashboardView = window.contentViewController as? DashboardWebViewController {
-                    dashboardView.webView?.evaluateJavaScript("document.execCommand('copy');", completionHandler: nil)
-                }
-                return true
-            case "x":
-                if let dashboardView = window.contentViewController as? DashboardWebViewController {
-                    dashboardView.webView?.evaluateJavaScript("document.execCommand('cut');", completionHandler: nil)
-                }
-                return true
-            default:
-                // Don't intercept other shortcuts like Cmd+D, Cmd+Q, etc.
-                break
-            }
-        }
-        return false
     }
 } 
