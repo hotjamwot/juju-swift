@@ -92,7 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     func refreshMenu() {
         projects = ProjectManager.shared.loadProjects()
-        menuManager.refreshMenu()
+        menuManager.updateProjects(projects)
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {
