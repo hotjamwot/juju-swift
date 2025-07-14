@@ -40,5 +40,11 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         if let appDelegate = NSApp.delegate as? AppDelegate {
             appDelegate.dashboardWindowController = nil
         }
+        // Explicitly release the contentViewController to help cleanup WKWebView
+        self.window?.contentViewController = nil
+    }
+
+    deinit {
+        print("Deinit: DashboardWindowController")
     }
 } 

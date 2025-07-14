@@ -846,4 +846,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             self.webView = nil
         }
     }
+    
+    deinit {
+        print("Deinit: DashboardWebViewController")
+    }
 } 
