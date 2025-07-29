@@ -8,6 +8,9 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     
     override func loadView() {
         let config = WKWebViewConfiguration()
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            config.processPool = appDelegate.sharedProcessPool
+        }
         if #available(macOS 11.0, *) {
             config.defaultWebpagePreferences.allowsContentJavaScript = true
         } else {
@@ -837,6 +840,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     private func cleanupWebView() {
         print("[DashboardWebViewController] cleanupWebView called")
         if let webView = self.webView {
+            // Load about:blank to clear memory and JS state
+            webView.load(URLRequest(url: URL(string: "about:blank")!))
             webView.navigationDelegate = nil
             webView.uiDelegate = nil
             webView.removeFromSuperview()

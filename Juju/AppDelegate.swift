@@ -1,4 +1,5 @@
 import Cocoa
+import WebKit
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
@@ -8,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var projects: [Project] = []
     var dashboardWindow: NSWindow?
     var dashboardWindowController: DashboardWindowController?
+    let sharedProcessPool = WKProcessPool()
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Enable Web Inspector for WKWebView
