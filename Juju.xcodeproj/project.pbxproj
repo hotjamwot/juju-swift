@@ -43,7 +43,7 @@
 		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
-		6697532E2E06C48600D09901 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+
 		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
 		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
@@ -77,7 +77,6 @@
 			isa = PBXGroup;
 			children = (
 				66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */,
-				6697532E2E06C48600D09901 /* Assets.xcassets */,
 				661564842E06159D006D14F6 /* NotesModalViewController.swift */,
 				6627709F2E0451AD002D6859 /* JujuUtils.swift */,
 				66E0B07E2E033E4D0029121D /* dashboard-web */,
@@ -196,7 +195,6 @@
 				6657F69F2E0313200016F333 /* icon.png in Resources */,
 				6657F69B2E0313200016F333 /* icon-active.png in Resources */,
 				6657F69C2E0313200016F333 /* icon-idle.png in Resources */,
-				6697532F2E06C48600D09901 /* Assets.xcassets in Resources */,
 				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,6 +1,8 @@
 import Cocoa
 
 class DashboardWindowController: NSWindowController, NSWindowDelegate {
+    private var isActuallyClosing = false
+    
     init() {
         let windowSize = NSSize(width: 1400, height: 1000)
         let minWindowSize = NSSize(width: 1400, height: 900)
@@ -37,11 +39,49 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            appDelegate.dashboardWindowController = nil
+        print("[DashboardWindowController] windowWillClose called")
+        
+        if isActuallyClosing {
+            print("[DashboardWindowController] Actually closing window and cleaning up")
+            // Cleanup when actually closing
+            if let appDelegate = NSApp.delegate as? AppDelegate {
+                appDelegate.dashboardWindowController = nil
+            }
+            // Explicitly release the contentViewController to help cleanup WKWebView
+            self.window?.contentViewController = nil
+        } else {
+            print("[DashboardWindowController] Hiding window for reuse instead of closing")
+            // Cancel the close operation and hide instead
+            if let window = self.window {
+                window.orderOut(nil)
+            }
         }
-        // Explicitly release the contentViewController to help cleanup WKWebView
-        self.window?.contentViewController = nil
+    }
+    
+    // Override close to hide instead of close
+    override func close() {
+        print("[DashboardWindowController] close called - hiding window instead")
+        if let window = self.window {
+            window.orderOut(nil)
+        }
+    }
+    
+    // Method to actually close the window (called during app termination)
+    func forceClose() {
+        print("[DashboardWindowController] forceClose called")
+        isActuallyClosing = true
+        if let window = self.window {
+            window.close()
+        }
+    }
+    
+    // Override windowShouldClose to hide instead of close
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        print("[DashboardWindowController] windowShouldClose called - hiding instead")
+        if let window = self.window {
+            window.orderOut(nil)
+        }
+        return false // Prevent actual closing
     }
 
     deinit {

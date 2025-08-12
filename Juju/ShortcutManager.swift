@@ -21,7 +21,7 @@ class ShortcutManager {
         let modifiers: UInt32 = UInt32(shiftKey | optionKey | cmdKey)
 
         // Define a unique signature and id for your hotkey
-        var hotKeyID = EventHotKeyID(signature: OSType(UInt32(truncatingIfNeeded: "JUJU".hashValue)), id: 1)
+        let hotKeyID = EventHotKeyID(signature: OSType(UInt32(truncatingIfNeeded: "JUJU".hashValue)), id: 1)
         let status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetEventDispatcherTarget(), 0, &hotKeyRef)
         if status == noErr {
             print("✅ Carbon global hotkey registered successfully!")

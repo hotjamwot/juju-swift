@@ -79,11 +79,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func showDashboard() {
+        // Reuse existing dashboard window controller if it exists
         if dashboardWindowController == nil {
+            print("[AppDelegate] Creating new DashboardWindowController")
             dashboardWindowController = DashboardWindowController()
+        } else {
+            print("[AppDelegate] Reusing existing DashboardWindowController")
         }
+        
+        // Show the window (either existing or new)
         dashboardWindowController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    func forceCloseDashboard() {
+        print("[AppDelegate] forceCloseDashboard called")
+        if let controller = dashboardWindowController {
+            // Force actual close to terminate WKWebView process
+            controller.forceClose()
+            dashboardWindowController = nil
+        }
     }
     
     func updateMenuBarIcon(isActive: Bool) {
@@ -98,6 +113,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {
+        print("[AppDelegate] applicationWillTerminate called")
+        
+        // Properly close dashboard to terminate WKWebView process
+        if let controller = dashboardWindowController {
+            print("[AppDelegate] Terminating dashboard to cleanup WKWebView process")
+            controller.window?.close() // This will actually close, not hide
+            dashboardWindowController = nil
+        }
+        
         shortcutManager.cleanup()
     }
     

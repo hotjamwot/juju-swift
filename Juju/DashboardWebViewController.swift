@@ -271,7 +271,14 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     
     override func viewDidAppear() {
         super.viewDidAppear()
+        
+        // Reset web view for reuse if it already exists
+        if webView != nil {
+            resetWebViewForReuse()
+        }
+        
         loadDashboardHTML()
+        
         // Add invisible menu to enable standard shortcuts (Cmd+C, Cmd+V, etc.)
         if let window = self.view.window {
             let menu = NSMenu()
@@ -300,8 +307,8 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             menu.addItem(windowMenuItem)
             let windowMenu = NSMenu(title: "Window")
             windowMenuItem.submenu = windowMenu
-            let closeItem = NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-            closeItem.target = window
+            let closeItem = NSMenuItem(title: "Close Window", action: #selector(hideWindow), keyEquivalent: "w")
+            closeItem.target = self
             windowMenu.addItem(closeItem)
 
             window.menu = menu
@@ -309,10 +316,18 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         // Add local monitor for Cmd+W
         cmdWMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "w" {
-                self?.view.window?.performClose(nil)
+                print("[DashboardWebViewController] Cmd+W detected, hiding window")
+                self?.hideWindow()
                 return nil // Consume the event
             }
             return event
+        }
+    }
+    
+    @objc private func hideWindow() {
+        print("[DashboardWebViewController] hideWindow called")
+        if let window = self.view.window {
+            window.orderOut(nil)
         }
     }
     
@@ -333,12 +348,14 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     }
     
     private func loadDashboardHTML() {
+        print("[DashboardWebViewController] loadDashboardHTML called")
         // Look for dashboard-web/dashboard.html in the app bundle
         guard let htmlURL = Bundle.main.url(forResource: "dashboard-web/dashboard", withExtension: "html") else {
             print("[DashboardWebViewController] ERROR: dashboard.html not found in bundle!")
             return
         }
         // Load the HTML file, allowing access to its folder for assets
+        print("[DashboardWebViewController] Loading dashboard HTML from: \(htmlURL)")
         webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
     }
     
@@ -696,16 +713,31 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         DispatchQueue.main.async {
             let panel = NSSavePanel()
             panel.title = "Export Sessions"
-            switch format {
-            case "csv":
-                panel.allowedFileTypes = ["csv"]
-                panel.nameFieldStringValue = "juju-sessions.csv"
-            case "md":
-                panel.allowedFileTypes = ["md"]
-                panel.nameFieldStringValue = "juju-sessions.md"
-            default:
-                panel.allowedFileTypes = ["txt"]
-                panel.nameFieldStringValue = "juju-sessions.txt"
+            if #available(macOS 12.0, *) {
+                switch format {
+                case "csv":
+                    panel.allowedContentTypes = [.commaSeparatedText]
+                    panel.nameFieldStringValue = "juju-sessions.csv"
+                case "md":
+                    panel.allowedContentTypes = [.text]
+                    panel.nameFieldStringValue = "juju-sessions.md"
+                default:
+                    panel.allowedContentTypes = [.text]
+                    panel.nameFieldStringValue = "juju-sessions.txt"
+                }
+            } else {
+                // Fallback for older macOS versions
+                switch format {
+                case "csv":
+                    panel.allowedFileTypes = ["csv"]
+                    panel.nameFieldStringValue = "juju-sessions.csv"
+                case "md":
+                    panel.allowedFileTypes = ["md"]
+                    panel.nameFieldStringValue = "juju-sessions.md"
+                default:
+                    panel.allowedFileTypes = ["txt"]
+                    panel.nameFieldStringValue = "juju-sessions.txt"
+                }
             }
             panel.canCreateDirectories = true
             panel.isExtensionHidden = false
@@ -840,16 +872,289 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     private func cleanupWebView() {
         print("[DashboardWebViewController] cleanupWebView called")
         if let webView = self.webView {
-            // Load about:blank to clear memory and JS state
+            // Clean up content without destroying the process
             webView.load(URLRequest(url: URL(string: "about:blank")!))
-            webView.navigationDelegate = nil
-            webView.uiDelegate = nil
-            webView.removeFromSuperview()
-            // Remove all message handlers
+            
+            // Clear all user scripts and message handlers
             webView.configuration.userContentController.removeAllUserScripts()
             webView.configuration.userContentController.removeScriptMessageHandler(forName: "jujuBridge")
-            self.webView = nil
+            
+            // Clear navigation and UI delegates
+            webView.navigationDelegate = nil
+            webView.uiDelegate = nil
+            
+            // Don't remove from superview - just keep it attached but hidden
+            print("[DashboardWebViewController] WebView content cleaned up (process preserved)")
         }
+    }
+    
+    // MARK: - WebView Reset for Reuse
+    private func resetWebViewForReuse() {
+        print("[DashboardWebViewController] resetWebViewForReuse called")
+        if let webView = self.webView {
+            // Ensure webView is properly attached to the view hierarchy
+            if webView.superview == nil {
+                self.view = webView
+                print("[DashboardWebViewController] WebView reattached to view hierarchy")
+            }
+            
+            // Remove existing jujuBridge handler if it exists
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: "jujuBridge")
+            
+            // Add the message handler for reuse
+            webView.configuration.userContentController.add(self, name: "jujuBridge")
+            print("[DashboardWebViewController] jujuBridge message handler reset")
+            
+            // Re-inject the API polyfill (this can be done multiple times safely)
+            let apiScript = WKUserScript(source: getApiPolyfillScript(), injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            webView.configuration.userContentController.addUserScript(apiScript)
+            
+            print("[DashboardWebViewController] WebView reset for reuse")
+        }
+    }
+    
+    private func getApiPolyfillScript() -> String {
+        // Return the API polyfill script content
+        return """
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        console.log('Polyfill injected');
+        window.api = window.api || {};
+        window.api.getComparisonStats = function() {
+            console.log('window.api.getComparisonStats called');
+            const sessions = window.allSessions && Array.isArray(window.allSessions) ? window.allSessions : [];
+            if (!sessions.length) {
+                console.warn('getComparisonStats: No session data available.');
+                return Promise.resolve(null);
+            }
+            // Helper: parse date string to Date object
+            function parseDate(dateStr) {
+                return new Date(dateStr + 'T00:00:00');
+            }
+            // Helper: get ISO week number and year
+            function getWeekYear(date) {
+                const d = new Date(date);
+                d.setHours(0,0,0,0);
+                d.setDate(d.getDate() + 4 - (d.getDay()||7));
+                const yearStart = new Date(d.getFullYear(),0,1);
+                const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return { year: d.getFullYear(), week: weekNo };
+            }
+            // Helper: get YYYY-MM for month key
+            function getMonthKey(date) {
+                return date.getFullYear() + '-' + (date.getMonth()+1).toString().padStart(2,'0');
+            }
+            // Helper: sum duration for a given date
+            function sumDay(date) {
+                const key = date.toISOString().slice(0,10);
+                return sessions.filter(s => s.date === key)
+                    .reduce((sum, s) => sum + (Number(s.duration_minutes ?? s.durationMinutes) || 0), 0) / 60;
+            }
+            // --- DEFINE TODAY AT THE TOP ---
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            // --- DAY COMPARISON: Today vs. 7-Day Average ---
+            const last7Days = [];
+            for (let i = 1; i <= 7; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                last7Days.push(d);
+            }
+            const last7DayValues = last7Days.map(d => sumDay(d));
+            const avg7 = last7DayValues.reduce((a, b) => a + b, 0) / last7DayValues.length;
+            const todayValue = sumDay(today);
+            const dayRange = avg7 ? ((todayValue - avg7) >= 0 ? '+' : '') + (todayValue - avg7).toFixed(1) + 'h vs avg' : '';
+            // --- WEEK COMPARISON ---
+            const thisMonday = new Date(today);
+            thisMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+            function sumWeekRange(start, end) {
+                return sessions.filter(s => {
+                    const d = parseDate(s.date);
+                    return d >= start && d <= end;
+                }).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
+            }
+            const weekPast = [];
+            for (let i = 3; i >= 1; i--) {
+                const pastMonday = new Date(thisMonday);
+                pastMonday.setDate(thisMonday.getDate() - 7*i);
+                const pastEnd = new Date(pastMonday);
+                pastEnd.setDate(pastMonday.getDate() + (today.getDay()));
+                weekPast.push({
+                    label: pastMonday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '–' + pastEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    value: +sumWeekRange(pastMonday, pastEnd).toFixed(1)
+                });
+            }
+            const weekCurrentValue = +sumWeekRange(thisMonday, today).toFixed(1);
+            const weekAvg = weekPast.length ? weekPast.reduce((sum, d) => sum + d.value, 0) / weekPast.length : 0;
+            const weekRange = weekAvg ? ((weekCurrentValue - weekAvg) >= 0 ? '+' : '') + (weekCurrentValue - weekAvg).toFixed(1) + 'h vs avg' : '';
+            const weekCurrent = { label: thisMonday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '–' + today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), value: weekCurrentValue, range: weekRange };
+            // --- MONTH COMPARISON ---
+            const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            function sumMonthRange(start, end) {
+                return sessions.filter(s => {
+                    const d = parseDate(s.date);
+                    return d >= start && d <= end;
+                }).reduce((sum, s) => sum + (s.duration_minutes || s.durationMinutes || 0), 0) / 60;
+            }
+            const monthPast = [];
+            for (let i = 3; i >= 1; i--) {
+                const pastMonthStart = new Date(thisMonthStart);
+                pastMonthStart.setMonth(thisMonthStart.getMonth() - i);
+                const pastEnd = new Date(pastMonthStart);
+                pastEnd.setDate(Math.min(today.getDate(), new Date(pastMonthStart.getFullYear(), pastMonthStart.getMonth() + 1, 0).getDate()));
+                monthPast.push({
+                    label: pastMonthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
+                    value: +sumMonthRange(pastMonthStart, pastEnd).toFixed(1)
+                });
+            }
+            const monthCurrentValue = +sumMonthRange(thisMonthStart, today).toFixed(1);
+            const monthAvg = monthPast.length ? monthPast.reduce((sum, d) => sum + d.value, 0) / monthPast.length : 0;
+            const monthRange = monthAvg ? ((monthCurrentValue - monthAvg) >= 0 ? '+' : '') + (monthCurrentValue - monthAvg).toFixed(1) + 'h vs avg' : '';
+            const monthCurrent = { label: thisMonthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }), value: monthCurrentValue, range: monthRange };
+            // Compose result
+            const result = {
+                day: { past: [{ label: "7-Day Avg", value: +avg7.toFixed(1) }], current: { label: "Today", value: +todayValue.toFixed(1), range: dayRange } },
+                week: { past: weekPast, current: weekCurrent },
+                month: { past: monthPast, current: monthCurrent }
+            };
+            console.log('getComparisonStats result:', result);
+            return Promise.resolve(result);
+        };
+        window.jujuApi = {
+            loadSessions: function() {
+                console.log('window.jujuApi.loadSessions called');
+                return new Promise((resolve, reject) => {
+                    const callbackName = 'onSessionsLoaded';
+                    const original = window[callbackName];
+                    window[callbackName] = function(sessions) {
+                        if (typeof original === 'function') original(sessions);
+                        resolve(sessions);
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadSessions' });
+                });
+            },
+            loadProjects: function() {
+                console.log('window.jujuApi.loadProjects called');
+                return new Promise((resolve, reject) => {
+                    const callbackName = 'onProjectsLoaded';
+                    const original = window[callbackName];
+                    window[callbackName] = function(projects) {
+                        if (typeof original === 'function') original(projects);
+                        resolve(projects);
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({ type: 'loadProjects' });
+                });
+            },
+            updateSession: function(id, field, value) {
+                console.log('window.jujuApi.updateSession called', id, field, value);
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'updateSession',
+                        id, field, value, callbackId
+                    });
+                });
+            },
+            deleteSession: function(id) {
+                console.log('window.jujuApi.deleteSession called', id, 'type:', typeof id);
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    console.log('[Polyfill] About to postMessage to Swift: type=deleteSession, id=', id, 'type:', typeof id, 'callbackId:', callbackId);
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'deleteSession',
+                        id, callbackId
+                    });
+                });
+            },
+            getProjectNames: function() {
+                console.log('window.jujuApi.getProjectNames called');
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result.names);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'getProjectNames',
+                        callbackId
+                    });
+                });
+            },
+            testLog: function() {
+                console.log('window.jujuApi.testLog called');
+            },
+            addProject: function(project) {
+                console.log('window.jujuApi.addProject called', project);
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'addProject',
+                        project, callbackId
+                    });
+                });
+            },
+            updateProjectColor: function(id, color) {
+                console.log('window.jujuApi.updateProjectColor called', id, color);
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'updateProjectColor',
+                        id, color, callbackId
+                    });
+                });
+            },
+            deleteProject: function(id) {
+                console.log('[Polyfill] window.jujuApi.deleteProject called with id', id);
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    const msg = { type: 'deleteProject', id, callbackId };
+                    console.log('[Polyfill] About to postMessage to Swift:', msg);
+                    window.webkit.messageHandlers.jujuBridge.postMessage(msg);
+                });
+            },
+            exportSessions: function({ sessions, fields, format }) {
+                return new Promise((resolve, reject) => {
+                    const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                    window[callbackId] = (result) => {
+                        delete window[callbackId];
+                        if (result && result.success) resolve(result);
+                        else reject(result && result.error ? result.error : 'Unknown error');
+                    };
+                    window.webkit.messageHandlers.jujuBridge.postMessage({
+                        type: 'exportSessions',
+                        sessions, fields, format, callbackId
+                    });
+                });
+            }
+        };
+        window.jujuApi.getComparisonStats = window.api.getComparisonStats;
+        """
     }
     
     deinit {
