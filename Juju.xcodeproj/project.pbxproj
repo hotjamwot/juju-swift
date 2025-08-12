@@ -20,7 +20,6 @@
 		6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6902E0313200016F333 /* MenuManager.swift */; };
 		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
 		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
-		6697532F2E06C48600D09901 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6697532E2E06C48600D09901 /* Assets.xcassets */; };
 		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
 		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
 		66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
