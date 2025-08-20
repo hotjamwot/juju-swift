@@ -10,10 +10,41 @@ class NotesModalViewController: NSViewController, WKScriptMessageHandler {
         self.init()
         self.completion = completion
     }
+
+    func setCompletion(_ completion: @escaping (String, Int?) -> Void) {
+        self.completion = completion
+    }
+
+    // Reset the notes input to blank and focus the field
+    func resetContentAndFocus() {
+        if webView != nil {
+            let script = """
+            (function(){
+                const t = document.getElementById('notesInput');
+                if (t) { t.value = ''; t.focus(); return true; }
+                return false;
+            })();
+            """
+            webView.evaluateJavaScript(script) { [weak self] result, _ in
+                if let ok = result as? Bool, ok == false {
+                    self?.loadNotesModal()
+                }
+            }
+        } else if let textView = fallbackTextView {
+            textView.string = ""
+            DispatchQueue.main.async { [weak self] in
+                self?.view.window?.makeFirstResponder(textView)
+            }
+        }
+    }
     
     override func loadView() {
         // Create WKWebView configuration with clipboard permissions
         let config = WKWebViewConfiguration()
+        // Share the same process pool as the dashboard to avoid spawning new WebKit processes
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            config.processPool = appDelegate.sharedProcessPool
+        }
         let userContentController = WKUserContentController()
         userContentController.add(self, name: "notesBridge")
         config.userContentController = userContentController
@@ -285,6 +316,18 @@ extension NotesModalViewController: WKNavigationDelegate {
 }
 
 class NotesModalWindowController: NSWindowController {
+    func present(completion: @escaping (String, Int?) -> Void) {
+        if let notesVC = window?.contentViewController as? NotesModalViewController {
+            notesVC.setCompletion(completion)
+        }
+        showWindow(nil)
+        // Reset and focus after the window is visible
+        if let notesVC = window?.contentViewController as? NotesModalViewController {
+            DispatchQueue.main.async {
+                notesVC.resetContentAndFocus()
+            }
+        }
+    }
     convenience init(completion: @escaping (String, Int?) -> Void) {
         let notesViewController = NotesModalViewController(completion: completion)
         

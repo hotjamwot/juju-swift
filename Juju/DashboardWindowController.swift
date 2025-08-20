@@ -22,7 +22,7 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
         window.backgroundColor = NSColor.windowBackgroundColor
-        window.isReleasedWhenClosed = true
+        window.isReleasedWhenClosed = false  // Don't release when closed to preserve the instance
         window.level = .normal
         window.contentMinSize = minWindowSize
 

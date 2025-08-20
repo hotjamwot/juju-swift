@@ -6,6 +6,7 @@ class MenuManager {
     private weak var appDelegate: AppDelegate?
     private var sessionManager = SessionManager.shared
     private var updateTimer: Timer?
+    private var notesWindowController: NotesModalWindowController?
     
     init(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
@@ -103,26 +104,37 @@ class MenuManager {
         print("[MenuManager] endCurrentSession called")
         stopUpdateTimer()
         
-        print("[MenuManager] Creating NotesModalWindowController")
-        let notesWindow = NotesModalWindowController { [weak self] (note: String?, mood: Int?) in
+        print("[MenuManager] Preparing NotesModalWindowController")
+        if notesWindowController == nil {
+            notesWindowController = NotesModalWindowController { [weak self] (note: String?, mood: Int?) in
+                print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>") Mood: \(mood.map { String($0) } ?? "<nil>")")
+                // Only end the session if notes are provided (not null)
+                if let note = note {
+                    self?.sessionManager.endSession(notes: note, mood: mood)
+                    self?.appDelegate?.updateMenuBarIcon(isActive: false)
+                    self?.refreshMenu()
+                } else {
+                    // Session was cancelled, restart the update timer and keep session active
+                    print("[MenuManager] Session cancelled, keeping session active")
+                    self?.startUpdateTimer()
+                }
+            }
+        }
+        guard let notesWindow = notesWindowController else { return }
+        
+        // Show the AppKit-based modal
+        print("[MenuManager] Calling present on NotesModalWindowController")
+        notesWindow.present { [weak self] (note: String?, mood: Int?) in
             print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>") Mood: \(mood.map { String($0) } ?? "<nil>")")
-            
-            // Only end the session if notes are provided (not null)
-            // If cancelled (note is nil), keep the session active
             if let note = note {
                 self?.sessionManager.endSession(notes: note, mood: mood)
                 self?.appDelegate?.updateMenuBarIcon(isActive: false)
                 self?.refreshMenu()
             } else {
-                // Session was cancelled, restart the update timer and keep session active
                 print("[MenuManager] Session cancelled, keeping session active")
                 self?.startUpdateTimer()
             }
         }
-        
-        // Show the AppKit-based modal
-        print("[MenuManager] Calling showWindow on NotesModalWindowController")
-        notesWindow.showWindow(nil)
         print("[MenuManager] showWindow call completed")
     }
     

@@ -79,12 +79,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func showDashboard() {
-        // Reuse existing dashboard window controller if it exists
+        // Always reuse existing dashboard window controller if it exists
         if dashboardWindowController == nil {
             print("[AppDelegate] Creating new DashboardWindowController")
             dashboardWindowController = DashboardWindowController()
         } else {
             print("[AppDelegate] Reusing existing DashboardWindowController")
+            // Ensure the window is properly configured for reuse
+            if let window = dashboardWindowController?.window {
+                // Reset the window to a clean state
+                window.orderFront(nil)
+            }
         }
         
         // Show the window (either existing or new)
@@ -118,6 +123,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Properly close dashboard to terminate WKWebView process
         if let controller = dashboardWindowController {
             print("[AppDelegate] Terminating dashboard to cleanup WKWebView process")
+            // Get the content view controller and cleanup the web view
+            if let dashboardVC = controller.window?.contentViewController as? DashboardWebViewController {
+                dashboardVC.cleanupWebView()
+            }
             controller.window?.close() // This will actually close, not hide
             dashboardWindowController = nil
         }
