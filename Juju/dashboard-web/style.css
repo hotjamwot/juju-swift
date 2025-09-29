@@ -478,8 +478,15 @@ select.input-base {
     background: transparent;
     padding: 6px 8px;
     border-radius: 6px;
+    color: var(--text-light);
+    text-align: left;
 }
-.project-about .about-display:hover { border-color: var(--border-color); }
+.project-about .about-display.placeholder {
+    color: var(--text-muted);
+}
+.project-about .about-display:hover {
+    border-color: var(--border-color);
+}
 
 .project-color {
     display: flex;

@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </div>
                         <div class="project-about">
-                            <div class="about-display" data-project-id="${project.id}" style="min-height: 1.8em; padding: 6px 8px; border: 1px solid transparent; border-radius: 4px; cursor: text; color: ${project.about && project.about.trim() ? 'inherit' : 'var(--text-muted)'}; background: transparent; text-align: left;">
+                            <div class="about-display ${project.about && project.about.trim() ? '' : 'placeholder'}" data-project-id="${project.id}">
                                 ${project.about && project.about.trim() ? project.about.replace(/\n/g, '<br>') : '(Click to add about...)'}
                             </div>
                         </div>
