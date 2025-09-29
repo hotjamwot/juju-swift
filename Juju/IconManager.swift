@@ -2,8 +2,9 @@ import Cocoa
 
 class IconManager {
     static func loadIcon(for button: NSStatusBarButton) {
-        if let image = NSImage(named: "icon-idle") {
+        if let image = NSImage(named: "status-idle") {
             image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = true
             button.image = image
             print("✅ Custom icon loaded successfully from Assets catalog!")
         } else {
@@ -13,10 +14,11 @@ class IconManager {
     }
     
     static func updateIcon(for button: NSStatusBarButton, isActive: Bool) {
-        let iconName = isActive ? "icon-active" : "icon-idle"
+        let iconName = isActive ? "status-active" : "status-idle"
         
         if let image = NSImage(named: iconName) {
             image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = true
             button.image = image
             print("✅ \(iconName) loaded successfully from Assets catalog!")
         } else {

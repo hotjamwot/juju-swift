@@ -7,6 +7,7 @@ class MenuManager {
     private var sessionManager = SessionManager.shared
     private var updateTimer: Timer?
     private var notesWindowController: NotesModalWindowController?
+    private weak var endSessionMenuItem: NSMenuItem?
     
     init(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
@@ -26,6 +27,7 @@ class MenuManager {
             )
             endSessionItem.target = self
             menu.addItem(endSessionItem)
+            endSessionMenuItem = endSessionItem
         } else {
             // Session is idle - show Start Session with project submenu
             let startSessionItem = NSMenuItem(title: "Start Session", action: nil, keyEquivalent: "s")
@@ -77,7 +79,12 @@ class MenuManager {
         
         // Start new timer to update menu every minute
         updateTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
-            self?.refreshMenu()
+            guard let self = self else { return }
+            if self.sessionManager.isSessionActive, let item = self.endSessionMenuItem {
+                item.title = "End Session (\(self.sessionManager.currentProjectName ?? "Unknown") - \(self.sessionManager.getCurrentSessionDuration()))"
+            } else {
+                self.refreshMenu()
+            }
         }
     }
     

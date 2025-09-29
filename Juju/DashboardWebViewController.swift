@@ -6,6 +6,7 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     
     private var cmdWMonitor: Any?
     private var isWebViewInitialized = false
+    private var hasLoaded = false
     
     override func loadView() {
         // Only create the web view once
@@ -19,8 +20,10 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             } else {
                 config.preferences.javaScriptEnabled = true
             }
-            // Explicitly enable developer extras for WKWebView Inspector
+            // Explicitly enable developer extras for WKWebView Inspector (Debug only)
+            #if DEBUG
             config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+            #endif
             let userContentController = WKUserContentController()
             userContentController.add(self, name: "jujuBridge")
             // Inject window.jujuApi polyfill with debug logs
@@ -278,9 +281,16 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
     override func viewDidAppear() {
         super.viewDidAppear()
         
-        // Always reload dashboard HTML when view appears to ensure fresh content
-        print("[DashboardWebViewController] Loading dashboard HTML")
-        loadDashboardHTML()
+        if !hasLoaded {
+            print("[DashboardWebViewController] Initial load of dashboard HTML")
+            loadDashboardHTML()
+            hasLoaded = true
+        } else {
+            // Soft refresh: reload data without reloading HTML
+            print("[DashboardWebViewController] Refreshing data (sessions/projects) without reloading HTML")
+            handleLoadSessions()
+            handleLoadProjects()
+        }
         
         // Add invisible menu to enable standard shortcuts (Cmd+C, Cmd+V, etc.)
         if let window = self.view.window {
@@ -540,33 +550,13 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         sessions[idx] = newSession
         // Save all sessions back to CSV
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         // Before writing to CSV, ensure times are in HH:mm:ss format
         func ensureSeconds(_ time: String) -> String {
             return time.count == 5 ? time + ":00" : time
         }
-        let rows = sessions.map { s in
-            let startTime = ensureSeconds(s.startTime)
-            let endTime = ensureSeconds(s.endTime)
-            let moodStr = s.mood != nil ? String(s.mood!) : ""
-            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(moodStr)"
-        }
-        let csv = header + rows.joined(separator: "\n") + "\n"
-        do {
-            let appSupportPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            let jujuPath = appSupportPath?.appendingPathComponent("Juju")
-            let dataFile = jujuPath?.appendingPathComponent("data.csv")
-            if let dataFile = dataFile {
-                try? FileManager.default.createDirectory(at: jujuPath!, withIntermediateDirectories: true)
-                try csv.write(to: dataFile, atomically: true, encoding: .utf8)
-                sendUpdateSessionCallback(callbackId: callbackId, success: true, error: nil)
-                handleLoadSessions() // Immediately send updated data to JS
-            } else {
-                sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Data file not found")
-            }
-        } catch {
-            sendUpdateSessionCallback(callbackId: callbackId, success: false, error: error.localizedDescription)
-        }
+        SessionManager.shared.saveAllSessions(sessions)
+        sendUpdateSessionCallback(callbackId: callbackId, success: true, error: nil)
+        handleLoadSessions()
     }
     
     // MARK: - Session Deletion
@@ -578,33 +568,13 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
         }
         sessions.remove(at: idx)
         // Save all sessions back to CSV
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         // Before writing to CSV, ensure times are in HH:mm:ss format
         func ensureSeconds(_ time: String) -> String {
             return time.count == 5 ? time + ":00" : time
         }
-        let rows = sessions.map { s in
-            let startTime = ensureSeconds(s.startTime)
-            let endTime = ensureSeconds(s.endTime)
-            let moodStr = s.mood != nil ? String(s.mood!) : ""
-            return "\(s.id),\(s.date),\(startTime),\(endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(moodStr)"
-        }
-        let csv = header + rows.joined(separator: "\n") + "\n"
-        do {
-            let appSupportPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            let jujuPath = appSupportPath?.appendingPathComponent("Juju")
-            let dataFile = jujuPath?.appendingPathComponent("data.csv")
-            if let dataFile = dataFile {
-                try? FileManager.default.createDirectory(at: jujuPath!, withIntermediateDirectories: true)
-                try csv.write(to: dataFile, atomically: true, encoding: .utf8)
-                sendUpdateSessionCallback(callbackId: callbackId, success: true, error: nil)
-                handleLoadSessions() // Immediately send updated data to JS
-            } else {
-                sendUpdateSessionCallback(callbackId: callbackId, success: false, error: "Data file not found")
-            }
-        } catch {
-            sendUpdateSessionCallback(callbackId: callbackId, success: false, error: error.localizedDescription)
-        }
+        SessionManager.shared.saveAllSessions(sessions)
+        sendUpdateSessionCallback(callbackId: callbackId, success: true, error: nil)
+        handleLoadSessions()
     }
     
     private func sendUpdateSessionCallback(callbackId: String, success: Bool, error: String?) {

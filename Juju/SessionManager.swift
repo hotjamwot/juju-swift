@@ -115,7 +115,7 @@ class SessionManager {
         let id = UUID().uuidString
         let moodStr = mood.map { String($0) } ?? ""
         
-        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\"\(sessionData.projectName)\",\"\(sessionData.notes)\",\(moodStr)\n"
+        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\(csvEscape(sessionData.projectName)),\(csvEscape(sessionData.notes)),\(moodStr)\n"
         
         // Check if file exists and needs header
         let needsHeader = !fileExists() || isFileEmpty()
@@ -301,12 +301,25 @@ extension SessionManager {
     
     // Save all sessions (with IDs) to CSV
     func saveAllSessions(_ sessions: [SessionRecord]) {
+        func ensureSeconds(_ time: String) -> String { time.count == 5 ? time + ":00" : time }
         let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
         let rows = sessions.map { s in
-            "\(s.id),\(s.date),\(s.startTime),\(s.endTime),\(s.durationMinutes),\"\(s.projectName)\",\"\(s.notes)\",\(s.mood.map { String($0) } ?? "")\""
+            let project = csvEscape(s.projectName)
+            let notes = csvEscape(s.notes)
+            let moodStr = s.mood.map(String.init) ?? ""
+            let start = ensureSeconds(s.startTime)
+            let end = ensureSeconds(s.endTime)
+            return "\(s.id),\(s.date),\(start),\(end),\(s.durationMinutes),\(project),\(notes),\(moodStr)"
         }
         let csv = header + rows.joined(separator: "\n") + "\n"
         writeToFile(csv)
         print("[SessionManager] Rewritten CSV with IDs for all sessions.")
     }
 } 
+
+// MARK: - CSV helpers
+private extension SessionManager {
+    func csvEscape(_ s: String) -> String {
+        return "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+    }
+}
