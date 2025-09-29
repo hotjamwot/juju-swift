@@ -236,6 +236,21 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                         });
                     });
                 },
+                updateProjectAbout: function(id, about) {
+                    console.log('window.jujuApi.updateProjectAbout called', id);
+                    return new Promise((resolve, reject) => {
+                        const callbackId = 'cb_' + Math.random().toString(36).substr(2, 9);
+                        window[callbackId] = (result) => {
+                            delete window[callbackId];
+                            if (result && result.success) resolve(result);
+                            else reject(result && result.error ? result.error : 'Unknown error');
+                        };
+                        window.webkit.messageHandlers.jujuBridge.postMessage({
+                            type: 'updateProjectAbout',
+                            id, about, callbackId
+                        });
+                    });
+                },
                 deleteProject: function(id) {
                     console.log('[Polyfill] window.jujuApi.deleteProject called with id', id);
                     return new Promise((resolve, reject) => {
@@ -427,6 +442,18 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
                    let color = dict["color"] as? String,
                    let callbackId = dict["callbackId"] as? String {
                     handleUpdateProjectColor(id: id, color: color, callbackId: callbackId)
+                }
+            case "updateProjectAbout":
+                let idValue = dict["id"]
+                let id: String? = {
+                    if let strId = idValue as? String { return strId }
+                    if let intId = idValue as? Int { return String(intId) }
+                    return nil
+                }()
+                if let id = id,
+                   let about = dict["about"] as? String,
+                   let callbackId = dict["callbackId"] as? String {
+                    handleUpdateProjectAbout(id: id, about: about, callbackId: callbackId)
                 }
             case "deleteProject":
                 let idValue = dict["id"]
@@ -637,6 +664,17 @@ class DashboardWebViewController: NSViewController, WKScriptMessageHandler {
             return
         }
         projects[idx].color = color
+        ProjectManager.shared.saveProjects(projects)
+        sendProjectCallback(callbackId: callbackId, success: true, error: nil)
+        handleLoadProjects() // Refresh UI
+    }
+    private func handleUpdateProjectAbout(id: String, about: String, callbackId: String) {
+        var projects = ProjectManager.shared.loadProjects()
+        guard let idx = projects.firstIndex(where: { $0.id == id }) else {
+            sendProjectCallback(callbackId: callbackId, success: false, error: "Project not found")
+            return
+        }
+        projects[idx].about = about
         ProjectManager.shared.saveProjects(projects)
         sendProjectCallback(callbackId: callbackId, success: true, error: nil)
         handleLoadProjects() // Refresh UI

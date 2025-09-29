@@ -352,6 +352,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                        data-project-id="${project.id}">
                             </div>
                         </div>
+                        <div class="project-about">
+                            <div class="about-display" data-project-id="${project.id}" style="min-height: 1.8em; padding: 6px 8px; border: 1px solid transparent; border-radius: 4px; cursor: text; color: ${project.about && project.about.trim() ? 'inherit' : 'var(--text-muted)'}; background: transparent; text-align: left;">
+                                ${project.about && project.about.trim() ? project.about.replace(/\n/g, '<br>') : '(Click to add about...)'}
+                            </div>
+                        </div>
                         <div class="project-actions">
                             <button class="btn btn-delete" data-id="${project.id}" data-name="${project.name}" title="Delete Project" aria-label="Delete Project">&times;</button>
                         </div>
@@ -369,6 +374,71 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 eventSystem.showNotification('error', 'Update Failed', `Failed to update color: ${error.message}`);
                             }
                         });
+                    }
+                    const aboutDisplay = projectElement.querySelector('.project-about .about-display');
+                    if (aboutDisplay) {
+                        const beginEdit = () => {
+                            // Prevent multiple editors
+                            if (projectElement.querySelector('.project-about textarea')) return;
+                            const currentText = (project.about || '');
+                            const textarea = document.createElement('textarea');
+                            textarea.className = 'inline-edit-input';
+                            textarea.rows = Math.min(6, Math.max(2, (currentText.split('\n').length)));
+                            textarea.value = currentText;
+                            textarea.style.width = '100%';
+                            // Replace display with editor
+                            aboutDisplay.replaceWith(textarea);
+                            textarea.focus();
+
+                            const finish = async (save) => {
+                                textarea.removeEventListener('blur', onBlur);
+                                textarea.removeEventListener('keydown', onKey);
+                                if (save) {
+                                    try {
+                                        await window.jujuApi.updateProjectAbout(project.id, textarea.value);
+                                        project.about = textarea.value;
+                                        eventSystem.showNotification('success', 'Saved', `About updated for "${project.name}"`);
+                                    } catch (error) {
+                                        eventSystem.showNotification('error', 'Update Failed', `Failed to update about: ${error.message}`);
+                                    }
+                                }
+                                // Recreate display node
+                                const display = document.createElement('div');
+                                display.className = 'about-display';
+                                display.setAttribute('data-project-id', project.id);
+                                display.style.minHeight = '1.8em';
+                                display.style.padding = '6px 8px';
+                                display.style.border = '1px solid transparent';
+                                display.style.borderRadius = '4px';
+                                display.style.cursor = 'text';
+                                display.style.background = 'transparent';
+                                display.style.textAlign = 'left';
+                                const showText = (project.about && project.about.trim()) ? project.about : '';
+                                if (showText) {
+                                    display.style.color = 'inherit';
+                                    display.innerHTML = showText.replace(/\n/g, '<br>');
+                                } else {
+                                    display.style.color = 'var(--text-muted)';
+                                    display.textContent = '(Click to add about...)';
+                                }
+                                textarea.replaceWith(display);
+                                display.addEventListener('click', beginEdit);
+                            };
+
+                            const onBlur = () => finish(true);
+                            const onKey = (e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    finish(true);
+                                } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    finish(false);
+                                }
+                            };
+                            textarea.addEventListener('blur', onBlur);
+                            textarea.addEventListener('keydown', onKey);
+                        };
+                        aboutDisplay.addEventListener('click', beginEdit);
                     }
                     projectsList.appendChild(projectElement);
                 });

@@ -5,11 +5,13 @@ struct Project: Codable {
     let id: String
     var name: String
     var color: String
+    var about: String?
     
-    init(name: String, color: String = "#4E79A7") {
+    init(name: String, color: String = "#4E79A7", about: String? = nil) {
         self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
         self.name = name
         self.color = color
+        self.about = about
     }
 }
 
@@ -82,6 +84,12 @@ class ProjectManager {
                 migratedProject.color = "#4E79A7"
                 needsRewrite = true
                 print("Found project with invalid color, setting to default")
+            }
+            // Ensure project has an about field (allow empty string by default)
+            if migratedProject.about == nil {
+                migratedProject.about = ""
+                needsRewrite = true
+                print("Adding missing 'about' field to project \(migratedProject.name)")
             }
             
             migratedProjects.append(migratedProject)
