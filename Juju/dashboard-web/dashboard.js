@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sessionStartDateInput = document.getElementById('session-filter-start-date');
         const sessionEndDateInput = document.getElementById('session-filter-end-date');
         const exportSessionsBtn = document.getElementById('export-sessions-btn');
+        const sessionClearDatesBtn = document.getElementById('session-clear-dates-btn');
 
         // --- WKWebView Data Bridge Receivers ---
         window.onSessionsLoaded = function(sessions) {
@@ -405,6 +406,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentPage++;
                 refreshSessionDisplay();
             }
+        });
+
+        // Clear Sessions Date Filters to show all sessions
+        sessionClearDatesBtn?.addEventListener('click', () => {
+            if (sessionStartDateInput) sessionStartDateInput.value = '';
+            if (sessionEndDateInput) sessionEndDateInput.value = '';
+            currentPage = 1;
+            refreshSessionDisplay();
         });
 
         document.getElementById('projects-list').addEventListener('click', async function(e) {

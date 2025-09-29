@@ -10,8 +10,8 @@
 		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
 		661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661564842E06159D006D14F6 /* NotesModalViewController.swift */; };
 		662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6627709F2E0451AD002D6859 /* JujuUtils.swift */; };
-		6657F69B2E0313200016F333 /* icon-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* icon-active.png */; };
-		6657F69C2E0313200016F333 /* icon-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* icon-idle.png */; };
+		6657F69B2E0313200016F333 /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* status-active.png */; };
+		6657F69C2E0313200016F333 /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* status-idle.png */; };
 		6657F69F2E0313200016F333 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6842E0313200016F333 /* icon.png */; };
 		6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6882E0313200016F333 /* AppDelegate.swift */; };
 		6657F6A32E0313200016F333 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6892E0313200016F333 /* Assets.xcassets */; };
@@ -30,8 +30,8 @@
 		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
 		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
-		6657F6802E0313200016F333 /* icon-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-active.png"; sourceTree = "<group>"; };
-		6657F6812E0313200016F333 /* icon-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-idle.png"; sourceTree = "<group>"; };
+		6657F6802E0313200016F333 /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
+		6657F6812E0313200016F333 /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
 		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -42,7 +42,6 @@
 		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
-
 		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
 		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
@@ -65,8 +64,8 @@
 		6657F6872E0313200016F333 /* icons */ = {
 			isa = PBXGroup;
 			children = (
-				6657F6802E0313200016F333 /* icon-active.png */,
-				6657F6812E0313200016F333 /* icon-idle.png */,
+				6657F6802E0313200016F333 /* status-active.png */,
+				6657F6812E0313200016F333 /* status-idle.png */,
 				6657F6842E0313200016F333 /* icon.png */,
 			);
 			path = icons;
@@ -192,8 +191,8 @@
 			files = (
 				66E0B07F2E033E4D0029121D /* dashboard-web in Resources */,
 				6657F69F2E0313200016F333 /* icon.png in Resources */,
-				6657F69B2E0313200016F333 /* icon-active.png in Resources */,
-				6657F69C2E0313200016F333 /* icon-idle.png in Resources */,
+				6657F69B2E0313200016F333 /* status-active.png in Resources */,
+				6657F69C2E0313200016F333 /* status-idle.png in Resources */,
 				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
