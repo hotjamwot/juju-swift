@@ -3,33 +3,10 @@ import SwiftUI
 class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
-    @Published var isGridView: Bool = true
-    @Published var searchText: String = ""
-    @Published var sortOrder: SortOrder = .order
-    
-    enum SortOrder {
-        case order, name, dateCreated
-    }
     
     var filteredProjects: [Project] {
-        let sorted = projects.sorted { p1, p2 in
-            switch sortOrder {
-            case .order:
-                return p1.order < p2.order
-            case .name:
-                return p1.name.lowercased() < p2.name.lowercased()
-            case .dateCreated:
-                return p1.id < p2.id
-            }
-        }
-        
-        if searchText.isEmpty {
-            return sorted
-        }
-        
-        return sorted.filter {
-            $0.name.lowercased().contains(searchText.lowercased()) ||
-            ($0.about ?? "").lowercased().contains(searchText.lowercased())
+        projects.sorted { p1, p2 in
+            p1.order < p2.order
         }
     }
     

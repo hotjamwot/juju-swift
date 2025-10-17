@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 // MARK: - NSColor <-> Hex helpers
 extension NSColor {
@@ -21,9 +22,20 @@ extension NSColor {
     }
 }
 
+// MARK: - SwiftUI Color Hex Extension
+extension Color {
+    init(hex: String) {
+        guard let nsColor = NSColor(hex: hex) else {
+            self.init(.systemBlue)
+            return
+        }
+        self.init(nsColor)
+    }
+}
+
 // MARK: - ClosureSleeve for button/colorWell actions
 class ClosureSleeve: NSObject {
     let closure: () -> Void
     init(_ closure: @escaping () -> Void) { self.closure = closure }
     @objc func invoke() { closure() }
-} 
+}
