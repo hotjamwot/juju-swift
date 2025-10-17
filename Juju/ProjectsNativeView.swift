@@ -76,10 +76,22 @@ struct ProjectsNativeView: View {
                 }
             }
             .navigationDestination(for: Project.self) { project in
+                let projectBinding = Binding(
+                    get: { project },
+                    set: { newValue in
+                        if let index = viewModel.projects.firstIndex(where: { $0.id == project.id }) {
+                            viewModel.projects[index] = newValue
+                        }
+                    }
+                )
                 ProjectDetailView(
-                    project: .constant(project),
-                    onSave: { updated in
-                        viewModel.updateProject(updated)
+                    project: projectBinding,
+                    onSave: { updatedProject in
+                        viewModel.updateProject(updatedProject)
+                    },
+                    onDelete: { projectToDelete in
+                        viewModel.deleteProject(projectToDelete)
+                        path.removeLast()  // Pop back to projects list
                     }
                 )
                 .navigationTitle("Edit Project")

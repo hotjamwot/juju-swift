@@ -3,7 +3,7 @@ import SwiftUI
 class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
-    @Published var isGridView: Bool = false
+    @Published var isGridView: Bool = true
     @Published var searchText: String = ""
     @Published var sortOrder: SortOrder = .order
     

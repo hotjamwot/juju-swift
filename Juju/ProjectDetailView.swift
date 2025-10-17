@@ -3,18 +3,22 @@ import SwiftUI
 struct ProjectDetailView: View {
     @Binding var project: Project
     let onSave: (Project) -> Void
+    let onDelete: (Project) -> Void
     
     @State private var editedName: String
     @State private var editedColor: Color
     @State private var editedAbout: String
     
-    init(project: Binding<Project>, onSave: @escaping (Project) -> Void) {
+    init(project: Binding<Project>, onSave: @escaping (Project) -> Void, onDelete: @escaping (Project) -> Void) {
         self._project = project
         self.onSave = onSave
+        self.onDelete = onDelete
         self._editedName = State(initialValue: project.wrappedValue.name)
         self._editedColor = State(initialValue: Color(hex: project.wrappedValue.color))
         self._editedAbout = State(initialValue: project.wrappedValue.about ?? "")
     }
+    
+    @State private var showingDeleteAlert = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -53,9 +57,27 @@ struct ProjectDetailView: View {
             }
             
             Spacer()
+            
+            // Delete Button
+            Button("Delete Project") {
+                showingDeleteAlert = true
+            }
+            .buttonStyle(.borderless)
+            .foregroundColor(.red)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding()
         .frame(minWidth: 300)
+        .alert("Are You Sure?", isPresented: $showingDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                onDelete(project)
+            }
+            Button("Cancel", role: .cancel) {
+                // Do nothing
+            }
+        } message: {
+            Text("This will permanently delete the project and cannot be undone.")
+        }
     }
     
     private func updateProject() {

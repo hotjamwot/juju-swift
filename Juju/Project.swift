@@ -1,5 +1,9 @@
 import Foundation
 
+extension Notification.Name {
+    static let projectsDidChange = Notification.Name("projectsDidChange")
+}
+
 // Project structure to match the original app
 struct Project: Codable, Identifiable, Hashable {
     let id: String
@@ -97,6 +101,7 @@ class ProjectManager {
                 let data = try encoder.encode(projects)
                 try data.write(to: projectsFile)
                 print("✅ Saved \(projects.count) projects to \(projectsFile.path)")
+                NotificationCenter.default.post(name: .projectsDidChange, object: nil)
             } catch {
                 print("❌ Error saving projects to \(projectsFile.path): \(error)")
             }

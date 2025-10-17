@@ -11,6 +11,23 @@ class MenuManager {
     
     init(appDelegate: AppDelegate) {
         self.appDelegate = appDelegate
+        
+        // Observe project changes to refresh menu
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onProjectsDidChange),
+            name: .projectsDidChange,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func onProjectsDidChange() {
+        projects = ProjectManager.shared.loadProjects()
+        updateProjects(projects)
     }
     
     func createMenu(with projects: [Project]) {
@@ -154,4 +171,4 @@ class MenuManager {
         print("Quit clicked")
         NSApplication.shared.terminate(nil)
     }
-} 
+}
