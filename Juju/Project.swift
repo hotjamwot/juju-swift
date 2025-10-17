@@ -1,17 +1,49 @@
 import Foundation
 
 // Project structure to match the original app
-struct Project: Codable {
+struct Project: Codable, Identifiable, Hashable {
     let id: String
     var name: String
     var color: String
     var about: String?
+    var order: Int
     
-    init(name: String, color: String = "#4E79A7", about: String? = nil) {
+    enum CodingKeys: String, CodingKey {
+        case id, name, color, about, order
+    }
+    
+    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0) {
         self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
         self.name = name
         self.color = color
         self.about = about
+        self.order = order
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#4E79A7"
+        about = try container.decodeIfPresent(String.self, forKey: .about)
+        order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(color, forKey: .color)
+        try container.encodeIfPresent(about, forKey: .about)
+        try container.encode(order, forKey: .order)
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Project, rhs: Project) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
@@ -43,8 +75,14 @@ class ProjectManager {
                 return migratedProjects
             } catch {
                 print("Error loading projects: \(error)")
-                // Create default projects if file doesn't exist or is invalid
-                return createDefaultProjects()
+                if FileManager.default.fileExists(atPath: projectsFile.path) {
+                    // File exists but invalid JSON - return empty to prevent overwrite
+                    print("Invalid projects.json exists, returning empty array to avoid overwrite")
+                    return []
+                } else {
+                    // File doesn't exist, create defaults
+                    return createDefaultProjects()
+                }
             }
         } else {
             return createDefaultProjects()
@@ -69,30 +107,28 @@ class ProjectManager {
         var needsRewrite = false
         var migratedProjects: [Project] = []
         
-        for project in loadedProjects {
-            var migratedProject = project
-            
+        for var project in loadedProjects {
             // Ensure project has a valid name
             if project.name.isEmpty || project.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                migratedProject.name = "Unnamed"
+                project.name = "Unnamed"
                 needsRewrite = true
                 print("Found project with invalid name, setting to 'Unnamed'")
             }
             
             // Ensure project has a valid color
             if project.color.isEmpty || !project.color.hasPrefix("#") {
-                migratedProject.color = "#4E79A7"
+                project.color = "#4E79A7"
                 needsRewrite = true
                 print("Found project with invalid color, setting to default")
             }
             // Ensure project has an about field (allow empty string by default)
-            if migratedProject.about == nil {
-                migratedProject.about = ""
+            if project.about == nil {
+                project.about = ""
                 needsRewrite = true
-                print("Adding missing 'about' field to project \(migratedProject.name)")
+                print("Adding missing 'about' field to project \(project.name)")
             }
             
-            migratedProjects.append(migratedProject)
+            migratedProjects.append(project)
         }
         
         if needsRewrite {
@@ -114,4 +150,4 @@ class ProjectManager {
         saveProjects(defaults)
         return defaults
     }
-} 
+}

@@ -26,6 +26,11 @@
 		66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
 		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
+		66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3C3C32E33333300000001 /* ProjectsNativeView.swift */; };
+		66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3D3D32E44444400000001 /* ProjectsViewModel.swift */; };
+		66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3E3E32E55555500000001 /* ProjectDetailView.swift */; };
+		66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3F3F32E66666600000001 /* ProjectGridItemView.swift */; };
+		66F4G4G52E77777700000001 /* ProjectRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F4G4G42E77777700000001 /* ProjectRowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +56,11 @@
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
 		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
 		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
+		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
+		66F3D3D32E44444400000001 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
+		66F3E3E32E55555500000001 /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		66F3F3F32E66666600000001 /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectGridItemView.swift; sourceTree = "<group>"; };
+		66F4G4G42E77777700000001 /* ProjectRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectRowView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -94,6 +104,11 @@
 				6657F68F2E0313200016F333 /* main.swift */,
 				6657F6902E0313200016F333 /* MenuManager.swift */,
 				6657F6912E0313200016F333 /* Project.swift */,
+				66F3C3C32E33333300000001 /* ProjectsNativeView.swift */,
+				66F3D3D32E44444400000001 /* ProjectsViewModel.swift */,
+				66F3E3E32E55555500000001 /* ProjectDetailView.swift */,
+				66F3F3F32E66666600000001 /* ProjectGridItemView.swift */,
+				66F4G4G42E77777700000001 /* ProjectRowView.swift */,
 				6657F6922E0313200016F333 /* ShortcutManager.swift */,
 			);
 			path = Juju;
@@ -224,6 +239,11 @@
 				66109E1C2E031720000B7182 /* SessionManager.swift in Sources */,
 				66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */,
 				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
+				66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */,
+				66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */,
+				66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */,
+				66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */,
+				66F4G4G52E77777700000001 /* ProjectRowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
