@@ -7,7 +7,7 @@ struct SessionsView: View {
     
     // Filter state
     @State private var projectFilter = "All"
-    @State private var searchText = ""
+    @State private var currentDateInterval: DateInterval? = nil
     
     // Pagination state
     @State private var currentPage = 1
@@ -37,46 +37,67 @@ struct SessionsView: View {
                     // Project filter
                     HStack {
                         Text("Project:")
-                        Picker("Project", selection: $projectFilter) {
+                        Picker(selection: $projectFilter, label: EmptyView()) {
                             Text("All").tag("All")
                             ForEach(projectsViewModel.projects, id: \.id) { project in
-                                Text(project.name).tag(String(project.id))
+                                Text(project.name).tag(project.name)
                             }
                         }
                         .pickerStyle(.menu)
                         .frame(width: 150)
+                        .onChange(of: projectFilter) { _ in
+                            updateFilteredSessions()
+                        }
                     }
                     
                     // Date filters
                     HStack {
                         Text("Date Range:")
                         Button("Today") {
-                            filterByToday()
+                            let today = Date()
+                            let calendar = Calendar.current
+                            let start = calendar.startOfDay(for: today)
+                            let end = calendar.date(byAdding: .day, value: 1, to: start)!
+                            currentDateInterval = DateInterval(start: start, end: end)
+                            currentPage = 1
+                            updateFilteredSessions()
                         }
                         .buttonStyle(.bordered)
                         
                         Button("This Week") {
-                            filterByThisWeek()
+                            let today = Date()
+                            let calendar = Calendar.current
+                            let todayStart = calendar.startOfDay(for: today)
+                            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
+                            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+                            currentDateInterval = DateInterval(start: weekStart, end: end)
+                            currentPage = 1
+                            updateFilteredSessions()
                         }
                         .buttonStyle(.bordered)
                         
                         Button("This Month") {
-                            filterByThisMonth()
+                            let today = Date()
+                            let calendar = Calendar.current
+                            let todayStart = calendar.startOfDay(for: today)
+                            let monthStart = calendar.date(byAdding: .day, value: -30, to: todayStart)!
+                            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+                            currentDateInterval = DateInterval(start: monthStart, end: end)
+                            currentPage = 1
+                            updateFilteredSessions()
                         }
                         .buttonStyle(.bordered)
                         
                         Button("Clear") {
-                            clearDateFilters()
+                            currentDateInterval = nil
+                            projectFilter = "All"
+                            currentPage = 1
+                            updateFilteredSessions()
                         }
                         .buttonStyle(.borderedProminent)
                     }
                     
                     Spacer()
-                    
-                    // Search field
-                    TextField("Search sessions...", text: $searchText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 200)
                     
                     // Export button
                     Menu {
@@ -114,11 +135,11 @@ struct SessionsView: View {
                     // Grid view
                     ScrollView {
                         LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3),
+                            columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 1),
                             spacing: 16
                         ) {
                             ForEach(filteredSessions, id: \.id) { session in
-                                SessionCardView(session: session) {
+                                SessionCardView(session: session, projects: projectsViewModel.projects) {
                                     editingSession = session
                                     showingEditSheet = true
                                 } onDelete: {
@@ -161,11 +182,24 @@ struct SessionsView: View {
         }
         .padding()
         .onAppear {
-            loadSessions()
+            let today = Date()
+            let calendar = Calendar.current
+            let todayStart = calendar.startOfDay(for: today)
+            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
+            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+            currentDateInterval = DateInterval(start: weekStart, end: end)
+            projectFilter = "All"
+            currentPage = 1
+            updateFilteredSessions()
         }
         .sheet(isPresented: $showingEditSheet) {
             if let session = editingSession {
                 EditSessionView(session: session, projectNames: projectsViewModel.projects.map { $0.name })
+            }
+        }
+        .onChange(of: showingEditSheet) { newValue in
+            if !newValue {
+                updateFilteredSessions()
             }
         }
         .alert("Export Complete", isPresented: $showingExportAlert) {
@@ -186,32 +220,21 @@ struct SessionsView: View {
         }
     }
     
-    private func loadSessions() {
-        isLoading = true
-        
-        // Load sessions on main thread for immediate feedback
-        let sessions = sessionManager.loadAllSessions()
-        isLoading = false
-        updateFilteredSessions()
-    }
     
     private func updateFilteredSessions() {
         DispatchQueue.main.async {
-            // Apply filters
-            var sessions = sessionManager.allSessions
+            let loadedSessions: [SessionRecord]
+            if let interval = currentDateInterval {
+                loadedSessions = sessionManager.loadSessions(in: interval)
+            } else {
+                loadedSessions = sessionManager.allSessions
+            }
+            
+            var sessions = loadedSessions
             
             // Apply project filter
             if projectFilter != "All" {
                 sessions = sessions.filter { $0.projectName == projectFilter }
-            }
-            
-            // Apply search filter
-            if !searchText.isEmpty {
-                let searchLower = searchText.lowercased()
-                sessions = sessions.filter { session in
-                    session.projectName.lowercased().contains(searchLower) ||
-                    session.notes.lowercased().contains(searchLower)
-                }
             }
             
             // Sort by date descending (most recent first)
@@ -272,313 +295,10 @@ struct SessionsView: View {
         return formatter.date(from: dateString) ?? Date()
     }
     
-    // Date filtering functions
-    private func filterByToday() {
-        let today = Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let todayString = formatter.string(from: today)
-        
-        searchText = ""
-        projectFilter = "All"
-        
-        // Filter by today's date
-        var sessions = sessionManager.allSessions
-        sessions = sessions.filter { $0.date == todayString }
-        
-        // Sort by date descending (most recent first)
-        sessions.sort { session1, session2 in
-            let date1 = parseDate(session1.date)
-            let date2 = parseDate(session2.date)
-            return date1 > date2
-        }
-        
-        currentPage = 1
-        filteredSessions = sessions
-        totalPages = Int(ceil(Double(sessions.count) / Double(sessionsPerPage)))
-    }
-    
-    private func filterByThisWeek() {
-        let today = Date()
-        let calendar = Calendar.current
-        let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: today)?.start ?? today
-        let endOfWeek = calendar.dateInterval(of: .weekOfYear, for: today)?.end ?? today
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        
-        searchText = ""
-        projectFilter = "All"
-        
-        // Filter by this week's dates
-        var sessions = sessionManager.allSessions
-        sessions = sessions.filter { session in
-            guard let sessionDate = formatter.date(from: session.date) else { return false }
-            return sessionDate >= startOfWeek && sessionDate <= endOfWeek
-        }
-        
-        // Sort by date descending (most recent first)
-        sessions.sort { session1, session2 in
-            let date1 = parseDate(session1.date)
-            let date2 = parseDate(session2.date)
-            return date1 > date2
-        }
-        
-        currentPage = 1
-        filteredSessions = sessions
-        totalPages = Int(ceil(Double(sessions.count) / Double(sessionsPerPage)))
-    }
-    
-    private func filterByThisMonth() {
-        let today = Date()
-        let calendar = Calendar.current
-        let startOfMonth = calendar.dateInterval(of: .month, for: today)?.start ?? today
-        let endOfMonth = calendar.dateInterval(of: .month, for: today)?.end ?? today
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        
-        searchText = ""
-        projectFilter = "All"
-        
-        // Filter by this month's dates
-        var sessions = sessionManager.allSessions
-        sessions = sessions.filter { session in
-            guard let sessionDate = formatter.date(from: session.date) else { return false }
-            return sessionDate >= startOfMonth && sessionDate <= endOfMonth
-        }
-        
-        // Sort by date descending (most recent first)
-        sessions.sort { session1, session2 in
-            let date1 = parseDate(session1.date)
-            let date2 = parseDate(session2.date)
-            return date1 > date2
-        }
-        
-        currentPage = 1
-        filteredSessions = sessions
-        totalPages = Int(ceil(Double(sessions.count) / Double(sessionsPerPage)))
-    }
-    
-    private func clearDateFilters() {
-        searchText = ""
-        projectFilter = "All"
-        currentPage = 1
-        updateFilteredSessions()
-    }
-    
     // Pagination functions
     private func goToPage(_ page: Int) {
         guard page >= 1 && page <= totalPages else { return }
         currentPage = page
         updateFilteredSessions()
-    }
-}
-
-// Session card component for grid view
-struct SessionCardView: View {
-    let session: SessionRecord
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Date and project
-            HStack {
-                Text(session.date)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                Spacer()
-                Text(session.projectName)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Duration
-            HStack {
-                Image(systemName: "clock")
-                Text(formatDuration(session.durationMinutes))
-                    .font(.caption)
-                Spacer()
-                // Mood
-                if let mood = session.mood {
-                    HStack {
-                        Image(systemName: "star.fill")
-                        Text("\(mood)")
-                            .font(.caption)
-                    }
-                    .foregroundColor(mood > 5 ? .green : mood > 2 ? .orange : .red)
-                }
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            
-            // Notes (truncated)
-            if !session.notes.isEmpty {
-                Text(session.notes)
-                    .font(.caption)
-                    .lineLimit(3)
-                    .truncationMode(.tail)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Time range
-            HStack {
-                Image(systemName: "play")
-                Text(String(session.startTime.prefix(5)))
-                    .font(.caption)
-                Spacer()
-                Image(systemName: "stop")
-                Text(String(session.endTime.prefix(5)))
-                    .font(.caption)
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            // Action buttons
-            HStack {
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.blue)
-                }
-                .buttonStyle(.borderless)
-                
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(.borderless)
-            }
-        }
-        .padding()
-        .background(Color(NSColor.controlBackgroundColor))
-        .border(Color.gray.opacity(0.3), width: 1)
-        .cornerRadius(8)
-        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
-    }
-    
-    private func formatDuration(_ minutes: Int) -> String {
-        let hours = minutes / 60
-        let mins = minutes % 60
-        return hours > 0 ? "\(hours)h \(mins)m" : "\(mins)m"
-    }
-}
-
-struct EditSessionView: View {
-    let session: SessionRecord
-    let projectNames: [String]
-    
-    @Environment(\.dismiss) private var dismiss
-    @State private var editedDate: String = ""
-    @State private var editedStartTime: String = "09:00"
-    @State private var editedEndTime: String = "17:00"
-    @State private var editedProject: String = ""
-    @State private var editedNotes: String = ""
-    @State private var selectedMood: String = ""
-    
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Date
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Date")
-                            .font(.headline)
-                        TextField("YYYY-MM-DD", text: $editedDate)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    // Times
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Times")
-                            .font(.headline)
-                        HStack(spacing: 16) {
-                            TextField("Start", text: $editedStartTime)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(width: 100)
-                            TextField("End", text: $editedEndTime)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(width: 100)
-                        }
-                    }
-                    
-                    // Project
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Project")
-                            .font(.headline)
-                        Picker("Project", selection: $editedProject) {
-                            Text("-- Select Project --").tag("")
-                            ForEach(projectNames, id: \.self) { name in
-                                Text(name).tag(name)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(maxWidth: 200)
-                    }
-                    
-                    // Notes
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notes")
-                            .font(.headline)
-                        TextEditor(text: $editedNotes)
-                            .frame(height: 100)
-                            .border(Color.gray.opacity(0.3), width: 1)
-                            .cornerRadius(4)
-                    }
-                    
-                    // Mood
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Mood (0-10)")
-                            .font(.headline)
-                        Picker("Mood", selection: $selectedMood) {
-                            Text("-- No mood --").tag("")
-                            ForEach(0...10, id: \.self) { mood in
-                                Text("\(mood)").tag("\(mood)")
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Edit Session")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveSession()
-                    }
-                    .disabled(editedProject.isEmpty)
-                }
-            }
-        }
-        .onAppear {
-            editedDate = session.date
-            editedStartTime = String(session.startTime.prefix(5))
-            editedEndTime = String(session.endTime.prefix(5))
-            editedProject = session.projectName
-            editedNotes = session.notes
-            selectedMood = session.mood.map { "\($0)" } ?? ""
-        }
-    }
-    
-    private func saveSession() {
-        _ = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: editedDate,
-            startTime: editedStartTime + ":00",
-            endTime: editedEndTime + ":00",
-            projectName: editedProject,
-            notes: editedNotes,
-            mood: selectedMood.isEmpty ? nil : Int(selectedMood)
-        )
-        
-        dismiss()
     }
 }

@@ -447,24 +447,92 @@ extension SessionManager {
     }
     
     // Update session with all fields at once
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?) -> Bool {
-        let moodValue = mood.map { String($0) } ?? ""
-        let successes = [
-            updateSession(id: id, field: "date", value: date),
-            updateSession(id: id, field: "start_time", value: startTime),
-            updateSession(id: id, field: "end_time", value: endTime),
-            updateSession(id: id, field: "project", value: projectName),
-            updateSession(id: id, field: "notes", value: notes),
-            updateSession(id: id, field: "mood", value: moodValue)
-        ]
-        let allSuccess = successes.allSatisfy { $0 }
-        if allSuccess {
-            print("✅ Updated full session \(id)")
-        } else {
-            print("❌ Partial failure updating session \(id)")
-        }
-        return allSuccess
+func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?) -> Bool {
+    let moodValue = mood.map { String($0) } ?? ""
+    let successes = [
+        updateSession(id: id, field: "date", value: date),
+        updateSession(id: id, field: "start_time", value: startTime),
+        updateSession(id: id, field: "end_time", value: endTime),
+        updateSession(id: id, field: "project", value: projectName),
+        updateSession(id: id, field: "notes", value: notes),
+        updateSession(id: id, field: "mood", value: moodValue)
+    ]
+    let allSuccess = successes.allSatisfy { $0 }
+    if allSuccess {
+        print("✅ Updated full session \(id)")
+    } else {
+        print("❌ Partial failure updating session \(id)")
     }
+    return allSuccess
+}
+
+public func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
+    guard let dataFile = self.dataFile, FileManager.default.fileExists(atPath: dataFile.path) else {
+        return []
+    }
+    
+    if dateInterval == nil {
+        return loadAllSessions()
+    }
+    
+    let interval = dateInterval!
+    
+    do {
+        let content = try String(contentsOf: dataFile, encoding: .utf8)
+        let lines = content.components(separatedBy: .newlines)
+        guard let headerLine = lines.first, !headerLine.isEmpty else {
+            return []
+        }
+        let hasIdColumn = headerLine.lowercased().contains("id")
+        let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        var sessions: [SessionRecord] = []
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        for line in dataLines {
+            let fields = parseCSVLineOptimized(line)
+            let fieldCount = fields.count
+            let dateIndex = hasIdColumn ? 1 : 0
+            let dateStr = (dateIndex < fieldCount) ? cleanField(fields[dateIndex]) : ""
+            guard !dateStr.isEmpty,
+                  let date = dateFormatter.date(from: dateStr),
+                  date >= interval.start && date < interval.end else {
+                continue
+            }
+            let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
+            let startIndex = hasIdColumn ? 2 : 1
+            let endIndex = hasIdColumn ? 3 : 2
+            let durIndex = hasIdColumn ? 4 : 3
+            let projIndex = hasIdColumn ? 5 : 4
+            let notesIndex = hasIdColumn ? 6 : 5
+            let moodIndex = hasIdColumn ? 7 : 6
+            let startTime = (startIndex < fieldCount) ? cleanField(fields[startIndex]) : ""
+            let endTime = (endIndex < fieldCount) ? cleanField(fields[endIndex]) : ""
+            let durationStr = (durIndex < fieldCount) ? cleanField(fields[durIndex]) : "0"
+            let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
+            let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
+            let moodStr = (moodIndex < fieldCount) ? fields[moodIndex] : ""
+            let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
+            let durationMinutes = Int(durationStr) ?? 0
+            let record = SessionRecord(
+                id: id,
+                date: dateStr,
+                startTime: startTime,
+                endTime: endTime,
+                durationMinutes: durationMinutes,
+                projectName: projectName,
+                notes: notes,
+                mood: mood
+            )
+            sessions.append(record)
+        }
+        // Sort by date descending (string comparison works for yyyy-MM-dd)
+        sessions.sort { $0.date > $1.date }
+        return sessions
+    } catch {
+        print("❌ Error loading filtered sessions: \(error)")
+        return []
+    }
+}
     
     // Save all sessions (with IDs) to CSV
     func saveAllSessions(_ sessions: [SessionRecord]) {
