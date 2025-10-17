@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
-    enum Tab: Hashable { case charts, sessions, projects }
+    // Keep track of which tab is selected
+    private enum Tab {
+        case charts, sessions, projects
+    }
     @State private var selected: Tab = .charts
 
     var body: some View {

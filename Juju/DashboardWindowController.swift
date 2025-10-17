@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 class DashboardWindowController: NSWindowController, NSWindowDelegate {
     private var isActuallyClosing = false

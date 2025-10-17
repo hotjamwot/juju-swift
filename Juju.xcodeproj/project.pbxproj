@@ -21,8 +21,10 @@
 		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
 		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
 		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
+		66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */; };
+		66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F2B2B02E22222200000000 /* WebDashboardView.swift */; };
+		66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
-		66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +46,8 @@
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
 		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
 		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
+		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
+		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
 		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
 		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
@@ -75,6 +79,8 @@
 			isa = PBXGroup;
 			children = (
 				66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */,
+				66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */,
+				66F2B2B02E22222200000000 /* WebDashboardView.swift */,
 				661564842E06159D006D14F6 /* NotesModalViewController.swift */,
 				6627709F2E0451AD002D6859 /* JujuUtils.swift */,
 				66E0B07E2E033E4D0029121D /* dashboard-web */,
@@ -205,14 +211,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */,
+				66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */,
+				66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */,
 				6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */,
-				66E0B07A2E033C1F0029121D /* DashboardWebViewController.swift in Sources */,
 				66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */,
 				6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */,
 				661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */,
 				662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */,
 				6657F6A72E0313200016F333 /* IconManager.swift in Sources */,
 				6657F6A92E0313200016F333 /* main.swift in Sources */,
+				66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */,
 				66109E1C2E031720000B7182 /* SessionManager.swift in Sources */,
 				66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */,
 				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
