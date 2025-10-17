@@ -10,6 +10,7 @@
 		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
 		661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661564842E06159D006D14F6 /* NotesModalViewController.swift */; };
 		662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6627709F2E0451AD002D6859 /* JujuUtils.swift */; };
+		663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */; };
 		6657F69B2E0313200016F333 /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* status-active.png */; };
 		6657F69C2E0313200016F333 /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* status-idle.png */; };
 		6657F69F2E0313200016F333 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6842E0313200016F333 /* icon.png */; };
@@ -21,11 +22,11 @@
 		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
 		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
 		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
-		66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */; };
-		66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F2B2B02E22222200000000 /* WebDashboardView.swift */; };
 		66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B0712E033A160029121D /* ProjectsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0702E033A160029121D /* ProjectsTabView.swift */; };
 		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
+		66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */; };
+		66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F2B2B02E22222200000000 /* WebDashboardView.swift */; };
 		66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3C3C32E33333300000001 /* ProjectsNativeView.swift */; };
 		66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3D3D32E44444400000001 /* ProjectsViewModel.swift */; };
 		66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3E3E32E55555500000001 /* ProjectDetailView.swift */; };
@@ -37,6 +38,7 @@
 		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
 		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
+		663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
 		6657F6802E0313200016F333 /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
 		6657F6812E0313200016F333 /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
 		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
@@ -51,11 +53,11 @@
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
 		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
 		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
-		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
-		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
 		66E0B0702E033A160029121D /* ProjectsTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsTabView.swift; sourceTree = "<group>"; };
 		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
 		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
+		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
+		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
 		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
 		66F3D3D32E44444400000001 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		66F3E3E32E55555500000001 /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
@@ -88,6 +90,7 @@
 		6657F6932E0313200016F333 /* Juju */ = {
 			isa = PBXGroup;
 			children = (
+				663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */,
 				66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */,
 				66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */,
 				66F2B2B02E22222200000000 /* WebDashboardView.swift */,
@@ -240,6 +243,7 @@
 				66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */,
 				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
 				66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */,
+				663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */,
 				66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */,
 				66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */,
 				66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */,

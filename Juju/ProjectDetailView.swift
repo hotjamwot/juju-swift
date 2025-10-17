@@ -29,7 +29,7 @@ struct ProjectDetailView: View {
                     .foregroundColor(.secondary)
                 TextField("Project Name", text: $editedName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onChange(of: editedName) { _ in updateProject() }
+                    .onChange(of: editedName) { _, _ in updateProject() }
             }
             
             // Color Picker
@@ -39,7 +39,7 @@ struct ProjectDetailView: View {
                     .foregroundColor(.secondary)
                 ColorPicker("", selection: $editedColor)
                     .labelsHidden()
-                    .onChange(of: editedColor) { _ in updateProject() }
+                    .onChange(of: editedColor) { _, _ in updateProject() }
             }
             
             // About Text Editor
@@ -53,7 +53,7 @@ struct ProjectDetailView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.secondary.opacity(0.2))
                     )
-                    .onChange(of: editedAbout) { _ in updateProject() }
+                    .onChange(of: editedAbout) { _, _ in updateProject() }
             }
             
             Spacer()
