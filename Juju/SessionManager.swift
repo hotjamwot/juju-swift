@@ -58,6 +58,12 @@ class SessionManager: ObservableObject {
     private let dataFile: URL?
     private var lastLoadedDate = Date.distantPast
     
+    private lazy var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+    
     private init() {
         self.jujuPath = appSupportPath?.appendingPathComponent("Juju")
         self.dataFile = jujuPath?.appendingPathComponent("data.csv")
@@ -330,10 +336,16 @@ extension SessionManager {
                         safeFields.append("")
                     }
                     
+                    let dateStr = cleanField(safeFields[1])
+                    guard !dateStr.isEmpty, dateFormatter.date(from: dateStr) != nil else {
+                        print("⚠️ Skipping invalid date in row \(rowIndex): \(dateStr)")
+                        continue
+                    }
+                    
                     // Optimized field extraction
                     let record = SessionRecord(
                         id: id,
-                        date: cleanField(safeFields[1]),
+                        date: dateStr,
                         startTime: cleanField(safeFields[2]),
                         endTime: cleanField(safeFields[3]),
                         durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
@@ -486,14 +498,13 @@ public func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
         let hasIdColumn = headerLine.lowercased().contains("id")
         let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         var sessions: [SessionRecord] = []
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
         for line in dataLines {
             let fields = parseCSVLineOptimized(line)
             let fieldCount = fields.count
             let dateIndex = hasIdColumn ? 1 : 0
             let dateStr = (dateIndex < fieldCount) ? cleanField(fields[dateIndex]) : ""
             guard !dateStr.isEmpty,
+                  dateFormatter.date(from: dateStr) != nil,
                   let date = dateFormatter.date(from: dateStr),
                   date >= interval.start && date < interval.end else {
                 continue

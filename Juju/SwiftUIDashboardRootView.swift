@@ -50,7 +50,7 @@ struct SwiftUIDashboardRootView: View {
                 ZStack {
                     switch selected {
                     case .charts:
-                        NativeSwiftChartsView()
+                        DashboardNativeSwiftChartsView()
                             .transition(.opacity)
                     case .sessions:
                         SessionsView()

@@ -28,8 +28,8 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.contentMinSize = minWindowSize
 
         // Host SwiftUI root
-        let hosting = NSHostingController(rootView: SwiftUIDashboardRootView())
-        window.contentViewController = hosting
+        let hostingController = NSHostingController(rootView: SwiftUIDashboardRootView())
+        window.contentViewController = hostingController
 
         super.init(window: window)
         window.delegate = self

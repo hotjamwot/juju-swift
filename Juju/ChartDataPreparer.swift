@@ -38,13 +38,13 @@ class ChartDataPreparer: ObservableObject {
         
         // Convert to chart data
         var chartData: [TimeSeriesData] = []
-        
-        // Get all months from the data
         let sortedMonths = monthlyData.keys.sorted()
         
         for monthKey in sortedMonths {
             let components = monthKey.split(separator: "-").compactMap { Int($0) }
-            if components.count == 2, let year = components[0], let month = components[1] {
+            if components.count == 2 {
+                let year = components[0]
+                let month = components[1]
                 let date = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
                 let formatter = DateFormatter()
                 formatter.dateFormat = "MMM yyyy"
@@ -66,6 +66,7 @@ class ChartDataPreparer: ObservableObject {
         // Get the date range for the current filter
         var dateRange: ClosedRange<Date>
         let today = Date()
+        let year = calendar.component(.year, from: today)
         
         switch viewModel.currentFilter {
         case "Last 7 Days":
@@ -78,18 +79,18 @@ class ChartDataPreparer: ObservableObject {
             let lastQuarter = calendar.date(byAdding: .month, value: -3, to: today)!
             dateRange = lastQuarter...today
         case "This Year":
-            let thisYear = calendar.date(from: DateComponents(year: today.year, month: 1, day: 1))!
+            let thisYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
             dateRange = thisYear...today
         case "All Time":
             if let minDateStr = filteredSessions.min(by: { $0.date < $1.date })?.date,
-               let minDate = DateFormatter yyyyMMdd.date(from: minDateStr) {
+               let minDate = DateFormatter.yyyyMMdd.date(from: minDateStr) {
                 dateRange = minDate...today
             } else {
                 viewModel.weeklyData = []
                 return
             }
         default:
-            let thisYear = calendar.date(from: DateComponents(year: today.year, month: 1, day: 1))!
+            let thisYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
             dateRange = thisYear...today
         }
         
@@ -97,7 +98,7 @@ class ChartDataPreparer: ObservableObject {
         var weeklyData: [String: Double] = [:]
         
         for session in filteredSessions {
-            if let sessionDate = DateFormatter yyyyMMdd.date(from: session.date),
+            if let sessionDate = DateFormatter.yyyyMMdd.date(from: session.date),
                sessionDate >= dateRange.lowerBound && sessionDate <= dateRange.upperBound {
                 let weekNumber = calendar.component(.weekOfYear, from: sessionDate)
                 let year = calendar.component(.year, from: sessionDate)
@@ -110,18 +111,18 @@ class ChartDataPreparer: ObservableObject {
         
         // Convert to chart data
         var chartData: [TimeSeriesData] = []
-        
-        // Get all weeks from the data
         let sortedWeeks = weeklyData.keys.sorted()
         
         for weekKey in sortedWeeks {
             let components = weekKey.split(separator: "-").compactMap { Int($0) }
-            if components.count == 2, let year = components[0], let week = components[1] {
+            if components.count == 2 {
+                let year = components[0]
+                let week = components[1]
                 let formatter = DateFormatter()
                 formatter.dateFormat = "MMM dd"
                 
                 // Get the start date of the week for display
-                let weekStart = calendar.date(from: DateComponents(yearForWeekOfYear: year, weekOfYear: week, weekday: 2))!
+                let weekStart = calendar.date(from: DateComponents(weekday: 2, weekOfYear: week, yearForWeekOfYear: year))!
                 let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart)!
                 
                 chartData.append(TimeSeriesData(
@@ -168,19 +169,14 @@ class ChartDataPreparer: ObservableObject {
             }
         }
         
-        // Sort by total hours descending
         chartData.sort { $0.totalHours > $1.totalHours }
-        
         viewModel.projectDistribution = chartData
     }
     
     private func prepareProjectBreakdown() {
         let filteredSessions = viewModel.filteredSessions
         
-        // Get all unique projects
         let uniqueProjects = Array(Set(filteredSessions.map { $0.projectName }))
-        
-        // Convert to chart data
         var chartData: [TimeSeriesData] = []
         
         for projectName in uniqueProjects {
@@ -193,13 +189,11 @@ class ChartDataPreparer: ObservableObject {
             ))
         }
         
-        // Sort by total hours descending
         chartData.sort { $0.value > $1.value }
-        
         viewModel.projectBreakdown = chartData
     }
     
-    // MARK: - Comparison Stats (copied from JavaScript implementation)
+    // MARK: - Comparison Stats
     
     func getComparisonStats() -> [String: Any] {
         let sessions = viewModel.sessions
@@ -215,7 +209,6 @@ class ChartDataPreparer: ObservableObject {
         
         func getWeekYear(_ date: Date) -> (year: Int, week: Int) {
             let d = calendar.date(byAdding: .day, value: 4 - (calendar.component(.weekday, from: date) == 1 ? -6 : calendar.component(.weekday, from: date) - 2), to: date)!
-            let yearStart = calendar.date(from: DateComponents(year: calendar.component(.year, from: d), month: 1, day: 1))!
             let weekNo = calendar.dateComponents([.weekOfYear], from: d).weekOfYear ?? 1
             return (calendar.component(.year, from: d), weekNo)
         }
@@ -267,7 +260,7 @@ class ChartDataPreparer: ObservableObject {
             "label": "\(calendar.component(.month, from: thisMonday))/\(calendar.component(.day, from: thisMonday))-\(calendar.component(.month, from: today))/\(calendar.component(.day, from: today))",
             "value": weekCurrentValue,
             "range": weekRange
-        ]
+        ] as [String : Any]
         
         return [
             "day": [
