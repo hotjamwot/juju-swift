@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 class DashboardWindowController: NSWindowController, NSWindowDelegate {
     private var isActuallyClosing = false
@@ -26,8 +27,9 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.level = .normal
         window.contentMinSize = minWindowSize
 
-        let dashboardView = DashboardWebViewController()
-        window.contentViewController = dashboardView
+        // Host SwiftUI root with native tabs and embedded web charts
+        let hosting = NSHostingController(rootView: SwiftUIDashboardRootView())
+        window.contentViewController = hosting
 
         super.init(window: window)
         window.delegate = self
