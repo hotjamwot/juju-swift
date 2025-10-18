@@ -27,6 +27,8 @@
 		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
 		66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
 		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
+		66E8277B2EA3B79A0077478D /* Dashboard in Resources */ = {isa = PBXBuildFile; fileRef = 66E8277A2EA3B79A0077478D /* Dashboard */; };
+		66E8277F2EA3B8CA0077478D /* NativeSwiftChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E8277E2EA3B8CA0077478D /* NativeSwiftChartsView.swift */; };
 		66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */; };
 		66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F2B2B02E22222200000000 /* WebDashboardView.swift */; };
 		66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3C3C32E33333300000001 /* ProjectsNativeView.swift */; };
@@ -59,6 +61,8 @@
 		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
 		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
 		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
+		66E8277A2EA3B79A0077478D /* Dashboard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Dashboard; sourceTree = "<group>"; };
+		66E8277E2EA3B8CA0077478D /* NativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NativeSwiftChartsView.swift; sourceTree = "<group>"; };
 		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
 		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
 		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
@@ -92,6 +96,8 @@
 		6657F6932E0313200016F333 /* Juju */ = {
 			isa = PBXGroup;
 			children = (
+				66E8277E2EA3B8CA0077478D /* NativeSwiftChartsView.swift */,
+				66E8277A2EA3B79A0077478D /* Dashboard */,
 				663C0D572EA2D9E500747BE5 /* AddProjectView.swift */,
 				663C0D552EA2D45C00747BE5 /* EditSessionView.swift */,
 				663C0D532EA2D45700747BE5 /* SessionCardView.swift */,
@@ -221,6 +227,7 @@
 				6657F69B2E0313200016F333 /* status-active.png in Resources */,
 				6657F69C2E0313200016F333 /* status-idle.png in Resources */,
 				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
+				66E8277B2EA3B79A0077478D /* Dashboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +258,7 @@
 				663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */,
 				66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */,
 				66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */,
+				66E8277F2EA3B8CA0077478D /* NativeSwiftChartsView.swift in Sources */,
 				66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

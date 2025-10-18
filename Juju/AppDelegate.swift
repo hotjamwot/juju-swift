@@ -97,14 +97,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-    func forceCloseDashboard() {
-        print("[AppDelegate] forceCloseDashboard called")
-        if let controller = dashboardWindowController {
-            // Force actual close to terminate WKWebView process
-            controller.forceClose()
-            dashboardWindowController = nil
-        }
+func forceCloseDashboard() {
+    print("[AppDelegate] forceCloseDashboard called")
+    if let controller = dashboardWindowController {
+        // Close the window normally
+        controller.close()
+        dashboardWindowController = nil
     }
+}
     
     func updateMenuBarIcon(isActive: Bool) {
         if let button = statusItem.button {
