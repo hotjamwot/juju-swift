@@ -1,3 +1,7 @@
+
+
+
+
 import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
@@ -13,6 +17,7 @@ struct SwiftUIDashboardRootView: View {
             Color(red: 0.10, green: 0.10, blue: 0.12)
                 .ignoresSafeArea()
             
+            // Ensure the entire VStack is pinned to the top
             VStack(spacing: 0) {
                 // Top navigation bar
                 HStack(spacing: 0) {
@@ -47,6 +52,9 @@ struct SwiftUIDashboardRootView: View {
                 .frame(height: 42)
                 .background(Color(red: 0.12, green: 0.12, blue: 0.14))
                 .overlay(Divider().background(Color.white.opacity(0.15)), alignment: .bottom)
+                .edgesIgnoringSafeArea(.top) // Ensure top bar ignores safe area
+                .fixedSize(horizontal: false, vertical: true) // Prevent vertical resizing
+                .frame(maxHeight: 42) // Ensure fixed height
                 
                 // Main content area
                 ZStack {
@@ -66,6 +74,7 @@ struct SwiftUIDashboardRootView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Pin to top
         }
         .frame(minWidth: 1200, minHeight: 800)
     }
