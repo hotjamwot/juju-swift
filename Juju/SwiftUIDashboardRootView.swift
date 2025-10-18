@@ -1,35 +1,72 @@
 import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
-    // Keep track of which tab is selected
     private enum Tab {
         case charts, sessions, projects
     }
+    
     @State private var selected: Tab = .charts
-
+    
     var body: some View {
-        VStack(spacing: 0) {
-            // Removed projects toolbar as part of refactoring
-            // if selected == .projects {
-            //     ProjectsToolbarView()
-            // }
+        ZStack {
+            // Dark grey background
+            Color(red: 0.10, green: 0.10, blue: 0.12)
+                .ignoresSafeArea()
             
-            TabView(selection: $selected) {
-                WebDashboardView()
-                    .tabItem { Text("Juju") }
-                    .tag(Tab.charts)
-
-                SessionsView()
-                    .tabItem { Text("Sessions") }
-                    .tag(Tab.sessions)
-
-                ProjectsNativeView()
-                    .tabItem { Text("Projects") }
-                    .tag(Tab.projects)
+            VStack(spacing: 0) {
+                // Top navigation bar
+                HStack(spacing: 0) {
+                    // Left logo (smaller and more subtle)
+                    Image("AppIcon") // <-- make sure the name matches your asset name, not the filename
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .opacity(0.8)
+                        .padding(.leading, 16)
+                    
+                    Spacer()
+                    
+                    // Centered tab picker
+                    Picker("", selection: $selected) {
+                        Text("Juju").tag(Tab.charts)
+                        Text("Sessions").tag(Tab.sessions)
+                        Text("Projects").tag(Tab.projects)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .frame(width: 300)
+                    .tint(.white)
+                    .padding(.vertical, 6)
+                    
+                    Spacer()
+                    
+                    // Right spacer (keeps tabs centred)
+                    Spacer()
+                        .frame(width: 36)
+                        .padding(.trailing, 16)
+                }
+                .frame(height: 42)
+                .background(Color(red: 0.12, green: 0.12, blue: 0.14))
+                .overlay(Divider().background(Color.white.opacity(0.15)), alignment: .bottom)
+                
+                // Main content area
+                ZStack {
+                    switch selected {
+                    case .charts:
+                        WebDashboardView()
+                            .transition(.opacity)
+                    case .sessions:
+                        SessionsView()
+                            .transition(.opacity)
+                    case .projects:
+                        ProjectsNativeView()
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: selected)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
         }
         .frame(minWidth: 1200, minHeight: 800)
     }
 }
-
-// Removed ProjectsToolbarView as part of refactoring - toolbar functionality eliminated
