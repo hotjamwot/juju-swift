@@ -1,5 +1,5 @@
 import Cocoa
-import WebKit
+import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
@@ -7,14 +7,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var menuManager: MenuManager!
     var shortcutManager: ShortcutManager!
     var projects: [Project] = []
-    var dashboardWindow: NSWindow?
     var dashboardWindowController: DashboardWindowController?
-    let sharedProcessPool = WKProcessPool()
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Enable Web Inspector for WKWebView
-        UserDefaults.standard.set(true, forKey: "WebKitDeveloperExtras")
-        
         // Load projects
         projects = ProjectManager.shared.loadProjects()
         
@@ -97,14 +92,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-func forceCloseDashboard() {
-    print("[AppDelegate] forceCloseDashboard called")
-    if let controller = dashboardWindowController {
-        // Close the window normally
-        controller.close()
-        dashboardWindowController = nil
+    func forceCloseDashboard() {
+        print("[AppDelegate] forceCloseDashboard called")
+        if let controller = dashboardWindowController {
+            controller.close()
+            dashboardWindowController = nil
+        }
     }
-}
     
     func updateMenuBarIcon(isActive: Bool) {
         if let button = statusItem.button {
@@ -120,16 +114,8 @@ func forceCloseDashboard() {
     func applicationWillTerminate(_ aNotification: Notification) {
         print("[AppDelegate] applicationWillTerminate called")
         
-        // Properly close dashboard to terminate WKWebView process
-        if let controller = dashboardWindowController {
-            print("[AppDelegate] Terminating dashboard to cleanup WKWebView process")
-            // Get the content view controller and cleanup the web view
-            if let dashboardVC = controller.window?.contentViewController as? DashboardWebViewController {
-                dashboardVC.cleanupWebView()
-            }
-            controller.window?.close() // This will actually close, not hide
-            dashboardWindowController = nil
-        }
+        // Close dashboard if open
+        forceCloseDashboard()
         
         shortcutManager.cleanup()
     }
@@ -138,8 +124,8 @@ func forceCloseDashboard() {
     
     func windowWillClose(_ notification: Notification) {
         print("[AppDelegate] windowWillClose called for dashboard window")
-        if let window = notification.object as? NSWindow, window == dashboardWindow {
-            dashboardWindow = nil
+        if let window = notification.object as? NSWindow, let controller = dashboardWindowController, controller.window == window {
+            dashboardWindowController = nil
         }
     }
-} 
+}

@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 class MenuManager {
     private var menu: NSMenu!
@@ -6,7 +7,7 @@ class MenuManager {
     private weak var appDelegate: AppDelegate?
     private var sessionManager = SessionManager.shared
     private var updateTimer: Timer?
-    private var notesWindowController: NotesModalWindowController?
+    private var notesManager = NotesManager.shared
     private weak var endSessionMenuItem: NSMenuItem?
     
     init(appDelegate: AppDelegate) {
@@ -124,42 +125,30 @@ class MenuManager {
         }
     }
     
-    @objc private func endCurrentSession() {
+    @MainActor @objc private func endCurrentSession() {
         print("[MenuManager] endCurrentSession called")
         stopUpdateTimer()
         
-        print("[MenuManager] Preparing NotesModalWindowController")
-        if notesWindowController == nil {
-            notesWindowController = NotesModalWindowController { [weak self] (note: String?, mood: Int?) in
-                print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>") Mood: \(mood.map { String($0) } ?? "<nil>")")
-                // Only end the session if notes are provided (not null)
-                if let note = note {
-                    self?.sessionManager.endSession(notes: note, mood: mood)
-                    self?.appDelegate?.updateMenuBarIcon(isActive: false)
-                    self?.refreshMenu()
-                } else {
-                    // Session was cancelled, restart the update timer and keep session active
-                    print("[MenuManager] Session cancelled, keeping session active")
-                    self?.startUpdateTimer()
+        print("[MenuManager] Presenting SwiftUI Notes modal")
+        // Show the new SwiftUI-based modal
+        Task { @MainActor in
+            await MainActor.run {
+                self.notesManager.present { [weak self] (note: String?, mood: Int?) in
+                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil")")
+                    // Only end the session if notes are provided (not empty)
+                    if let note = note, !note.isEmpty {
+                        self?.sessionManager.endSession(notes: note, mood: mood)
+                        self?.appDelegate?.updateMenuBarIcon(isActive: false)
+                        self?.refreshMenu()
+                    } else {
+                        // Session was cancelled, restart the update timer and keep session active
+                        print("[MenuManager] Session cancelled, keeping session active")
+                        self?.startUpdateTimer()
+                    }
                 }
             }
         }
-        guard let notesWindow = notesWindowController else { return }
-        
-        // Show the AppKit-based modal
-        print("[MenuManager] Calling present on NotesModalWindowController")
-        notesWindow.present { [weak self] (note: String?, mood: Int?) in
-            print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "<nil>") Mood: \(mood.map { String($0) } ?? "<nil>")")
-            if let note = note {
-                self?.sessionManager.endSession(notes: note, mood: mood)
-                self?.appDelegate?.updateMenuBarIcon(isActive: false)
-                self?.refreshMenu()
-            } else {
-                print("[MenuManager] Session cancelled, keeping session active")
-                self?.startUpdateTimer()
-            }
-        }
-        print("[MenuManager] showWindow call completed")
+        print("[MenuManager] SwiftUI Notes modal presentation completed")
     }
     
     @objc private func showDashboard() {
