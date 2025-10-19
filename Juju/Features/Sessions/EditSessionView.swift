@@ -1,108 +1,98 @@
 import SwiftUI
 
 struct EditSessionView: View {
+    // MARK: – Public Properties
     let session: SessionRecord
     let projectNames: [String]
-    
+
+    // MARK: – Environment & State
     @Environment(\.dismiss) private var dismiss
-    @State private var editedDate: String = ""
-    @State private var editedStartTime: String = "09:00"
-    @State private var editedEndTime: String = "17:00"
-    @State private var editedProject: String = ""
-    @State private var editedNotes: String = ""
-    @State private var selectedMood: String = ""
-    
+    @State private var editedDate = ""
+    @State private var editedStartTime = "09:00"
+    @State private var editedEndTime = "17:00"
+    @State private var editedProject = ""
+    @State private var editedNotes = ""
+    @State private var selectedMood = ""
+
+    // MARK: – Body
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Date
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Date")
-                            .font(.headline)
-                        TextField("YYYY-MM-DD", text: $editedDate)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    // Times
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Times")
-                            .font(.headline)
-                        HStack(spacing: 16) {
-                            TextField("Start", text: $editedStartTime)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(width: 120)
-                            TextField("End", text: $editedEndTime)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(width: 120)
-                        }
-                    }
-                    
-                    // Project
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Project")
-                            .font(.headline)
-                        Picker("Project", selection: $editedProject) {
-                            Text("-- Select Project --").tag("")
-                            ForEach(projectNames, id: \.self) { name in
-                                Text(name).tag(name)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(maxWidth: 250)
-                    }
-                    
-                    // Notes
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notes")
-                            .font(.headline)
-                        TextEditor(text: $editedNotes)
-                            .frame(height: 120)
-                            .border(Theme.surface, width: 1)
-                            .cornerRadius(4)
-                    }
-                    
-                    // Mood
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Mood (0-10)")
-                            .font(.headline)
-                        Picker("Mood", selection: $selectedMood) {
-                            Text("-- No mood --").tag("")
-                            ForEach(0...10, id: \.self) { mood in
-                                Text("\(mood)").tag("\(mood)")
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                }
-                .padding()
+        Form {
+            // ── Date ──────────────────────────────────────
+            Section(header: Text("Date")) {
+                TextField("YYYY-MM-DD", text: $editedDate)
+                    .textFieldStyle(.roundedBorder)
             }
-            .navigationTitle("Edit Session")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+
+            // ── Times ──────────────────────────────────────
+            Section(header: Text("Times")) {
+                HStack(spacing: Theme.spacingLarge) {
+                    TextField("Start", text: $editedStartTime)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 120)
+                    TextField("End", text: $editedEndTime)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 120)
+                }
+            }
+
+            // ── Project ───────────────────────────────────
+            Section(header: Text("Project")) {
+                Picker("Project", selection: $editedProject) {
+                    Text("-- Select Project --").tag("")
+                    ForEach(projectNames, id: \.self) { name in
+                        Text(name).tag(name)
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveSession()
+                .pickerStyle(.menu)
+                .labelsHidden()
+            }
+
+            // ── Notes ─────────────────────────────────────
+            Section(header: Text("Notes")) {
+                TextEditor(text: $editedNotes)
+                    .frame(height: 120)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                            .stroke(Theme.surface, lineWidth: 1)
+                    )
+            }
+
+            // ── Mood ───────────────────────────────────────
+            Section(header: Text("Mood (0‑10)")) {
+                Picker("Mood", selection: $selectedMood) {
+                    Text("-- No mood --").tag("")
+                    ForEach(0...10, id: \.self) { mood in
+                        Text("\(mood)").tag("\(mood)")
                     }
-                    .disabled(editedProject.isEmpty)
                 }
+                .pickerStyle(.segmented)
             }
         }
-        .frame(minWidth: 500, minHeight: 600) // Increased default size to fit all fields
+        .padding(.horizontal, Theme.spacingLarge) 
+        .navigationTitle("Edit Session")            // Shows on iOS; macOS shows the window title
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") { saveSession() }
+                    .disabled(editedProject.isEmpty)
+                    .buttonStyle(.borderedProminent)
+                    .tint(.accentColor)
+            }
+        }
+        .frame(minWidth: 500, minHeight: 600)        // Comfortable default size
         .onAppear {
-            editedDate = session.date
-            editedStartTime = String(session.startTime.prefix(5))
-            editedEndTime = String(session.endTime.prefix(5))
-            editedProject = session.projectName
-            editedNotes = session.notes
-            selectedMood = session.mood.map { "\($0)" } ?? ""
+            editedDate       = session.date
+            editedStartTime  = String(session.startTime.prefix(5))
+            editedEndTime    = String(session.endTime.prefix(5))
+            editedProject    = session.projectName
+            editedNotes      = session.notes
+            selectedMood     = session.mood.map { "\($0)" } ?? ""
         }
     }
-    
+
+    // MARK: – Helpers
     private func saveSession() {
         _ = SessionManager.shared.updateSessionFull(
             id: session.id,
@@ -113,7 +103,6 @@ struct EditSessionView: View {
             notes: editedNotes,
             mood: selectedMood.isEmpty ? nil : Int(selectedMood)
         )
-        
         dismiss()
     }
 }

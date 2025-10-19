@@ -126,7 +126,7 @@ struct SessionsView: View {
                                 .progressViewStyle(CircularProgressViewStyle())
                         } else {
                             Text("No sessions found")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.foreground)
                         }
                         Spacer()
                     }

@@ -104,14 +104,14 @@ struct SessionCardView: View {
                     Button(action: onEdit) {
                         Image(systemName: "pencil")
                             .font(.title3)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
                     
                     Button(action: onDelete) {
                         Image(systemName: "trash")
                             .font(.title3)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -160,7 +160,7 @@ struct SessionCardView: View {
     private var startTimeComponents: (hour: Int, minute: Int) {
         let parts = session.startTime.components(separatedBy: ":")
         let hour = Int(parts[0]) ?? 0
-        let minute = Int(parts[1] ?? "0") ?? 0
+        let minute = Int(parts[1]) ?? 0
         return (hour, minute)
     }
     
@@ -215,7 +215,7 @@ struct SessionCardView: View {
         var rgb: UInt64 = 0
         var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0
         
-        let index = hexSanitized.index(after: hexSanitized.startIndex)
+        _ = hexSanitized.index(after: hexSanitized.startIndex)
         hexSanitized.remove(at: hexSanitized.startIndex)
         if hexSanitized.count == 3 {
             hexSanitized = String(hexSanitized.lazy.map { "\($0)\($0)" }.joined())

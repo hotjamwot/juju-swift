@@ -413,25 +413,63 @@ extension SessionManager {
     private func cleanField(_ field: String) -> String {
         return field.trimmingCharacters(in: CharacterSet(charactersIn: "\"")).trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    private func minutesBetween(start: String, end: String) -> Int {
+    // Accept “HH:mm” or “HH:mm:ss”; if seconds are missing we’ll pad them.
+    let formatter = DateFormatter()
+    formatter.dateFormat = "HH:mm:ss"
+
+    // Pad missing seconds so the formatter can parse it
+    let paddedStart = start.count == 5 ? start + ":00" : start
+    let paddedEnd   = end.count   == 5 ? end   + ":00" : end
+
+    guard
+        let startDate = formatter.date(from: paddedStart),
+        let endDate   = formatter.date(from: paddedEnd)
+    else { return 0 }
+
+    let diff = endDate.timeIntervalSince(startDate)
+    return Int(round(diff / 60))   // minutes
+}
+
     
-    // Update a session field
-    func updateSession(id: String, field: String, value: String) -> Bool {
-        guard let session = allSessions.first(where: { $0.id == id }) else {
-            print("❌ Session \(id) not found for update")
-            return false
-        }
-        
-        let updated = session.withUpdated(field: field, value: value)
-        
-        if let index = allSessions.firstIndex(where: { $0.id == id }) {
-            allSessions[index] = updated
-            saveAllSessions(allSessions)
-            print("✅ Updated session \(id) field \(field) to \(value)")
-            return true
-        }
-        
+// Update a session field
+func updateSession(id: String, field: String, value: String) -> Bool {
+    guard let session = allSessions.first(where: { $0.id == id }) else {
+        print("❌ Session \(id) not found for update")
         return false
     }
+
+    // 1️⃣  First produce a copy with the new field
+    var updated = session.withUpdated(field: field, value: value)
+
+    // 2️⃣  Re‑calculate duration if a time was changed
+    if field == "start_time" || field == "end_time" {
+        let newDuration = minutesBetween(start: updated.startTime, end: updated.endTime)
+        // Replace the immutable durationMinutes field
+        updated = SessionRecord(
+            id: updated.id,
+            date: updated.date,
+            startTime: updated.startTime,
+            endTime: updated.endTime,
+            durationMinutes: newDuration,
+            projectName: updated.projectName,
+            notes: updated.notes,
+            mood: updated.mood
+        )
+    }
+
+    // 3️⃣  Persist the change
+    if let index = allSessions.firstIndex(where: { $0.id == id }) {
+        allSessions[index] = updated
+        saveAllSessions(allSessions)          // writes the CSV
+        print("✅ Updated session \(id) field \(field) to \(value)")
+        return true
+    }
+
+    return false
+}
+
     
     // Delete a session
     func deleteSession(id: String) -> Bool {
