@@ -39,38 +39,38 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
-		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
-		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
-		663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
-		663C0D532EA2D45700747BE5 /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCardView.swift; sourceTree = "<group>"; };
-		663C0D552EA2D45C00747BE5 /* EditSessionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditSessionView.swift; sourceTree = "<group>"; };
-		663C0D572EA2D9E500747BE5 /* AddProjectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddProjectView.swift; sourceTree = "<group>"; };
+		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/SessionManager.swift"; sourceTree = "<group>"; };
+		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Notes/NotesModalViewController.swift"; sourceTree = "<group>"; };
+		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "App/JujuUtils.swift"; sourceTree = "<group>"; };
+		663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Sessions/SessionsView.swift"; sourceTree = "<group>"; };
+		663C0D532EA2D45700747BE5 /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Sessions/SessionCardView.swift"; sourceTree = "<group>"; };
+		663C0D552EA2D45C00747BE5 /* EditSessionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Sessions/EditSessionView.swift"; sourceTree = "<group>"; };
+		663C0D572EA2D9E500747BE5 /* AddProjectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Projects/AddProjectView.swift"; sourceTree = "<group>"; };
 		6657F6802E0313200016F333 /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
 		6657F6812E0313200016F333 /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
 		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6657F68D2E0313200016F333 /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconManager.swift; sourceTree = "<group>"; };
-		6657F68E2E0313200016F333 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6657F68F2E0313200016F333 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		6657F6902E0313200016F333 /* MenuManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MenuManager.swift; sourceTree = "<group>"; };
-		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
-		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
+		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "App/AppDelegate.swift"; sourceTree = "<group>"; };
+		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Resources/Assets.xcassets"; sourceTree = "<group>"; };
+		6657F68D2E0313200016F333 /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/IconManager.swift"; sourceTree = "<group>"; };
+		6657F68E2E0313200016F333 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "App/Info.plist"; sourceTree = "<group>"; };
+		6657F68F2E0313200016F333 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "App/main.swift"; sourceTree = "<group>"; };
+		6657F6902E0313200016F333 /* MenuManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/MenuManager.swift"; sourceTree = "<group>"; };
+		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Models/Project.swift"; sourceTree = "<group>"; };
+		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/ShortcutManager.swift"; sourceTree = "<group>"; };
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
-		667DC29D2EA44E9800FA3F5C /* DashboardNativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardNativeSwiftChartsView.swift; sourceTree = "<group>"; };
-		667DC29F2EA44FB100FA3F5C /* ChartDataPreparer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartDataPreparer.swift; sourceTree = "<group>"; };
-		667DC2A12EA44FB700FA3F5C /* ChartModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartModels.swift; sourceTree = "<group>"; };
-		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
-		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
-		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
-		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
-		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
-		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
-		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
-		66F3D3D32E44444400000001 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
-		66F3E3E32E55555500000001 /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
-		66F3F3F32E66666600000001 /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectGridItemView.swift; sourceTree = "<group>"; };
+		667DC29D2EA44E9800FA3F5C /* DashboardNativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/DashboardNativeSwiftChartsView.swift"; sourceTree = "<group>"; };
+		667DC29F2EA44FB100FA3F5C /* ChartDataPreparer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/ChartDataPreparer.swift"; sourceTree = "<group>"; };
+		667DC2A12EA44FB700FA3F5C /* ChartModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Models/ChartModels.swift"; sourceTree = "<group>"; };
+		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = "App/Juju.entitlements"; sourceTree = "<group>"; };
+		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/DashboardWindowController.swift"; sourceTree = "<group>"; };
+		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/DashboardWebViewController.swift"; sourceTree = "<group>"; };
+		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Features/Dashboard/dashboard-web"; sourceTree = "<group>"; };
+		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/SwiftUIDashboardRootView.swift"; sourceTree = "<group>"; };
+		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/WebDashboardView.swift"; sourceTree = "<group>"; };
+		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Projects/ProjectsNativeView.swift"; sourceTree = "<group>"; };
+		66F3D3D32E44444400000001 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/ViewModels/ProjectsViewModel.swift"; sourceTree = "<group>"; };
+		66F3E3E32E55555500000001 /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Projects/ProjectDetailView.swift"; sourceTree = "<group>"; };
+		66F3F3F32E66666600000001 /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Projects/ProjectGridItemView.swift"; sourceTree = "<group>"; };
 		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -395,7 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Juju/App/Juju.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -403,7 +403,7 @@
 				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_FILE = "Juju/App/Info.plist";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -423,7 +423,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Juju/App/Juju.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -431,7 +431,7 @@
 				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_FILE = "Juju/App/Info.plist";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
