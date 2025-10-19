@@ -46,23 +46,19 @@ class ChartViewModel: ObservableObject {
             dateFormatter.dateFormat = "yyyy-MM-dd"
             
             switch currentFilter {
-            case "Last 7 Days":
-                let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today)! 
-                let sevenDaysAgoStr = dateFormatter.string(from: sevenDaysAgo)
+            case "Last month":
+                // Rolling last 30 days including today
+                let start = calendar.date(byAdding: .day, value: -29, to: today)!
+                let startStr = dateFormatter.string(from: start)
                 let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= sevenDaysAgoStr && $0.date <= todayStr }
+                return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
                 
-            case "Last Month":
-                let lastMonth = calendar.date(byAdding: .month, value: -1, to: today)!
-                let lastMonthStr = dateFormatter.string(from: lastMonth)
+            case "Last 90 days":
+                // Rolling last 90 days including today
+                let start = calendar.date(byAdding: .day, value: -89, to: today)!
+                let startStr = dateFormatter.string(from: start)
                 let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= lastMonthStr && $0.date <= todayStr }
-                
-            case "Last Quarter":
-                let lastQuarter = calendar.date(byAdding: .month, value: -3, to: today)!
-                let lastQuarterStr = dateFormatter.string(from: lastQuarter)
-                let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= lastQuarterStr && $0.date <= todayStr }
+                return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
                 
             case "This Year":
                 let thisYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1))!

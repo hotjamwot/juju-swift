@@ -26,11 +26,9 @@ struct DashboardNativeSwiftChartsView: View {
                 Spacer()
                 
                 HStack(spacing: 8) {
-                    FilterButton(title: "Last 7 Days", filter: "Last 7 Days", currentFilter: $currentFilter)
-                    FilterButton(title: "Last Month", filter: "Last Month", currentFilter: $currentFilter)
-                    FilterButton(title: "Last Quarter", filter: "Last Quarter", currentFilter: $currentFilter)
+                    FilterButton(title: "Last month", filter: "Last month", currentFilter: $currentFilter)
+                    FilterButton(title: "Last 90 days", filter: "Last 90 days", currentFilter: $currentFilter)
                     FilterButton(title: "This Year", filter: "This Year", currentFilter: $currentFilter)
-                    FilterButton(title: "All Time", filter: "All Time", currentFilter: $currentFilter)
                 }
             }
             .padding(.horizontal, 16)
@@ -43,14 +41,24 @@ struct DashboardNativeSwiftChartsView: View {
                     GridItem(.flexible(), spacing: 16)
                 ], spacing: 16) {
                     
-                    // Time Overview Line Chart
-                    ChartCard(title: "Time Overview") {
-                        if chartDataPreparer.viewModel.yearlyData.isEmpty {
-                            NoDataPlaceholder()
-                        } else {
-                            LineChartView(data: chartDataPreparer.viewModel.yearlyData)
-                        }
-                    }
+      // Time Overview Line Chart
+ChartCard(title: "Time Overview") {
+    let data: [TimeSeriesData] = {
+        if ["Last month", "Last 90 days"].contains(currentFilter) {
+            return chartDataPreparer.viewModel.weeklyData
+        } else {
+            return chartDataPreparer.viewModel.yearlyData
+        }
+    }()
+
+    Group {
+        if data.isEmpty {
+            NoDataPlaceholder()
+        } else {
+            LineChartView(data: data)
+        }
+    }
+}
                     
                     // Project Hours Bar Chart
                     ChartCard(title: "Project Hours") {
@@ -101,7 +109,7 @@ struct DashboardNativeSwiftChartsView: View {
     }
     
     private func updateChartData() {
-        chartDataPreparer.prepareChartData(sessions: sessions, projects: projects, filter: currentFilter)
+        chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: currentFilter)
     }
 }
 
