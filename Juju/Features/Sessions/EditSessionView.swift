@@ -58,7 +58,7 @@ struct EditSessionView: View {
                             .font(.headline)
                         TextEditor(text: $editedNotes)
                             .frame(height: 120)
-                            .border(Color.gray.opacity(0.3), width: 1)
+                            .border(Theme.surface, width: 1)
                             .cornerRadius(4)
                     }
                     

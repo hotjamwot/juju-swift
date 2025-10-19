@@ -20,7 +20,7 @@ struct NotesModalView: View {
             footerView
         }
         .frame(width: 600, height: 400)
-        .background(Color(NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1))) // #181A1B
+        .background(Color(Theme.background))
         .onAppear {
             // Focus the text field when view appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -56,12 +56,12 @@ struct NotesModalView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 16)
+            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.top, Theme.spacingLarge)
+            .padding(.bottom, Theme.spacingMedium)
             
             Divider()
-                .background(Color(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1))) // #2C2C2C
+                .background(Color(Theme.background))
         }
     }
     
@@ -75,8 +75,8 @@ struct NotesModalView: View {
                     Text("Enter your session notes here...")
                         .font(.system(size: 14))
                         .foregroundColor(Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1))) // #A0A0A0
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Theme.spacingMedium)
+                        .padding(.vertical, Theme.spacingSmall)
                         .allowsHitTesting(false)
                 }
                 
@@ -86,7 +86,7 @@ struct NotesModalView: View {
                     .background(Color.clear)
                     .scrollContentBackground(.hidden)
                     .focused($isTextFieldFocused)
-                    .padding(4)
+                    .padding(Theme.spacingSmall)
             }
             .background(Color(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.086, alpha: 1))) // Slightly darker
             .cornerRadius(8)
@@ -98,8 +98,8 @@ struct NotesModalView: View {
             // Mood Selector (optional - can be expanded later)
             moodSelectorView
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.vertical, Theme.spacingMedium)
     }
     
     // MARK: - Mood Selector View
@@ -187,8 +187,8 @@ struct NotesModalView: View {
                     ))
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.vertical, Theme.spacingMedium)
         }
     }
     

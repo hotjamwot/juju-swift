@@ -32,8 +32,8 @@ struct DashboardNativeSwiftChartsView: View {
                     FilterButton(title: "This Year", filter: "This Year", currentFilter: $currentFilter)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.vertical, Theme.spacingMedium)
             
             // MARK: Charts
             ScrollView {
@@ -117,8 +117,8 @@ struct DashboardNativeSwiftChartsView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                .padding(.horizontal, Theme.spacingLarge)
+                .padding(.bottom, Theme.spacingLarge)
             }
         }
         .background(Color(red: 0.10, green: 0.10, blue: 0.12))
@@ -168,14 +168,14 @@ struct FilterButton: View {
             Text(title)
                 .font(.caption)
                 .lineLimit(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
                 .background(
                     ZStack {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
                             .fill(Color.gray.opacity(0.25))
                         if currentFilter == filter {
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
                                 .fill(Color.accentColor.opacity(0.9))
                                 .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
                                 .transition(.opacity.combined(with: .scale))
@@ -202,7 +202,7 @@ struct ChartCard<Content: View>: View {
         }
         .padding()
         .background(Color.gray.opacity(0.1))
-        .cornerRadius(12)
+        .cornerRadius(Theme.cornerRadius)
     }
 }
 
@@ -213,7 +213,7 @@ struct NoDataPlaceholder: View {
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, minHeight: minHeight)
             .background(Color.gray.opacity(0.2))
-            .cornerRadius(8)
+            .cornerRadius(Theme.cornerRadius)
     }
 }
 
@@ -292,10 +292,10 @@ struct SummaryCard: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Theme.spacingMedium)
+        .padding(.vertical, Theme.spacingSmall)
         .background(Color.gray.opacity(0.2))
-        .cornerRadius(8)
+        .cornerRadius(Theme.cornerRadius)
     }
 }
 

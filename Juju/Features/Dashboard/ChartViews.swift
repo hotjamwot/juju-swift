@@ -318,7 +318,7 @@ struct ChartLegend: View {
                 }
             }
         }
-        .padding(.top, 8)
+        .padding(.top, Theme.spacingSmall)
     }
 }
 
@@ -345,8 +345,8 @@ struct ChartTooltip: View {
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Theme.spacingMedium)
+        .padding(.vertical, Theme.spacingSmall)
         .background(Color.black.opacity(0.8))
         .cornerRadius(8)
         .shadow(radius: 4)
@@ -382,7 +382,7 @@ struct EnhancedChartCard<Content: View>: View {
                 ChartLegend(data: legendData)
             }
         }
-        .padding(16)
+        .padding(Theme.spacingLarge)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.gray.opacity(0.1))

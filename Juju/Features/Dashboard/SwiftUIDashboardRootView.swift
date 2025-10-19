@@ -11,7 +11,7 @@ struct SwiftUIDashboardRootView: View {
     var body: some View {
         ZStack {
             // Dark grey background
-            Color(red: 0.10, green: 0.10, blue: 0.12)
+            Color(Theme.background)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -23,7 +23,7 @@ struct SwiftUIDashboardRootView: View {
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                         .opacity(0.8)
-                        .padding(.leading, 16)
+                        .padding(.leading, Theme.spacingLarge)
 
                     Spacer()
 
@@ -36,15 +36,15 @@ struct SwiftUIDashboardRootView: View {
                     .pickerStyle(SegmentedPickerStyle())
                     .frame(width: 300)
                     .tint(.white)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, Theme.spacingExtraSmall)
 
                     Spacer()
                         .frame(width: 36)
-                        .padding(.trailing, 16)
+                        .padding(.trailing, Theme.spacingLarge)
                 }
                 .frame(height: 42)
-                .background(Color(red: 0.12, green: 0.12, blue: 0.14))
-                .overlay(Divider().background(Color.white.opacity(0.15)), alignment: .bottom)
+                .background(Color(Theme.background))
+                .overlay(Divider().background(Theme.surface), alignment: .bottom)
 
                 // Main content
                 ZStack {
@@ -61,8 +61,8 @@ struct SwiftUIDashboardRootView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: selected)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                .padding(.horizontal, Theme.spacingLarge)
+                .padding(.bottom, Theme.spacingLarge)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }

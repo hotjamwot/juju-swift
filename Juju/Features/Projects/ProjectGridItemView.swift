@@ -27,7 +27,7 @@ struct ProjectGridItemView: View {
                     .lineLimit(2)
             }
         }
-        .padding(8)
+        .padding(Theme.spacingMedium)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
         .cornerRadius(12)

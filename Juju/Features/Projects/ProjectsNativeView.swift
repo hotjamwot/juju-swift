@@ -28,7 +28,7 @@ struct ProjectsNativeView: View {
                                 .lineLimit(1)
                                 .font(.headline)
                         }
-                        .padding(8)
+                        .padding(Theme.spacingMedium)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.clear)
                         .cornerRadius(12)

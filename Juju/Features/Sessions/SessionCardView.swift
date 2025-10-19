@@ -7,10 +7,9 @@ struct SessionCardView: View {
     let onDelete: () -> Void
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: Theme.spacingLarge) {
             // LEFT: Project > Date
-            VStack(alignment: .leading, spacing: 8) {
-                // Project (moved from RIGHT, no color marker)
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text(session.projectName)
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -23,7 +22,7 @@ struct SessionCardView: View {
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             
             // MIDDLE-LEFT: Duration and Start/End Time (new column)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 // Duration
                 HStack {
                     Image(systemName: "clock.fill")
@@ -36,8 +35,8 @@ struct SessionCardView: View {
                 }
                 
                 // Start Time - End Time
-                HStack(spacing: 4) {
-                    HStack(spacing: 2) {
+                HStack(spacing: Theme.spacingExtraSmall) {
+                    HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "play.fill")
                             .font(.caption2)
                         Text(formattedStartTime)
@@ -50,7 +49,7 @@ struct SessionCardView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     
-                    HStack(spacing: 2) {
+                    HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "stop.fill")
                             .font(.caption2)
                         Text(formattedEndTime)
@@ -63,7 +62,7 @@ struct SessionCardView: View {
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             
             // MIDDLE-RIGHT: Note (lengthened horizontally for more X axis space)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 if !session.notes.isEmpty {
                     Text(session.notes)
                         .font(.body)
@@ -81,18 +80,18 @@ struct SessionCardView: View {
             .frame(maxWidth: .infinity)
             
             // RIGHT: Mood > Edit and Delete buttons
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
                 // Mood
                 if let mood = session.mood {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "star.fill")
                             .font(.caption)
                         Text("\(mood)")
                             .font(.caption)
                         .fontWeight(.medium)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Theme.spacingSmall)
+                    .padding(.vertical, Theme.spacingExtraSmall)
                     .foregroundStyle(moodColor(for: mood))
                     .background(Color.secondary.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -101,7 +100,7 @@ struct SessionCardView: View {
                 Spacer()
                 
                 // Actions
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.spacingSmall) {
                     Button(action: onEdit) {
                         Image(systemName: "pencil")
                             .font(.title3)
@@ -119,15 +118,15 @@ struct SessionCardView: View {
             }
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(16)
+        .padding(Theme.spacingLarge)
         .frame(minHeight: 100)
-        .background(Color(NSColor.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color(Theme.background))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                .stroke(Theme.primary.opacity(0.9), lineWidth: 1)
         )
-        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
+        .shadow(color: Theme.surface.opacity(0.9), radius: 2, x: 0, y: 1)
     }
     
     private var formattedDate: String {

@@ -213,14 +213,51 @@
           }
         },
         "Notes": {
-          "NotesModalViewController.swift": {
-            "purpose": "Currently a NSWindow pop-up",
+          "NotesManager.swift": {
+            "purpose": "Manages session notes persistence.",
             "responsibilities": [
-              "You’ll convert it to a native SwiftUI sheet/modal."
+              "Saving, loading, and potentially syncing notes."
+            ],
+            "dependsOn": []
+          },
+          "NotesModalView.swift": {
+            "purpose": "SwiftUI view for notes input modal.",
+            "responsibilities": [
+              "Presents text area for notes entry.",
+              "Handles mood rating UI."
             ],
             "dependsOn": [
-              "App/AppDelegate (conditionally)"
+              "Features/Notes/NotesViewModel"
             ]
+          },
+          "NotesModalViewController.swift": {
+            "purpose": "Controls the notes input modal.",
+            "responsibilities": [
+              "Presents the NotesModalView.",
+              "Handles saving/canceling notes."
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesModalView",
+              "Features/Notes/NotesViewModel",
+              "Features/Notes/NotesManager"
+            ]
+          },
+          "NotesViewModel.swift": {
+            "purpose": "Data and logic for notes input.",
+            "responsibilities": [
+              "Manages notes text, mood rating, etc.",
+              "Communicates with NotesManager."
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesManager"
+            ]
+          },
+          "README.md": {
+            "purpose": "Documentation for the Notes feature.",
+            "responsibilities": [
+              "Explains the feature's architecture and usage."
+            ],
+            "dependsOn": []
           },
           "NotesModalWindowController.swift": {
             "purpose": "Window controller",
