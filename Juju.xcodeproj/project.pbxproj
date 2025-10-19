@@ -25,6 +25,7 @@
 		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
 		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
 		667DC29E2EA44E9900FA3F5C /* DashboardNativeSwiftChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667DC29D2EA44E9800FA3F5C /* DashboardNativeSwiftChartsView.swift */; };
+		6BD2A6C0885F4F77B9631916 /* ChartViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD2A6C1885F4F77B9631917 /* ChartViews.swift */; };
 		667DC2A02EA44FB100FA3F5C /* ChartDataPreparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667DC29F2EA44FB100FA3F5C /* ChartDataPreparer.swift */; };
 		667DC2A22EA44FB700FA3F5C /* ChartModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667DC2A12EA44FB700FA3F5C /* ChartModels.swift */; };
 		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
@@ -59,6 +60,7 @@
 		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/ShortcutManager.swift"; sourceTree = "<group>"; };
 		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
 		667DC29D2EA44E9800FA3F5C /* DashboardNativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/DashboardNativeSwiftChartsView.swift"; sourceTree = "<group>"; };
+		6BD2A6C1885F4F77B9631917 /* ChartViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Features/Dashboard/ChartViews.swift"; sourceTree = "<group>"; };
 		667DC29F2EA44FB100FA3F5C /* ChartDataPreparer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Managers/ChartDataPreparer.swift"; sourceTree = "<group>"; };
 		667DC2A12EA44FB700FA3F5C /* ChartModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Core/Models/ChartModels.swift"; sourceTree = "<group>"; };
 		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = "App/Juju.entitlements"; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				667DC2A12EA44FB700FA3F5C /* ChartModels.swift */,
 				667DC29F2EA44FB100FA3F5C /* ChartDataPreparer.swift */,
 				667DC29D2EA44E9800FA3F5C /* DashboardNativeSwiftChartsView.swift */,
+				6BD2A6C1885F4F77B9631917 /* ChartViews.swift */,
 				663C0D572EA2D9E500747BE5 /* AddProjectView.swift */,
 				663C0D552EA2D45C00747BE5 /* EditSessionView.swift */,
 				663C0D532EA2D45700747BE5 /* SessionCardView.swift */,
@@ -257,6 +260,7 @@
 				66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */,
 				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
 				667DC29E2EA44E9900FA3F5C /* DashboardNativeSwiftChartsView.swift in Sources */,
+				6BD2A6C0885F4F77B9631916 /* ChartViews.swift in Sources */,
 				663C0D562EA2D45C00747BE5 /* EditSessionView.swift in Sources */,
 				66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */,
 				663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */,

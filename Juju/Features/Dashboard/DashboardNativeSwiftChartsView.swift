@@ -36,41 +36,60 @@ struct DashboardNativeSwiftChartsView: View {
             
             // MARK: Charts
             ScrollView {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 16),
-                    GridItem(.flexible(), spacing: 16)
-                ], spacing: 16) {
-                    
-      // Time Overview Line Chart
-ChartCard(title: "Time Overview") {
-    let data: [TimeSeriesData] = {
-        if ["Last month", "Last 90 days"].contains(currentFilter) {
-            return chartDataPreparer.viewModel.weeklyData
-        } else {
-            return chartDataPreparer.viewModel.yearlyData
-        }
-    }()
-
-    Group {
-        if data.isEmpty {
-            NoDataPlaceholder()
-        } else {
-            LineChartView(data: data)
-        }
-    }
-}
-                    
-                    // Project Hours Bar Chart
-                    ChartCard(title: "Project Hours") {
-                        if chartDataPreparer.viewModel.projectBreakdown.isEmpty {
-                            NoDataPlaceholder()
+                VStack(spacing: 20) {
+                    // Row 1: Stacked Bar Chart (Daily)
+                    EnhancedChartCard(
+                        title: "Daily Time Distribution",
+                        legendData: chartDataPreparer.viewModel.pieChartData
+                    ) {
+                        if chartDataPreparer.viewModel.dailyStackedData.isEmpty {
+                            NoDataPlaceholder(minHeight: 200)
                         } else {
-                            BarChartView(data: chartDataPreparer.viewModel.projectBreakdown)
+                            StackedBarChartView(data: chartDataPreparer.viewModel.dailyStackedData)
+                        }
+                    }
+                    
+                    // Row 2: Stacked Area Chart (Weekly)
+                    EnhancedChartCard(
+                        title: "Weekly Time Trends",
+                        legendData: chartDataPreparer.viewModel.pieChartData
+                    ) {
+                        if chartDataPreparer.viewModel.weeklyStackedData.isEmpty {
+                            NoDataPlaceholder(minHeight: 200)
+                        } else {
+                            StackedAreaChartView(data: chartDataPreparer.viewModel.weeklyStackedData)
+                        }
+                    }
+                    
+                    // Row 3: Pie Chart and Project Bar Chart
+                    HStack(spacing: 16) {
+                        // Left: Pie Chart
+                        EnhancedChartCard(
+                            title: "Project Distribution",
+                            legendData: chartDataPreparer.viewModel.pieChartData
+                        ) {
+                            if chartDataPreparer.viewModel.pieChartData.isEmpty {
+                                NoDataPlaceholder(minHeight: 200)
+                            } else {
+                                PieChartView(data: chartDataPreparer.viewModel.pieChartData)
+                            }
+                        }
+                        
+                        // Right: Project Bar Chart
+                        EnhancedChartCard(
+                            title: "Project Hours Comparison",
+                            legendData: chartDataPreparer.viewModel.pieChartData
+                        ) {
+                            if chartDataPreparer.viewModel.projectBarData.isEmpty {
+                                NoDataPlaceholder(minHeight: 200)
+                            } else {
+                                ProjectBarChartView(data: chartDataPreparer.viewModel.projectBarData)
+                            }
                         }
                     }
                     
                     // Summary Section
-                    ChartCard(title: "Summary") {
+                    EnhancedChartCard(title: "Summary") {
                         VStack(spacing: 12) {
                             if !sessions.isEmpty {
                                 SummaryCard(title: "Total Sessions",

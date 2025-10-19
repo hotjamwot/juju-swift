@@ -18,11 +18,20 @@ final class ChartDataPreparer: ObservableObject {
         viewModel.projects = projects
         viewModel.currentFilter = filter
         
+        // Transform sessions to unified ChartEntry format
+        viewModel.chartEntries = transformToChartEntries(from: filteredSessions, projects: projects)
+        
         // Compute all available data series
         viewModel.yearlyData = aggregateByMonth(from: filteredSessions)
         viewModel.weeklyData = aggregateByWeek(from: filteredSessions)
         viewModel.projectDistribution = aggregateProjectTotals(from: filteredSessions)
         viewModel.projectBreakdown = aggregateProjectBreakdown(from: filteredSessions)
+        
+        // Compute new chart data
+        viewModel.dailyStackedData = prepareDailyStackedData()
+        viewModel.weeklyStackedData = prepareWeeklyStackedData()
+        viewModel.pieChartData = preparePieChartData()
+        viewModel.projectBarData = prepareProjectBarData()
     }
     
     // MARK: - Core Accessors
@@ -33,6 +42,104 @@ final class ChartDataPreparer: ObservableObject {
     
     private let calendar = Calendar.current
     private let formatterYYYYMMDD = DateFormatter.yyyyMMdd
+    
+    // MARK: - Data Transformation Methods
+    
+    /// Transforms SessionRecord array to unified ChartEntry format
+    private func transformToChartEntries(from sessions: [SessionRecord], projects: [Project]) -> [ChartEntry] {
+        return sessions.compactMap { session in
+            guard let date = formatterYYYYMMDD.date(from: session.date) else { return nil }
+            guard let project = projects.first(where: { $0.name == session.projectName }) else { return nil }
+            
+            return ChartEntry(
+                date: date,
+                projectName: session.projectName,
+                projectColor: project.color,
+                durationMinutes: session.durationMinutes,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                notes: session.notes,
+                mood: session.mood
+            )
+        }
+    }
+    
+    /// Prepares data for daily stacked bar chart
+    private func prepareDailyStackedData() -> [DailyChartEntry] {
+        return viewModel.chartEntries.map { entry in
+            DailyChartEntry(
+                date: entry.date,
+                dateString: formatterYYYYMMDD.string(from: entry.date),
+                projectName: entry.projectName,
+                projectColor: entry.projectColor,
+                durationHours: entry.durationHours
+            )
+        }.sorted { $0.date < $1.date }
+    }
+    
+    /// Prepares data for weekly stacked area chart
+    private func prepareWeeklyStackedData() -> [StackedChartEntry] {
+        var weekTotals: [Date: [String: Double]] = [:]
+        
+        for entry in viewModel.chartEntries {
+            guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: entry.date)) else { continue }
+            
+            if weekTotals[weekStart] == nil {
+                weekTotals[weekStart] = [:]
+            }
+            weekTotals[weekStart]![entry.projectName, default: 0] += entry.durationHours
+        }
+        
+        var result: [(StackedChartEntry, Date)] = []
+        for (weekDate, projectTotals) in weekTotals {
+            guard let endDate = calendar.date(byAdding: .day, value: 6, to: weekDate) else { continue }
+            let periodLabel = "\(weekDate.formatted(.dateTime.day().month(.abbreviated))) - \(endDate.formatted(.dateTime.day().month(.abbreviated)))"
+            
+            for (projectName, hours) in projectTotals {
+                guard let project = viewModel.projects.first(where: { $0.name == projectName }) else { continue }
+                let entry = StackedChartEntry(
+                    period: periodLabel,
+                    projectName: projectName,
+                    projectColor: project.color,
+                    value: hours
+                )
+                result.append((entry, weekDate))
+            }
+        }
+        
+        return result.sorted { $0.1 < $1.1 }.map { $0.0 }
+    }
+    
+    /// Prepares data for pie chart
+    private func preparePieChartData() -> [PieChartEntry] {
+        var totals: [String: Double] = [:]
+        for entry in viewModel.chartEntries {
+            totals[entry.projectName, default: 0] += entry.durationHours
+        }
+        
+        let totalHours = totals.values.reduce(0, +)
+        return totals.compactMap { (projectName, hours) in
+            guard let project = viewModel.projects.first(where: { $0.name == projectName }) else { return nil }
+            return PieChartEntry(
+                projectName: projectName,
+                projectColor: project.color,
+                value: hours,
+                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
+            )
+        }.sorted { $0.value > $1.value }
+    }
+    
+    /// Prepares data for project bar chart
+    private func prepareProjectBarData() -> [ProjectChartData] {
+        return preparePieChartData().map { pieEntry in
+            ProjectChartData(
+                projectName: pieEntry.projectName,
+                color: pieEntry.projectColor,
+                totalHours: pieEntry.value,
+                percentage: pieEntry.percentage
+            )
+        }
+    }
     
     // MARK: - Aggregations
     

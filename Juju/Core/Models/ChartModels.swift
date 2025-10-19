@@ -1,6 +1,27 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Unified Chart Data Model
+struct ChartEntry: Identifiable {
+    let id = UUID()
+    let date: Date
+    let projectName: String
+    let projectColor: String
+    let durationMinutes: Int
+    let startTime: String
+    let endTime: String
+    let notes: String
+    let mood: Int?
+    
+    var durationHours: Double {
+        Double(durationMinutes) / 60.0
+    }
+    
+    var projectColorSwiftUI: Color {
+        Color(hex: projectColor)
+    }
+}
+
 // MARK: - Chart Data Models
 struct ChartDataPoint: Identifiable {
     let id = UUID()
@@ -15,6 +36,10 @@ struct ProjectChartData: Identifiable {
     let color: String
     let totalHours: Double
     let percentage: Double
+    
+    var colorSwiftUI: Color {
+        Color(hex: color)
+    }
 }
 
 struct TimeSeriesData: Identifiable {
@@ -25,6 +50,45 @@ struct TimeSeriesData: Identifiable {
     var comparisonLabel: String?
 }
 
+// MARK: - Stacked Chart Data Models
+struct StackedChartEntry: Identifiable {
+    let id = UUID()
+    let period: String
+    let projectName: String
+    let projectColor: String
+    let value: Double
+    
+    var colorSwiftUI: Color {
+        Color(hex: projectColor)
+    }
+}
+
+struct PieChartEntry: Identifiable {
+    let id = UUID()
+    let projectName: String
+    let projectColor: String
+    let value: Double
+    let percentage: Double
+    
+    var colorSwiftUI: Color {
+        Color(hex: projectColor)
+    }
+}
+
+// MARK: - Daily Chart Data Model
+struct DailyChartEntry: Identifiable {
+    let id = UUID()
+    let date: Date
+    let dateString: String
+    let projectName: String
+    let projectColor: String
+    let durationHours: Double
+    
+    var colorSwiftUI: Color {
+        Color(hex: projectColor)
+    }
+}
+
 // MARK: - Chart View Models
 class ChartViewModel: ObservableObject {
     @Published var yearlyData: [TimeSeriesData] = []
@@ -33,6 +97,13 @@ class ChartViewModel: ObservableObject {
     @Published var projectBreakdown: [TimeSeriesData] = []
     @Published var isLoading: Bool = false
     @Published var currentFilter: String = "This Year"
+    
+    // New chart data arrays
+    @Published var chartEntries: [ChartEntry] = []
+    @Published var dailyStackedData: [DailyChartEntry] = []
+    @Published var weeklyStackedData: [StackedChartEntry] = []
+    @Published var pieChartData: [PieChartEntry] = []
+    @Published var projectBarData: [ProjectChartData] = []
     
     var sessions: [SessionRecord] = []
     var projects: [Project] = []
@@ -78,3 +149,4 @@ class ChartViewModel: ObservableObject {
         }
     }
 }
+
