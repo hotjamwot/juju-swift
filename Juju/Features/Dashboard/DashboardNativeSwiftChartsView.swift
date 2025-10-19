@@ -7,6 +7,7 @@ struct DashboardNativeSwiftChartsView: View {
     @State private var currentFilter = "This Year"
     @State private var sessions: [SessionRecord] = []
     @State private var projects: [Project] = []
+    @Namespace private var filterNamespace
     
     var body: some View {
         VStack(spacing: 0) {
@@ -57,7 +58,11 @@ struct DashboardNativeSwiftChartsView: View {
                         if chartDataPreparer.viewModel.weeklyStackedData.isEmpty {
                             NoDataPlaceholder(minHeight: 200)
                         } else {
-                            StackedAreaChartView(data: chartDataPreparer.viewModel.weeklyStackedData)
+                            // Adjust tick density based on filter to reduce clutter
+                            StackedAreaChartView(
+                                data: chartDataPreparer.viewModel.weeklyStackedData,
+                                desiredTickCount: desiredTickCountForFilter(currentFilter)
+                            )
                         }
                     }
                     
@@ -118,7 +123,12 @@ struct DashboardNativeSwiftChartsView: View {
         }
         .background(Color(red: 0.10, green: 0.10, blue: 0.12))
         .onAppear(perform: loadData)
-        .onChange(of: currentFilter) { _ in updateChartData() }
+        .onChange(of: currentFilter) { _ in
+            // Smoothly animate chart transitions when filter changes
+            withAnimation(.easeInOut(duration: 0.22)) {
+                updateChartData()
+            }
+        }
     }
     
     private func loadData() {
@@ -130,6 +140,20 @@ struct DashboardNativeSwiftChartsView: View {
     private func updateChartData() {
         chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: currentFilter)
     }
+
+    // Choose reasonable axis tick counts per filter window
+    private func desiredTickCountForFilter(_ filter: String) -> Int {
+        switch filter {
+        case "Last month":
+            return 6 // about every 5 days
+        case "Last 90 days":
+            return 8 // weekly-ish
+        case "This Year":
+            return 6 // roughly bi-monthly
+        default:
+            return 6
+        }
+    }
 }
 
 // MARK: - Components
@@ -140,14 +164,25 @@ struct FilterButton: View {
     @Binding var currentFilter: String
     
     var body: some View {
-        Button(action: { currentFilter = filter }) {
+        Button(action: { withAnimation(.easeInOut(duration: 0.18)) { currentFilter = filter } }) {
             Text(title)
                 .font(.caption)
+                .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(currentFilter == filter ? Color.accentColor : Color.gray.opacity(0.3))
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.25))
+                        if currentFilter == filter {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.accentColor.opacity(0.9))
+                                .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                                .transition(.opacity.combined(with: .scale))
+                        }
+                    }
+                )
                 .foregroundColor(currentFilter == filter ? .white : .primary)
-                .cornerRadius(6)
         }
         .buttonStyle(.plain)
     }
