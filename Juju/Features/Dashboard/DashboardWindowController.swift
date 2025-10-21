@@ -26,11 +26,8 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.isReleasedWhenClosed = false // Keep instance until fully cleaned up
         window.level = .normal
         window.contentMinSize = minWindowSize
-
-        // Host SwiftUI root
         let hostingController = NSHostingController(rootView: SwiftUIDashboardRootView())
         window.contentViewController = hostingController
-
         super.init(window: window)
         window.delegate = self
         window.center()
@@ -50,6 +47,11 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 
+    // Tell the system we’re happy to close.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        print("[DashboardWindowController] windowShouldClose - returning true")
+        return true   // Allow the close to happen
+    }
     // Optional: handle Cmd+W explicitly
     override func cancelOperation(_ sender: Any?) {
         print("[DashboardWindowController] Cmd+W pressed - closing window")

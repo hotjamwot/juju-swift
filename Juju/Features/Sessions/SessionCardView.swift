@@ -167,7 +167,7 @@ struct SessionCardView: View {
     private var endTimeComponents: (hour: Int, minute: Int) {
         let parts = session.endTime.components(separatedBy: ":")
         let hour = Int(parts[0]) ?? 0
-        let minute = Int(parts[1] ?? "0") ?? 0
+        let minute = Int(parts[1]) ?? 0
         return (hour, minute)
     }
     
