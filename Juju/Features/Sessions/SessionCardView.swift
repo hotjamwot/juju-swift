@@ -120,13 +120,13 @@ struct SessionCardView: View {
         }
         .padding(Theme.spacingLarge)
         .frame(minHeight: 100)
-        .background(Color(Theme.background))
-        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+        .background(Color(Theme.Colors.background))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                .stroke(Theme.primary.opacity(0.9), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .stroke(Theme.Colors.primary.opacity(0.9), lineWidth: 1)
         )
-        .shadow(color: Theme.surface.opacity(0.9), radius: 2, x: 0, y: 1)
+        .shadow(color: Theme.Colors.surface.opacity(0.9), radius: 2, x: 0, y: 1)
     }
     
     private var formattedDate: String {

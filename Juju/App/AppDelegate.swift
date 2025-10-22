@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import WebKit
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
@@ -8,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var shortcutManager: ShortcutManager!
     var projects: [Project] = []
     var dashboardWindowController: DashboardWindowController?
+    var sharedProcessPool: WKProcessPool!
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Load projects
@@ -33,6 +35,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Register global shortcut
         shortcutManager.registerGlobalShortcut()
+        
+        // Initialize shared WKWebView process pool to avoid spawning new WebKit processes
+        sharedProcessPool = WKProcessPool()
 
         // Add a minimal main menu with Edit items to restore shortcut support
         let mainMenu = NSMenu()

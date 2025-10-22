@@ -20,7 +20,7 @@ struct NotesModalView: View {
             footerView
         }
         .frame(width: 600, height: 400)
-        .background(Color(Theme.background))
+        .background(Color(Theme.Colors.background))
         .onAppear {
             // Focus the text field when view appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -52,7 +52,7 @@ struct NotesModalView: View {
             HStack {
                 Text("What did you work on?")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1))) // #F5F5F7
+                    .foregroundColor(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1).swiftUIColor) // #F5F5F7
                 
                 Spacer()
             }
@@ -61,7 +61,7 @@ struct NotesModalView: View {
             .padding(.bottom, Theme.spacingMedium)
             
             Divider()
-                .background(Color(Theme.background))
+                .background(Color(Theme.Colors.background))
         }
     }
     
@@ -74,7 +74,7 @@ struct NotesModalView: View {
                 if viewModel.notesText.isEmpty {
                     Text("Enter your session notes here...")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1))) // #A0A0A0
+                        .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
                         .padding(.horizontal, Theme.spacingMedium)
                         .padding(.vertical, Theme.spacingSmall)
                         .allowsHitTesting(false)
@@ -82,17 +82,17 @@ struct NotesModalView: View {
                 
                 TextEditor(text: $viewModel.notesText)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1))) // #F5F5F7
+                    .foregroundColor(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1).swiftUIColor) // #F5F5F7
                     .background(Color.clear)
                     .scrollContentBackground(.hidden)
                     .focused($isTextFieldFocused)
                     .padding(Theme.spacingSmall)
             }
-            .background(Color(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.086, alpha: 1))) // Slightly darker
+            .background(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.086, alpha: 1).swiftUIColor) // Slightly darker
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1)), lineWidth: 1) // #2C2C2C
+                    .stroke(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1).swiftUIColor, lineWidth: 1) // #2C2C2C
             )
             
             // Mood Selector (optional - can be expanded later)
@@ -108,7 +108,7 @@ struct NotesModalView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("How did you feel about this session?")
                 .font(.system(size: 12))
-                .foregroundColor(Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1))) // #A0A0A0
+                .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
             
             HStack(spacing: 12) {
                 ForEach(1...5, id: \.self) { moodValue in
@@ -121,8 +121,8 @@ struct NotesModalView: View {
                     .buttonStyle(PlainButtonStyle())
                     .background(
                         Circle()
-                            .fill(viewModel.mood == moodValue ? 
-                                  Color(NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3)) : Color.clear)
+                        .fill(viewModel.mood == moodValue ? 
+                              NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3).swiftUIColor : Color.clear)
                             .frame(width: 32, height: 32)
                     )
                     .onHover { isHovered in
@@ -141,7 +141,7 @@ struct NotesModalView: View {
                         viewModel.mood = nil
                     }
                     .font(.system(size: 11))
-                    .foregroundColor(Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1)))
+                    .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor)
                     .buttonStyle(PlainButtonStyle())
                 }
             }
@@ -153,12 +153,12 @@ struct NotesModalView: View {
     private var footerView: some View {
         VStack(spacing: 8) {
             Divider()
-                .background(Color(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1))) // #2C2C2C
+                .background(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1).swiftUIColor) // #2C2C2C
             
             HStack {
                 Text("Press ⌘+Enter to save, or Esc to cancel")
                     .font(.system(size: 11))
-                    .foregroundColor(Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1))) // #A0A0A0
+                    .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
                 
                 Spacer()
                 
@@ -169,8 +169,8 @@ struct NotesModalView: View {
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     .buttonStyle(NotesButtonStyle(
-                        backgroundColor: Color(NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1)),
-                        foregroundColor: Color(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1))
+                        backgroundColor: NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1).swiftUIColor,
+                        foregroundColor: NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor
                     ))
                     
                     // Save Button
@@ -181,8 +181,8 @@ struct NotesModalView: View {
                     .disabled(!viewModel.canSave)
                     .buttonStyle(NotesButtonStyle(
                         backgroundColor: viewModel.canSave ? 
-                            Color(NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 1)) : 
-                            Color(NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3)),
+                            NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 1).swiftUIColor : 
+                            NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3).swiftUIColor,
                         foregroundColor: .white
                     ))
                 }

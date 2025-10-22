@@ -172,10 +172,10 @@ struct FilterButton: View {
                 .padding(.vertical, Theme.spacingExtraSmall)
                 .background(
                     ZStack {
-                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .fill(Color.gray.opacity(0.25))
                         if currentFilter == filter {
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                                 .fill(Color.accentColor.opacity(0.9))
                                 .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
                                 .transition(.opacity.combined(with: .scale))
@@ -202,7 +202,7 @@ struct ChartCard<Content: View>: View {
         }
         .padding()
         .background(Color.gray.opacity(0.1))
-        .cornerRadius(Theme.cornerRadius)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
 }
 
@@ -213,7 +213,7 @@ struct NoDataPlaceholder: View {
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, minHeight: minHeight)
             .background(Color.gray.opacity(0.2))
-            .cornerRadius(Theme.cornerRadius)
+            .cornerRadius(Theme.Design.cornerRadius)
     }
 }
 
@@ -295,7 +295,7 @@ struct SummaryCard: View {
         .padding(.horizontal, Theme.spacingMedium)
         .padding(.vertical, Theme.spacingSmall)
         .background(Color.gray.opacity(0.2))
-        .cornerRadius(Theme.cornerRadius)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
 }
 

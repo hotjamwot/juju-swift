@@ -14,7 +14,7 @@ struct ProjectDetailView: View {
         self.onSave = onSave
         self.onDelete = onDelete
         self._editedName = State(initialValue: project.wrappedValue.name)
-        self._editedColor = State(initialValue: Color(NSColor(hex: project.wrappedValue.color) ?? NSColor.systemBlue))
+        self._editedColor = State(initialValue: (NSColor(hex: project.wrappedValue.color) ?? NSColor.systemBlue).swiftUIColor)
         self._editedAbout = State(initialValue: project.wrappedValue.about ?? "")
     }
     

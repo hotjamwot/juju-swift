@@ -1,17 +1,13 @@
 import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
-    private enum Tab {
-        case charts, sessions, projects
-    }
-
     @State private var selected: Tab = .charts
     @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
         ZStack {
             // Dark grey background
-            Color(Theme.background)
+            Color(Theme.Colors.background)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -27,25 +23,22 @@ struct SwiftUIDashboardRootView: View {
 
                     Spacer()
 
-                    // Centered tab picker
-                    Picker("", selection: $selected) {
-                        Text("Juju").tag(Tab.charts)
-                        Text("Sessions").tag(Tab.sessions)
-                        Text("Projects").tag(Tab.projects)
+                    // CENTERED TAB BAR
+                    HStack(spacing: 4) {
+                        ForEach(Tab.allCases) { tab in
+                            TabButton(tab: tab, selected: $selected)
+                        }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(width: 300)
-                    .tint(.white)
+                    .frame(maxWidth: 260)          // tweak if you want a tighter band
                     .padding(.vertical, Theme.spacingExtraSmall)
-
                     Spacer()
                         .frame(width: 36)
                         .padding(.trailing, Theme.spacingLarge)
                 }
                 .frame(height: 42)
-                .background(Color(Theme.background))
-                .overlay(Divider().background(Theme.surface), alignment: .bottom)
-
+                .background(Color(Theme.Colors.background))
+                .overlay(Divider().background(Theme.Colors.surface), alignment: .bottom)
+                
                 // Main content
                 ZStack {
                     switch selected {
@@ -61,10 +54,10 @@ struct SwiftUIDashboardRootView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: selected)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, Theme.spacingLarge)
                 .padding(.bottom, Theme.spacingLarge)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 

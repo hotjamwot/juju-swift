@@ -52,8 +52,8 @@ struct EditSessionView: View {
                 TextEditor(text: $editedNotes)
                     .frame(height: 120)
                     .overlay(
-                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                            .stroke(Theme.surface, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.surface, lineWidth: 1)
                     )
             }
 
