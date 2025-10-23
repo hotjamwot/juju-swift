@@ -5,128 +5,130 @@ struct SessionCardView: View {
     let projects: [Project]
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     var body: some View {
-        HStack(spacing: Theme.spacingLarge) {
+        HStack(spacing: Theme.spacingMedium) {
             // LEFT: Project > Date
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text(session.projectName)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
+                    .font(Theme.Fonts.body.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+
                 // Date
                 Text(formattedDate)
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
             }
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-            
+
             // MIDDLE-LEFT: Duration and Start/End Time (new column)
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 // Duration
                 HStack {
                     Image(systemName: "clock.fill")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                     Text(formatDuration(session.durationMinutes))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
                 }
-                
+
                 // Start Time - End Time
                 HStack(spacing: Theme.spacingExtraSmall) {
                     HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "play.fill")
-                            .font(.caption2)
+                            .font(Theme.Fonts.caption)
                         Text(formattedStartTime)
-                            .font(.caption2)
-                            .fontWeight(.medium)
+                            .font(Theme.Fonts.caption.weight(.semibold))
                     }
-                    .foregroundStyle(.secondary)
-                    
+                    .foregroundColor(Theme.Colors.textSecondary)
+
                     Text("—")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+
                     HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "stop.fill")
-                            .font(.caption2)
+                            .font(Theme.Fonts.caption)
                         Text(formattedEndTime)
-                            .font(.caption2)
-                            .fontWeight(.medium)
+                            .font(Theme.Fonts.caption.weight(.semibold))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-            
+
             // MIDDLE-RIGHT: Note (lengthened horizontally for more X axis space)
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 if !session.notes.isEmpty {
                     Text(session.notes)
-                        .font(.body)
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(6) // Increased from 4 to 6 for 1.5x space
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true) // Allow horizontal expansion
                 } else {
                     Text("No notes")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                         .italic()
                 }
             }
             .frame(maxWidth: .infinity)
-            
+
             // RIGHT: Mood > Edit and Delete buttons
             VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
                 // Mood
                 if let mood = session.mood {
                     HStack(spacing: Theme.spacingExtraSmall) {
                         Image(systemName: "star.fill")
-                            .font(.caption)
+                            .font(Theme.Fonts.caption)
                         Text("\(mood)")
-                            .font(.caption)
-                        .fontWeight(.medium)
+                            .font(Theme.Fonts.caption.weight(.semibold))
                     }
                     .padding(.horizontal, Theme.spacingSmall)
                     .padding(.vertical, Theme.spacingExtraSmall)
-                    .foregroundStyle(moodColor(for: mood))
-                    .background(Color.secondary.opacity(0.1))
+                    .foregroundColor(moodColor(for: mood))
+                    .background(Theme.Colors.accent.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                
+
                 Spacer()
-                
+
                 // Actions
                 HStack(spacing: Theme.spacingSmall) {
                     Button(action: onEdit) {
                         Image(systemName: "pencil")
                             .font(.title3)
-                        .foregroundStyle(.secondary)
+                            .foregroundColor(Theme.Colors.textSecondary)
                     }
-                    .buttonStyle(.plain)
-                    
+                    .buttonStyle(PlainButtonStyle())
+
                     Button(action: onDelete) {
                         Image(systemName: "trash")
                             .font(.title3)
-                        .foregroundStyle(.secondary)
+                            .foregroundColor(Theme.Colors.textSecondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(Theme.spacingLarge)
+        .padding(Theme.spacingMedium)
         .frame(minHeight: 100)
-        .background(Color(Theme.Colors.background))
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.primary.opacity(0.9), lineWidth: 1)
-        )
-        .shadow(color: Theme.Colors.surface.opacity(0.9), radius: 2, x: 0, y: 1)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
+                .shadow(color: Theme.Tab.glow.swiftUIColor, radius: 2, x: 0, y: 1)
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
     
     private var formattedDate: String {
@@ -201,11 +203,13 @@ struct SessionCardView: View {
         }
     }
     
+    @State private var isHovering = false
+
     private func moodColor(for mood: Int) -> Color {
         switch mood {
-        case 7...10: return .green
-        case 4...6: return .orange
-        default: return .red
+        case 7...10: return Theme.Colors.accent
+        case 4...6: return Theme.Colors.surface
+        default: return Theme.Colors.error
         }
     }
     

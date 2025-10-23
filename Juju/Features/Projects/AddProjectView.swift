@@ -5,7 +5,6 @@ struct AddProjectView: View {
     @State private var name: String = ""
     @State private var color: String = "#4E79A7"
     @State private var about: String = ""
-    @State private var showingColorPicker = false
     
     let colorOptions = [
         "#4E79A7", "#F28E2C", "#E15759", "#76B7B2", 
@@ -16,58 +15,128 @@ struct AddProjectView: View {
     var onSave: (Project) -> Void
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Project Details")) {
-                    TextField("Project Name", text: $name)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                    
-                    Text("Color")
-                        .foregroundColor(.primary)
-                    
-                    HStack {
-                        ForEach(colorOptions, id: \.self) { colorOption in
-                            Button(action: {
-                                self.color = colorOption
-                            }) {
-                                Circle()
-                                    .fill(Color(hex: colorOption))
-                                    .frame(width: 30, height: 30)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.primary.opacity(0.3), lineWidth: self.color == colorOption ? 2 : 0)
-                                    )
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    TextField("Description (optional)", text: $about, axis: .vertical)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+            // Header
+            HStack {
+                Text("New Project")
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
-                Section {
-                    Button("Create Project") {
-                        if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            let newProject = Project(name: name.trimmingCharacters(in: .whitespacesAndNewlines), 
-                                                   color: color, 
-                                                   about: about.isEmpty ? nil : about)
-                            onSave(newProject)
-                        }
+                Spacer()
+                
+                Button("Cancel") {
+                    dismiss()
+                }
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+                .buttonStyle(PlainButtonStyle())
+                .onHover { isHovered in
+                    if isHovered {
+                        NSCursor.pointingHand.set()
+                    } else {
+                        NSCursor.arrow.set()
                     }
-                    .frame(maxWidth: .infinity)
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .navigationTitle("New Project")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+            .padding(.bottom, Theme.spacingMedium)
+            
+            Divider()
+                .background(Theme.Colors.divider)
+                .padding(.bottom, Theme.spacingLarge)
+            
+            // Name Field
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Text("Project Name")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                TextField("Project Name", text: $name)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+            }
+            
+            // Color Section
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Text("Color")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                HStack(spacing: Theme.spacingSmall) {
+                    ForEach(colorOptions, id: \.self) { colorOption in
+                        Button(action: {
+                            self.color = colorOption
+                        }) {
+                            Circle()
+                                .fill(Color(hex: colorOption))
+                                .frame(width: 30, height: 30)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Theme.Colors.divider, lineWidth: colorOption == color ? 2 : 1)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
+            // About
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Text("Description (optional)")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                TextEditor(text: $about)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .frame(minHeight: 120)
+                    .padding(Theme.spacingMedium)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+            }
+            
+            Spacer()
+            
+            // Create Button
+            Divider()
+                .background(Theme.Colors.divider)
+                .padding(.bottom, Theme.spacingMedium)
+            
+            Button("Create Project") {
+                if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let newProject = Project(name: name.trimmingCharacters(in: .whitespacesAndNewlines), 
+                                           color: color, 
+                                           about: about.isEmpty ? nil : about)
+                    onSave(newProject)
+                }
+            }
+            .font(Theme.Fonts.body.weight(.semibold))
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .background(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.Colors.accent.opacity(0.5) : Theme.Colors.accent)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .scaleEffect(0.95)
+            .onHover { isHovered in
+                if isHovered && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    NSCursor.pointingHand.set()
+                } else {
+                    NSCursor.arrow.set()
                 }
             }
         }
+        .padding(Theme.spacingLarge)
+        .frame(minWidth: 400, minHeight: 300)
+        .background(Theme.Colors.surface)
     }
 }

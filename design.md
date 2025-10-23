@@ -62,7 +62,7 @@
 
 ---
 
-### Iconography
+## Iconography
 - Style: Outline / linear (Lucide / SF Symbols)
 - Stroke weight: 1.5–2px
 - Size: 20–24px

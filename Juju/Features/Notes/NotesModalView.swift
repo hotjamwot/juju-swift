@@ -20,7 +20,7 @@ struct NotesModalView: View {
             footerView
         }
         .frame(width: 600, height: 400)
-        .background(Color(Theme.Colors.background))
+        .background(Theme.Colors.surface)
         .onAppear {
             // Focus the text field when view appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -51,8 +51,8 @@ struct NotesModalView: View {
         VStack(spacing: 0) {
             HStack {
                 Text("What did you work on?")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1).swiftUIColor) // #F5F5F7
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
                 Spacer()
             }
@@ -61,7 +61,7 @@ struct NotesModalView: View {
             .padding(.bottom, Theme.spacingMedium)
             
             Divider()
-                .background(Color(Theme.Colors.background))
+                .background(Theme.Colors.divider)
         }
     }
     
@@ -73,26 +73,26 @@ struct NotesModalView: View {
             ZStack(alignment: .topLeading) {
                 if viewModel.notesText.isEmpty {
                     Text("Enter your session notes here...")
-                        .font(.system(size: 14))
-                        .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                         .padding(.horizontal, Theme.spacingMedium)
                         .padding(.vertical, Theme.spacingSmall)
                         .allowsHitTesting(false)
                 }
                 
                 TextEditor(text: $viewModel.notesText)
-                    .font(.system(size: 14))
-                    .foregroundColor(NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.97, alpha: 1).swiftUIColor) // #F5F5F7
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
                     .background(Color.clear)
                     .scrollContentBackground(.hidden)
                     .focused($isTextFieldFocused)
                     .padding(Theme.spacingSmall)
             }
-            .background(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.086, alpha: 1).swiftUIColor) // Slightly darker
-            .cornerRadius(8)
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.cornerRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1).swiftUIColor, lineWidth: 1) // #2C2C2C
+                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                    .stroke(Theme.Colors.divider, lineWidth: 1)
             )
             
             // Mood Selector (optional - can be expanded later)
@@ -105,26 +105,27 @@ struct NotesModalView: View {
     // MARK: - Mood Selector View
     
     private var moodSelectorView: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
             Text("How did you feel about this session?")
-                .font(.system(size: 12))
-                .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
             
-            HStack(spacing: 12) {
+            HStack(spacing: Theme.spacingSmall) {
                 ForEach(1...5, id: \.self) { moodValue in
                     Button(action: {
                         viewModel.mood = viewModel.mood == moodValue ? nil : moodValue
                     }) {
                         Text(moodEmoji(for: moodValue))
-                            .font(.system(size: 20))
+                            .font(Theme.Fonts.icon)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .background(
                         Circle()
                         .fill(viewModel.mood == moodValue ? 
-                              NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3).swiftUIColor : Color.clear)
+                              Theme.Colors.accent.opacity(0.3) : Color.clear)
                             .frame(width: 32, height: 32)
                     )
+                    .cornerRadius(Theme.Design.cornerRadius)
                     .onHover { isHovered in
                         if isHovered {
                             NSCursor.pointingHand.set()
@@ -140,8 +141,8 @@ struct NotesModalView: View {
                     Button("Clear") {
                         viewModel.mood = nil
                     }
-                    .font(.system(size: 11))
-                    .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .buttonStyle(PlainButtonStyle())
                 }
             }
@@ -151,26 +152,26 @@ struct NotesModalView: View {
     // MARK: - Footer View
     
     private var footerView: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Theme.spacingSmall) {
             Divider()
-                .background(NSColor(calibratedRed: 0.173, green: 0.173, blue: 0.173, alpha: 1).swiftUIColor) // #2C2C2C
+                .background(Theme.Colors.divider)
             
             HStack {
                 Text("Press ⌘+Enter to save, or Esc to cancel")
-                    .font(.system(size: 11))
-                    .foregroundColor(NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor) // #A0A0A0
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 
                 Spacer()
                 
-                HStack(spacing: 12) {
+                HStack(spacing: Theme.spacingSmall) {
                     // Cancel Button
                     Button("Cancel") {
                         viewModel.cancelNotes()
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     .buttonStyle(NotesButtonStyle(
-                        backgroundColor: NSColor(calibratedRed: 0.106, green: 0.106, blue: 0.106, alpha: 1).swiftUIColor,
-                        foregroundColor: NSColor(calibratedRed: 0.63, green: 0.63, blue: 0.63, alpha: 1).swiftUIColor
+                        backgroundColor: Theme.Colors.surface,
+                        foregroundColor: Theme.Colors.textSecondary
                     ))
                     
                     // Save Button
@@ -181,8 +182,8 @@ struct NotesModalView: View {
                     .disabled(!viewModel.canSave)
                     .buttonStyle(NotesButtonStyle(
                         backgroundColor: viewModel.canSave ? 
-                            NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 1).swiftUIColor : 
-                            NSColor(calibratedRed: 0.56, green: 0.35, blue: 1.0, alpha: 0.3).swiftUIColor,
+                            Theme.Colors.accent : 
+                            Theme.Colors.accent.opacity(0.5),
                         foregroundColor: .white
                     ))
                 }
@@ -214,12 +215,13 @@ struct NotesButtonStyle: ButtonStyle {
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
+            .font(Theme.Fonts.body.weight(.semibold))
             .foregroundColor(foregroundColor)
             .frame(width: 90, height: 32)
             .background(backgroundColor)
-            .cornerRadius(8)
+            .cornerRadius(Theme.Design.cornerRadius)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: configuration.isPressed)
             .onHover { isHovered in
                 if isHovered {
                     NSCursor.pointingHand.set()

@@ -19,39 +19,54 @@ struct ProjectDetailView: View {
     }
     
     @State private var showingDeleteAlert = false
+    @State private var isDeleteHover = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             // Project Name
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("Name")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 TextField("Project Name", text: $editedName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
                     .onChange(of: editedName) { _, _ in updateProject() }
             }
             
             // Color Picker
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("Color")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 ColorPicker("", selection: $editedColor)
                     .labelsHidden()
                     .onChange(of: editedColor) { _, _ in updateProject() }
             }
             
             // About Text Editor
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("About")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 TextEditor(text: $editedAbout)
-                    .frame(minHeight: 100)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .frame(minHeight: 120)
+                    .padding(Theme.spacingMedium)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.secondary.opacity(0.2))
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
                     .onChange(of: editedAbout) { _, _ in updateProject() }
             }
@@ -62,12 +77,20 @@ struct ProjectDetailView: View {
             Button("Delete Project") {
                 showingDeleteAlert = true
             }
-            .buttonStyle(.borderless)
-            .foregroundColor(.red)
+            .font(Theme.Fonts.caption)
+            .foregroundColor(Theme.Colors.error)
+            .padding(.horizontal, Theme.spacingMedium)
+            .padding(.vertical, Theme.spacingSmall)
+            .background(isDeleteHover ? Theme.Colors.surface : Color.clear)
+            .cornerRadius(Theme.Design.cornerRadius)
             .frame(maxWidth: .infinity, alignment: .trailing)
+            .onHover { hovering in
+                isDeleteHover = hovering
+            }
         }
-        .padding()
-        .frame(minWidth: 300)
+        .padding(Theme.spacingLarge)
+        .frame(minWidth: 400, minHeight: 300)
+        .background(Theme.Colors.surface)
         .alert("Are You Sure?", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {
                 onDelete(project)

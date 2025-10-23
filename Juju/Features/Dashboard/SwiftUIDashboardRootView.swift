@@ -24,20 +24,20 @@ struct SwiftUIDashboardRootView: View {
                     Spacer()
 
                     // CENTERED TAB BAR
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.spacingSmall) {
                         ForEach(Tab.allCases) { tab in
                             TabButton(tab: tab, selected: $selected)
                         }
                     }
                     .frame(maxWidth: 260)          // tweak if you want a tighter band
-                    .padding(.vertical, Theme.spacingExtraSmall)
+                    .padding(.vertical, Theme.spacingSmall)
                     Spacer()
                         .frame(width: 36)
                         .padding(.trailing, Theme.spacingLarge)
                 }
                 .frame(height: 42)
-                .background(Color(Theme.Colors.background))
-                .overlay(Divider().background(Theme.Colors.surface), alignment: .bottom)
+                .background(Theme.Colors.background)
+                .overlay(Divider().background(Theme.Colors.divider), alignment: .bottom)
                 
                 // Main content
                 ZStack {
