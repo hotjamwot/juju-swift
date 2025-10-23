@@ -17,13 +17,14 @@ struct StackedBarChartView: View {
                 y: .value("Duration", entry.durationHours)
             )
             .foregroundStyle(entry.colorSwiftUI)
+            .cornerRadius(4)
             .opacity(0.8)
             // NOTE: Explicit bar width control isn't available on this Charts version.
             // Rely on automatic sizing; spacing is handled by x-domain/tick density.
         }
         .frame(height: 200)
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: desiredTickCount)) { _ in
+            AxisMarks(values: .automatic(desiredCount: desiredTickCount + 2)) { _ in
                 AxisValueLabel(format: .dateTime.month(.abbreviated).day())
             }
         }

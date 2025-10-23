@@ -1,37 +1,59 @@
 import SwiftUI
 import Charts
+import Foundation
+
+// MARK: – Time‑range filter
+
+/// One of the three drop‑down options you already have.
+enum TimePeriod: String, CaseIterable, Identifiable {
+    case lastMonth   = "Last month"
+    case last90Days  = "Last 90 days"
+    case thisYear    = "This Year"
+
+    var id: String { rawValue }          // Needed for ForEach
+
+    /// Human‑friendly title (used in the button & header).
+    var title: String { rawValue }
+
+    /// How many days back from `Date()` this option covers.
+    var daysAgo: Int {
+        switch self {
+        case .lastMonth:  return 30
+        case .last90Days: return 90
+        case .thisYear:   return 365
+        }
+    }
+
+    /// Convenience: the `DateInterval` that ChartDataPreparer can use directly.
+    var dateInterval: DateInterval {
+        let end = Date()
+        let start = Calendar.current.date(byAdding: .day, value: -daysAgo, to: end)!
+        return DateInterval(start: start, end: end)
+    }
+}
 
 /// Modern native SwiftUI Charts dashboard
 struct DashboardNativeSwiftChartsView: View {
     @StateObject private var chartDataPreparer = ChartDataPreparer()
-    @State private var currentFilter = "This Year"
+    @State private var selectedPeriod: TimePeriod = .thisYear
     @State private var sessions: [SessionRecord] = []
     @State private var projects: [Project] = []
     @Namespace private var filterNamespace
-    
+
+
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Time Tracking")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Text("Showing data for: \(currentFilter)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
+            // MARK: Header 
                 HStack(spacing: 8) {
-                    FilterButton(title: "Last month", filter: "Last month", currentFilter: $currentFilter)
-                    FilterButton(title: "Last 90 days", filter: "Last 90 days", currentFilter: $currentFilter)
-                    FilterButton(title: "This Year", filter: "This Year", currentFilter: $currentFilter)
-                }
-            }
+               ForEach(TimePeriod.allCases) { period in
+        FilterButton(
+            title: period.title,
+            filter: period,
+            selectedPeriod: $selectedPeriod
+        )
+    }
+}
+
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
             
@@ -58,10 +80,10 @@ struct DashboardNativeSwiftChartsView: View {
                         if chartDataPreparer.viewModel.weeklyStackedData.isEmpty {
                             NoDataPlaceholder(minHeight: 200)
                         } else {
-                            // Adjust tick density based on filter to reduce clutter
+                            // Adjust tick density based on Period to reduce clutter
                             StackedAreaChartView(
                                 data: chartDataPreparer.viewModel.weeklyStackedData,
-                                desiredTickCount: desiredTickCountForFilter(currentFilter)
+                                desiredTickCount: desiredTickCountForPeriod(selectedPeriod)
                             )
                         }
                     }
@@ -123,10 +145,11 @@ struct DashboardNativeSwiftChartsView: View {
         }
         .background(Color(red: 0.10, green: 0.10, blue: 0.12))
         .onAppear(perform: loadData)
-        .onChange(of: currentFilter) { _ in
+        .onChange(of: selectedPeriod) { newPeriod in
             // Smoothly animate chart transitions when filter changes
             withAnimation(.easeInOut(duration: 0.22)) {
                 updateChartData()
+                print("[Dashboard] Updating chart for period: \(selectedPeriod.title)")
             }
         }
     }
@@ -138,33 +161,32 @@ struct DashboardNativeSwiftChartsView: View {
     }
     
     private func updateChartData() {
-        chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: currentFilter)
+        chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: selectedPeriod)
     }
 
     // Choose reasonable axis tick counts per filter window
-    private func desiredTickCountForFilter(_ filter: String) -> Int {
-        switch filter {
-        case "Last month":
-            return 6 // about every 5 days
-        case "Last 90 days":
-            return 8 // weekly-ish
-        case "This Year":
-            return 6 // roughly bi-monthly
-        default:
-            return 6
-        }
+    private func desiredTickCountForPeriod(_ period: TimePeriod) -> Int {
+    switch period {
+    case .lastMonth:
+        return 6        // about every 5 days
+    case .last90Days:
+        return 8        // weekly‑ish
+    case .thisYear:
+        return 6        // roughly bi‑monthly
     }
+}
+
 }
 
 // MARK: - Components
 
 struct FilterButton: View {
     let title: String
-    let filter: String
-    @Binding var currentFilter: String
+    let filter: TimePeriod
+    @Binding var selectedPeriod: TimePeriod
     
     var body: some View {
-        Button(action: { withAnimation(.easeInOut(duration: 0.18)) { currentFilter = filter } }) {
+        Button(action: { withAnimation(.easeInOut(duration: 0.18)) { selectedPeriod = filter } }) {
             Text(title)
                 .font(.caption)
                 .lineLimit(1)
@@ -174,7 +196,7 @@ struct FilterButton: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .fill(Color.gray.opacity(0.25))
-                        if currentFilter == filter {
+                        if selectedPeriod == filter {
                             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                                 .fill(Color.accentColor.opacity(0.9))
                                 .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
@@ -182,7 +204,7 @@ struct FilterButton: View {
                         }
                     }
                 )
-                .foregroundColor(currentFilter == filter ? .white : .primary)
+                .foregroundColor(selectedPeriod == filter ? .white : .primary)
         }
         .buttonStyle(.plain)
     }

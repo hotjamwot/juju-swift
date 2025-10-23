@@ -6,17 +6,32 @@ import SwiftUI
 @MainActor
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
+
     
     // MARK: - Public Entry Point
     
     func prepareData(
         sessions: [SessionRecord],
         projects: [Project],
-        filter: String
-    ) {
+        filter: TimePeriod
+        ) {
+    // MARK: – use the enum’s DateInterval
+    let interval = filter.dateInterval
+    // filter your session array
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    let filteredSessions = sessions.filter { (session: SessionRecord) -> Bool in
+        let paddedStartTime = session.startTime.count == 5 ? session.startTime + ":00" : session.startTime
+        let startDateStr = session.date + " " + paddedStartTime
+        guard let startDate = dateFormatter.date(from: startDateStr) else { return false }
+        return interval.contains(startDate)
+    }
+    
+    // Build the view‑model arrays from `filteredSessions…`
+    print("[ChartDataPreparer] Re‑calculating for: \(filter.title) – interval: \(interval)")
         viewModel.sessions = sessions
         viewModel.projects = projects
-        viewModel.currentFilter = filter
+        viewModel.currentFilter = filter.rawValue
         
         // Transform sessions to unified ChartEntry format
         viewModel.chartEntries = transformToChartEntries(from: filteredSessions, projects: projects)
