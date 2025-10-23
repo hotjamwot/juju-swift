@@ -7,7 +7,7 @@ struct SessionCardView: View {
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: Theme.spacingMedium) {
+        HStack(spacing: Theme.spacingLarge) {
             // LEFT: Project > Date
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text(session.projectName)
@@ -19,12 +19,12 @@ struct SessionCardView: View {
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textPrimary)
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
             // MIDDLE-LEFT: Duration and Start/End Time (new column)
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 // Duration
-                HStack {
+                HStack (spacing: Theme.spacingMedium) {
                     Image(systemName: "clock.fill")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
@@ -56,7 +56,7 @@ struct SessionCardView: View {
                     .foregroundColor(Theme.Colors.textSecondary)
                 }
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
             // MIDDLE-RIGHT: Note (lengthened horizontally for more X axis space)
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
@@ -75,6 +75,7 @@ struct SessionCardView: View {
                         .italic()
                 }
             }
+            .layoutPriority(3)
             .frame(maxWidth: .infinity)
 
             // RIGHT: Mood > Edit and Delete buttons
@@ -113,7 +114,7 @@ struct SessionCardView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+            .layoutPriority(1)
         }
         .padding(Theme.spacingMedium)
         .frame(minHeight: 100)
@@ -207,8 +208,8 @@ struct SessionCardView: View {
 
     private func moodColor(for mood: Int) -> Color {
         switch mood {
-        case 7...10: return Theme.Colors.accent
-        case 4...6: return Theme.Colors.surface
+        case 9...10: return Theme.Colors.accent
+        case 4...9: return Theme.Colors.surface
         default: return Theme.Colors.error
         }
     }

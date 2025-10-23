@@ -35,8 +35,8 @@ public struct Theme {
     // MARK: Typography
     public struct Fonts {
         public static let header   = Font.system(size: 16, weight: .semibold)
-        public static let body     = Font.system(size: 16, weight: .regular)
-        public static let caption  = Font.system(size: 13, weight: .medium)
+        public static let body     = Font.system(size: 14, weight: .regular)
+        public static let caption  = Font.system(size: 12, weight: .medium)
         public static let icon     = Font.system(size: 20, weight: .regular)
     }
 
