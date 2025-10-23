@@ -208,8 +208,11 @@ struct SessionCardView: View {
 
     private func moodColor(for mood: Int) -> Color {
         switch mood {
-        case 9...10: return Theme.Colors.accent
-        case 4...9: return Theme.Colors.surface
+        case 1...4: return Theme.Colors.error
+        case 5...7: return Theme.Colors.surface
+        case 8: return Theme.Colors.accent.opacity(0.6)
+        case 9: return Theme.Colors.accent.opacity(0.85)
+        case 10: return Theme.Colors.accent
         default: return Theme.Colors.error
         }
     }

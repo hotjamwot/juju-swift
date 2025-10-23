@@ -164,7 +164,7 @@ struct SessionsView: View {
                             .buttonStyle(.bordered)
                             
                             Text("Page \(currentPage) of \(totalPages)")
-                                .font(.caption)
+                                .font(Theme.Fonts.caption)
                             
                             Button("Next") {
                                 if currentPage < totalPages {
@@ -219,6 +219,17 @@ struct SessionsView: View {
             }
         }
     }
+
+
+            /// Turns a SessionRecord into a Date that represents the session’s
+            /// *start* moment (date + time).
+            private func startDateTime(_ session: SessionRecord) -> Date {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"          // include seconds to match CSV format
+                formatter.timeZone = TimeZone.current            // or .utc if your data is UTC
+             let combined = "\(session.date) \(session.startTime)"
+          return formatter.date(from: combined) ?? Date()
+            }
     
     
     private func updateFilteredSessions() {
@@ -238,11 +249,8 @@ struct SessionsView: View {
             }
             
             // Sort by date descending (most recent first)
-            sessions.sort { session1, session2 in
-                let date1 = parseDate(session1.date)
-                let date2 = parseDate(session2.date)
-                return date1 > date2
-            }
+            sessions.sort { startDateTime($0) > startDateTime($1) }
+
             
             // Update pagination
             let totalSessions = sessions.count

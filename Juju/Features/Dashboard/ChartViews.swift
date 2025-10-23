@@ -307,15 +307,15 @@ struct ChartLegend: View {
                         .fill(entry.colorSwiftUI)
                         .frame(width: 10, height: 10)
                     Text(entry.projectName)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Spacer(minLength: 4)
                     Text(String(format: "%.1fh", entry.value))
-                        .font(.caption)
+                        .font(Theme.Fonts.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.Colors.textPrimary)
                 }
             }
         }
@@ -337,14 +337,14 @@ struct ChartTooltip: View {
                     .frame(width: 8, height: 8)
                 
                 Text(title)
-                    .font(.caption)
+                    .font(Theme.Fonts.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.Colors.textPrimary)
             }
             
             Text(value)
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(Theme.Colors.textSecondary)
         }
         .padding(.horizontal, Theme.spacingMedium)
         .padding(.vertical, Theme.spacingSmall)
@@ -370,9 +370,9 @@ struct EnhancedChartCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(Theme.Fonts.header)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
                 Spacer()
             }

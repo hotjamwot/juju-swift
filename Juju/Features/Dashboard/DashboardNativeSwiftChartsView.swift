@@ -145,7 +145,7 @@ struct DashboardNativeSwiftChartsView: View {
                 .padding(.bottom, Theme.spacingLarge)
             }
         }
-        .background(Color(red: 0.10, green: 0.10, blue: 0.12))
+        .background(Theme.Colors.background)
         .onAppear(perform: loadData)
         .onChange(of: selectedPeriod) { newPeriod in
             print("[Dashboard] Selected period changed to: \(newPeriod.title)")
@@ -186,12 +186,13 @@ struct FilterButton: View {
     
     var body: some View {
         Button(action: {
-            selectedPeriod = filter
-            onSelect()
-            withAnimation(.easeInOut(duration: 0.18)) { }
+            withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
+                selectedPeriod = filter
+                onSelect()
+            }
         }) {
             Text(title)
-                .font(.caption)
+                .font(Theme.Fonts.caption)
                 .lineLimit(1)
                 .padding(.horizontal, Theme.spacingSmall)
                 .padding(.vertical, Theme.spacingExtraSmall)
@@ -207,7 +208,8 @@ struct FilterButton: View {
                         }
                     }
                 )
-                .foregroundColor(selectedPeriod == filter ? .white : .primary)
+                .foregroundColor(selectedPeriod == filter ? Theme.Colors.textPrimary :
+                Theme.Colors.textSecondary)
         }
         .buttonStyle(.plain)
     }
@@ -221,12 +223,12 @@ struct ChartCard<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.headline)
-                .foregroundColor(.white)
+                .font(Theme.Fonts.header)
+                .foregroundColor(Theme.Colors.textPrimary)
             content
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
+        .padding(Theme.spacingMedium)
+        .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
     }
 }
@@ -235,9 +237,9 @@ struct NoDataPlaceholder: View {
     var minHeight: CGFloat = 200
     var body: some View {
         Text("No data available")
-            .foregroundColor(.secondary)
+            .foregroundColor(Theme.Colors.textSecondary)
             .frame(maxWidth: .infinity, minHeight: minHeight)
-            .background(Color.gray.opacity(0.2))
+            .background(Theme.Colors.surface.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
     }
 }
@@ -307,19 +309,19 @@ struct SummaryCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 
                 Text(value)
-                    .font(.title2)
+                    .font(Theme.Fonts.header)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.Colors.textPrimary)
             }
             Spacer()
         }
         .padding(.horizontal, Theme.spacingMedium)
         .padding(.vertical, Theme.spacingSmall)
-        .background(Color.gray.opacity(0.2))
+        .background(Theme.Colors.surface.opacity(0.2))
         .cornerRadius(Theme.Design.cornerRadius)
     }
 }

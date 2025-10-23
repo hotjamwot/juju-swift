@@ -13,17 +13,17 @@ struct ProjectGridItemView: View {
                 .overlay(
                     Text(project.name.prefix(1).uppercased())
                         .font(.system(size: 36, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.Colors.textPrimary)
                 )
             
             Text(project.name)
                 .lineLimit(1)
-                .font(.headline)
+                font(Theme.Fonts.header)
             
             if let about = project.about, !about.isEmpty {
                 Text(about)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .lineLimit(2)
             }
         }

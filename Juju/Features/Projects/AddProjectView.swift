@@ -120,7 +120,7 @@ struct AddProjectView: View {
                 }
             }
             .font(Theme.Fonts.body.weight(.semibold))
-            .foregroundColor(.white)
+            .foregroundColor(Theme.Colors.textPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: 40)
             .background(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.Colors.accent.opacity(0.5) : Theme.Colors.accent)

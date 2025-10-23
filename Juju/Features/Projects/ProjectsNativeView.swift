@@ -26,7 +26,7 @@ struct ProjectsNativeView: View {
                             
                             Text("Add Project")
                                 .lineLimit(1)
-                                .font(.headline)
+                                font(Theme.Fonts.header)
                         }
                         .padding(Theme.spacingMedium)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,7 +54,7 @@ struct ProjectsNativeView: View {
                 if viewModel.filteredProjects.isEmpty {
                     Spacer()
                     Text("No projects found. Click 'Add Project' to create one.")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Theme.Colors.textSecondary)
                     Spacer()
                 }
             }
