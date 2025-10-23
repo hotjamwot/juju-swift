@@ -28,10 +28,10 @@ final class ChartDataPreparer: ObservableObject {
     }
     
     // Build the view‑model arrays from `filteredSessions…`
-    print("[ChartDataPreparer] Re‑calculating for: \(filter.title) – interval: \(interval)")
+        print("[ChartDataPreparer] Re‑calculating for: \(filter.title) – interval: \(interval)")
         viewModel.sessions = sessions
         viewModel.projects = projects
-        viewModel.currentFilter = filter.rawValue
+        viewModel.currentFilter = filter
         
         // Transform sessions to unified ChartEntry format
         viewModel.chartEntries = transformToChartEntries(from: filteredSessions, projects: projects)
@@ -64,12 +64,12 @@ final class ChartDataPreparer: ObservableObject {
     private func transformToChartEntries(from sessions: [SessionRecord], projects: [Project]) -> [ChartEntry] {
         return sessions.compactMap { session in
             guard let date = formatterYYYYMMDD.date(from: session.date) else { return nil }
-            guard let project = projects.first(where: { $0.name == session.projectName }) else { return nil }
+            let projectColor = projects.first(where: { $0.name == session.projectName })?.color ?? "#999999"
             
             return ChartEntry(
                 date: date,
                 projectName: session.projectName,
-                projectColor: project.color,
+                projectColor: projectColor,
                 durationMinutes: session.durationMinutes,
                 startTime: session.startTime,
                 endTime: session.endTime,
@@ -111,11 +111,11 @@ final class ChartDataPreparer: ObservableObject {
             let periodLabel = "\(weekDate.formatted(.dateTime.day().month(.abbreviated))) - \(endDate.formatted(.dateTime.day().month(.abbreviated)))"
             
             for (projectName, hours) in projectTotals {
-                guard let project = viewModel.projects.first(where: { $0.name == projectName }) else { continue }
+                let projectColor = viewModel.projects.first(where: { $0.name == projectName })?.color ?? "#999999"
                 let entry = StackedChartEntry(
                     period: periodLabel,
                     projectName: projectName,
-                    projectColor: project.color,
+                    projectColor: projectColor,
                     value: hours
                 )
                 result.append((entry, weekDate))
@@ -133,11 +133,11 @@ final class ChartDataPreparer: ObservableObject {
         }
         
         let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (projectName, hours) in
-            guard let project = viewModel.projects.first(where: { $0.name == projectName }) else { return nil }
+        return totals.map { (projectName, hours) in
+            let projectColor = viewModel.projects.first(where: { $0.name == projectName })?.color ?? "#999999"
             return PieChartEntry(
                 projectName: projectName,
-                projectColor: project.color,
+                projectColor: projectColor,
                 value: hours,
                 percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
             )
@@ -203,11 +203,11 @@ final class ChartDataPreparer: ObservableObject {
         }
         
         let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (name, hours) in
-            guard let project = viewModel.projects.first(where: { $0.name == name }) else { return nil }
+        return totals.map { (name, hours) in
+            let color = viewModel.projects.first(where: { $0.name == name })?.color ?? "#999999"
             return ProjectChartData(
                 projectName: name,
-                color: project.color,
+                color: color,
                 totalHours: hours,
                 percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
             )

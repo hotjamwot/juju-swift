@@ -70,7 +70,7 @@ class ProjectManager {
         }
         
         // Load projects from file or create default
-        if let projectsFile = projectsFile {
+        if let projectsFile = projectsFile, FileManager.default.fileExists(atPath: projectsFile.path) {
             do {
                 let data = try Data(contentsOf: projectsFile)
                 let loadedProjects = try JSONDecoder().decode([Project].self, from: data)
@@ -79,14 +79,9 @@ class ProjectManager {
                 return migratedProjects
             } catch {
                 print("Error loading projects: \(error)")
-                if FileManager.default.fileExists(atPath: projectsFile.path) {
-                    // File exists but invalid JSON - return empty to prevent overwrite
-                    print("Invalid projects.json exists, returning empty array to avoid overwrite")
-                    return []
-                } else {
-                    // File doesn't exist, create defaults
-                    return createDefaultProjects()
-                }
+                print("Deleting invalid projects.json and creating defaults")
+                try? FileManager.default.removeItem(at: projectsFile)
+                return createDefaultProjects()
             }
         } else {
             return createDefaultProjects()

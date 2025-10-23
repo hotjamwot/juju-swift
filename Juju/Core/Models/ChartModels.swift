@@ -90,14 +90,14 @@ struct DailyChartEntry: Identifiable {
 }
 
 // MARK: - Chart View Models
+@MainActor
 class ChartViewModel: ObservableObject {
     @Published var yearlyData: [TimeSeriesData] = []
     @Published var weeklyData: [TimeSeriesData] = []
     @Published var projectDistribution: [ProjectChartData] = []
     @Published var projectBreakdown: [TimeSeriesData] = []
     @Published var isLoading: Bool = false
-    @Published var currentFilter: String = "This Year"
-    
+    @Published var currentFilter: TimePeriod = .last90Days
     // New chart data arrays
     @Published var chartEntries: [ChartEntry] = []
     @Published var dailyStackedData: [DailyChartEntry] = []
@@ -112,33 +112,29 @@ class ChartViewModel: ObservableObject {
         get {
             let calendar = Calendar.current
             let today = Date()
-            
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             
             switch currentFilter {
-            case "Last month":
+            case .lastMonth:
                 // Rolling last 30 days including today
                 let start = calendar.date(byAdding: .day, value: -29, to: today)!
                 let startStr = dateFormatter.string(from: start)
                 let todayStr = dateFormatter.string(from: today)
                 return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
                 
-            case "Last 90 days":
+            case .last90Days:
                 // Rolling last 90 days including today
                 let start = calendar.date(byAdding: .day, value: -89, to: today)!
                 let startStr = dateFormatter.string(from: start)
                 let todayStr = dateFormatter.string(from: today)
                 return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
                 
-            case "This Year":
+            case .thisYear:
                 let thisYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1))!
                 let thisYearStr = dateFormatter.string(from: thisYear)
                 let todayStr = dateFormatter.string(from: today)
                 return sessions.filter { $0.date >= thisYearStr && $0.date <= todayStr }
-                
-            case "All Time":
-                return sessions
                 
             default:
                 let thisYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1))!
@@ -149,4 +145,3 @@ class ChartViewModel: ObservableObject {
         }
     }
 }
-

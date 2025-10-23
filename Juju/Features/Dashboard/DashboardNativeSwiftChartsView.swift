@@ -50,7 +50,9 @@ struct DashboardNativeSwiftChartsView: View {
             title: period.title,
             filter: period,
             selectedPeriod: $selectedPeriod
-        )
+        ) {
+            updateChartData(filter: period)
+        }
     }
 }
 
@@ -146,22 +148,18 @@ struct DashboardNativeSwiftChartsView: View {
         .background(Color(red: 0.10, green: 0.10, blue: 0.12))
         .onAppear(perform: loadData)
         .onChange(of: selectedPeriod) { newPeriod in
-            // Smoothly animate chart transitions when filter changes
-            withAnimation(.easeInOut(duration: 0.22)) {
-                updateChartData()
-                print("[Dashboard] Updating chart for period: \(selectedPeriod.title)")
-            }
+            print("[Dashboard] Selected period changed to: \(newPeriod.title)")
         }
     }
     
     private func loadData() {
         sessions = SessionManager.shared.loadAllSessions()
         projects = ProjectManager.shared.loadProjects()
-        updateChartData()
+        updateChartData(filter: selectedPeriod)
     }
     
-    private func updateChartData() {
-        chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: selectedPeriod)
+    private func updateChartData(filter: TimePeriod) {
+        chartDataPreparer.prepareData(sessions: sessions, projects: projects, filter: filter)
     }
 
     // Choose reasonable axis tick counts per filter window
@@ -184,9 +182,14 @@ struct FilterButton: View {
     let title: String
     let filter: TimePeriod
     @Binding var selectedPeriod: TimePeriod
+    let onSelect: () -> Void
     
     var body: some View {
-        Button(action: { withAnimation(.easeInOut(duration: 0.18)) { selectedPeriod = filter } }) {
+        Button(action: {
+            selectedPeriod = filter
+            onSelect()
+            withAnimation(.easeInOut(duration: 0.18)) { }
+        }) {
             Text(title)
                 .font(.caption)
                 .lineLimit(1)
