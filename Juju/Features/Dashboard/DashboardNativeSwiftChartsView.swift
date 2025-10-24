@@ -59,12 +59,20 @@ struct DashboardNativeSwiftChartsView: View {
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
             
+            // MARK: Summary Row
+            HStack(spacing: Theme.spacingLarge) {
+                SummaryCard(title: "Total Sessions", value: "\(sessions.count)", color: .blue, icon: Image(systemName: "clock"))
+                SummaryCard(title: "Total Hours", value: String(format: "%.1f", calculateTotalHours()), color: .green, icon: Image(systemName: "hourglass"))
+                SummaryCard(title: "Active Projects", value: "\(projects.count)", color: .purple, icon: Image(systemName: "folder"))
+            }
+            .padding(.horizontal, Theme.spacingLarge)
+            
             // MARK: Charts
             ScrollView {
                 VStack(spacing: 20) {
                     // Row 1: Stacked Bar Chart (Daily)
                     EnhancedChartCard(
-                        title: "Daily Time Distribution",
+                        title: nil,
                         legendData: chartDataPreparer.viewModel.pieChartData
                     ) {
                         if chartDataPreparer.viewModel.dailyStackedData.isEmpty {
@@ -76,7 +84,7 @@ struct DashboardNativeSwiftChartsView: View {
                     
                     // Row 2: Stacked Area Chart (Weekly)
                     EnhancedChartCard(
-                        title: "Weekly Time Trends",
+                        title: nil,
                         legendData: chartDataPreparer.viewModel.pieChartData
                     ) {
                         if chartDataPreparer.viewModel.weeklyStackedData.isEmpty {
@@ -94,7 +102,7 @@ struct DashboardNativeSwiftChartsView: View {
                     HStack(spacing: 16) {
                         // Left: Pie Chart
                         EnhancedChartCard(
-                            title: "Project Distribution",
+                            title: nil,
                             legendData: chartDataPreparer.viewModel.pieChartData
                         ) {
                             if chartDataPreparer.viewModel.pieChartData.isEmpty {
@@ -106,37 +114,13 @@ struct DashboardNativeSwiftChartsView: View {
                         
                         // Right: Project Bar Chart
                         EnhancedChartCard(
-                            title: "Project Hours Comparison",
+                            title: nil,
                             legendData: chartDataPreparer.viewModel.pieChartData
                         ) {
                             if chartDataPreparer.viewModel.projectBarData.isEmpty {
                                 NoDataPlaceholder(minHeight: 200)
                             } else {
                                 ProjectBarChartView(data: chartDataPreparer.viewModel.projectBarData)
-                            }
-                        }
-                    }
-                    
-                    // Summary Section
-                    EnhancedChartCard(title: "Summary") {
-                        VStack(spacing: 12) {
-                            if !sessions.isEmpty {
-                                SummaryCard(title: "Total Sessions",
-                                            value: "\(sessions.count)",
-                                            color: .blue)
-                                
-                                let totalHours = Double(sessions.reduce(0) { $0 + $1.durationMinutes }) / 60.0
-                                SummaryCard(title: "Total Hours",
-                                            value: String(format: "%.1f", totalHours),
-                                            color: .green)
-                                
-                                if !projects.isEmpty {
-                                    SummaryCard(title: "Active Projects",
-                                                value: "\(projects.count)",
-                                                color: .purple)
-                                }
-                            } else {
-                                NoDataPlaceholder(minHeight: 100)
                             }
                         }
                     }
@@ -150,6 +134,10 @@ struct DashboardNativeSwiftChartsView: View {
         .onChange(of: selectedPeriod) { newPeriod in
             print("[Dashboard] Selected period changed to: \(newPeriod.title)")
         }
+    }
+    
+    private func calculateTotalHours() -> Double {
+        return Double(sessions.reduce(0) { $0 + $1.durationMinutes }) / 60.0
     }
     
     private func loadData() {
@@ -300,12 +288,26 @@ struct SummaryCard: View {
     let title: String
     let value: String
     let color: Color
+    let icon: Image?
+    
+    init(title: String, value: String, color: Color, icon: Image? = nil) {
+        self.title = title
+        self.value = value
+        self.color = color
+        self.icon = icon
+    }
     
     var body: some View {
         HStack {
-            Circle()
-                .fill(color)
-                .frame(width: 12, height: 12)
+            if let icon = icon {
+                icon
+                    .foregroundColor(color)
+                    .frame(width: 16, height: 16)
+            } else {
+                Circle()
+                    .fill(color)
+                    .frame(width: 12, height: 12)
+            }
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

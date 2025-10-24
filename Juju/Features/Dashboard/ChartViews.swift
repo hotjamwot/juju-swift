@@ -1,6 +1,17 @@
 import SwiftUI
 import Charts
 
+// MARK: - Simple Chart Card View
+struct ChartCardSimple<Content: View>: View {
+    let content: Content
+    var body: some View {
+        content
+            .padding()
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.cornerRadius)
+    }
+}
+
 // MARK: - Stacked Bar Chart View
 struct StackedBarChartView: View {
     let data: [DailyChartEntry]
@@ -90,21 +101,16 @@ struct StackedAreaChartView: View {
                 x: .value("Period", entry.period),
                 y: .value("Hours", entry.value)
             )
-            .interpolationMethod(.linear) // reduce visual wobble
+            .interpolationMethod(.catmullRom)
             .foregroundStyle(by: .value("Project", entry.projectName))
         }
         .frame(height: 200)
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: desiredTickCount)) { _ in
-                AxisValueLabel()
-            }
+        .chartYAxis {
+            AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4))
         }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { _ in
-                        AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(1)))
-                        AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
-                    }
-                }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 6))
+        }
         .chartPlotStyle { plotArea in
             plotArea
                 .background(Color.white.opacity(0.02))
@@ -356,11 +362,11 @@ struct ChartTooltip: View {
 
 // MARK: - Enhanced Chart Card with Legend
 struct EnhancedChartCard<Content: View>: View {
-    let title: String
+    let title: String?
     let legendData: [PieChartEntry]?
     @ViewBuilder let content: Content
     
-    init(title: String, legendData: [PieChartEntry]? = nil, @ViewBuilder content: () -> Content) {
+    init(title: String? = nil, legendData: [PieChartEntry]? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.legendData = legendData
         self.content = content()
@@ -368,13 +374,15 @@ struct EnhancedChartCard<Content: View>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(title)
-                    .font(Theme.Fonts.header)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Spacer()
+            if let title = title {
+                HStack {
+                    Text(title)
+                        .font(Theme.Fonts.header)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                    
+                    Spacer()
+                }
             }
             
             content
