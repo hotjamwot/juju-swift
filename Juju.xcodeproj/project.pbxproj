@@ -34,7 +34,6 @@
 		66B1487B2EA8EA4B00E9BB4A /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148392EA8EA4B00E9BB4A /* ProjectDetailView.swift */; };
 		66B1487C2EA8EA4B00E9BB4A /* ProjectGridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483A2EA8EA4B00E9BB4A /* ProjectGridItemView.swift */; };
 		66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */; };
-		66B1487E2EA8EA4B00E9BB4A /* EditSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483D2EA8EA4B00E9BB4A /* EditSessionView.swift */; };
 		66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */; };
 		66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */; };
 		66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66B148422EA8EA4B00E9BB4A /* Assets.xcassets */; };
@@ -79,7 +78,6 @@
 		66B148392EA8EA4B00E9BB4A /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		66B1483A2EA8EA4B00E9BB4A /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectGridItemView.swift; sourceTree = "<group>"; };
 		66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
-		66B1483D2EA8EA4B00E9BB4A /* EditSessionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditSessionView.swift; sourceTree = "<group>"; };
 		66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCardView.swift; sourceTree = "<group>"; };
 		66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
 		66B148422EA8EA4B00E9BB4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -225,7 +223,6 @@
 		66B148402EA8EA4B00E9BB4A /* Sessions */ = {
 			isa = PBXGroup;
 			children = (
-				66B1483D2EA8EA4B00E9BB4A /* EditSessionView.swift */,
 				66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */,
 				66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */,
 			);
@@ -376,7 +373,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				66B1484F2EA8EA4B00E9BB4A /* MenuManager.swift in Sources */,
-				66B1487E2EA8EA4B00E9BB4A /* EditSessionView.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
 				66B1488E2EA8EB2300E9BB4A /* TabButton.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,

@@ -3,10 +3,57 @@ import SwiftUI
 struct SessionCardView: View {
     let session: SessionRecord
     let projects: [Project]
-    let onEdit: () -> Void
+    let onSave: () -> Void
     let onDelete: () -> Void
 
+    @State private var isEditing = false
+    @State private var editedDate = ""
+    @State private var editedStartTime = ""
+    @State private var editedEndTime = ""
+    @State private var editedProject = ""
+    @State private var editedNotes = ""
+    @State private var selectedMood: String = ""
+    @State private var isHovering = false
+
+    var projectNames: [String] {
+        projects.map { $0.name }
+    }
+
     var body: some View {
+        Group {
+            if isEditing {
+                editingBody
+            } else {
+                viewingBody
+            }
+        }
+        .padding(Theme.spacingMedium)
+        .frame(minHeight: 100)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .stroke(Theme.Colors.divider, lineWidth: 1)
+        )
+        .shadow(color: Theme.Tab.glow.swiftUIColor, radius: 2, x: 0, y: 1)
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
+        }
+        .onChange(of: isEditing) { newValue in
+            if newValue {
+                editedDate = session.date
+                editedStartTime = String(session.startTime.prefix(5))
+                editedEndTime = String(session.endTime.prefix(5))
+                editedProject = session.projectName
+                editedNotes = session.notes
+                selectedMood = session.mood.map { "\($0)" } ?? ""
+            }
+        }
+    }
+
+    private var viewingBody: some View {
         HStack(spacing: Theme.spacingLarge) {
             // LEFT: Project > Date
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
@@ -99,7 +146,9 @@ struct SessionCardView: View {
 
                 // Actions
                 HStack(spacing: Theme.spacingSmall) {
-                    Button(action: onEdit) {
+                    Button {
+                        isEditing = true
+                    } label: {
                         Image(systemName: "pencil")
                             .font(.title3)
                             .foregroundColor(Theme.Colors.textSecondary)
@@ -116,22 +165,109 @@ struct SessionCardView: View {
             }
             .layoutPriority(1)
         }
-        .padding(Theme.spacingMedium)
-        .frame(minHeight: 100)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                )
-                .shadow(color: Theme.Tab.glow.swiftUIColor, radius: 2, x: 0, y: 1)
-        .scaleEffect(isHovering ? 1.02 : 1.0)
-        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isHovering)
-        .onHover { hovering in
-            isHovering = hovering
-        }
     }
-    
+
+    private var editingBody: some View {
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+            // Date
+            VStack(alignment: .leading) {
+                Text("Date")
+                    .font(.headline)
+                TextField("YYYY-MM-DD", text: $editedDate)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            // Times
+            VStack(alignment: .leading) {
+                Text("Times")
+                    .font(.headline)
+                HStack(spacing: Theme.spacingLarge) {
+                    TextField("Start (HH:MM)", text: $editedStartTime)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 120)
+                    Text("—")
+                    TextField("End (HH:MM)", text: $editedEndTime)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 120)
+                }
+            }
+
+            // Project
+            VStack(alignment: .leading) {
+                Text("Project")
+                    .font(.headline)
+                Picker("Project", selection: $editedProject) {
+                    Text("-- Select Project --").tag("")
+                    ForEach(projectNames, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+            }
+
+            // Notes
+            VStack(alignment: .leading) {
+                Text("Notes")
+                    .font(.headline)
+                TextEditor(text: $editedNotes)
+                    .frame(height: 120)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+            }
+
+            // Mood
+            VStack(alignment: .leading) {
+                Text("Mood (0-10)")
+                    .font(.headline)
+                Picker("Mood", selection: $selectedMood) {
+                    Text("-- No mood --").tag("")
+                    ForEach(0...10, id: \.self) { mood in
+                        Text("\(mood)").tag("\(mood)")
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            // Buttons
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    isEditing = false
+                }
+                .buttonStyle(.bordered)
+                Button("Save") {
+                    saveSession()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(editedProject.isEmpty)
+                .tint(.accentColor)
+                Spacer()
+            }
+            .padding(.top)
+        }
+        .frame(minHeight: 400)
+    }
+
+    private func saveSession() {
+        let moodInt = selectedMood.isEmpty ? nil : Int(selectedMood)
+        if SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: editedDate,
+            startTime: editedStartTime + ":00",
+            endTime: editedEndTime + ":00",
+            projectName: editedProject,
+            notes: editedNotes,
+            mood: moodInt
+        ) {
+            onSave()
+            isEditing = false
+        }
+        // TODO: Handle save failure if needed
+    }
+
     private var formattedDate: String {
         let date = parseDate()
         let day = Calendar.current.component(.day, from: date)
@@ -139,7 +275,7 @@ struct SessionCardView: View {
         let ordinal = ordinalSuffix(for: day)
         return "\(day)\(ordinal) \(month)"
     }
-    
+
     private var formattedStartTime: String {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "h:mm a"
@@ -149,7 +285,7 @@ struct SessionCardView: View {
         }
         return ""
     }
-    
+
     private var formattedEndTime: String {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "h:mm a"
@@ -159,27 +295,27 @@ struct SessionCardView: View {
         }
         return ""
     }
-    
+
     private var startTimeComponents: (hour: Int, minute: Int) {
         let parts = session.startTime.components(separatedBy: ":")
         let hour = Int(parts[0]) ?? 0
         let minute = Int(parts[1]) ?? 0
         return (hour, minute)
     }
-    
+
     private var endTimeComponents: (hour: Int, minute: Int) {
         let parts = session.endTime.components(separatedBy: ":")
         let hour = Int(parts[0]) ?? 0
         let minute = Int(parts[1]) ?? 0
         return (hour, minute)
     }
-    
+
     private func parseDate() -> Date {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.date(from: session.date) ?? Date()
     }
-    
+
     private func formatDuration(_ minutes: Int) -> String {
         let hours = minutes / 60
         let mins = minutes % 60
@@ -189,7 +325,7 @@ struct SessionCardView: View {
             return "\(mins)m"
         }
     }
-    
+
     private func ordinalSuffix(for day: Int) -> String {
         let ones = day % 10
         let tens = day % 100
@@ -203,8 +339,6 @@ struct SessionCardView: View {
         default: return "th"
         }
     }
-    
-    @State private var isHovering = false
 
     private func moodColor(for mood: Int) -> Color {
         switch mood {
@@ -216,7 +350,7 @@ struct SessionCardView: View {
         default: return Theme.Colors.error
         }
     }
-    
+
     private func colorFromHex(_ hex: String) -> Color {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var hexSanitized = hex

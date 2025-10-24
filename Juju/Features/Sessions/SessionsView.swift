@@ -15,8 +15,6 @@ struct SessionsView: View {
     @State private var totalPages = 1
     
     // Editing state
-    @State private var editingSession: SessionRecord? = nil
-    @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
     @State private var toDelete: SessionRecord? = nil
     
@@ -138,15 +136,19 @@ struct SessionsView: View {
                             columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 1),
                             spacing: 16
                         ) {
-                            ForEach(filteredSessions, id: \.id) { session in
-                                SessionCardView(session: session, projects: projectsViewModel.projects) {
-                                    editingSession = session
-                                    showingEditSheet = true
-                                } onDelete: {
-                                    toDelete = session
-                                    showingDeleteAlert = true
+                                ForEach(filteredSessions, id: \.id) { session in
+                                    SessionCardView(
+                                        session: session,
+                                        projects: projectsViewModel.projects,
+                                        onSave: {
+                                            updateFilteredSessions()
+                                        },
+                                        onDelete: {
+                                            toDelete = session
+                                            showingDeleteAlert = true
+                                        }
+                                    )
                                 }
-                            }
                         }
                         .padding()
                     }
@@ -191,16 +193,6 @@ struct SessionsView: View {
             projectFilter = "All"
             currentPage = 1
             updateFilteredSessions()
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            if let session = editingSession {
-                EditSessionView(session: session, projectNames: projectsViewModel.projects.map { $0.name })
-            }
-        }
-        .onChange(of: showingEditSheet) { newValue in
-            if !newValue {
-                updateFilteredSessions()
-            }
         }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
