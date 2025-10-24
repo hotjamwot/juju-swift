@@ -174,7 +174,7 @@ struct SessionCardView: View {
                 Text("Date")
                     .font(.headline)
                 TextField("YYYY-MM-DD", text: $editedDate)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
             }
 
             // Times
@@ -183,11 +183,11 @@ struct SessionCardView: View {
                     .font(.headline)
                 HStack(spacing: Theme.spacingLarge) {
                     TextField("Start (HH:MM)", text: $editedStartTime)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
                         .frame(width: 120)
                     Text("—")
                     TextField("End (HH:MM)", text: $editedEndTime)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
                         .frame(width: 120)
                 }
             }

@@ -152,6 +152,7 @@ struct SessionsView: View {
                         }
                         .padding()
                     }
+                    .scrollContentBackground(.hidden)
                     
                     // Pagination controls
                     if totalPages > 1 {

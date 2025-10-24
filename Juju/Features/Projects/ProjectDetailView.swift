@@ -28,6 +28,7 @@ struct ProjectDetailView: View {
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
                 TextField("Project Name", text: $editedName)
+                    .textFieldStyle(.plain)
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .padding(.horizontal, Theme.spacingMedium)

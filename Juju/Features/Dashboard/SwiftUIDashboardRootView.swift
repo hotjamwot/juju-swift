@@ -12,6 +12,10 @@ struct SwiftUIDashboardRootView: View {
 
             HStack(spacing: 0) {
                 SidebarView(selected: $selected)
+                    .background(Color(Theme.Colors.sidebarBackground))
+                
+                Divider()
+                    .hidden()
 
                 VStack(spacing: 0) {
                     // Main content

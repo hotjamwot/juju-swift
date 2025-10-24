@@ -50,6 +50,7 @@ struct AddProjectView: View {
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
                 TextField("Project Name", text: $name)
+                    .textFieldStyle(.plain)
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .padding(.horizontal, Theme.spacingMedium)

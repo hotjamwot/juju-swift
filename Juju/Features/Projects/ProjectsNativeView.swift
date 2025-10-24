@@ -60,6 +60,7 @@ struct ProjectsNativeView: View {
                     }
                 }
                 .padding()
+                .scrollContentBackground(.hidden)
                 
                 if viewModel.filteredProjects.isEmpty {
                     Spacer()

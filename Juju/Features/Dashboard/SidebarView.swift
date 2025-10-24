@@ -22,6 +22,7 @@ struct SidebarView: View {
 
             Divider()
                 .background(Theme.Colors.divider)
+                .hidden()
 
             // Tab buttons
             VStack(spacing: Theme.spacingSmall) {

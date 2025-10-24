@@ -18,9 +18,10 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Juju Time Tracker"
+        window.title = ""
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
+        window.styleMask.insert(.fullSizeContentView)
         window.isMovableByWindowBackground = true
         window.backgroundColor = NSColor.windowBackgroundColor
         window.isReleasedWhenClosed = false // Keep instance until fully cleaned up
