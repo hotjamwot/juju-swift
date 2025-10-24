@@ -1,12 +1,57 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Session Filter Button Style
+struct SessionFilterButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.Fonts.caption)
+                .lineLimit(1)
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .fill(isSelected ? Theme.Colors.accent : Theme.Colors.surface)
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .fill(Theme.Colors.accent.opacity(0.9))
+                                .shadow(color: Theme.Colors.accent.opacity(0.3), radius: 6, x: 0, y: 2)
+                                .transition(.opacity.combined(with: .scale))
+                        }
+                    }
+                )
+                .foregroundColor(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isSelected)
+    }
+}
+
+// MARK: - Date Filter Options
+enum DateFilter: String, CaseIterable, Identifiable {
+    case today = "Today"
+    case thisWeek = "This Week"
+    case thisMonth = "This Month"
+    case clear = "Clear"
+    
+    var id: String { rawValue }
+    
+    var title: String { rawValue }
+}
+
 struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
     
     // Filter state
     @State private var projectFilter = "All"
+    @State private var selectedDateFilter: DateFilter = .thisWeek
     @State private var currentDateInterval: DateInterval? = nil
     
     // Pagination state
@@ -27,14 +72,15 @@ struct SessionsView: View {
     @State private var filteredSessions: [SessionRecord] = []
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Theme.spacingMedium) {
             // Header with filters and actions
-            VStack(spacing: 12) {
+            VStack(spacing: Theme.spacingSmall) {
                 // Filter controls
                 HStack {
                     // Project filter
                     HStack {
                         Text("Project:")
+                            .font(Theme.Fonts.caption)
                         Picker(selection: $projectFilter, label: EmptyView()) {
                             Text("All").tag("All")
                             ForEach(projectsViewModel.projects, id: \.id) { project in
@@ -42,57 +88,29 @@ struct SessionsView: View {
                             }
                         }
                         .pickerStyle(.menu)
-                        .frame(width: 150)
+                        .frame(width: 120)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .fill(Theme.Colors.surface)
+                        )
                         .onChange(of: projectFilter) { _ in
                             updateFilteredSessions()
                         }
                     }
                     
                     // Date filters
-                    HStack {
+                    HStack(spacing: Theme.spacingSmall) {
                         Text("Date Range:")
-                        Button("Today") {
-                            let today = Date()
-                            let calendar = Calendar.current
-                            let start = calendar.startOfDay(for: today)
-                            let end = calendar.date(byAdding: .day, value: 1, to: start)!
-                            currentDateInterval = DateInterval(start: start, end: end)
-                            currentPage = 1
-                            updateFilteredSessions()
+                            .font(Theme.Fonts.caption)
+                        ForEach(DateFilter.allCases) { filter in
+                            SessionFilterButton(
+                                title: filter.title,
+                                isSelected: selectedDateFilter == filter,
+                                action: {
+                                    handleDateFilterSelection(filter)
+                                }
+                            )
                         }
-                        .buttonStyle(.bordered)
-                        
-                        Button("This Week") {
-                            let today = Date()
-                            let calendar = Calendar.current
-                            let todayStart = calendar.startOfDay(for: today)
-                            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
-                            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-                            currentDateInterval = DateInterval(start: weekStart, end: end)
-                            currentPage = 1
-                            updateFilteredSessions()
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("This Month") {
-                            let today = Date()
-                            let calendar = Calendar.current
-                            let todayStart = calendar.startOfDay(for: today)
-                            let monthStart = calendar.date(byAdding: .day, value: -30, to: todayStart)!
-                            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-                            currentDateInterval = DateInterval(start: monthStart, end: end)
-                            currentPage = 1
-                            updateFilteredSessions()
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Clear") {
-                            currentDateInterval = nil
-                            projectFilter = "All"
-                            currentPage = 1
-                            updateFilteredSessions()
-                        }
-                        .buttonStyle(.borderedProminent)
                     }
                     
                     Spacer()
@@ -109,10 +127,21 @@ struct SessionsView: View {
                             exportSessions(format: "md")
                         }
                     } label: {
-                        Image(systemName: "square.and.arrow.down")
-                        Text("Export")
+                        HStack(spacing: Theme.spacingExtraSmall) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(Theme.Fonts.icon)
+                            Text("Export")
+                                .font(Theme.Fonts.caption)
+                        }
+                        .padding(.horizontal, Theme.spacingSmall)
+                        .padding(.vertical, Theme.spacingExtraSmall)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .fill(Theme.Colors.accent)
+                        )
+                        .foregroundColor(Theme.Colors.textPrimary)
                     }
-                    .buttonStyle(.bordered)
+                    .frame(width: 100)
                 }
                 
                 // Pagination info
@@ -124,17 +153,19 @@ struct SessionsView: View {
                                 .progressViewStyle(CircularProgressViewStyle())
                         } else {
                             Text("No sessions found")
-                                .foregroundColor(.foreground)
+                                .foregroundColor(Theme.Colors.textPrimary)
                         }
                         Spacer()
                     }
                     .frame(height: 200)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
                 } else {
                     // Grid view
                     ScrollView {
                         LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 1),
-                            spacing: 16
+                            columns: Array(repeating: GridItem(.flexible(), spacing: Theme.spacingSmall), count: 1),
+                            spacing: Theme.spacingMedium
                         ) {
                                 ForEach(filteredSessions, id: \.id) { session in
                                     SessionCardView(
@@ -150,7 +181,7 @@ struct SessionsView: View {
                                     )
                                 }
                         }
-                        .padding()
+                        .padding(Theme.spacingMedium)
                     }
                     .scrollContentBackground(.hidden)
                     
@@ -183,7 +214,10 @@ struct SessionsView: View {
                 }
             }
         }
-        .padding()
+        .padding(Theme.spacingMedium)
+        .task {
+            await projectsViewModel.loadProjects()
+        }
         .onAppear {
             let today = Date()
             let calendar = Calendar.current
@@ -193,6 +227,7 @@ struct SessionsView: View {
             currentDateInterval = DateInterval(start: weekStart, end: end)
             projectFilter = "All"
             currentPage = 1
+            selectedDateFilter = .thisWeek
             updateFilteredSessions()
         }
         .alert("Export Complete", isPresented: $showingExportAlert) {
@@ -297,6 +332,38 @@ struct SessionsView: View {
     }
     
     // Pagination functions
+    private func handleDateFilterSelection(_ filter: DateFilter) {
+        selectedDateFilter = filter
+        
+        switch filter {
+        case .today:
+            let today = Date()
+            let calendar = Calendar.current
+            let start = calendar.startOfDay(for: today)
+            let end = calendar.date(byAdding: .day, value: 1, to: start)!
+            currentDateInterval = DateInterval(start: start, end: end)
+        case .thisWeek:
+            let today = Date()
+            let calendar = Calendar.current
+            let todayStart = calendar.startOfDay(for: today)
+            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
+            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+            currentDateInterval = DateInterval(start: weekStart, end: end)
+        case .thisMonth:
+            let today = Date()
+            let calendar = Calendar.current
+            let todayStart = calendar.startOfDay(for: today)
+            let monthStart = calendar.date(byAdding: .day, value: -30, to: todayStart)!
+            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+            currentDateInterval = DateInterval(start: monthStart, end: end)
+        case .clear:
+            currentDateInterval = nil
+        }
+        
+        currentPage = 1
+        updateFilteredSessions()
+    }
+    
     private func goToPage(_ page: Int) {
         guard page >= 1 && page <= totalPages else { return }
         currentPage = page
