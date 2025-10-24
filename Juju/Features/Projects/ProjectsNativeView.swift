@@ -1,5 +1,15 @@
 import SwiftUI
 
+struct LazyView<Content: View>: View {
+    let build: () -> Content
+    init(@ViewBuilder build: @escaping () -> Content) {
+        self.build = build
+    }
+    var body: some View {
+        build()
+    }
+}
+
 struct ProjectsNativeView: View {
     @StateObject private var viewModel = ProjectsViewModel()
     @State private var path = NavigationPath()
@@ -26,7 +36,7 @@ struct ProjectsNativeView: View {
                             
                             Text("Add Project")
                                 .lineLimit(1)
-                                font(Theme.Fonts.header)
+                                .font(Theme.Fonts.header)
                         }
                         .padding(Theme.spacingMedium)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,25 +76,22 @@ struct ProjectsNativeView: View {
                 })
             }
             .navigationDestination(for: Project.self) { project in
-                let projectBinding = Binding(
-                    get: { project },
-                    set: { newValue in
-                        if let index = viewModel.projects.firstIndex(where: { $0.id == project.id }) {
-                            viewModel.projects[index] = newValue
+                LazyView {
+                    ProjectDetailView(
+                        project: project,
+                        onSave: { updatedProject in
+                            viewModel.updateProject(updatedProject)
+                        },
+                        onDelete: { projectToDelete in
+                            viewModel.deleteProject(projectToDelete)
+                            path.removeLast()  // Pop back to projects list
                         }
-                    }
-                )
-                ProjectDetailView(
-                    project: projectBinding,
-                    onSave: { updatedProject in
-                        viewModel.updateProject(updatedProject)
-                    },
-                    onDelete: { projectToDelete in
-                        viewModel.deleteProject(projectToDelete)
-                        path.removeLast()  // Pop back to projects list
-                    }
-                )
+                    )
+                }
                 .navigationTitle("Edit Project")
+            }
+            .task {
+                await viewModel.loadProjects()
             }
         }
     }

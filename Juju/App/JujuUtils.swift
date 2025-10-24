@@ -31,6 +31,10 @@ extension Color {
         }
         self.init(nsColor)
     }
+    
+    var toHex: String {
+        NSColor(self).hexString
+    }
 }
 
 // MARK: - ClosureSleeve for button/colorWell actions

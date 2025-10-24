@@ -1,25 +1,24 @@
 import SwiftUI
 
 struct ProjectDetailView: View {
-    @Binding var project: Project
+    let project: Project
     let onSave: (Project) -> Void
     let onDelete: (Project) -> Void
-    
+
     @State private var editedName: String
     @State private var editedColor: Color
     @State private var editedAbout: String
-    
-    init(project: Binding<Project>, onSave: @escaping (Project) -> Void, onDelete: @escaping (Project) -> Void) {
-        self._project = project
-        self.onSave = onSave
-        self.onDelete = onDelete
-        self._editedName = State(initialValue: project.wrappedValue.name)
-        self._editedColor = State(initialValue: (NSColor(hex: project.wrappedValue.color) ?? NSColor.systemBlue).swiftUIColor)
-        self._editedAbout = State(initialValue: project.wrappedValue.about ?? "")
-    }
-    
     @State private var showingDeleteAlert = false
     @State private var isDeleteHover = false
+    
+    init(project: Project, onSave: @escaping (Project) -> Void, onDelete: @escaping (Project) -> Void) {
+        self.project = project
+        self.onSave = onSave
+        self.onDelete = onDelete
+        self._editedName = State(initialValue: project.name)
+        self._editedAbout = State(initialValue: project.about ?? "")
+        self._editedColor = State(initialValue: project.swiftUIColor)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
@@ -39,7 +38,6 @@ struct ProjectDetailView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
-                    .onChange(of: editedName) { _, _ in updateProject() }
             }
             
             // Color Picker
@@ -49,7 +47,6 @@ struct ProjectDetailView: View {
                     .foregroundColor(Theme.Colors.textSecondary)
                 ColorPicker("", selection: $editedColor)
                     .labelsHidden()
-                    .onChange(of: editedColor) { _, _ in updateProject() }
             }
             
             // About Text Editor
@@ -68,7 +65,6 @@ struct ProjectDetailView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
-                    .onChange(of: editedAbout) { _, _ in updateProject() }
             }
             
             Spacer()
@@ -91,6 +87,9 @@ struct ProjectDetailView: View {
         .padding(Theme.spacingLarge)
         .frame(minWidth: 400, minHeight: 300)
         .background(Theme.Colors.surface)
+        .onDisappear {
+            updateProject()
+        }
         .alert("Are You Sure?", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {
                 onDelete(project)
@@ -104,20 +103,13 @@ struct ProjectDetailView: View {
     }
     
     private func updateProject() {
-        var updatedProject = project
-        updatedProject.name = editedName
-        updatedProject.color = editedColor.toHex() ?? "#4E79A7"
-        updatedProject.about = editedAbout
+        let updatedProject = Project(
+            id: project.id,
+            name: editedName,
+            color: editedColor.toHex,
+            about: editedAbout.isEmpty ? nil : editedAbout,
+            order: project.order
+        )
         onSave(updatedProject)
-    }
-}
-
-extension Color {
-    func toHex() -> String? {
-        guard let components = NSColor(self).cgColor.components else { return nil }
-        let r = Int(round(components[0] * 255.0))
-        let g = Int(round(components[1] * 255.0))
-        let b = Int(round(components[2] * 255.0))
-        return String(format: "#%02X%02X%02X", r, g, b)
     }
 }

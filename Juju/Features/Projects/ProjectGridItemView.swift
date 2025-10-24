@@ -5,10 +5,13 @@ struct ProjectGridItemView: View {
     let isSelected: Bool
     let onSelect: () -> Void
     
+    
     var body: some View {
+        let displayColor: Color = project.swiftUIColor
+        
         VStack(alignment: .leading, spacing: 8) {
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color(hex: project.color))
+                .fill(displayColor)
                 .frame(height: 100)
                 .overlay(
                     Text(project.name.prefix(1).uppercased())
@@ -18,7 +21,7 @@ struct ProjectGridItemView: View {
             
             Text(project.name)
                 .lineLimit(1)
-                font(Theme.Fonts.header)
+                .font(Theme.Fonts.header)
             
             if let about = project.about, !about.isEmpty {
                 Text(about)

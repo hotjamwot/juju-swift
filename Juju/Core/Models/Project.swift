@@ -1,8 +1,11 @@
 import Foundation
+import SwiftUI
 
 extension Notification.Name {
     static let projectsDidChange = Notification.Name("projectsDidChange")
 }
+
+    // No Color extensions here - use JujuUtils
 
 // Project structure to match the original app
 struct Project: Codable, Identifiable, Hashable {
@@ -16,8 +19,21 @@ struct Project: Codable, Identifiable, Hashable {
         case id, name, color, about, order
     }
     
+    // Computed SwiftUI Color from hex string (avoids storing Color)
+    var swiftUIColor: Color {
+        Color(hex: color)
+    }
+    
     init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0) {
         self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
+        self.name = name
+        self.color = color
+        self.about = about
+        self.order = order
+    }
+    
+    init(id: String, name: String, color: String, about: String?, order: Int) {
+        self.id = id
         self.name = name
         self.color = color
         self.about = about

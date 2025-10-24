@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
@@ -13,16 +14,24 @@ class ProjectsViewModel: ObservableObject {
     private let projectManager = ProjectManager.shared
     
     init() {
-        loadProjects()
+        // Don’t load here — it blocks the main thread.
     }
     
-    func loadProjects() {
-        projects = projectManager.loadProjects()
-        // Ensure projects have valid order values
-        if projects.contains(where: { $0.order == 0 }) {
-            reorderAllProjects()
+    func loadProjects() async {
+        print("DEBUG: loadProjects() called")
+        let loaded = projectManager.loadProjects()
+        print("DEBUG: Loaded \(loaded.count) projects")
+        await MainActor.run {
+            self.projects = loaded
+            if self.projects.contains(where: { $0.order == 0 }) {
+                print("DEBUG: Reordering projects")
+                self.reorderAllProjects()
+            }
+            print("DEBUG: Done updating view model")
         }
     }
+    
+    
     
     func addProject(name: String) {
         let maxOrder = projects.map(\.order).max() ?? 0

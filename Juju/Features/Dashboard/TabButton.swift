@@ -3,6 +3,7 @@ import SwiftUI
 struct TabButton: View {
     let tab: Tab
     @Binding var selected: Tab          // the currently chosen tab
+    @Binding var isCollapsed: Bool
     @State private var isHovering = false
 
     // MARK: – Body
@@ -13,15 +14,33 @@ struct TabButton: View {
         Button {
             withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) { selected = tab }
         } label: {
-            Image(systemName: systemIcon)
-                .font(Theme.Fonts.icon)
-                .foregroundColor(isSelected
-                                     ? Theme.Tab.selectedIcon.swiftUIColor
-                                     : Theme.Tab.icon.swiftUIColor)
-                .padding(Theme.spacingSmall)
+            if isCollapsed {
+                Image(systemName: systemIcon)
+                    .font(Theme.Fonts.icon)
+                    .foregroundColor(isSelected
+                                         ? Theme.Tab.selectedIcon.swiftUIColor
+                                         : Theme.Tab.icon.swiftUIColor)
+                    .padding(Theme.spacingSmall)
+            } else {
+                HStack(spacing: Theme.spacingSmall) {
+                    Image(systemName: systemIcon)
+                        .font(Theme.Fonts.icon)
+                        .foregroundColor(isSelected
+                                             ? Theme.Tab.selectedIcon.swiftUIColor
+                                             : Theme.Tab.icon.swiftUIColor)
+                    
+                    Text(tab.displayName)
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(isSelected
+                                             ? Theme.Tab.selectedIcon.swiftUIColor
+                                             : Theme.Tab.icon.swiftUIColor)
+                }
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
+            }
         }
         .buttonStyle(PlainButtonStyle())
-        .frame(width: 48, height: 48)           // a clean square → pill with corner radius
+        .frame(height: 44)
         .background(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .fill(isSelected
@@ -33,6 +52,7 @@ struct TabButton: View {
         .onHover { hovering in
             withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) { isHovering = hovering }
         }
+        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isCollapsed)
     }
 
     // MARK: – Icon helper
@@ -44,3 +64,4 @@ struct TabButton: View {
         }
     }
 }
+
