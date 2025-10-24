@@ -39,7 +39,6 @@
 		66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */; };
 		66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66B148422EA8EA4B00E9BB4A /* Assets.xcassets */; };
 		66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148452EA8EA4B00E9BB4A /* Theme.swift */; };
-		66B1488A2EA8EA6000E9BB4A /* STATUS.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148862EA8EA6000E9BB4A /* STATUS.md */; };
 		66B1488B2EA8EA6000E9BB4A /* index.json in Resources */ = {isa = PBXBuildFile; fileRef = 66B148872EA8EA6000E9BB4A /* index.json */; };
 		66B1488D2EA8EA6000E9BB4A /* design.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148892EA8EA6000E9BB4A /* design.md */; };
 		66B1488E2EA8EB2300E9BB4A /* TabButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148302EA8EA4B00E9BB4A /* TabButton.swift */; };
@@ -84,7 +83,6 @@
 		66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
 		66B148422EA8EA4B00E9BB4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		66B148452EA8EA4B00E9BB4A /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		66B148862EA8EA6000E9BB4A /* STATUS.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = STATUS.md; sourceTree = "<group>"; };
 		66B148872EA8EA6000E9BB4A /* index.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = index.json; sourceTree = "<group>"; };
 		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		66B148892EA8EA6000E9BB4A /* design.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = design.md; sourceTree = "<group>"; };
@@ -112,7 +110,6 @@
 				66B148892EA8EA6000E9BB4A /* design.md */,
 				66B148872EA8EA6000E9BB4A /* index.json */,
 				66B148882EA8EA6000E9BB4A /* README.md */,
-				66B148862EA8EA6000E9BB4A /* STATUS.md */,
 			);
 			name = "juju-swift";
 			sourceTree = "<group>";
@@ -357,7 +354,6 @@
 				66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */,
 				66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */,
 				66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */,
-				66B1488A2EA8EA6000E9BB4A /* STATUS.md in Resources */,
 				66B1488D2EA8EA6000E9BB4A /* design.md in Resources */,
 				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
 				66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */,

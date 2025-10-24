@@ -41,7 +41,6 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         print("[DashboardWindowController] windowWillClose - cleaning up")
-        cleanupWebViewIfNeeded()
         if let appDelegate = NSApp.delegate as? AppDelegate {
             appDelegate.dashboardWindowController = nil
         }
@@ -58,13 +57,6 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         self.window?.close()
     }
 
-    // MARK: - WebView cleanup
-
-    private func cleanupWebViewIfNeeded() {
-        if let hosting = window?.contentViewController as? NSHostingController<SwiftUIDashboardRootView> {
-            NotificationCenter.default.post(name: .cleanupWebView, object: nil)
-        }
-    }
 
     deinit {
         print("[DashboardWindowController] deinit")

@@ -44,16 +44,4 @@ struct SwiftUIDashboardRootView: View {
         NSApp.keyWindow?.close()
     }
 
-    private func cleanupWebTabIfNeeded() {
-        if selected == .charts {
-            // Attempt to clean up the WebView when the window is closing
-            NotificationCenter.default.post(name: .cleanupWebView, object: nil)
-        }
-    }
-}
-
-// MARK: - Notifications
-
-extension Notification.Name {
-    static let cleanupWebView = Notification.Name("cleanupWebView")
 }
