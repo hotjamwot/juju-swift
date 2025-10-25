@@ -25,11 +25,11 @@ struct StackedBarChartView: View {
         Chart(data) { entry in
             BarMark(
                 x: .value("Date", entry.date),
-                y: .value("Duration", entry.durationHours)
+             y: .value("Duration", entry.durationHours)
             )
             .foregroundStyle(entry.colorSwiftUI)
-            .cornerRadius(4)
-            .opacity(0.8)
+            .cornerRadius(3)
+            .opacity(0.85)
             // NOTE: Explicit bar width control isn't available on this Charts version.
             // Rely on automatic sizing; spacing is handled by x-domain/tick density.
         }
@@ -39,17 +39,27 @@ struct StackedBarChartView: View {
                 AxisValueLabel(format: .dateTime.month(.abbreviated).day())
             }
         }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { _ in
-                        AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(1)))
-                        AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
-                    }
-                }
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(1)))
+                AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
+            }
+        }
         // Subtle plot background for dark mode
         .chartPlotStyle { plotArea in
             plotArea
                 .background(Color.white.opacity(0.02))
                 .cornerRadius(8)
+        }
+        .chartXScale(domain: ClosedRange(uncheckedBounds:
+    (lower: data.first!.date.addingTimeInterval(-43200),
+     upper: data.last!.date.addingTimeInterval(43200))
+))
+        .chartPlotStyle { plotArea in
+            plotArea
+                .background(Color.white.opacity(0.02))
+                .cornerRadius(8)
+                .padding(.horizontal, 8) // <-- prevents clipping
         }
         // Tooltip overlay using ChartProxy + hover tracking (no click needed)
         .chartOverlay { proxy in
@@ -306,26 +316,22 @@ struct ChartLegend: View {
     let columns: [GridItem] = [GridItem(.adaptive(minimum: 160), spacing: 12)]
     
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
-            ForEach(data) { entry in
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(entry.colorSwiftUI)
-                        .frame(width: 10, height: 10)
-                    Text(entry.projectName)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Spacer(minLength: 4)
-                    Text(String(format: "%.1fh", entry.value))
-                        .font(Theme.Fonts.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(Theme.Colors.textPrimary)
-                }
-            }
+LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+    ForEach(data) { entry in
+        HStack(spacing: 8) {
+            Circle()
+                .fill(entry.colorSwiftUI)
+                .frame(width: 10, height: 10)
+            Text(entry.projectName)
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 4)
         }
-        .padding(.top, Theme.spacingSmall)
+    }
+}
+.padding(.top, Theme.spacingSmall)
     }
 }
 

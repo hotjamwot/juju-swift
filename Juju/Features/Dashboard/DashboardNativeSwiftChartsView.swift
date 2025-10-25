@@ -39,6 +39,13 @@ struct DashboardNativeSwiftChartsView: View {
     @State private var sessions: [SessionRecord] = []
     @State private var projects: [Project] = []
     @Namespace private var filterNamespace
+    
+    // Mock data for project bubbles
+    let mockBubbles = [
+        ProjectChartData(projectName: "Film", color: "#FFA500", totalHours: 6.2, percentage: 57.4),
+        ProjectChartData(projectName: "Writing", color: "#800080", totalHours: 3.8, percentage: 35.0),
+        ProjectChartData(projectName: "Admin", color: "#0000FF", totalHours: 2.1, percentage: 19.2)
+    ]
 
 
     var body: some View {
@@ -58,6 +65,14 @@ struct DashboardNativeSwiftChartsView: View {
 
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
+            
+            // MARK: Hero Section
+            HeroSectionView(
+                totalHours: 12.1,
+                projectBubbles: mockBubbles,
+                totalAllTimeHours: 108.3,
+                totalSessions: 245
+            )
             
             // MARK: Summary Row
             HStack(spacing: Theme.spacingLarge) {
