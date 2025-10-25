@@ -2,6 +2,8 @@ import SwiftUI
 
 @MainActor
 class ProjectsViewModel: ObservableObject {
+    static let shared = ProjectsViewModel()
+
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
     

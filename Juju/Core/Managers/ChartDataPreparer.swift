@@ -7,27 +7,43 @@ import SwiftUI
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
 
-    
     // MARK: - Public Entry Point
     
-    func prepareData(
-        sessions: [SessionRecord],
-        projects: [Project],
-        filter: TimePeriod
-        ) {
-    // MARK: – use the enum’s DateInterval
-    let interval = filter.dateInterval
-    // filter your session array
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-    let filteredSessions = sessions.filter { (session: SessionRecord) -> Bool in
-        let paddedStartTime = session.startTime.count == 5 ? session.startTime + ":00" : session.startTime
-        let startDateStr = session.date + " " + paddedStartTime
-        guard let startDate = dateFormatter.date(from: startDateStr) else { return false }
-        return interval.contains(startDate)
+    func prepareAllTimeData(sessions: [SessionRecord], projects: [Project]) {
+        viewModel.sessions = sessions
+        viewModel.projects = projects
+        
+        // Transform sessions to unified ChartEntry format for all time
+        viewModel.chartEntries = transformToChartEntries(from: sessions, projects: projects)
+        
+        // Compute legacy data series from all sessions (for backward compatibility)
+        viewModel.yearlyData = aggregateByMonth(from: sessions)
+        viewModel.weeklyData = aggregateByWeek(from: sessions)
+        viewModel.projectDistribution = aggregateProjectTotals(from: sessions)
+        viewModel.projectBreakdown = aggregateProjectBreakdown(from: sessions)
+        
+        // Compute new chart data using all time
+        viewModel.dailyStackedData = prepareDailyStackedData()
+        viewModel.weeklyStackedData = prepareWeeklyStackedData()
+        viewModel.pieChartData = preparePieChartData()
+        viewModel.projectBarData = prepareProjectBarData()
+        
+        print("[ChartDataPreparer] Prepared all-time data")
     }
-    
-    // Build the view‑model arrays from `filteredSessions…`
+
+    func prepareData(sessions: [SessionRecord], projects: [Project], filter: ChartTimePeriod) {
+        // Use the enum’s DateInterval to filter
+        let interval = filter.dateInterval
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let filteredSessions = sessions.filter { (session: SessionRecord) -> Bool in
+            let paddedStartTime = session.startTime.count == 5 ? session.startTime + ":00" : session.startTime
+            let startDateStr = session.date + " " + paddedStartTime
+            guard let startDate = dateFormatter.date(from: startDateStr) else { return false }
+            return interval.contains(startDate)
+        }
+        
+        // Build the view-model arrays from `filteredSessions…`
         print("[ChartDataPreparer] Re‑calculating for: \(filter.title) – interval: \(interval)")
         viewModel.sessions = sessions
         viewModel.projects = projects
@@ -222,6 +238,114 @@ final class ChartDataPreparer: ObservableObject {
             return TimeSeriesData(period: projectName, value: totalHours)
         }.sorted { $0.value > $1.value }
     }
+    
+    // MARK: - Dashboard Aggregations
+    
+    private func parseTimeToHour(_ timeString: String) -> Double {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        if let date = formatter.date(from: timeString) {
+            let components = calendar.dateComponents([.hour, .minute], from: date)
+            return Double(components.hour ?? 0) + Double(components.minute ?? 0) / 60.0
+        }
+        return 0.0
+    }
+
+    private var currentWeekInterval: DateInterval {
+        let today = Date()
+        let weekday = calendar.component(.weekday, from: today)
+        let daysToSubtract = (weekday == 1 ? 0 : weekday - 2)  // Monday as 2
+        let monday = calendar.date(byAdding: .day, value: -daysToSubtract, to: today) ?? today
+        let sunday = calendar.date(byAdding: .day, value: 6, to: monday) ?? today
+        return DateInterval(start: monday, end: sunday)
+    }
+
+    private var currentYearInterval: DateInterval {
+        let today = Date()
+        let yearStart = calendar.date(from: DateComponents(year: calendar.component(.year, from: today))) ?? today
+        return DateInterval(start: yearStart, end: today)
+    }
+
+    /// Current week project totals for weekly bubbles
+    func weeklyProjectTotals() -> [ProjectChartData] {
+        let filteredSessions = viewModel.sessions.filter { session in
+            formatterYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
+        }
+        return aggregateProjectTotals(from: filteredSessions)
+    }
+
+    /// Current week sessions for calendar view
+    func currentWeekSessions() -> [WeeklySession] {
+        let weekSessions = viewModel.sessions.filter { session in
+            formatterYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
+        }
+        return weekSessions.compactMap { session in
+            guard let date = formatterYYYYMMDD.date(from: session.date),
+                  let dayIndex = calendar.dateComponents([.weekday], from: date).weekday,
+                  dayIndex > 1 && dayIndex < 8 else { return nil }
+            let dayName = ["", "", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex] ?? "Monday"
+            let startHour = parseTimeToHour(session.startTime)
+            let endHour = parseTimeToHour(session.endTime.isEmpty ? "00:00" : session.endTime)
+            let projectColor = viewModel.projects.first(where: { $0.name == session.projectName })?.color ?? "#999999"
+            return WeeklySession(day: dayName, startHour: startHour, endHour: endHour, projectName: session.projectName, projectColor: projectColor)
+        }
+    }
+
+    /// Year to date project totals for yearly bubbles
+    func yearlyProjectTotals() -> [ProjectChartData] {
+        let yearSessions = viewModel.sessions.filter { session in
+            formatterYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+        }
+        return aggregateProjectTotals(from: yearSessions)
+    }
+
+    /// Monthly project totals for grouped bar chart
+    func monthlyProjectTotals() -> [MonthlyBarData] {
+        let yearSessions = viewModel.sessions.filter { session in
+            formatterYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+        }
+        var monthlyTotals: [Date: [String: Double]] = [:]
+        for session in yearSessions {
+            guard let date = formatterYYYYMMDD.date(from: session.date) else { continue }
+            let components = calendar.dateComponents([.year, .month], from: date)
+            guard let monthStart = calendar.date(from: components) else { continue }
+            let hours = Double(session.durationMinutes) / 60.0
+            monthlyTotals[monthStart, default: [:]][session.projectName, default: 0] += hours
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        var result: [MonthlyBarData] = []
+        for month in 1...12 {
+            let components = DateComponents(year: calendar.component(.year, from: Date()), month: month)
+            guard let monthDate = calendar.date(from: components) else { continue }
+            let monthName = formatter.string(from: monthDate)
+            let projectData = monthlyTotals[monthDate]?.map { (projectName, hours) in
+                ProjectMonthlyData(projectName: projectName, hours: hours, color: viewModel.projects.first(where: { $0.name == projectName })?.color ?? "#999999")
+            } ?? []
+            result.append(MonthlyBarData(month: monthName, projects: projectData))
+        }
+        return result
+    }
+
+    /// Weekly total hours for headline
+    func weeklyTotalHours() -> Double {
+        weeklyProjectTotals().reduce(0) { $0 + $1.totalHours }
+    }
+
+    /// All-time total hours for summary
+    func allTimeTotalHours() -> Double {
+        aggregateProjectTotals(from: viewModel.sessions).reduce(0) { $0 + $1.totalHours }
+    }
+
+    /// All-time total sessions for summary
+    func allTimeTotalSessions() -> Int {
+        viewModel.sessions.count
+    }
+
+    // Accessors for convenience in views
+    var chartEntries: [ChartEntry] { viewModel.chartEntries }
+    var projects: [Project] { viewModel.projects }
+    var sessions: [SessionRecord] { viewModel.sessions }
     
     // MARK: - Comparison Stats (unchanged for now)
     

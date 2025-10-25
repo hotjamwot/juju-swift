@@ -25,7 +25,6 @@
 		66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FD2EA8EA4B00E9BB4A /* ChartModels.swift */; };
 		66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FE2EA8EA4B00E9BB4A /* Project.swift */; };
 		66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148002EA8EA4B00E9BB4A /* ProjectsViewModel.swift */; };
-		66B1486F2EA8EA4B00E9BB4A /* ChartViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482B2EA8EA4B00E9BB4A /* ChartViews.swift */; };
 		66B148702EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */; };
 		66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */; };
 		66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */; };
@@ -41,8 +40,6 @@
 		66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148452EA8EA4B00E9BB4A /* Theme.swift */; };
 		66B1488B2EA8EA6000E9BB4A /* index.json in Resources */ = {isa = PBXBuildFile; fileRef = 66B148872EA8EA6000E9BB4A /* index.json */; };
 		66B1488D2EA8EA6000E9BB4A /* design.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148892EA8EA6000E9BB4A /* design.md */; };
-		66B1488E2EA8EB2300E9BB4A /* TabButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148302EA8EA4B00E9BB4A /* TabButton.swift */; };
-		66B148902EA8EE6900E9BB4A /* Tab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1488F2EA8EE6900E9BB4A /* Tab.swift */; };
 		66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */; };
 		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
 		66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */; };
@@ -73,11 +70,9 @@
 		66B147FD2EA8EA4B00E9BB4A /* ChartModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartModels.swift; sourceTree = "<group>"; };
 		66B147FE2EA8EA4B00E9BB4A /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		66B148002EA8EA4B00E9BB4A /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
-		66B1482B2EA8EA4B00E9BB4A /* ChartViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartViews.swift; sourceTree = "<group>"; };
 		66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardNativeSwiftChartsView.swift; sourceTree = "<group>"; };
 		66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
 		66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
-		66B148302EA8EA4B00E9BB4A /* TabButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TabButton.swift; sourceTree = "<group>"; };
 		66B148332EA8EA4B00E9BB4A /* NotesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesManager.swift; sourceTree = "<group>"; };
 		66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalView.swift; sourceTree = "<group>"; };
 		66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesViewModel.swift; sourceTree = "<group>"; };
@@ -92,7 +87,6 @@
 		66B148872EA8EA6000E9BB4A /* index.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = index.json; sourceTree = "<group>"; };
 		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		66B148892EA8EA6000E9BB4A /* design.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = design.md; sourceTree = "<group>"; };
-		66B1488F2EA8EE6900E9BB4A /* Tab.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Tab.swift; sourceTree = "<group>"; };
 		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
 		66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupedBarChartCardView.swift; sourceTree = "<group>"; };
 		66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
@@ -206,13 +200,10 @@
 				66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */,
 				66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */,
 				66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */,
-				66B1488F2EA8EE6900E9BB4A /* Tab.swift */,
 				6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */,
-				66B1482B2EA8EA4B00E9BB4A /* ChartViews.swift */,
 				66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */,
 				66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */,
 				66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */,
-				66B148302EA8EA4B00E9BB4A /* TabButton.swift */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -391,12 +382,10 @@
 			files = (
 				66B1484F2EA8EA4B00E9BB4A /* MenuManager.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
-				66B1488E2EA8EB2300E9BB4A /* TabButton.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
 				66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
-				66B148902EA8EE6900E9BB4A /* Tab.swift in Sources */,
 				66B1487B2EA8EA4B00E9BB4A /* ProjectDetailView.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */,
@@ -422,7 +411,6 @@
 				6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */,
 				66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */,
 				66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */,
-				66B1486F2EA8EA4B00E9BB4A /* ChartViews.swift in Sources */,
 				66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

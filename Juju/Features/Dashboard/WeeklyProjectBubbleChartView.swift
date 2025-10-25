@@ -52,17 +52,17 @@ struct WeeklyProjectBubbleChartView: View {
                     }
 
                 if let project = selectedProject, let loc = hoverLocation {
-                    ChartTooltip(
-                        title: project.projectName,
-                        value: String(format: "%.1f hours", project.totalHours),
-                        color: project.colorSwiftUI
-                    )
-                    .position(
-                        x: min(max(loc.x, 80), geo.size.width - 80),
-                        y: max(loc.y - 30, 20)
-                    )
-                    .transition(.opacity.combined(with: .scale))
-                    .animation(.easeInOut(duration: 0.15), value: selectedProject?.id)
+                   // ChartTooltip(
+                   //     title: project.projectName,
+                   //     value: String(format: "%.1f hours", project.totalHours),
+                   //     color: project.colorSwiftUI
+                   // )
+                   // .position(
+                   //     x: min(max(loc.x, 80), geo.size.width - 80),
+                   //     y: max(loc.y - 30, 20)
+                   // )
+                   // .transition(.opacity.combined(with: .scale))
+                   // .animation(.easeInOut(duration: 0.15), value: selectedProject?.id)
                 }
             }
         }

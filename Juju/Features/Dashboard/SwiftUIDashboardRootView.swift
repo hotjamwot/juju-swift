@@ -1,28 +1,29 @@
 import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
-    @State private var selected: Tab = .charts
+    @State private var selected: DashboardView = .charts
     @Environment(\.presentationMode) private var presentationMode
-
+    
     var body: some View {
         ZStack {
             // Dark grey background
             Color(Theme.Colors.background)
                 .ignoresSafeArea()
-
+            
             HStack(spacing: 0) {
-                SidebarView(selected: $selected)
+                SidebarView(selectedView: $selected)
                     .background(Color(Theme.Colors.sidebarBackground))
                 
                 Divider()
                     .hidden()
-
+                
                 VStack(spacing: 0) {
                     // Main content
                     ZStack {
                         switch selected {
                         case .charts:
                             DashboardNativeSwiftChartsView()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .transition(.opacity)
                         case .sessions:
                             SessionsView()
@@ -41,11 +42,10 @@ struct SwiftUIDashboardRootView: View {
             }
         }
     }
-
+    
     // MARK: - Helpers
-
+    
     private func closeWindow() {
         NSApp.keyWindow?.close()
     }
-
 }

@@ -1,6 +1,30 @@
 import Foundation
 import SwiftUI
 
+enum ChartTimePeriod: String, CaseIterable, Identifiable {
+    case lastMonth = "Last month"
+    case last90Days = "Last 90 days"
+    case thisYear = "This Year"
+    
+    var id: String { rawValue }
+    
+    var title: String { rawValue }
+    
+    var daysAgo: Int {
+        switch self {
+        case .lastMonth: return 30
+        case .last90Days: return 90
+        case .thisYear: return 365
+        }
+    }
+    
+    var dateInterval: DateInterval {
+        let end = Date()
+        let start = Calendar.current.date(byAdding: .day, value: -daysAgo, to: end)!
+        return DateInterval(start: start, end: end)
+    }
+}
+
 // MARK: - Unified Chart Data Model
 struct ChartEntry: Identifiable {
     let id = UUID()
@@ -89,6 +113,28 @@ struct DailyChartEntry: Identifiable {
     }
 }
 
+// MARK: - Dashboard Chart Data Models
+struct WeeklySession: Identifiable {
+    let id = UUID()
+    let day: String
+    let startHour: Double
+    let endHour: Double
+    let projectName: String
+    let projectColor: String
+    var duration: Double { endHour - startHour }
+}
+
+struct MonthlyBarData {
+    let month: String
+    let projects: [ProjectMonthlyData]
+}
+
+struct ProjectMonthlyData {
+    let projectName: String
+    let hours: Double
+    let color: String
+}
+
 // MARK: - Chart View Models
 @MainActor
 class ChartViewModel: ObservableObject {
@@ -97,7 +143,7 @@ class ChartViewModel: ObservableObject {
     @Published var projectDistribution: [ProjectChartData] = []
     @Published var projectBreakdown: [TimeSeriesData] = []
     @Published var isLoading: Bool = false
-    @Published var currentFilter: TimePeriod = .last90Days
+    @Published var currentFilter: ChartTimePeriod = .last90Days
     // New chart data arrays
     @Published var chartEntries: [ChartEntry] = []
     @Published var dailyStackedData: [DailyChartEntry] = []
