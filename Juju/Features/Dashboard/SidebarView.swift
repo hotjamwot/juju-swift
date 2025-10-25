@@ -32,38 +32,38 @@ struct SidebarButton: View {
             // ❗️  Selection – this drives the right‑hand panel
             selected = target
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: Theme.spacingLarge) {
                 Image(systemName: target.icon)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 18, weight: .regular))
                     .frame(width: 24, height: 24)
 
                 Text(target.rawValue)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(Theme.Fonts.body)
 
                 Spacer()
             }
             .foregroundColor(isSelected ? .white : (isHovered ? .accentColor : .primary))
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
+            .padding(.vertical, Theme.spacingSmall)
+            .padding(.horizontal, Theme.spacingSmall)
             .background(
                 ZStack {
                     if isSelected {          // ✅  Selected colour
-                        RoundedRectangle(cornerRadius: 7)
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.3),
+                            .shadow(color: Color.accentColor.opacity(0.5),
                                     radius: 3, x: 0, y: 1.5)
                     } else if isHovered {     // ☁️  Hover reveal
-                        RoundedRectangle(cornerRadius: 7)
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .fill(colorScheme == .dark ?
-                                  Color.white.opacity(0.06) :
-                                  Color.black.opacity(0.04))
+                                  Theme.Colors.textPrimary :
+                                    Theme.Colors.textSecondary)
                     }
                 }
             )
         }
         .buttonStyle(.plain)
         .onHover { hovering in               // Detect root‑view hover
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
                 isHovered = hovering
             }
         }
@@ -78,21 +78,19 @@ struct SidebarView: View {
     @Binding var selectedView: DashboardView
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 10) {
             // ── optional header / app icon
             HStack {
                 if let img = NSImage(named: "AppIcon") {
                     Image(nsImage: img)
                         .resizable()
                         .frame(width: 24, height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
                 }
-                Text("Juju")
-                    .font(.system(.subheadline, weight: .bold))
                 Spacer()
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
             .background(.thinMaterial)   // macOS‑style blur
 
             // ── the list of buttons

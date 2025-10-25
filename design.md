@@ -9,7 +9,7 @@
 
 ## 🧱 Layout
 - Use **flat hierarchies**, no deep nesting.
-- **Spacing:** multiples of 8pt (8, 16, 24).
+- **Spacing:** multiples of 8pt (8, 16, 24, 32).
 - **Align:** content left, navigation centred.
 - **Min window:** 1200×800.
 

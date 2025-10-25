@@ -9,7 +9,7 @@ public struct Theme {
         // Design-based hardcoded colors (independent of xcassets)
         public static let background  = NSColor(srgbRed: 0.094, green: 0.094, blue: 0.106, alpha: 1.0).swiftUIColor  // #18181B
         public static let surface     = NSColor(srgbRed: 0.118, green: 0.118, blue: 0.122, alpha: 1.0).swiftUIColor  // #1E1E1F
-        public static let accent      = NSColor(srgbRed: 0.200, green: 0.400, blue: 0.800, alpha: 1.0).swiftUIColor    // #3366CC
+        public static let accent      = NSColor(srgbRed: 0.882, green: 0.400, blue: 1.000, alpha: 1.0).swiftUIColor    // #E100FF
         public static let textPrimary = NSColor(srgbRed: 0.898, green: 0.898, blue: 0.906, alpha: 1.0).swiftUIColor  // #E5E5E7
         public static let textSecondary = NSColor(srgbRed: 0.604, green: 0.604, blue: 0.627, alpha: 1.0).swiftUIColor  // #9A9AA0
         public static let divider     = NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.1).swiftUIColor         // rgba(255,255,255,0.1)
@@ -46,6 +46,7 @@ public struct Theme {
     public static let spacingExtraSmall  = CGFloat(4)
     public static let spacingMedium      = CGFloat(16)
     public static let spacingLarge       = CGFloat(24)
+    public static let spacingExtraLarge       = CGFloat(32)
 
     // MARK: Corners / Animation
     public struct Design {

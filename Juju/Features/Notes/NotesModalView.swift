@@ -59,9 +59,6 @@ struct NotesModalView: View {
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.top, Theme.spacingLarge)
             .padding(.bottom, Theme.spacingMedium)
-            
-            Divider()
-                .background(Theme.Colors.divider)
         }
     }
     
@@ -95,56 +92,72 @@ struct NotesModalView: View {
                     .stroke(Theme.Colors.divider, lineWidth: 1)
             )
             
-            // Mood Selector (optional - can be expanded later)
-            moodSelectorView
+            // Mood Slider View
+            moodSliderView
         }
         .padding(.horizontal, Theme.spacingLarge)
         .padding(.vertical, Theme.spacingMedium)
     }
     
-    // MARK: - Mood Selector View
+    // MARK: - Mood Slider View
     
-    private var moodSelectorView: some View {
+    private var moodSliderView: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-            Text("How did you feel about this session?")
+            Text("How do you feel about the session?")
                 .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textSecondary)
             
-            HStack(spacing: Theme.spacingSmall) {
-                ForEach(1...5, id: \.self) { moodValue in
-                    Button(action: {
-                        viewModel.mood = viewModel.mood == moodValue ? nil : moodValue
-                    }) {
-                        Text(moodEmoji(for: moodValue))
-                            .font(Theme.Fonts.icon)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .background(
-                        Circle()
-                        .fill(viewModel.mood == moodValue ? 
-                              Theme.Colors.accent.opacity(0.3) : Color.clear)
-                            .frame(width: 32, height: 32)
-                    )
-                    .cornerRadius(Theme.Design.cornerRadius)
-                    .onHover { isHovered in
-                        if isHovered {
-                            NSCursor.pointingHand.set()
-                        } else {
-                            NSCursor.arrow.set()
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                if viewModel.mood != nil {
-                    Button("Clear") {
-                        viewModel.mood = nil
-                    }
+            HStack(spacing: 16) {
+                // Left label
+                Text("0")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .buttonStyle(PlainButtonStyle())
+                
+                // Slider track
+                GeometryReader(content: { geometry in
+                ZStack {
+                    // Track background
+                    Rectangle()
+                        .fill(Theme.Colors.divider.opacity(0.3))
+                        .frame(height: 4)
+                    
+                    // Active track
+                    Rectangle()
+                        .fill(Theme.Colors.accent)
+                        .frame(width: CGFloat(viewModel.mood ?? 0) / 10 * geometry.size.width)
+
+                    // Slider
+                    Slider(value: Binding(
+                        get: { viewModel.mood.map { Double($0) } ?? 0 },
+                        set: { value in
+                            let intValue = Int(value.rounded())
+                            viewModel.mood = intValue
+                        }
+                    ), in: 0...10)
+                    .labelsHidden()  // Without this, it might expand too much
+                    .tint(Theme.Colors.accent)
+                    .frame(width: geometry.size.width)
                 }
+            })
+                
+                // Right label
+                Text("10")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+            }
+            
+            // Current mood value display
+            HStack {
+                if let mood = viewModel.mood {
+                    Text("Selected: \(mood)")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.accent)
+                } else {
+                    Text("No rating")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                Spacer()
             }
         }
     }
@@ -153,13 +166,7 @@ struct NotesModalView: View {
     
     private var footerView: some View {
         VStack(spacing: Theme.spacingSmall) {
-            Divider()
-                .background(Theme.Colors.divider)
-            
             HStack {
-                Text("Press ⌘+Enter to save, or Esc to cancel")
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
                 
                 Spacer()
                 
@@ -181,8 +188,8 @@ struct NotesModalView: View {
                     .keyboardShortcut(.return, modifiers: .command)
                     .disabled(!viewModel.canSave)
                     .buttonStyle(NotesButtonStyle(
-                        backgroundColor: viewModel.canSave ? 
-                            Theme.Colors.accent : 
+                        backgroundColor: viewModel.canSave ?
+                            Theme.Colors.accent :
                             Theme.Colors.accent.opacity(0.5),
                         foregroundColor: .white
                     ))
@@ -193,50 +200,56 @@ struct NotesModalView: View {
         }
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Custom Button Style
     
-    private func moodEmoji(for mood: Int) -> String {
-        switch mood {
-        case 1: return "😔"
-        case 2: return "😐"
-        case 3: return "🙂"
-        case 4: return "😊"
-        case 5: return "🤩"
-        default: return "🙂"
+    struct NotesButtonStyle: ButtonStyle {
+        let backgroundColor: Color
+        let foregroundColor: Color
+        
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .font(Theme.Fonts.body.weight(.semibold))
+                .foregroundColor(foregroundColor)
+                .frame(width: 90, height: 32)
+                .background(
+                    Group {
+                        if backgroundColor == Theme.Colors.surface {
+                            backgroundColor
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
+                        } else {
+                            backgroundColor
+                        }
+                    }
+                )
+                .cornerRadius(Theme.Design.cornerRadius)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: Theme.Design.animationDuration), value: configuration.isPressed)
+                .onHover { isHovered in
+                    if isHovered {
+                        NSCursor.pointingHand.set()
+                    } else {
+                        NSCursor.arrow.set()
+                    }
+                }
+        }
+    }
+    
+    // MARK: - Preview
+    
+    struct NotesModalView_Previews: PreviewProvider {
+        static var previews: some View {
+            NotesModalView(viewModel: NotesViewModel.preview)
+                .previewDisplayName("Notes Modal")
         }
     }
 }
 
-// MARK: - Custom Button Style
-
-struct NotesButtonStyle: ButtonStyle {
-    let backgroundColor: Color
-    let foregroundColor: Color
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Theme.Fonts.body.weight(.semibold))
-            .foregroundColor(foregroundColor)
-            .frame(width: 90, height: 32)
-            .background(backgroundColor)
-            .cornerRadius(Theme.Design.cornerRadius)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: configuration.isPressed)
-            .onHover { isHovered in
-                if isHovered {
-                    NSCursor.pointingHand.set()
-                } else {
-                    NSCursor.arrow.set()
-                }
-            }
-    }
-}
-
-// MARK: - Preview
-
-struct NotesModalView_Previews: PreviewProvider {
-    static var previews: some View {
-        NotesModalView(viewModel: NotesViewModel.preview)
-            .previewDisplayName("Notes Modal")
+// Helper extension
+private extension Int {
+    func toDouble() -> Double {
+        Double(self)
     }
 }

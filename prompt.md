@@ -22,11 +22,13 @@ Context of Juju app:
 - Flat file system: No cloud, no lock-in, no hidden database.
 ### 📊 Dashboard
 **Charts (default tab):**
-- Summaries: Total number of Juju Sessions, Total Juju Hours logged 
-- Stacked bar chart: Daily hours.
-- Curved Stacked Area chart: Weekly trends.
-- Pie chart: Total time by project.
-- Bar chart: Total time by project.
+1. 🪩 Hero Section – “This Week in Juju”
+- **Headline Text:** “You’ve spent {time} in the Juju this week!”
+- This Week Bubble Chart:
+- Summary Stats (right side): Total Hours (all-time), **Total Sessions (all-time)
+2. A vertical Monday -> Sunday chart with coloured bars for sessions
+3. Full-width Bubble Chart for Yearly Overview
+4. Grouped Bar Chart for Monthly Trends
 **Session Table (Sessions):**
 - Inline editing: Edit date, project, times, notes, and mood directly in the table.
 - Pagination for large datasets.
@@ -45,8 +47,9 @@ Context of Juju app:
 
 ---
 
-Here is the current filetree:
+### Current filetree:
 
+```
 ├── Juju/
 │   ├── App/
 │   │   ├── AppDelegate.swift
@@ -69,18 +72,20 @@ Here is the current filetree:
 │   │       └── ProjectsViewModel.swift
 │   ├── Features/
 │   │   ├── Dashboard/
-│   │   │   ├── ChartViews.swift
+│   │   │   ├── BubbleChartCardView.swift
 │   │   │   ├── DashboardNativeSwiftChartsView.swift
 │   │   │   ├── DashboardWindowController.swift
+│   │   │   ├── GroupedBarChartCardView.swift
+│   │   │   ├── HeroSectionView.swift
+│   │   │   ├── SessionCalendarChartView.swift
+│   │   │   ├── SidebarView.swift
+│   │   │   ├── SummaryMetricView.swift
 │   │   │   ├── SwiftUIDashboardRootView.swift
-|   |   |   ├── Tab.swift
-|   |   |   ├── TabButton.swift
-|   |   |   ├── SidebarView.swift
-
+│   │   │   └── WeeklyProjectBubbleChartView.swift
 │   │   ├── Notes/
 │   │   │   ├── NotesManager.swift
 │   │   │   ├── NotesModalView.swift
-│   │   │   ├── NotesViewModel.swift
+│   │   │   └── NotesViewModel.swift
 │   │   ├── Projects/
 │   │   │   ├── AddProjectView.swift
 │   │   │   ├── ProjectDetailView.swift
@@ -103,4 +108,6 @@ Here is the current filetree:
 │   ├── juju-icon.pdf
 │   ├── status-active.png
 │   └── status-idle.png
+├── prompt.md
 └── index.json
+```
