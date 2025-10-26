@@ -2,8 +2,8 @@ import SwiftUI
 import Charts
 
 struct HeroSectionView: View {
+    @ObservedObject var chartDataPreparer: ChartDataPreparer
     let totalHours: Double
-    let projectBubbles: [ProjectChartData]
     let totalAllTimeHours: Double
     let totalSessions: Int
     
@@ -33,7 +33,7 @@ struct HeroSectionView: View {
                     .minimumScaleFactor(0.5)
                     
                     // Bubble chart for this week’s projects
-                    WeeklyProjectBubbleChartView(data: projectBubbles)
+                    WeeklyProjectBubbleChartView(chartDataPreparer: chartDataPreparer)
                         .frame(height: 160)
                 }
                 

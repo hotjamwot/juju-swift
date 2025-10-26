@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// 1️⃣  What we want to show in the sidebar
 enum DashboardView: String, CaseIterable, Identifiable {
     case charts   = "Charts"
     case sessions = "Sessions"
@@ -19,9 +18,9 @@ enum DashboardView: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// MARK: ── Sidebar button (re‑usable)
+    // MARK: ── Sidebar button (re‑usable)
 struct SidebarButton: View {
-    @Binding var selected: DashboardView   // the parent’s selection state
+    @Binding var selected: DashboardView   // the parent's selection state
     let target: DashboardView              // the view that this button represents
 
     @State private var isHovered = false
@@ -32,37 +31,37 @@ struct SidebarButton: View {
             // ❗️  Selection – this drives the right‑hand panel
             selected = target
         } label: {
-            HStack(spacing: Theme.spacingLarge) {
+            HStack(spacing: Theme.spacingMedium) {
                 Image(systemName: target.icon)
-                    .font(.system(size: 18, weight: .regular))
-                    .frame(width: 24, height: 24)
+                    .font(.system(size: 16, weight: .light))
+                    .frame(width: 12, height: 12)
 
                 Text(target.rawValue)
                     .font(Theme.Fonts.body)
 
                 Spacer()
             }
-            .foregroundColor(isSelected ? .white : (isHovered ? .accentColor : .primary))
-            .padding(.vertical, Theme.spacingSmall)
-            .padding(.horizontal, Theme.spacingSmall)
+            .foregroundColor(isSelected ? Color.accent.opacity(0.8) : (isHovered ? .secondary : .primary))
+            .padding(.vertical, Theme.spacingLarge)
+            .padding(.horizontal, Theme.spacingMedium)
             .background(
                 ZStack {
                     if isSelected {          // ✅  Selected colour
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                            .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.5),
-                                    radius: 3, x: 0, y: 1.5)
+                            .fill(Color.background.opacity(0.8))
                     } else if isHovered {     // ☁️  Hover reveal
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .fill(colorScheme == .dark ?
-                                  Theme.Colors.textPrimary :
+                                  Theme.Colors.surface.opacity(0.6) :
                                     Theme.Colors.textSecondary)
                     }
                 }
             )
         }
         .buttonStyle(.plain)
-        .onHover { hovering in               // Detect root‑view hover
+        .focusable(false)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onHover { hovering in
             withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
                 isHovered = hovering
             }
@@ -72,37 +71,53 @@ struct SidebarButton: View {
     private var isSelected: Bool { selected == target }
 }
 
-// MARK: ── The split‑view container
-
+    // MARK: ── Sidebar container
 struct SidebarView: View {
     @Binding var selectedView: DashboardView
+    @AppStorage("sidebarCollapsed") private var isSidebarCollapsed: Bool = false
 
     var body: some View {
         VStack(spacing: 10) {
-            // ── optional header / app icon
+            /* ----------- HEADER ----------- */
             HStack {
-                if let img = NSImage(named: "AppIcon") {
-                    Image(nsImage: img)
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
-                }
                 Spacer()
+
+                // 📌 Collapse/Expand button
+                Button {
+                    withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
+                        isSidebarCollapsed.toggle()
+                    }
+                } label: {
+                    Image(systemName: isSidebarCollapsed
+                          ? "sidebar.right"
+                          : "sidebar.left")
+                    .font(.system(size: 14, weight: .light))
+                        .foregroundColor(.secondary)
+                        .opacity(0.4)
+                }
+                .focusable(false)
+                .buttonStyle(.borderless)
+                .background(Theme.Colors.sidebarBackground)
+                .contentShape(Rectangle())
+                .help(isSidebarCollapsed ? "Open Sidebar" : "Close Sidebar")
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
-            .background(.thinMaterial)   // macOS‑style blur
+            .background(Theme.Colors.sidebarBackground)
 
-            // ── the list of buttons
-            ForEach(DashboardView.allCases) { view in
-                SidebarButton(selected: $selectedView, target: view)
-                    .accessibilityLabel(view.rawValue)
+            /* ----------- CONTENT (only one collapse icon) ----------- */
+            if !isSidebarCollapsed {
+                ForEach(DashboardView.allCases) { view in
+                    SidebarButton(selected: $selectedView, target: view)
+                        .accessibilityLabel(view.rawValue)
+                        .padding(.leading, Theme.spacingSmall)
+                }
             }
 
             Spacer()
         }
-        .frame(width: 170)                          // Fixed width
-        .background(.thinMaterial)                  // Hover/selection blend
+        .frame(width: isSidebarCollapsed ? 48 : 200)
+        .background(isSidebarCollapsed ? Theme.Colors.sidebarBackground : Theme.Colors.sidebarBackground)
     }
 }
 

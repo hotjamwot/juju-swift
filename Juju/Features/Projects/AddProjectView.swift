@@ -40,10 +40,6 @@ struct AddProjectView: View {
             }
             .padding(.bottom, Theme.spacingMedium)
             
-            Divider()
-                .background(Theme.Colors.divider)
-                .padding(.bottom, Theme.spacingLarge)
-            
             // Name Field
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("Project Name")
@@ -95,8 +91,8 @@ struct AddProjectView: View {
                 TextEditor(text: $about)
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
-                    .frame(minHeight: 120)
-                    .padding(Theme.spacingMedium)
+                    .frame(minHeight: 100)
+                    .padding(Theme.spacingLarge)
                     .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.cornerRadius)
                     .overlay(
@@ -108,14 +104,10 @@ struct AddProjectView: View {
             Spacer()
             
             // Create Button
-            Divider()
-                .background(Theme.Colors.divider)
-                .padding(.bottom, Theme.spacingMedium)
-            
             Button("Create Project") {
                 if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     let newProject = Project(name: name.trimmingCharacters(in: .whitespacesAndNewlines), 
-                                           color: color, 
+                                           color: color,
                                            about: about.isEmpty ? nil : about)
                     onSave(newProject)
                 }
@@ -124,7 +116,7 @@ struct AddProjectView: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: 40)
-            .background(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.Colors.accent.opacity(0.5) : Theme.Colors.accent)
+            .background(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.Colors.accent.opacity(0.8) : Theme.Colors.accent)
             .cornerRadius(Theme.Design.cornerRadius)
             .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .scaleEffect(0.95)
@@ -138,6 +130,27 @@ struct AddProjectView: View {
         }
         .padding(Theme.spacingLarge)
         .frame(minWidth: 400, minHeight: 300)
-        .background(Theme.Colors.surface)
+        .background(Theme.Colors.background)
+    }
+}
+
+// MARK: - Preview
+struct AddProjectView_Previews: PreviewProvider {
+    // A tiny no‑op closure for the preview – the real app will handle the save.
+    static var dummyOnSave: (Project) -> Void = { _ in /* no‑op */ }
+    static var previews: some View {
+        Group {
+            // Regular light‑mode preview
+            AddProjectView(onSave: dummyOnSave)
+                .frame(minWidth: 500, minHeight: 400)
+                .previewLayout(.sizeThatFits)
+                .previewDisplayName("Light")
+            // Dark‑mode preview – handy for testing Theme colors
+            AddProjectView(onSave: dummyOnSave)
+                .preferredColorScheme(.dark)
+                .frame(minWidth: 500, minHeight: 600)
+                .previewLayout(.sizeThatFits)
+                .previewDisplayName("Dark")
+        }
     }
 }

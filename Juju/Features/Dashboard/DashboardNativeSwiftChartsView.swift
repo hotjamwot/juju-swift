@@ -11,8 +11,8 @@ struct DashboardNativeSwiftChartsView: View {
         ScrollView {
             VStack(spacing: 32) {
                 HeroSectionView(
+                    chartDataPreparer: chartDataPreparer,
                     totalHours: chartDataPreparer.weeklyTotalHours(),
-                    projectBubbles: chartDataPreparer.weeklyProjectTotals(),
                     totalAllTimeHours: chartDataPreparer.allTimeTotalHours(),
                     totalSessions: chartDataPreparer.allTimeTotalSessions()
                 )
@@ -27,7 +27,10 @@ struct DashboardNativeSwiftChartsView: View {
         }
         .background(Theme.Colors.background)
         .onAppear {
-            chartDataPreparer.prepareAllTimeData(sessions: sessionManager.allSessions, projects: projectsViewModel.projects)
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
         }
     }
         

@@ -20,7 +20,7 @@
 |----------|---------|-------|
 | Background | #18181B | Dark grey base |
 | Surface | #1E1E1F | Panels, cards |
-| Accent | #7C5CFF | Purple-blue brand |
+| Accent | #E100FF | Purple brand |
 | Text Primary | #E5E5E7 | Off-white |
 | Text Secondary | #9A9AA0 | Muted grey |
 | Divider | rgba(255,255,255,0.1) | Subtle contrast |

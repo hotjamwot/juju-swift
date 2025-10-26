@@ -13,7 +13,7 @@ public struct Theme {
         public static let textPrimary = NSColor(srgbRed: 0.898, green: 0.898, blue: 0.906, alpha: 1.0).swiftUIColor  // #E5E5E7
         public static let textSecondary = NSColor(srgbRed: 0.604, green: 0.604, blue: 0.627, alpha: 1.0).swiftUIColor  // #9A9AA0
         public static let divider     = NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.1).swiftUIColor         // rgba(255,255,255,0.1)
-        public static let sidebarBackground = background  // Use background color for sidebar
+        public static let sidebarBackground = surface
         public static let primary     = surface  // Alias for consistency
         public static let secondary   = textSecondary
         public static let foreground  = textPrimary
