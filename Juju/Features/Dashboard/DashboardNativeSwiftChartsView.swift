@@ -27,12 +27,29 @@ struct DashboardNativeSwiftChartsView: View {
         }
         .background(Theme.Colors.background)
         .onAppear {
-            chartDataPreparer.prepareAllTimeData(
-                sessions: sessionManager.allSessions,
-                projects: projectsViewModel.projects
-            )
+            Task {
+                await projectsViewModel.loadProjects()
+                print("Projects after load:", projectsViewModel.projects.count)
+                
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
-    }
+            .onChange(of: sessionManager.allSessions.count) { _ in
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
+            .onChange(of: projectsViewModel.projects.count) { _ in
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
+        }
         
 private func updateChartData(filter: ChartTimePeriod) {
     chartDataPreparer.prepareData(sessions: sessionManager.allSessions, projects: projectsViewModel.projects, filter: filter)

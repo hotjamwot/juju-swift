@@ -35,7 +35,7 @@ struct BubbleChartCardView: View {
                             let diameter = bubbleDiameters[index]
                             
                             Circle()
-                                .fill(Color(bubble.color))
+                                .fill(Color(hex: bubble.color))
                                 .frame(width: diameter, height: diameter)
                                 .overlay(
                                     Text(bubble.projectName)

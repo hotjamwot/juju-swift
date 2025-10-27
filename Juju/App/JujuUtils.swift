@@ -26,10 +26,10 @@ extension NSColor {
 extension Color {
     init(hex: String) {
         guard let nsColor = NSColor(hex: hex) else {
-            self.init(.systemBlue)
+            self = Color(.gray)
             return
         }
-        self.init(nsColor)
+        self = Color(nsColor)
     }
     
     var toHex: String {

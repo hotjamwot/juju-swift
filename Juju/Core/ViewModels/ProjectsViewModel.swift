@@ -15,9 +15,11 @@ class ProjectsViewModel: ObservableObject {
     
     private let projectManager = ProjectManager.shared
     
-    init() {
-        // Don’t load here — it blocks the main thread.
+init() {
+    Task {
+        await loadProjects()
     }
+}
     
     func loadProjects() async {
         print("DEBUG: loadProjects() called")
