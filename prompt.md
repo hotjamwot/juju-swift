@@ -90,15 +90,18 @@ Context of Juju app:
 │   │   │   ├── ProjectAddEditView.swift
 │   │   │   └── ProjectsNativeView.swift
 │   │   └── Sessions/
+│   │       ├── Components/
 │   │       ├── SessionCardView.swift
 │   │       └── SessionsView.swift
 │   ├── Resources/
-│   │   └── [Assets]
-│   ├── Shared/
-│   │   └── Extensions/
-│   └── Theme.swift
+│   │   └── Assets.xcassets/ etc
+│   └── Shared/
+│       ├── Extensions/
+│       │   ├── ButtonTheme.swift
+│       │   └── NSColor+SwiftUI.swift
+│       └── Theme.swift
 ├── Juju.xcodeproj/
-│   ├── [xcode details]
+│   ├── project.pbxproj etc
 ├── README.md
 ├── design.md
 ├── icons/
@@ -106,6 +109,6 @@ Context of Juju app:
 │   ├── juju-icon.pdf
 │   ├── status-active.png
 │   └── status-idle.png
-├── prompt.md
-└── index.json
+├── index.json
+└── prompt.md
 ```
