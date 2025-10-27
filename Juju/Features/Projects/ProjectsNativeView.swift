@@ -1,98 +1,154 @@
 import SwiftUI
 
-struct LazyView<Content: View>: View {
-    let build: () -> Content
-    init(@ViewBuilder build: @escaping () -> Content) {
-        self.build = build
-    }
-    var body: some View {
-        build()
-    }
-}
-
 struct ProjectsNativeView: View {
     @StateObject private var viewModel = ProjectsViewModel()
-    @State private var path = NavigationPath()
     @State private var showingAddProject = false
+    @State private var selectedProject: Project?
     
     var body: some View {
-        NavigationStack(path: $path) {
-            VStack {
-                // Grid View with Add Project Button
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
-                    // Add Project Button
-                    Button(action: {
-                        showingAddProject = true
-                    }) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.accentColor.opacity(0.2))
-                                .frame(height: 100)
-                                .overlay(
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 36, weight: .bold))
-                                        .foregroundColor(.accentColor)
-                                )
-                            
-                            Text("Add Project")
-                                .lineLimit(1)
-                                .font(Theme.Fonts.header)
+        VStack {
+            // Header with title
+            HStack {
+                Text("Projects")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Spacer()
+                
+                Button(action: {
+                    showingAddProject = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Add Project")
+                            .font(Theme.Fonts.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.accent)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .onHover { isHovered in
+                    if isHovered {
+                        NSCursor.pointingHand.set()
+                    } else {
+                        NSCursor.arrow.set()
+                    }
+                }
+            }
+            .padding()
+            
+            // Projects List
+            ScrollView {
+                LazyVStack(spacing: Theme.spacingMedium) {
+                    ForEach(viewModel.filteredProjects) { project in
+                        Button(action: {
+                            selectedProject = project
+                        }) {
+                            ProjectRowView(project: project)
                         }
-                        .padding(Theme.spacingMedium)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.clear)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.accentColor.opacity(0.3))
-                        )
+                        .buttonStyle(PlainButtonStyle())
                     }
                     
-                    // Existing Projects
-                    ForEach(viewModel.filteredProjects) { project in
-                        NavigationLink(value: project) {
-                            ProjectGridItemView(
-                                project: project,
-                                isSelected: false,
-                                onSelect: {}
-                            )
+                    if viewModel.filteredProjects.isEmpty {
+                        VStack(spacing: Theme.spacingSmall) {
+                            Image(systemName: "folder")
+                                .font(.system(size: 40))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            Text("No projects found")
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            Text("Click 'Add Project' to create your first project")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .multilineTextAlignment(.center)
                         }
+                        .padding()
                     }
                 }
                 .padding()
-                .scrollContentBackground(.hidden)
+            }
+            .scrollContentBackground(.hidden)
+            .background(Theme.Colors.background)
+        }
+        .background(Theme.Colors.background)
+        .sheet(isPresented: $showingAddProject) {
+            ProjectAddEditView(onSave: { newProject in
+                viewModel.addProject(name: newProject.name)
+                showingAddProject = false
+            })
+        }
+        .sheet(item: $selectedProject) { project in
+            ProjectAddEditView(
+                project: project,
+                onSave: { updatedProject in
+                    viewModel.updateProject(updatedProject)
+                },
+                onDelete: { projectToDelete in
+                    viewModel.deleteProject(projectToDelete)
+                }
+            )
+        }
+        .task {
+            await viewModel.loadProjects()
+        }
+    }
+}
+
+struct ProjectRowView: View {
+    let project: Project
+    
+    var body: some View {
+        HStack(spacing: Theme.spacingMedium) {
+            // Project Color Indicator
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .fill(project.swiftUIColor)
+                .frame(width: 40, height: 40)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
+            
+            // Project Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(project.name)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
-                if viewModel.filteredProjects.isEmpty {
-                    Spacer()
-                    Text("No projects found. Click 'Add Project' to create one.")
+                if let about = project.about, !about.isEmpty {
+                    Text(about)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    Spacer()
+                        .lineLimit(1)
                 }
             }
-            .navigationTitle("Projects")
-            .sheet(isPresented: $showingAddProject) {
-                AddProjectView(onSave: { project in
-                    viewModel.addProject(name: project.name)
-                    showingAddProject = false
-                })
-            }
-            .navigationDestination(for: Project.self) { project in
-                LazyView {
-                    ProjectDetailView(
-                        project: project,
-                        onSave: { updatedProject in
-                            viewModel.updateProject(updatedProject)
-                        },
-                        onDelete: { projectToDelete in
-                            viewModel.deleteProject(projectToDelete)
-                            path.removeLast()  // Pop back to projects list
-                        }
-                    )
-                }
-                .navigationTitle("Edit Project")
-            }
-            .task {
-                await viewModel.loadProjects()
+            
+            Spacer()
+            
+            // Navigation Arrow
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Theme.Colors.textSecondary)
+        }
+        .padding(Theme.spacingMedium)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .stroke(Theme.Colors.divider, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .onHover { isHovered in
+            if isHovered {
+                NSCursor.pointingHand.set()
+            } else {
+                NSCursor.arrow.set()
             }
         }
     }

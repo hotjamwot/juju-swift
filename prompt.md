@@ -87,9 +87,7 @@ Context of Juju app:
 │   │   │   ├── NotesModalView.swift
 │   │   │   └── NotesViewModel.swift
 │   │   ├── Projects/
-│   │   │   ├── AddProjectView.swift
-│   │   │   ├── ProjectDetailView.swift
-│   │   │   ├── ProjectGridItemView.swift
+│   │   │   ├── ProjectAddEditView.swift
 │   │   │   └── ProjectsNativeView.swift
 │   │   └── Sessions/
 │   │       ├── SessionCardView.swift

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */; };
+		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
 		66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E42EA8EA4000E9BB4A /* icon.png */; };
 		66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */; };
 		66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E62EA8EA4000E9BB4A /* status-active.png */; };
@@ -30,9 +31,6 @@
 		66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */; };
 		66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148332EA8EA4B00E9BB4A /* NotesManager.swift */; };
 		66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */; };
-		66B1487A2EA8EA4B00E9BB4A /* AddProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148382EA8EA4B00E9BB4A /* AddProjectView.swift */; };
-		66B1487B2EA8EA4B00E9BB4A /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148392EA8EA4B00E9BB4A /* ProjectDetailView.swift */; };
-		66B1487C2EA8EA4B00E9BB4A /* ProjectGridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483A2EA8EA4B00E9BB4A /* ProjectGridItemView.swift */; };
 		66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */; };
 		66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */; };
 		66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */; };
@@ -52,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
 		66B147E42EA8EA4000E9BB4A /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "juju-icon.pdf"; sourceTree = "<group>"; };
 		66B147E62EA8EA4000E9BB4A /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
@@ -76,9 +75,6 @@
 		66B148332EA8EA4B00E9BB4A /* NotesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesManager.swift; sourceTree = "<group>"; };
 		66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalView.swift; sourceTree = "<group>"; };
 		66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesViewModel.swift; sourceTree = "<group>"; };
-		66B148382EA8EA4B00E9BB4A /* AddProjectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddProjectView.swift; sourceTree = "<group>"; };
-		66B148392EA8EA4B00E9BB4A /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
-		66B1483A2EA8EA4B00E9BB4A /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectGridItemView.swift; sourceTree = "<group>"; };
 		66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
 		66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCardView.swift; sourceTree = "<group>"; };
 		66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
@@ -221,9 +217,7 @@
 		66B1483C2EA8EA4B00E9BB4A /* Projects */ = {
 			isa = PBXGroup;
 			children = (
-				66B148382EA8EA4B00E9BB4A /* AddProjectView.swift */,
-				66B148392EA8EA4B00E9BB4A /* ProjectDetailView.swift */,
-				66B1483A2EA8EA4B00E9BB4A /* ProjectGridItemView.swift */,
+				666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */,
 				66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */,
 			);
 			path = Projects;
@@ -386,14 +380,12 @@
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
 				66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
-				66B1487B2EA8EA4B00E9BB4A /* ProjectDetailView.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */,
 				66B1484C2EA8EA4B00E9BB4A /* main.swift in Sources */,
 				66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */,
 				66B1484D2EA8EA4B00E9BB4A /* ChartDataPreparer.swift in Sources */,
 				66B148502EA8EA4B00E9BB4A /* SessionManager.swift in Sources */,
-				66B1487A2EA8EA4B00E9BB4A /* AddProjectView.swift in Sources */,
 				66B148702EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift in Sources */,
 				66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */,
 				66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */,
@@ -402,7 +394,6 @@
 				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
 				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
 				66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */,
-				66B1487C2EA8EA4B00E9BB4A /* ProjectGridItemView.swift in Sources */,
 				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
 				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
 				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,
@@ -411,6 +402,7 @@
 				6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */,
 				66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */,
 				66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */,
+				666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */,
 				66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
