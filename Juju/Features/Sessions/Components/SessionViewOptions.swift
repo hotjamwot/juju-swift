@@ -57,8 +57,8 @@ struct SessionViewOptions: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                     
                     Text(formattedStartTime)
-                        .font(Theme.Fonts.body.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textPrimary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                     
                     Text("—")
                         .font(Theme.Fonts.body)
@@ -69,8 +69,8 @@ struct SessionViewOptions: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                     
                     Text(formattedEndTime)
-                        .font(Theme.Fonts.body.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textPrimary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                 }
                 
                 // Duration - horizontal layout
@@ -80,7 +80,7 @@ struct SessionViewOptions: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                     
                     Text(formatDuration(session.durationMinutes))
-                        .font(Theme.Fonts.body)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                 }
             }
