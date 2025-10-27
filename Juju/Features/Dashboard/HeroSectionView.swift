@@ -8,15 +8,15 @@ struct HeroSectionView: View {
     let totalSessions: Int
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Theme.spacingMedium) {
             // MARK: - Header & Summary Row
-            HStack(alignment: .top, spacing: 24) {
+            HStack(alignment: .top, spacing: Theme.spacingLarge) {
                 
                 // MARK: Left: Headline + Weekly Bubbles
-                VStack(alignment: .leading, spacing: 16) {
-                    // Big friendly headline
+                VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+                    // Big friendly headline - LEFT UNCHANGED AS REQUESTED
                     HStack(spacing: 6) {
-                        Text("You’ve spent")
+                        Text("You've spent")
                             .font(.system(size: 32, weight: .bold))
                         
                         Text(String(format: "%.1f", totalHours) + " hours")
@@ -26,13 +26,13 @@ struct HeroSectionView: View {
                                 startPoint: .leading, endPoint: .trailing
                             ))
                         
-                        Text("in Juju this week!")
+                        Text("in the Juju this week!")
                             .font(.system(size: 32, weight: .bold))
                     }
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     
-                    // Bubble chart for this week’s projects
+                    // Bubble chart for this week's projects
                     WeeklyProjectBubbleChartView(chartDataPreparer: chartDataPreparer)
                         .frame(height: 160)
                 }
@@ -40,15 +40,15 @@ struct HeroSectionView: View {
                 Spacer()
                 
                 // MARK: Right: Summary Metrics
-                VStack(alignment: .trailing, spacing: 12) {
+                VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
                     SummaryMetricView(title: "Total Hours", value: String(format: "%.1f", totalAllTimeHours) + "h")
                     SummaryMetricView(title: "Total Sessions", value: "\(totalSessions)")
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
-            .background(Color(.controlBackgroundColor))
-            .cornerRadius(12)
+            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.vertical, Theme.spacingMedium)
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.cornerRadius)
             .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
         }
         .padding(.horizontal)

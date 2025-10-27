@@ -7,15 +7,15 @@ public struct Theme {
     // MARK: Colors
     public struct Colors {
         // Design-based hardcoded colors (independent of xcassets)
-        public static let background  = NSColor(srgbRed: 0.094, green: 0.094, blue: 0.106, alpha: 1.0).swiftUIColor  // #18181B
-        public static let surface     = NSColor(srgbRed: 0.118, green: 0.118, blue: 0.122, alpha: 1.0).swiftUIColor  // #1E1E1F
+        public static let background  = NSColor(srgbRed: 0.071, green: 0.071, blue: 0.071, alpha: 1.0).swiftUIColor  // #121212
+        public static let surface     = NSColor(srgbRed: 0.110, green: 0.110, blue: 0.118, alpha: 1.0).swiftUIColor  // #1C1C1E
         public static let accent      = NSColor(srgbRed: 0.882, green: 0.400, blue: 1.000, alpha: 1.0).swiftUIColor    // #E100FF
         public static let textPrimary = NSColor(srgbRed: 0.898, green: 0.898, blue: 0.906, alpha: 1.0).swiftUIColor  // #E5E5E7
         public static let textSecondary = NSColor(srgbRed: 0.604, green: 0.604, blue: 0.627, alpha: 1.0).swiftUIColor  // #9A9AA0
-        public static let divider     = NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.1).swiftUIColor         // rgba(255,255,255,0.1)
+        public static let divider     = NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.2).swiftUIColor         // rgba(255,255,255,0.1)
         public static let sidebarBackground = surface
         public static let primary     = surface  // Alias for consistency
-        public static let secondary   = textSecondary
+        public static let secondary   = NSColor(srgbRed: 0.141, green: 0.141, blue: 0.141, alpha: 1.0).swiftUIColor // #242424
         public static let foreground  = textPrimary
         public static let error       = Color("Error")  // Keep if defined
 

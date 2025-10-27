@@ -7,26 +7,22 @@ struct WeeklyProjectBubbleChartView: View {
     var body: some View {
         let data = chartDataPreparer.weeklyProjectTotals()
 
-        VStack(alignment: .leading, spacing: 12) {
-            Text("This Week's Projects")
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 8)
-
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+            
             if data.isEmpty {
                 Text("No sessions this week")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 160)
-                    .background(Color(.controlBackgroundColor))
-                    .cornerRadius(12)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
                     .shadow(radius: 2)
                     .padding(.horizontal)
             } else {
                 GeometryReader { geometry in
                     let maxSize = min(geometry.size.width - 40, geometry.size.height)
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let bubbleSpacing: CGFloat = 20
+                    let bubbleSpacing: CGFloat = Theme.spacingSmall
                     let maxDiameter = maxSize * 0.8
                     let bubbleDiameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
                     
@@ -46,7 +42,7 @@ struct WeeklyProjectBubbleChartView: View {
                                         .padding(.horizontal, 4)
                                 )
                                 .help("Project: \(bubble.projectName)\nTotal: \(bubble.totalHours)h")
-                                .animation(.easeInOut(duration: 0.3), value: diameter)
+                                .animation(.easeInOut(duration: Theme.Design.animationDuration), value: diameter)
                         }
                     }
                     .frame(width: geometry.size.width, height: maxSize, alignment: .center)
@@ -54,7 +50,7 @@ struct WeeklyProjectBubbleChartView: View {
                 .frame(height: 160)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Theme.spacingExtraSmall)
         .onAppear {
             print("[WeeklyProjectBubbleChartView] Data count: \(data.count)")
             if !data.isEmpty {

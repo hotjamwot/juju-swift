@@ -11,23 +11,22 @@ struct BubbleChartCardView: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
             Text("The Big Picture")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .font(Theme.Fonts.header)
+                .foregroundColor(Theme.Colors.textPrimary)
             
             if data.isEmpty {
                 Text("No data for this year")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: 250)
             } else {
                 GeometryReader { geometry in
                     let maxSize = min(geometry.size.width - 40, geometry.size.height)
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let bubbleSpacing: CGFloat = 20
-                    let maxDiameter = maxSize * 0.8
+                    let bubbleSpacing: CGFloat = Theme.spacingExtraLarge
+                    let maxDiameter = maxSize * 0.85
                     let bubbleDiameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
                     
                     HStack(spacing: bubbleSpacing) {
@@ -46,7 +45,7 @@ struct BubbleChartCardView: View {
                                         .padding(.horizontal, 4)
                                 )
                                 .help("Project: \(bubble.projectName)\nTotal: \(bubble.totalHours)h (\(bubble.percentage, specifier: "%.1f")%)")
-                                .animation(.easeInOut(duration: 0.3), value: diameter)
+                                .animation(.easeInOut(duration: Theme.Design.animationDuration), value: diameter)
                         }
                     }
                     .frame(width: geometry.size.width, height: maxSize, alignment: .center)
@@ -54,9 +53,9 @@ struct BubbleChartCardView: View {
                 .frame(height: 250)
             }
         }
-        .padding()
+        .padding(Theme.spacingLarge)
         .background(Theme.Colors.surface)
-        .cornerRadius(12)
+        .cornerRadius(Theme.Design.cornerRadius)
         .shadow(radius: 2)
     }
 }

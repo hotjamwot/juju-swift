@@ -5,15 +5,14 @@ struct GroupedBarChartCardView: View {
     let data: [MonthlyBarData]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.spacingExtraLarge) {
             Text("Your Rhythm")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .font(Theme.Fonts.header)
+                .foregroundColor(Theme.Colors.textPrimary)
             
             if data.isEmpty {
                 Text("No data for this year")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: 250)
             } else {
@@ -24,11 +23,11 @@ struct GroupedBarChartCardView: View {
                                 x: .value("Month", monthData.month),
                                 y: .value("Hours", project.hours)
                             )
-                            .foregroundStyle(by: .value("Project", project.projectName))
+                            .foregroundStyle(Color(hex: project.color))
                             .annotation(position: .top, alignment: .center) {
                                 Text("\(project.hours, specifier: "%.1f")")
-                                    .font(.caption)
-                                    .foregroundColor(.primary)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary)
                             }
                         }
                     }
@@ -42,9 +41,9 @@ struct GroupedBarChartCardView: View {
                 }
             }
         }
-        .padding()
-        .background(Color(Theme.Colors.background))
-        .cornerRadius(12)
+        .padding(Theme.spacingLarge)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
         .shadow(radius: 2)
     }
 }

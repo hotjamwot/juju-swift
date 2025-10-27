@@ -7,13 +7,12 @@ struct SessionCalendarChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingLarge) {
             Text("This Week's Sessions")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .font(Theme.Fonts.header)
+                .foregroundColor(Theme.Colors.textPrimary)
             
             if sessions.isEmpty {
                 Text("No sessions this week")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: 200)
             } else {
@@ -26,12 +25,12 @@ struct SessionCalendarChartView: View {
                     .foregroundStyle(Color(hex: session.projectColor))
                     .annotation(position: .overlay, alignment: .center) {
                         Text("\(session.duration, specifier: "%.1f")h")
-                            .font(.caption2)
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(.white)
                             .bold()
                     }
                 }
-                .chartYScale(domain: 0.0 ... 24.0)
+                .chartYScale(domain: 6.0 ... 23.0)
                 .frame(height: 200)
                 .chartYAxis {
                     AxisMarks(values: .stride(by: 2.0)) { value in
@@ -48,13 +47,15 @@ struct SessionCalendarChartView: View {
                     }
                 }
                 .chartPlotStyle { plotArea in
-                    plotArea.background(Color.gray.opacity(0.1))
+                    plotArea.background(Theme.Colors.secondary)
+                    .cornerRadius(Theme.Design.cornerRadius)
+
                 }
             }
         }
-        .padding()
-        .background(Color(NSColor.windowBackgroundColor))
-        .cornerRadius(12)
+        .padding(Theme.spacingMedium)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
         .shadow(radius: 2)
     }
 }
