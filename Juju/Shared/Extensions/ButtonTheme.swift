@@ -97,7 +97,7 @@ public extension Theme {
         
         public init(
             size: CGFloat = 36,
-            iconSize: CGFloat = 20,
+            iconSize: CGFloat = 12,
             cornerRadius: CGFloat = Theme.Design.cornerRadius,
             animationDuration: Double = Theme.Design.animationDuration
         ) {
@@ -118,7 +118,7 @@ public extension Theme {
             }
             .font(.system(size: iconSize))
             .frame(width: size, height: size)
-            .background(isDisabled ? Theme.Colors.surface.opacity(0.5) : Theme.Colors.surface)
+            .background(isDisabled ? Theme.Colors.surface : Theme.Colors.surface)
             .cornerRadius(cornerRadius)
             .disabled(isDisabled)
             .animation(.easeInOut(duration: animationDuration), value: isDisabled)

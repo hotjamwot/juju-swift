@@ -47,7 +47,7 @@ struct SessionCardView: View {
                     editedNotes: $editedNotes,
                     projects: projectNames,
                     onSave: saveSession,
-                    onCancel: { isEditing = false },
+                    onCancel: cancelEdit,
                     isProjectEmpty: isProjectEmpty
                 )
             } else {
@@ -77,14 +77,29 @@ struct SessionCardView: View {
         }
         .onChange(of: isEditing) { newValue, _ in
             if newValue {
-                editedDate = session.date
-                editedStartTime = String(session.startTime.prefix(5))
-                editedEndTime = String(session.endTime.prefix(5))
-                editedProject = session.projectName
-                editedNotes = session.notes
-                selectedMood = session.mood.map { "\($0)" } ?? ""
+                startEditing()
+            } else {
+                resetToOriginalValues()
             }
         }
+    }
+    
+    private func startEditing() {
+        editedDate = session.date
+        editedStartTime = String(session.startTime.prefix(5))
+        editedEndTime = String(session.endTime.prefix(5))
+        editedProject = session.projectName
+        editedNotes = session.notes
+        selectedMood = session.mood.map { "\($0)" } ?? ""
+    }
+    
+    private func resetToOriginalValues() {
+        editedDate = session.date
+        editedStartTime = String(session.startTime.prefix(5))
+        editedEndTime = String(session.endTime.prefix(5))
+        editedProject = session.projectName
+        editedNotes = session.notes
+        selectedMood = session.mood.map { "\($0)" } ?? ""
     }
     
     private func saveSession() {
@@ -98,9 +113,18 @@ struct SessionCardView: View {
             notes: editedNotes,
             mood: moodInt
         ) {
-            onSave()
-            isEditing = false
+            // Only call onSave if the update was successful
+            DispatchQueue.main.async {
+                onSave()
+                isEditing = false
+            }
         }
+    }
+    
+    private func cancelEdit() {
+        // Reset to original values and exit edit mode
+        resetToOriginalValues()
+        isEditing = false
     }
 }
 
@@ -129,7 +153,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 600, height: 120)
+            .frame(width: 800, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -153,7 +177,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 600, height: 140)
+            .frame(width: 800, height: 140)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -177,7 +201,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 600, height: 120)
+            .frame(width: 800, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -201,7 +225,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 600, height: 120)
+            .frame(width: 800, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -225,7 +249,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 600, height: 140)
+            .frame(width: 800, height: 140)
             .background(Color(.windowBackgroundColor))
         }
         .padding()

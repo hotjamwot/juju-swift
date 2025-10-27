@@ -46,10 +46,10 @@ struct SessionViewOptions: View {
                     .foregroundColor(Theme.Colors.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(width: 160)
+            .frame(width: 100)
             
             // CENTER: Time and Duration (20% width)
-            VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 // Time Range - horizontal layout
                 HStack(alignment: .top, spacing: Theme.spacingSmall) {
                     Image(systemName: "play.fill")
@@ -85,17 +85,17 @@ struct SessionViewOptions: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(width: 100)
+            .frame(width: 140)
             
             // RIGHT: Notes and Actions (45% width)
             HStack(spacing: Theme.spacingMedium) {
                 // Notes (takes up most of the space)
-                VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
+                VStack(alignment: .leading, spacing: Theme.spacingMedium) {
                     if !session.notes.isEmpty {
                         Text(session.notes)
                             .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(3)
+                            .lineLimit(4)
                             .multilineTextAlignment(.leading)
                     }
                 }
@@ -105,7 +105,7 @@ struct SessionViewOptions: View {
                 VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
                     // Mood
                     if let mood = session.mood {
-                        HStack(spacing: Theme.spacingExtraSmall) {
+                        HStack(spacing: Theme.spacingSmall) {
                             Image(systemName: "star.fill")
                                 .font(Theme.Fonts.caption)
                             Text("\(mood)")
@@ -120,12 +120,12 @@ struct SessionViewOptions: View {
                     
                     // Action buttons
                     HStack(spacing: Theme.spacingExtraSmall) {
-                        Theme.SimpleIconButtonStyle(iconSize: 14).makeSimpleIconButton(
+                        Theme.SimpleIconButtonStyle(iconSize: 8).makeSimpleIconButton(
                             label: { Image(systemName: "pencil") },
                             action: onEdit
                         )
                         
-                        Theme.SimpleIconButtonStyle(iconSize: 14).makeSimpleIconButton(
+                        Theme.SimpleIconButtonStyle(iconSize: 8).makeSimpleIconButton(
                             label: { Image(systemName: "trash") },
                             action: onDelete
                         )
@@ -253,7 +253,7 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 600, height: 80)
+            .frame(width: 800, height: 80)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -277,7 +277,7 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 600, height: 80)
+            .frame(width: 800, height: 80)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -301,7 +301,7 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 600, height: 80)
+            .frame(width: 800, height: 80)
             .background(Color(.windowBackgroundColor))
         }
         .padding()
