@@ -17,7 +17,7 @@ struct DashboardNativeSwiftChartsView: View {
                     totalSessions: chartDataPreparer.allTimeTotalSessions()
                 )
                 
-                SessionCalendarChartView(sessions: chartDataPreparer.currentWeekSessions())
+                SessionCalendarChartView(sessions: chartDataPreparer.currentWeekSessionsForCalendar())
                 
                 BubbleChartCardView(data: chartDataPreparer.yearlyProjectTotals())
                 
@@ -31,29 +31,48 @@ struct DashboardNativeSwiftChartsView: View {
                 await projectsViewModel.loadProjects()
                 print("Projects after load:", projectsViewModel.projects.count)
                 
+                let _ = sessionManager.loadAllSessions()
+                print("Sessions after load:", sessionManager.allSessions.count)
+                
+                // Force refresh the chart data
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                
+                // Create a new instance to force refresh
+                chartDataPreparer.viewModel = ChartViewModel()
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
             }
         }
-            .onChange(of: sessionManager.allSessions.count) { _ in
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-            }
-            .onChange(of: projectsViewModel.projects.count) { _ in
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-            }
+        .onChange(of: sessionManager.allSessions.count) { _ in
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
+            // Create a new instance to force refresh
+            chartDataPreparer.viewModel = ChartViewModel()
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
         }
-        
-private func updateChartData(filter: ChartTimePeriod) {
-    chartDataPreparer.prepareData(sessions: sessionManager.allSessions, projects: projectsViewModel.projects, filter: filter)
-}
+        .onChange(of: projectsViewModel.projects.count) { _ in
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
+            // Create a new instance to force refresh
+            chartDataPreparer.viewModel = ChartViewModel()
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
+        }
+    }
     
     // MARK: - Components
     
@@ -166,13 +185,14 @@ private func updateChartData(filter: ChartTimePeriod) {
             .background(Theme.Colors.surface.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
-        // MARK: - Preview
-        struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
-            static var previews: some View {
-                DashboardNativeSwiftChartsView()
-                    .frame(width: 1200, height: 800)
-                    .preferredColorScheme(.dark)
-            }
+    }
+    
+    // MARK: - Preview
+    struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
+        static var previews: some View {
+            DashboardNativeSwiftChartsView()
+                .frame(width: 1200, height: 800)
+                .preferredColorScheme(.dark)
         }
     }
 }

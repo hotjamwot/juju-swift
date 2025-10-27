@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 
 /// Displays a bubble-style chart showing project totals for the current week.
 struct WeeklyProjectBubbleChartView: View {
@@ -9,7 +8,7 @@ struct WeeklyProjectBubbleChartView: View {
         let data = chartDataPreparer.weeklyProjectTotals()
 
         VStack(alignment: .leading, spacing: 12) {
-            Text("This Week’s Projects")
+            Text("This Week's Projects")
                 .font(.headline)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 8)
@@ -24,46 +23,44 @@ struct WeeklyProjectBubbleChartView: View {
                     .shadow(radius: 2)
                     .padding(.horizontal)
             } else {
-                chartContent(data: data)
+                GeometryReader { geometry in
+                    let maxSize = min(geometry.size.width - 40, geometry.size.height)
+                    let maxHours = data.map { $0.totalHours }.max() ?? 1
+                    let bubbleSpacing: CGFloat = 20
+                    let maxDiameter = maxSize * 0.8
+                    let bubbleDiameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
+                    
+                    HStack(spacing: bubbleSpacing) {
+                        ForEach(Array(data.enumerated()), id: \.offset) { index, bubble in
+                            let diameter = bubbleDiameters[index]
+                            
+                            Circle()
+                                .fill(Color(hex: bubble.color))
+                                .frame(width: diameter, height: diameter)
+                                .overlay(
+                                    Text(bubble.projectName)
+                                        .font(.system(size: max(10, diameter * 0.15), weight: .medium))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2)
+                                        .padding(.horizontal, 4)
+                                )
+                                .help("Project: \(bubble.projectName)\nTotal: \(bubble.totalHours)h")
+                                .animation(.easeInOut(duration: 0.3), value: diameter)
+                        }
+                    }
+                    .frame(width: geometry.size.width, height: maxSize, alignment: .center)
+                }
+                .frame(height: 160)
             }
         }
         .padding(.vertical, 8)
-    }
-
-    private func chartContent(data: [ProjectChartData]) -> some View {
-        Chart(data, id: \.projectName) { item in
-            PointMark(
-                x: .value("Project", item.projectName),
-                y: .value("Total Hours", item.totalHours)
-            )
-            .foregroundStyle(Color(hex: item.color))
-            .symbol {
-                Circle().fill(Color(hex: item.color))
-            }
-            .symbolSize(by: .value("Total Hours", sqrt(item.totalHours))) // scaled size for readability
-            .annotation(position: .overlay, alignment: .center) {
-                Text(item.projectName)
-                    .font(.caption2.bold())
-                    .foregroundColor(.white)
-                    .shadow(radius: 2)
-                    .padding(2)
-            }
-            .accessibilityLabel(item.projectName)
-            .accessibilityValue("\(item.totalHours, specifier: "%.1f") hours total")
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisValueLabel()
-                    .font(.caption2)
+        .onAppear {
+            print("[WeeklyProjectBubbleChartView] Data count: \(data.count)")
+            if !data.isEmpty {
+                let sampleData = data.prefix(2).map { "\($0.projectName): \($0.totalHours)h" }
+                print("[WeeklyProjectBubbleChartView] Sample data: \(sampleData)")
             }
         }
-        .chartYAxis(.hidden)
-        .frame(height: 200)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal)
-        .background(Color(.controlBackgroundColor))
-        .cornerRadius(12)
-        .shadow(radius: 2)
-        .padding(.horizontal)
     }
 }

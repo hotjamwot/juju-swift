@@ -14,7 +14,7 @@ struct HeroSectionView: View {
                 
                 // MARK: Left: Headline + Weekly Bubbles
                 VStack(alignment: .leading, spacing: 16) {
-                    // Big VoiceInk-style headline
+                    // Big friendly headline
                     HStack(spacing: 6) {
                         Text("You’ve spent")
                             .font(.system(size: 32, weight: .bold))

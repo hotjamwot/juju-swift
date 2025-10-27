@@ -5,7 +5,7 @@ struct SessionCalendarChartView: View {
     let sessions: [WeeklySession]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.spacingLarge) {
             Text("This Week's Sessions")
                 .font(.title2)
                 .fontWeight(.semibold)
