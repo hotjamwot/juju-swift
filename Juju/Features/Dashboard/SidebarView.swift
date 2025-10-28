@@ -18,7 +18,7 @@ enum DashboardView: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-    // MARK: ── Sidebar button (re‑usable)
+// MARK: ── Sidebar button (re‑usable)
 struct SidebarButton: View {
     @Binding var selected: DashboardView   // the parent's selection state
     let target: DashboardView              // the view that this button represents
@@ -71,53 +71,24 @@ struct SidebarButton: View {
     private var isSelected: Bool { selected == target }
 }
 
-    // MARK: ── Sidebar container
+// MARK: ── Sidebar container
 struct SidebarView: View {
     @Binding var selectedView: DashboardView
-    @AppStorage("sidebarCollapsed") private var isSidebarCollapsed: Bool = false
 
     var body: some View {
         VStack(spacing: 10) {
-            /* ----------- HEADER ----------- */
-            HStack {
-                Spacer()
-
-                // 📌 Collapse/Expand button
-                Button {
-                    withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
-                        isSidebarCollapsed.toggle()
-                    }
-                } label: {
-                    Image(systemName: isSidebarCollapsed
-                          ? "sidebar.right"
-                          : "sidebar.left")
-                    .font(.system(size: 14, weight: .light))
-                        .foregroundColor(.secondary)
-                        .opacity(0.4)
-                }
-                .focusable(false)
-                .buttonStyle(.borderless)
-                .background(Theme.Colors.sidebarBackground)
-                .contentShape(Rectangle())
-                .help(isSidebarCollapsed ? "Open Sidebar" : "Close Sidebar")
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 8)
-            .background(Theme.Colors.sidebarBackground)
-
-            /* ----------- CONTENT (only one collapse icon) ----------- */
-            if !isSidebarCollapsed {
-                ForEach(DashboardView.allCases) { view in
-                    SidebarButton(selected: $selectedView, target: view)
-                        .accessibilityLabel(view.rawValue)
-                        .padding(.leading, Theme.spacingSmall)
-                }
+            /* ----------- CONTENT ----------- */
+            ForEach(DashboardView.allCases) { view in
+                SidebarButton(selected: $selectedView, target: view)
+                    .accessibilityLabel(view.rawValue)
+                    .padding(.leading, Theme.spacingSmall)
             }
 
             Spacer()
         }
-        .frame(width: isSidebarCollapsed ? 48 : 200)
-        .background(isSidebarCollapsed ? Theme.Colors.sidebarBackground : Theme.Colors.sidebarBackground)
+        .frame(width: 220)
+        .background(Theme.Colors.sidebarBackground)
+        .padding(.top, Theme.spacingExtraLarge)
     }
 }
 

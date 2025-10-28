@@ -60,7 +60,7 @@ struct SessionViewOptions: View {
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                     
-                    Text("—")
+                    Text("—") 
                         .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary)
                     
