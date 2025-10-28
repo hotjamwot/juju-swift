@@ -7,64 +7,97 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		66109E1C2E031720000B7182 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66109E1B2E031720000B7182 /* SessionManager.swift */; };
-		661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661564842E06159D006D14F6 /* NotesModalViewController.swift */; };
-		662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6627709F2E0451AD002D6859 /* JujuUtils.swift */; };
-		663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */; };
-		663C0D542EA2D45700747BE5 /* SessionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C0D532EA2D45700747BE5 /* SessionCardView.swift */; };
-		663C0D562EA2D45C00747BE5 /* EditSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C0D552EA2D45C00747BE5 /* EditSessionView.swift */; };
-		663C0D582EA2D9E500747BE5 /* AddProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C0D572EA2D9E500747BE5 /* AddProjectView.swift */; };
-		6657F69B2E0313200016F333 /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6802E0313200016F333 /* status-active.png */; };
-		6657F69C2E0313200016F333 /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6812E0313200016F333 /* status-idle.png */; };
-		6657F69F2E0313200016F333 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6842E0313200016F333 /* icon.png */; };
-		6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6882E0313200016F333 /* AppDelegate.swift */; };
-		6657F6A32E0313200016F333 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6657F6892E0313200016F333 /* Assets.xcassets */; };
-		6657F6A72E0313200016F333 /* IconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68D2E0313200016F333 /* IconManager.swift */; };
-		6657F6A92E0313200016F333 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F68F2E0313200016F333 /* main.swift */; };
-		6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6902E0313200016F333 /* MenuManager.swift */; };
-		6657F6AB2E0313200016F333 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6912E0313200016F333 /* Project.swift */; };
-		6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657F6922E0313200016F333 /* ShortcutManager.swift */; };
-		66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */; };
-		66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */; };
-		66E0B07F2E033E4D0029121D /* dashboard-web in Resources */ = {isa = PBXBuildFile; fileRef = 66E0B07E2E033E4D0029121D /* dashboard-web */; };
-		66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */; };
-		66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F2B2B02E22222200000000 /* WebDashboardView.swift */; };
-		66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3C3C32E33333300000001 /* ProjectsNativeView.swift */; };
-		66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3D3D32E44444400000001 /* ProjectsViewModel.swift */; };
-		66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3E3E32E55555500000001 /* ProjectDetailView.swift */; };
-		66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F3F3F32E66666600000001 /* ProjectGridItemView.swift */; };
+		6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */; };
+		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
+		666C394C2EAFB53800B408B8 /* SessionEditOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39482EAFB53800B408B8 /* SessionEditOptions.swift */; };
+		666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39492EAFB53800B408B8 /* SessionFilterButton.swift */; };
+		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
+		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
+		66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E42EA8EA4000E9BB4A /* icon.png */; };
+		66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */; };
+		66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E62EA8EA4000E9BB4A /* status-active.png */; };
+		66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E72EA8EA4000E9BB4A /* status-idle.png */; };
+		66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */; };
+		66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F12EA8EA4B00E9BB4A /* Info.plist */; };
+		66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */; };
+		66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F42EA8EA4B00E9BB4A /* JujuUtils.swift */; };
+		66B1484C2EA8EA4B00E9BB4A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F52EA8EA4B00E9BB4A /* main.swift */; };
+		66B1484D2EA8EA4B00E9BB4A /* ChartDataPreparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F72EA8EA4B00E9BB4A /* ChartDataPreparer.swift */; };
+		66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F82EA8EA4B00E9BB4A /* IconManager.swift */; };
+		66B1484F2EA8EA4B00E9BB4A /* MenuManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F92EA8EA4B00E9BB4A /* MenuManager.swift */; };
+		66B148502EA8EA4B00E9BB4A /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FA2EA8EA4B00E9BB4A /* SessionManager.swift */; };
+		66B148512EA8EA4B00E9BB4A /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FB2EA8EA4B00E9BB4A /* ShortcutManager.swift */; };
+		66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FD2EA8EA4B00E9BB4A /* ChartModels.swift */; };
+		66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147FE2EA8EA4B00E9BB4A /* Project.swift */; };
+		66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148002EA8EA4B00E9BB4A /* ProjectsViewModel.swift */; };
+		66B148702EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */; };
+		66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */; };
+		66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */; };
+		66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148332EA8EA4B00E9BB4A /* NotesManager.swift */; };
+		66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */; };
+		66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */; };
+		66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */; };
+		66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */; };
+		66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66B148422EA8EA4B00E9BB4A /* Assets.xcassets */; };
+		66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148452EA8EA4B00E9BB4A /* Theme.swift */; };
+		66B1488B2EA8EA6000E9BB4A /* index.json in Resources */ = {isa = PBXBuildFile; fileRef = 66B148872EA8EA6000E9BB4A /* index.json */; };
+		66B1488D2EA8EA6000E9BB4A /* design.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148892EA8EA6000E9BB4A /* design.md */; };
+		66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */; };
+		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
+		66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */; };
+		66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */; };
+		66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */; };
+		66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */; };
+		66BDAC4A2EAD0AF30042A906 /* HeroSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */; };
+		66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		66109E1B2E031720000B7182 /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
-		661564842E06159D006D14F6 /* NotesModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalViewController.swift; sourceTree = "<group>"; };
-		6627709F2E0451AD002D6859 /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
-		663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
-		663C0D532EA2D45700747BE5 /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCardView.swift; sourceTree = "<group>"; };
-		663C0D552EA2D45C00747BE5 /* EditSessionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditSessionView.swift; sourceTree = "<group>"; };
-		663C0D572EA2D9E500747BE5 /* AddProjectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddProjectView.swift; sourceTree = "<group>"; };
-		6657F6802E0313200016F333 /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
-		6657F6812E0313200016F333 /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
-		6657F6842E0313200016F333 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		6657F6882E0313200016F333 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		6657F6892E0313200016F333 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6657F68D2E0313200016F333 /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconManager.swift; sourceTree = "<group>"; };
-		6657F68E2E0313200016F333 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6657F68F2E0313200016F333 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		6657F6902E0313200016F333 /* MenuManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MenuManager.swift; sourceTree = "<group>"; };
-		6657F6912E0313200016F333 /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
-		6657F6922E0313200016F333 /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
-		6657F6942E0313200016F333 /* Juju.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Juju.xcodeproj; sourceTree = "<group>"; };
-		669753322E06CFBE00D09901 /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
-		66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
-		66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWebViewController.swift; sourceTree = "<group>"; };
-		66E0B07E2E033E4D0029121D /* dashboard-web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dashboard-web"; sourceTree = "<group>"; };
-		66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
-		66F2B2B02E22222200000000 /* WebDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebDashboardView.swift; sourceTree = "<group>"; };
-		66F3C3C32E33333300000001 /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
-		66F3D3D32E44444400000001 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
-		66F3E3E32E55555500000001 /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
-		66F3F3F32E66666600000001 /* ProjectGridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectGridItemView.swift; sourceTree = "<group>"; };
+		6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
+		666C39482EAFB53800B408B8 /* SessionEditOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionEditOptions.swift; sourceTree = "<group>"; };
+		666C39492EAFB53800B408B8 /* SessionFilterButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionFilterButton.swift; sourceTree = "<group>"; };
+		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
+		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
+		66B147E42EA8EA4000E9BB4A /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "juju-icon.pdf"; sourceTree = "<group>"; };
+		66B147E62EA8EA4000E9BB4A /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
+		66B147E72EA8EA4000E9BB4A /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
+		66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		66B147F12EA8EA4B00E9BB4A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Juju-entitlements.plist"; sourceTree = "<group>"; };
+		66B147F32EA8EA4B00E9BB4A /* Juju.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Juju.entitlements; sourceTree = "<group>"; };
+		66B147F42EA8EA4B00E9BB4A /* JujuUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuUtils.swift; sourceTree = "<group>"; };
+		66B147F52EA8EA4B00E9BB4A /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		66B147F72EA8EA4B00E9BB4A /* ChartDataPreparer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartDataPreparer.swift; sourceTree = "<group>"; };
+		66B147F82EA8EA4B00E9BB4A /* IconManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconManager.swift; sourceTree = "<group>"; };
+		66B147F92EA8EA4B00E9BB4A /* MenuManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MenuManager.swift; sourceTree = "<group>"; };
+		66B147FA2EA8EA4B00E9BB4A /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		66B147FB2EA8EA4B00E9BB4A /* ShortcutManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
+		66B147FD2EA8EA4B00E9BB4A /* ChartModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChartModels.swift; sourceTree = "<group>"; };
+		66B147FE2EA8EA4B00E9BB4A /* Project.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		66B148002EA8EA4B00E9BB4A /* ProjectsViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
+		66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardNativeSwiftChartsView.swift; sourceTree = "<group>"; };
+		66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
+		66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftUIDashboardRootView.swift; sourceTree = "<group>"; };
+		66B148332EA8EA4B00E9BB4A /* NotesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesManager.swift; sourceTree = "<group>"; };
+		66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesModalView.swift; sourceTree = "<group>"; };
+		66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesViewModel.swift; sourceTree = "<group>"; };
+		66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsNativeView.swift; sourceTree = "<group>"; };
+		66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCardView.swift; sourceTree = "<group>"; };
+		66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
+		66B148422EA8EA4B00E9BB4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		66B148452EA8EA4B00E9BB4A /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		66B148872EA8EA6000E9BB4A /* index.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = index.json; sourceTree = "<group>"; };
+		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		66B148892EA8EA6000E9BB4A /* design.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = design.md; sourceTree = "<group>"; };
+		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
+		66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupedBarChartCardView.swift; sourceTree = "<group>"; };
+		66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
+		66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SummaryMetricView.swift; sourceTree = "<group>"; };
+		66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BubbleChartCardView.swift; sourceTree = "<group>"; };
+		66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeroSectionView.swift; sourceTree = "<group>"; };
+		66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyProjectBubbleChartView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -79,61 +112,192 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6657F6872E0313200016F333 /* icons */ = {
-			isa = PBXGroup;
-			children = (
-				6657F6802E0313200016F333 /* status-active.png */,
-				6657F6812E0313200016F333 /* status-idle.png */,
-				6657F6842E0313200016F333 /* icon.png */,
-			);
-			path = icons;
-			sourceTree = "<group>";
-		};
-		6657F6932E0313200016F333 /* Juju */ = {
-			isa = PBXGroup;
-			children = (
-				663C0D572EA2D9E500747BE5 /* AddProjectView.swift */,
-				663C0D552EA2D45C00747BE5 /* EditSessionView.swift */,
-				663C0D532EA2D45700747BE5 /* SessionCardView.swift */,
-				663C0D4C2EA2A6F300747BE5 /* SessionsView.swift */,
-				66AEB19C2E169EFD00FF5775 /* DashboardWindowController.swift */,
-				66F1A1A02E11111100000000 /* SwiftUIDashboardRootView.swift */,
-				66F2B2B02E22222200000000 /* WebDashboardView.swift */,
-				661564842E06159D006D14F6 /* NotesModalViewController.swift */,
-				6627709F2E0451AD002D6859 /* JujuUtils.swift */,
-				66E0B07E2E033E4D0029121D /* dashboard-web */,
-				66E0B0792E033C1F0029121D /* DashboardWebViewController.swift */,
-				6657F6882E0313200016F333 /* AppDelegate.swift */,
-				66109E1B2E031720000B7182 /* SessionManager.swift */,
-				6657F6892E0313200016F333 /* Assets.xcassets */,
-				6657F68D2E0313200016F333 /* IconManager.swift */,
-				6657F68E2E0313200016F333 /* Info.plist */,
-				6657F68F2E0313200016F333 /* main.swift */,
-				6657F6902E0313200016F333 /* MenuManager.swift */,
-				6657F6912E0313200016F333 /* Project.swift */,
-				66F3C3C32E33333300000001 /* ProjectsNativeView.swift */,
-				66F3D3D32E44444400000001 /* ProjectsViewModel.swift */,
-				66F3E3E32E55555500000001 /* ProjectDetailView.swift */,
-				66F3F3F32E66666600000001 /* ProjectGridItemView.swift */,
-				6657F6922E0313200016F333 /* ShortcutManager.swift */,
-			);
-			path = Juju;
-			sourceTree = "<group>";
-		};
 		6657F6952E0313200016F333 /* juju-swift */ = {
 			isa = PBXGroup;
 			children = (
-				669753322E06CFBE00D09901 /* Juju.entitlements */,
-				6657F6872E0313200016F333 /* icons */,
-				6657F6932E0313200016F333 /* Juju */,
-				6657F6942E0313200016F333 /* Juju.xcodeproj */,
+				66B148472EA8EA4B00E9BB4A /* Juju */,
+				66B147E82EA8EA4000E9BB4A /* icons */,
+				66B148892EA8EA6000E9BB4A /* design.md */,
+				66B148872EA8EA6000E9BB4A /* index.json */,
+				66B148882EA8EA6000E9BB4A /* README.md */,
 			);
 			name = "juju-swift";
 			sourceTree = "<group>";
 		};
-		6657F6962E0313200016F333 /* Products */ = {
+		666C394B2EAFB53800B408B8 /* Components */ = {
 			isa = PBXGroup;
-			name = Products;
+			children = (
+				666C39482EAFB53800B408B8 /* SessionEditOptions.swift */,
+				666C39492EAFB53800B408B8 /* SessionFilterButton.swift */,
+				666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		66B147E32EA8EA4000E9BB4A /* Old */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Old;
+			sourceTree = "<group>";
+		};
+		66B147E82EA8EA4000E9BB4A /* icons */ = {
+			isa = PBXGroup;
+			children = (
+				66B147E32EA8EA4000E9BB4A /* Old */,
+				66B147E42EA8EA4000E9BB4A /* icon.png */,
+				66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */,
+				66B147E62EA8EA4000E9BB4A /* status-active.png */,
+				66B147E72EA8EA4000E9BB4A /* status-idle.png */,
+			);
+			path = icons;
+			sourceTree = "<group>";
+		};
+		66B147F62EA8EA4B00E9BB4A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */,
+				66B147F12EA8EA4B00E9BB4A /* Info.plist */,
+				66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */,
+				66B147F32EA8EA4B00E9BB4A /* Juju.entitlements */,
+				66B147F42EA8EA4B00E9BB4A /* JujuUtils.swift */,
+				66B147F52EA8EA4B00E9BB4A /* main.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		66B147FC2EA8EA4B00E9BB4A /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				66B147F72EA8EA4B00E9BB4A /* ChartDataPreparer.swift */,
+				66B147F82EA8EA4B00E9BB4A /* IconManager.swift */,
+				66B147F92EA8EA4B00E9BB4A /* MenuManager.swift */,
+				66B147FA2EA8EA4B00E9BB4A /* SessionManager.swift */,
+				66B147FB2EA8EA4B00E9BB4A /* ShortcutManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		66B147FF2EA8EA4B00E9BB4A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				66B147FD2EA8EA4B00E9BB4A /* ChartModels.swift */,
+				66B147FE2EA8EA4B00E9BB4A /* Project.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		66B148012EA8EA4B00E9BB4A /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				66B148002EA8EA4B00E9BB4A /* ProjectsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		66B148022EA8EA4B00E9BB4A /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				66B147FC2EA8EA4B00E9BB4A /* Managers */,
+				66B147FF2EA8EA4B00E9BB4A /* Models */,
+				66B148012EA8EA4B00E9BB4A /* ViewModels */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		66B148322EA8EA4B00E9BB4A /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */,
+				66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */,
+				66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */,
+				66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */,
+				66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */,
+				66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */,
+				6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */,
+				66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */,
+				66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */,
+				66B1482F2EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		66B148372EA8EA4B00E9BB4A /* Notes */ = {
+			isa = PBXGroup;
+			children = (
+				66B148332EA8EA4B00E9BB4A /* NotesManager.swift */,
+				66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */,
+				66B148352EA8EA4B00E9BB4A /* NotesViewModel.swift */,
+			);
+			path = Notes;
+			sourceTree = "<group>";
+		};
+		66B1483C2EA8EA4B00E9BB4A /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */,
+				66B1483B2EA8EA4B00E9BB4A /* ProjectsNativeView.swift */,
+			);
+			path = Projects;
+			sourceTree = "<group>";
+		};
+		66B148402EA8EA4B00E9BB4A /* Sessions */ = {
+			isa = PBXGroup;
+			children = (
+				666C394B2EAFB53800B408B8 /* Components */,
+				66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */,
+				66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */,
+			);
+			path = Sessions;
+			sourceTree = "<group>";
+		};
+		66B148412EA8EA4B00E9BB4A /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				66B148322EA8EA4B00E9BB4A /* Dashboard */,
+				66B148372EA8EA4B00E9BB4A /* Notes */,
+				66B1483C2EA8EA4B00E9BB4A /* Projects */,
+				66B148402EA8EA4B00E9BB4A /* Sessions */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		66B148432EA8EA4B00E9BB4A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				66B148422EA8EA4B00E9BB4A /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		66B148442EA8EA4B00E9BB4A /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				666C394F2EAFB54700B408B8 /* ButtonTheme.swift */,
+				66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		66B148462EA8EA4B00E9BB4A /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				66B148452EA8EA4B00E9BB4A /* Theme.swift */,
+				66B148442EA8EA4B00E9BB4A /* Extensions */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		66B148472EA8EA4B00E9BB4A /* Juju */ = {
+			isa = PBXGroup;
+			children = (
+				66B147F62EA8EA4B00E9BB4A /* App */,
+				66B148022EA8EA4B00E9BB4A /* Core */,
+				66B148412EA8EA4B00E9BB4A /* Features */,
+				66B148432EA8EA4B00E9BB4A /* Resources */,
+				66B148462EA8EA4B00E9BB4A /* Shared */,
+			);
+			path = Juju;
 			sourceTree = "<group>";
 		};
 		A1234567890123456789012K /* Products */ = {
@@ -198,12 +362,6 @@
 			mainGroup = A1234567890123456789012L;
 			productRefGroup = A1234567890123456789012K /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 6657F6962E0313200016F333 /* Products */;
-					ProjectRef = 6657F6942E0313200016F333 /* Juju.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				A1234567890123456789012M /* Juju */,
@@ -216,11 +374,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66E0B07F2E033E4D0029121D /* dashboard-web in Resources */,
-				6657F69F2E0313200016F333 /* icon.png in Resources */,
-				6657F69B2E0313200016F333 /* status-active.png in Resources */,
-				6657F69C2E0313200016F333 /* status-idle.png in Resources */,
-				6657F6A32E0313200016F333 /* Assets.xcassets in Resources */,
+				66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */,
+				66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */,
+				66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */,
+				66B1488D2EA8EA6000E9BB4A /* design.md in Resources */,
+				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
+				66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */,
+				66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */,
+				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
+				66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */,
+				66B1488B2EA8EA6000E9BB4A /* index.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,27 +394,40 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6657F6AA2E0313200016F333 /* MenuManager.swift in Sources */,
-				663C0D542EA2D45700747BE5 /* SessionCardView.swift in Sources */,
-				66F1A1A12E11111100000001 /* SwiftUIDashboardRootView.swift in Sources */,
-				663C0D582EA2D9E500747BE5 /* AddProjectView.swift in Sources */,
-				66F2B2B12E22222200000001 /* WebDashboardView.swift in Sources */,
-				6657F6AC2E0313200016F333 /* ShortcutManager.swift in Sources */,
-				6657F6A22E0313200016F333 /* AppDelegate.swift in Sources */,
-				661564852E06159D006D14F6 /* NotesModalViewController.swift in Sources */,
-				662770A02E0451AD002D6859 /* JujuUtils.swift in Sources */,
-				6657F6A72E0313200016F333 /* IconManager.swift in Sources */,
-				6657F6A92E0313200016F333 /* main.swift in Sources */,
-				66B4BFBF2EA13E7800C843AA /* DashboardWebViewController.swift in Sources */,
-				66109E1C2E031720000B7182 /* SessionManager.swift in Sources */,
-				66AEB19D2E169F0000FF5775 /* DashboardWindowController.swift in Sources */,
-				6657F6AB2E0313200016F333 /* Project.swift in Sources */,
-				663C0D562EA2D45C00747BE5 /* EditSessionView.swift in Sources */,
-				66F3C3C42E33333300000001 /* ProjectsNativeView.swift in Sources */,
-				663C0D4D2EA2A6F300747BE5 /* SessionsView.swift in Sources */,
-				66F3D3D42E44444400000001 /* ProjectsViewModel.swift in Sources */,
-				66F3E3E42E55555500000001 /* ProjectDetailView.swift in Sources */,
-				66F3F3F42E66666600000001 /* ProjectGridItemView.swift in Sources */,
+				66B1484F2EA8EA4B00E9BB4A /* MenuManager.swift in Sources */,
+				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
+				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
+				666C394C2EAFB53800B408B8 /* SessionEditOptions.swift in Sources */,
+				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
+				66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */,
+				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
+				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
+				66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */,
+				66B1484C2EA8EA4B00E9BB4A /* main.swift in Sources */,
+				66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */,
+				66B1484D2EA8EA4B00E9BB4A /* ChartDataPreparer.swift in Sources */,
+				66B148502EA8EA4B00E9BB4A /* SessionManager.swift in Sources */,
+				66B148702EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift in Sources */,
+				666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */,
+				66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */,
+				66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */,
+				66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */,
+				66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */,
+				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
+				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
+				66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */,
+				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
+				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
+				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,
+				66B148512EA8EA4B00E9BB4A /* ShortcutManager.swift in Sources */,
+				66BDAC4A2EAD0AF30042A906 /* HeroSectionView.swift in Sources */,
+				666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */,
+				6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */,
+				666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */,
+				66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */,
+				66B1487F2EA8EA4B00E9BB4A /* SessionCardView.swift in Sources */,
+				666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */,
+				66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,7 +559,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Juju/App/Juju.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -391,7 +567,7 @@
 				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_FILE = Juju/App/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -411,7 +587,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Juju.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Juju/App/Juju.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -419,7 +595,7 @@
 				DEVELOPMENT_TEAM = Z5Z57S6JKU;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Juju/Info.plist;
+				INFOPLIST_FILE = Juju/App/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (

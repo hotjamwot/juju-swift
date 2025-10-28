@@ -3,353 +3,289 @@
   "description": "A time tracking application built with Swift and SwiftUI",
   "fileStructure": {
     "Juju": {
-      "AppDelegate.swift": {
-        "purpose": "The application delegate that manages the application's lifecycle, status bar menu, global shortcuts, and dashboard window.",
-        "responsibilities": [
-          "Handles application startup and termination.",
-          "Creates and manages the status bar menu.",
-          "Registers and manages global shortcuts.",
-          "Loads and manages projects.",
-          "Manages the dashboard window.",
-          "Updates the menu bar icon.",
-          "Handles window closing events."
-        ],
-        "dependsOn": [
-          "Cocoa",
-          "WebKit",
-          "MenuManager",
-          "ShortcutManager",
-          "Project",
-          "ProjectManager",
-          "IconManager",
-          "DashboardWindowController",
-          "DashboardWebViewController"
-        ]
-      },
-      "DashboardWebViewController.swift": {
-        "purpose": "Manages the dashboard web view, handles communication between the Swift application and the JavaScript dashboard, and manages session and project data.",
-        "responsibilities": [
-          "Loads and manages the WKWebView for the dashboard.",
-          "Injects a JavaScript API (jujuApi) into the web view to enable communication between the Swift app and the dashboard.",
-          "Handles messages from the JavaScript dashboard via WKScriptMessageHandler.",
-          "Loads and saves session and project data using SessionManager and ProjectManager.",
-          "Provides handlers for session CRUD operations (Create, Read, Update, Delete) triggered from the web view.",
-          "Provides handlers for project CRUD operations triggered from the web view.",
-          "Manages Cmd+W shortcut to close the window.",
-          "Handles exporting sessions to various formats (CSV, MD, TXT).",
-          "Provides a cleanup function to terminate the WKWebView process.",
-          "Manages an invisible menu to enable standard keyboard shortcuts within the WebView."
-        ],
-        "dependsOn": [
-          "AppDelegate",
-          "SessionManager",
-          "ProjectManager",
-          "SessionRecord",
-          "Project"
-        ]
-      },
-      "DashboardWindowController.swift": {
-        "purpose": "Manages the main dashboard window of the application, handling its creation, display, and custom closing behavior.",
-        "responsibilities": [
-          "Creates and configures the main application window with a SwiftUI-based root view.",
-          "Overrides window close behavior to hide the window instead of closing it, allowing for window reuse.",
-          "Provides a `forceClose` method to actually close the window during application termination.",
-          "Acts as the NSWindowDelegate to intercept and customize window closing events.",
-          "Initializes the window with specific size, position, and style settings.",
-          "Sets up the content view controller with SwiftUI root view.",
-          "Prevents the window from being released when closed normally to preserve the instance.",
-          "Handles cleanup when the window is actually closed, releasing the content view controller and updating the app delegate."
-        ],
-        "dependsOn": [
-          "SwiftUI",
-          "SwiftUIDashboardRootView",
-          "AppDelegate"
-        ]
-      },
-      "IconManager.swift": {
-        "purpose": "Manages the status bar icon for the application.",
-        "responsibilities": [
-          "Loading the initial status bar icon.",
-          "Updating the status bar icon based on the application's active state."
-        ],
-        "dependsOn": [
-          "Cocoa"
-        ]
-      },
-      "JujuUtils.swift": {
-        "purpose": "Provides utility extensions and classes for the Juju application, including NSColor-Hex conversion and a ClosureSleeve for UI element actions.",
-        "responsibilities": [
-          "Extends NSColor to allow initialization from and conversion to Hex strings.",
-          "Provides a ClosureSleeve class to wrap closures for use with Objective-C based UI elements like buttons and color wells."
-        ],
-        "dependsOn": [
-          "Cocoa"
-        ]
-      },
-      "MenuManager.swift": {
-        "purpose": "Manages the application's menu bar menu, including session start/end actions, dashboard access, and quit functionality.",
-        "responsibilities": [
-          "Creating and updating the menu based on the current session state (active or idle).",
-          "Handling actions for starting and ending sessions.",
-          "Displaying a submenu of projects for starting new sessions.",
-          "Providing access to the dashboard.",
-          "Quitting the application.",
-          "Updating the menu title with session duration.",
-          "Presenting a notes modal when ending a session."
-        ],
-        "dependsOn": [
-          "AppDelegate",
-          "Project",
-          "SessionManager",
-          "NotesModalWindowController"
-        ]
-      },
-      "NotesModalViewController.swift": {
-        "purpose": "Provides a modal view for entering and saving session notes, with options for a WKWebView-based HTML editor or a fallback NSTextView.",
-        "responsibilities": [
-          "Loads a notes input modal, either using a WKWebView to display a HTML-based editor or a fallback NSTextView.",
-          "Handles user input for notes, including saving and canceling.",
-          "Communicates the entered notes and mood (if available) back to the calling code via a completion handler.",
-          "Manages the WKWebView, including setting up JavaScript bridges and handling navigation and UI delegate methods.",
-          "Provides a fallback NSTextView if the WKWebView fails to load the HTML.",
-          "Handles keyboard shortcuts for common text editing commands (copy, paste, cut, selectAll).",
-          "Presents the NotesModalViewController in a window.",
-          "Handles window lifecycle events (becoming key, closing)."
-        ],
-        "dependsOn": [
-          "AppDelegate (conditionally, to share the WKWebView process pool)"
-        ]
-      },
-      "Project.swift": {
-        "purpose": "Defines the `Project` data structure and manages loading, saving, and migrating project data.",
-        "responsibilities": [
-          "Defines the `Project` struct, which represents a project with properties like id, name, color, and about.",
-          "Provides a `ProjectManager` class (singleton) to handle project persistence and data management.",
-          "Loads projects from a JSON file in the application support directory.",
-          "Saves projects to a JSON file.",
-          "Migrates older project data to newer versions, ensuring data integrity and compatibility.",
-          "Creates default projects if no project file exists or if the file is invalid."
-        ],
-        "dependsOn": [
-          "Foundation"
-        ]
-      },
-      "ProjectsTabView.swift": {
-        "purpose": "Displays and manages a list of projects within a tab view.",
-        "responsibilities": [
-          "Displays a list of projects with their names, colors, and delete buttons.",
-          "Allows users to change the color of a project.",
-          "Allows users to delete a project.",
-          "Loads and saves project data using the ProjectManager.",
-          "Refreshes the project list when changes are made."
-        ],
-        "dependsOn": [
-          "ProjectManager",
-          "ClosureSleeve"
-        ]
-      },
-      "SessionManager.swift": {
-        "purpose": "Manages user work sessions, including starting, ending, tracking duration, and saving session data to a CSV file.",
-        "responsibilities": [
-          "Starting and ending work sessions.",
-          "Tracking the active session's project name, start time, and duration.",
-          "Saving session data (start time, end time, duration, project name, notes, mood) to a CSV file.",
-          "Loading all sessions from the CSV file, parsing the data, and converting it into SessionRecord objects.",
-          "Handling CSV file creation, appending, and writing operations.",
-          "Providing methods to get the current session duration.",
-          "Escaping and unescaping fields withing the CSV file."
-        ],
-        "dependsOn": []
-      },
-      "ShortcutManager.swift": {
-        "purpose": "Manages the registration and unregistration of a global keyboard shortcut (Shift+Option+Cmd+J) to toggle the application's menu, using both Carbon API for global shortcuts and NSEvent for local shortcuts.",
-        "responsibilities": [
-          "Registers a global keyboard shortcut using Carbon API (RegisterEventHotKey).",
-          "Registers a local key event monitor using NSEvent to detect the shortcut when the app is active.",
-          "Unregisters the global keyboard shortcut and removes the event handler when no longer needed (UnregisterEventHotKey, RemoveEventHandler).",
-          "Handles the keyboard shortcut event, calling `showMenuFromShortcut()` on the `AppDelegate` to toggle the menu.",
-          "Cleans up resources (monitors and hotkeys) when deinitialized."
-        ],
-        "dependsOn": [
-          "AppDelegate.swift (to call `showMenuFromShortcut()` when the shortcut is triggered)"
-        ]
-      },
-      "SwiftUIDashboardRootView.swift": {
-        "purpose": "Defines the root view for the Juju application's SwiftUI dashboard, utilizing a TabView to switch between different sections.",
-        "responsibilities": [
-          "Manages the main TabView for the application.",
-          "Defines the tabs: charts, sessions, and projects.",
-          "Presents the WebDashboardView (for charts) and placeholder SwiftUI views for sessions and projects.",
-          "Sets a minimum width and height for the window."
-        ],
-        "dependsOn": [
-          "WebDashboardView.swift (implicitly, for the charts tab)",
-          "SwiftUI"
-        ]
-      },
-      "WebDashboardView.swift": {
-        "purpose": "Wraps the DashboardWebViewController for use in SwiftUI.",
-        "responsibilities": [
-          "Creating and updating a DashboardWebViewController within a SwiftUI context."
-        ],
-        "dependsOn": [
-          "DashboardWebViewController",
-          "SwiftUI"
-        ]
-      },
-      "dashboard-web": {
-        "dashboard.bundle.js": {
-          "purpose": "Bundled JavaScript file for the dashboard web application. It handles chart creation, data filtering, session management, project management, and UI interactions.",
+      "App": {
+        "AppDelegate.swift": {
+          "purpose": "App lifecycle, menus, windows, launch setup.",
           "responsibilities": [
-            "Fetches and processes session and project data from the jujuApi.",
-            "Creates various charts (bar, pie, line) using Chart.js to visualize session data.",
-            "Provides filtering and pagination for session data.",
-            "Handles inline editing of session data within a table.",
-            "Manages project creation, deletion, and updates.",
-            "Implements notifications and confirmation modals for user feedback.",
-            "Sets up UI tabs and event listeners for user interactions.",
-            "Provides functionality for exporting session data in various formats."
-          ],
-          "dependsOn": []
-        },
-        "dashboard.html": {
-          "purpose": "Provides the structure and layout for the Juju dashboard web application.",
-          "responsibilities": [
-            "Defines the HTML structure for the dashboard, including header, tabs (Juju, Sessions, Projects), and content areas.",
-            "Includes placeholders for charts, session data, project lists, and input forms.",
-            "Sets up the layout and styling using CSS links.",
-            "Loads necessary JavaScript libraries (Chart.js) and application scripts (dashboard.bundle.js).",
-            "Implements notification and confirmation modal systems"
+            "Handles app lifecycle, menus, windows, launch setup."
           ],
           "dependsOn": [
-            "style.css",
-            "assets/juju-logo.png",
-            "https://cdn.jsdelivr.net/npm/chart.js",
-            "dashboard.bundle.js"
+            "Cocoa",
+            "WebKit",
+            "Core/Managers",
+            "Core/Models/Project",
+            "App/IconManager",
+            "Features/Dashboard/DashboardWindowController",
+            "Features/Dashboard/DashboardWebViewController"
           ]
         },
-        "dashboard.js": {
-          "purpose": "Initializes and manages the dashboard web UI, including loading and displaying session data, projects, charts, and handling user interactions such as date filtering, project management, and data exporting.",
+        "main.swift": {
+          "purpose": "macOS app entry point.",
           "responsibilities": [
-            "Initializes the dashboard UI after the DOM is loaded.",
-            "Loads and displays session and project data.",
-            "Manages chart updates based on selected date ranges.",
-            "Implements session filtering and pagination for the sessions table.",
-            "Manages project creation, updating (color, about), and deletion.",
-            "Handles user interactions, including date filter changes, project selection, and pagination.",
-            "Exports session data in various formats.",
-            "Sets up event listeners for UI elements.",
-            "Provides error handling and notifications for various operations.",
-            "Populates project filter options."
+            "Kicks off the SwiftUI/AppKit app delegate."
           ],
           "dependsOn": [
-            "./src/renderer/dashboard/charts.js",
-            "./src/renderer/dashboard/ui.js",
-            "./src/renderer/dashboard/event-system.js"
+            "AppDelegate.swift"
           ]
         },
-        "notes-modal.html": {
-          "purpose": "Provides a modal interface for users to enter session notes and a mood rating.",
+        "JujuUtils.swift": {
+          "purpose": "General utility functions.",
           "responsibilities": [
-            "Presents a text area for note input.",
-            "Includes a mood slider to rate session feeling.",
-            "Offers save and cancel buttons with keyboard shortcuts.",
-            "Communicates notes and mood data to a native bridge for persistence.",
-            "Handles focus and auto-resizing of the notes textarea.",
-            "Updates the mood value display based on slider input"
+            "NSColor-Hex conversion, ClosureSleeve."
           ],
-          "dependsOn": []
-        },
-        "src/renderer/dashboard": {
-          "chart-config.js": {
-            "purpose": "Defines default configurations for charts within the dashboard.",
+          "dependsOn": [
+            "Cocoa"
+          ]
+        }
+      },
+      "Core": {
+        "Models": {
+          "Project.swift": {
+            "purpose": "Project data model.",
             "responsibilities": [
-              "Exports default color palettes for charts.",
-              "Exports shared axis configuration for charts.",
-              "Exports shared legend configuration for charts.",
-              "Exports shared tooltip configuration for charts, including a custom label callback."
-            ],
-            "dependsOn": []
-          },
-          "chart-creators.js": {
-            "purpose": "Provides functions to create different types of charts using Chart.js, including stacked bar charts, pie charts, stream (line) charts, and project bar charts, with data obtained from a Juju API.",
-            "responsibilities": [
-              "Fetches project data (with caching) to assign colors to chart elements.",
-              "Defines a 'softShadow' Chart.js plugin for visual effects.",
-              "Creates and configures various chart types (stacked bar, pie, stream, project bar) with customizable options and data.",
-              "Handles cases where no data is available or Chart.js is not loaded.",
-              "Formats chart tooltips and labels for better readability.",
-              "Applies consistent styling and configuration via shared configuration objects."
+              "Defines the Project struct (name, sessions, etc.)."
             ],
             "dependsOn": [
-              "./chart-config.js"
+              "Foundation"
             ]
           },
-          "chart-data-preparers.js": {
-            "purpose": "Provides functions to prepare session data into formats suitable for different chart types (yearly daily, weekly, and pie).",
+          "ChartModels.swift": {
+            "purpose": "Data types for charts.",
             "responsibilities": [
-              "Transforms session data for yearly daily charts, aggregating hours by project and day.",
-              "Transforms session data for weekly charts, aggregating hours by project and week.",
-              "Transforms session data for pie charts, calculating total hours per project.",
-              "Handles edge cases such as invalid dates and empty session lists.",
-              "Calculates week numbers based on dates."
-            ],
-            "dependsOn": [
-              "./utils.js"
-            ]
-          },
-          "charts.js": {
-            "purpose": "Manages the creation, updating, and destruction of various charts (stacked bar, weekly stream, pie, and comparison bar charts) using Chart.js, displaying session data.",
-            "responsibilities": [
-              "Creates and updates chart instances based on session data.",
-              "Destroys existing chart instances to prevent conflicts.",
-              "Handles errors during chart creation and updating.",
-              "Prepares data for charts using data preparation functions.",
-              "Updates the chart range title in the UI.",
-              "Checks if Chart.js library is loaded before creating charts.",
-              "Manages multiple chart instances (yearly, weekly, pie, and comparison charts)."
-            ],
-            "dependsOn": [
-              "./chart-creators.js",
-              "./chart-data-preparers.js"
-            ]
-          },
-          "event-system.js": {
-            "purpose": "Provides a centralized event handling, notification, and modal management system for the Juju Dashboard.",
-            "responsibilities": [
-              "Managing custom events: subscribing, unsubscribing, and emitting events.",
-              "Displaying notifications with different types (success, error, warning, info).",
-              "Showing confirmation modals and handling user confirmation/cancellation.",
-              "Providing enhanced deletion utilities with confirmation prompts and fallback mechanisms.",
-              "Handling fallback deletion methods for sessions and projects if the primary API is unavailable.",
-              "Managing modal display and hiding."
-            ],
-            "dependsOn": []
-          },
-          "ui.js": {
-            "purpose": "Handles the user interface logic for the dashboard, including tab functionality and session table management.",
-            "responsibilities": [
-              "Sets up tab navigation functionality.",
-              "Updates the sessions table with data, including formatting and adding interactive elements.",
-              "Implements inline editing of session data within the table.",
-              "Handles session deletion.",
-              "Attaches event listeners for edit and delete actions on session table rows."
-            ],
-            "dependsOn": [
-              "./utils.js",
-              "./event-system.js"
-            ]
-          },
-          "utils.js": {
-            "purpose": "Provides utility functions for formatting time and working with dates, specifically for dashboards.",
-            "responsibilities": [
-              "Formatting total minutes into a human-readable 'Xh Ym' format.",
-              "Generating an array of YYYY-MM-DD date strings for each day in a given year.",
-              "Calculating the ISO 8601 week number for a given date.",
-              "Determining the total number of ISO 8601 weeks in a given year."
+              "Sessions over time, activity per project, etc."
             ],
             "dependsOn": []
           }
+        },
+        "ViewModels": {
+          "ProjectsViewModel.swift": {
+            "purpose": "Manages project list state.",
+            "responsibilities": [
+              "CRUD operations, filtering, etc."
+            ],
+            "dependsOn": [
+              "Core/Managers/ProjectManager",
+              "Core/Models/Project"
+            ]
+          }
+        },
+        "Managers": {
+          "SessionManager.swift": {
+            "purpose": "Handles logging deep work sessions.",
+            "responsibilities": [
+              "Logging, saving, retrieving sessions."
+            ],
+            "dependsOn": []
+          },
+          "MenuManager.swift": {
+            "purpose": "Builds/updates macOS status bar menu.",
+            "responsibilities": [
+              "Builds and updates the app menu."
+            ],
+            "dependsOn": [
+              "App/AppDelegate",
+              "Core/Models/Project",
+              "Core/Managers/SessionManager",
+              "Features/Notes/NotesModalWindowController"
+            ]
+          },
+          "ShortcutManager.swift": {
+            "purpose": "Registers global keyboard shortcuts.",
+            "responsibilities": [
+              "Listens for shortcuts."
+            ],
+            "dependsOn": [
+              "App/AppDelegate.swift"
+            ]
+          },
+          "IconManager.swift": {
+            "purpose": "Loads/manages icons.",
+            "responsibilities": [
+              "Active/idle/etc."
+            ],
+            "dependsOn": [
+              "Cocoa"
+            ]
+          },
+          "ChartDataPreparer.swift": {
+            "purpose": "Transforms data for charts.",
+            "responsibilities": [
+              "Session/project data to chart-friendly datasets."
+            ],
+            "dependsOn": []
+          }
+        }
+      },
+      "Features": {
+        "Dashboard": {
+          "ChartViews.swift": {
+            "purpose": "Swift Charts definitions.",
+            "responsibilities": [
+              "Everything for bar, area, and pie charts."
+            ],
+            "dependsOn": []
+          },
+          "DashboardNativeSwiftChartsView.swift": {
+            "purpose": "Displays Swift Charts.",
+            "responsibilities": [
+              "Connected to ChartDataPreparer."
+            ],
+            "dependsOn": [
+              "Core/Managers/ChartDataPreparer",
+              "Features/Dashboard/ChartViews"
+            ]
+          },
+          "SwiftUIDashboardRootView.swift": {
+            "purpose": "Main SwiftUI dashboard container.",
+            "responsibilities": [
+              "Tabs, layout, etc."
+            ],
+            "dependsOn": [
+              "Features/Dashboard/WebDashboardView",
+              "SwiftUI"
+            ]
+          },
+          "DashboardWindowController.swift": {
+            "purpose": "Manages dashboard window lifecycle.",
+            "responsibilities": [
+              "Open/close, focus."
+            ],
+            "dependsOn": [
+              "SwiftUI",
+              "Features/Dashboard/SwiftUIDashboardRootView",
+              "App/AppDelegate"
+            ]
+          }
+        },
+        "Projects": {
+          "NativeView.swift": {
+            "purpose": "SwiftUI project list/grid",
+            "responsibilities": [
+              "Displays a list or grid of projects"
+            ],
+            "dependsOn": [
+              "Core/ViewModels/ProjectsViewModel"
+            ]
+          },
+          "ProjectGridItemView.swift": {
+            "purpose": "Individual project tile",
+            "responsibilities": [
+              "UI for one project"
+            ],
+            "dependsOn": []
+          },
+          "ProjectDetailView.swift": {
+            "purpose": "Detail page for a project",
+            "responsibilities": [
+              "Shows details"
+            ],
+            "dependsOn": []
+          },
+          "AddProjectView.swift": {
+            "purpose": "Form for creating a new project",
+            "responsibilities": [
+              "Input fields for new project details"
+            ],
+            "dependsOn": []
+          }
+        },
+        "Sessions": {
+          "SessionsView.swift": {
+            "purpose": "Displays recorded sessions.",
+            "responsibilities": [
+              "Shows all sessions."
+            ],
+            "dependsOn": []
+          },
+          "SessionCardView.swift": {
+            "purpose": "One session's summary.",
+            "responsibilities": [
+              "Duration, notes, etc."
+            ],
+            "dependsOn": []
+          },
+          "EditSessionView.swift": {
+            "purpose": "Form for editing a session.",
+            "responsibilities": [
+              "Input for editing sessions."
+            ],
+            "dependsOn": []
+          }
+        },
+        "Notes": {
+          "NotesManager.swift": {
+            "purpose": "Manages session notes persistence.",
+            "responsibilities": [
+              "Saving, loading, and potentially syncing notes."
+            ],
+            "dependsOn": []
+          },
+          "NotesModalView.swift": {
+            "purpose": "SwiftUI view for notes input modal.",
+            "responsibilities": [
+              "Presents text area for notes entry.",
+              "Handles mood rating UI."
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesViewModel"
+            ]
+          },
+          "NotesModalViewController.swift": {
+            "purpose": "Controls the notes input modal.",
+            "responsibilities": [
+              "Presents the NotesModalView.",
+              "Handles saving/canceling notes."
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesModalView",
+              "Features/Notes/NotesViewModel",
+              "Features/Notes/NotesManager"
+            ]
+          },
+          "NotesViewModel.swift": {
+            "purpose": "Data and logic for notes input.",
+            "responsibilities": [
+              "Manages notes text, mood rating, etc.",
+              "Communicates with NotesManager."
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesManager"
+            ]
+          },
+          "README.md": {
+            "purpose": "Documentation for the Notes feature.",
+            "responsibilities": [
+              "Explains the feature's architecture and usage."
+            ],
+            "dependsOn": []
+          },
+          "NotesModalWindowController.swift": {
+            "purpose": "Window controller",
+            "responsibilities": [
+              "Popup window"
+            ],
+            "dependsOn": [
+              "Features/Notes/NotesModalViewController"
+            ]
+          }
+        }
+      },
+      "Resources": {
+        "Assets.xcassets": {
+          "purpose": "App icons, colours, image sets.",
+          "responsibilities": [
+            "Your app icons, accent colours, and image sets."
+          ],
+          "dependsOn": []
+        }
+      },
+      "Shared": {
+        "Extensions": {
+          "description": "Swift/SwiftUI extensions",
+          "purpose": "Generic helpers.",
+          "responsibilities": [
+            "e.g. .asDate(), .cornerRadius(), etc."
+          ]
         }
       },
       "keyComponents": [
@@ -364,6 +300,41 @@
           "Window Controller Pattern"
         ]
       }
+    },
+    "Juju.xcodeproj": {
+      "description": "Xcode project file containing build settings, targets, and references to source files.",
+      "files": [
+        "project.pbxproj",
+        "project.xcworkspace"
+      ]
+    },
+    "README.md": {
+      "purpose": "Provides a high-level overview of the project, including setup instructions, usage guidelines, and contribution information."
+    },
+    "STATUS.md": {
+      "purpose": "Documents the current status of the project and any known issues or limitations."
+    },
+    "design.md": {
+      "purpose": "Contains design documentation, including UI mockups, architecture diagrams, and user flow descriptions."
+    },
+    "icons": {
+      "description": "Directory containing various application icons.",
+      "files": [
+        "icon.png",
+        "juju-icon.pdf",
+        "status-active.png",
+        "status-idle.png"
+      ],
+      "Old": {
+        "files": [
+          "icon-active_old.png",
+          "icon-idle_old.png",
+          "icon_old.png"
+        ]
+      }
+    },
+    "index.json": {
+      "purpose": "Contains the file structure for AI analysis."
     }
   }
 }

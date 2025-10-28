@@ -2,6 +2,7 @@ Juju is a lightweight, always-on macOS menu bar app for tracking focused deep wo
 Juju is for people who want clarity over their time—without bloat, cloud lock-in, or constant notifications. It’s elegant, fast, and 100% local.
 
 ---
+
 ## ⚙️ Features
 ### ✅ System Tray Interface
 - Lives in your menu bar (macOS).
@@ -23,9 +24,10 @@ Juju is for people who want clarity over their time—without bloat, cloud�
 - Projects: projects.json in the same folder.
 - Flat file system: No cloud, no lock-in, no hidden database.
 ### 📊 Dashboard
-**Visual analytics (Juju tab):**
-- Bar chart: Daily hours.
-- Line chart: Weekly trends.
+**Charts (default tab):**
+- Summaries: Total number of Juju Sessions, Total Juju Hours logged 
+- Stacked bar chart: Daily hours.
+- Curved Stacked Area chart: Weekly trends.
 - Pie chart: Total time by project.
 - Bar chart: Total time by project.
 **Session Table (Sessions):**
@@ -43,18 +45,25 @@ Juju is for people who want clarity over their time—without bloat, cloud�
 - Export filtered sessions to CSV, Markdown, or TXT.
 - Choose export format and save anywhere via native macOS save dialog.
 - Export includes: Date, Project, Start Time, End Time, Duration, Notes, Mood, and a summary of filters used.
+
 ### 🔑 Global Shortcut
 - Press ⇧⌥⌘J from anywhere to quickly launch the app.
+
 ---
+
 ## 🛡️ Philosophy
 - Privacy-first: All data stays on your device.
 - Transparency: Data is stored in plain text files you can inspect or analyze.
 - No bloat: No cloud, no accounts, no ads, no tracking.
 - Fast and elegant: Designed for minimal friction and maximum clarity.
+
 ---
+
 ## 📝 Data Format
 - Sessions: CSV with columns: id, date, start_time, end_time, duration_minutes, project, notes, mood
 - Projects: JSON array with project names and color IDs.
+
 ---
+
 ## 💡 Why Juju?
 Juju is for makers, freelancers, and anyone who wants to understand and improve their deep work habits—without giving up privacy or control.
