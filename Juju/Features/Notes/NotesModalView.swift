@@ -50,7 +50,7 @@ struct NotesModalView: View {
     private var headerView: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("What did you work on?")
+                Text("Nice work getting into the Juju! What did you work on?")
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textPrimary)
                 
@@ -115,30 +115,30 @@ struct NotesModalView: View {
                 
                 // Slider track
                 GeometryReader(content: { geometry in
-                ZStack {
-                    // Track background
-                    Rectangle()
-                        .fill(Theme.Colors.divider.opacity(0.3))
-                        .frame(height: 4)
-                    
-                    // Active track
-                    Rectangle()
-                        .fill(Theme.Colors.accent)
-                        .frame(width: CGFloat(viewModel.mood ?? 0) / 10 * geometry.size.width)
-
-                    // Slider
-                    Slider(value: Binding(
-                        get: { viewModel.mood.map { Double($0) } ?? 0 },
-                        set: { value in
-                            let intValue = Int(value.rounded())
-                            viewModel.mood = intValue
-                        }
-                    ), in: 0...10)
-                    .labelsHidden()  // Without this, it might expand too much
-                    .tint(Theme.Colors.accent)
-                    .frame(width: geometry.size.width)
-                }
-            })
+                    ZStack {
+                        // Track background
+                        Rectangle()
+                            .fill(Theme.Colors.divider.opacity(0.3))
+                            .frame(height: 4)
+                        
+                        // Active track
+                        Rectangle()
+                            .fill(Theme.Colors.accent)
+                            .frame(width: CGFloat(viewModel.mood ?? 0) / 10 * geometry.size.width)
+                        
+                        // Slider
+                        Slider(value: Binding(
+                            get: { viewModel.mood.map { Double($0) } ?? 0 },
+                            set: { value in
+                                let intValue = Int(value.rounded())
+                                viewModel.mood = intValue
+                            }
+                        ), in: 0...10)
+                        .labelsHidden()  // Without this, it might expand too much
+                        .tint(Theme.Colors.accent)
+                        .frame(width: geometry.size.width)
+                    }
+                })
                 
                 // Right label
                 Text("10")
@@ -167,7 +167,6 @@ struct NotesModalView: View {
     private var footerView: some View {
         VStack(spacing: Theme.spacingSmall) {
             HStack {
-                
                 Spacer()
                 
                 HStack(spacing: Theme.spacingSmall) {
@@ -236,14 +235,14 @@ struct NotesModalView: View {
                 }
         }
     }
+}
     
-    // MARK: - Preview
+// MARK: - Preview
     
-    struct NotesModalView_Previews: PreviewProvider {
-        static var previews: some View {
-            NotesModalView(viewModel: NotesViewModel.preview)
-                .previewDisplayName("Notes Modal")
-        }
+struct NotesModalView_Previews: PreviewProvider {
+    static var previews: some View {
+        NotesModalView(viewModel: NotesViewModel.preview)
+            .previewDisplayName("Notes Modal")
     }
 }
 

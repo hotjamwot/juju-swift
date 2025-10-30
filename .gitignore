@@ -5,6 +5,8 @@
 xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
 DerivedData/
 build/
 *.pbxuser

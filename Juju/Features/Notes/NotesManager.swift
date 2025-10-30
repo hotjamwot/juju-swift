@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @MainActor
-class NotesManager: NSObject, ObservableObject {
+class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     static let shared = NotesManager()
     
     @Published private(set) var isPresented = false
@@ -26,18 +26,12 @@ class NotesManager: NSObject, ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
         
         // Create and configure the hosting window
-        createHostingWindow()
-        
-        // Present the notes modal
-        notesViewModel.present { [weak self] notes, mood in
-            self?.dismissNotes()
-            completion(notes, mood)
-        }
+        createHostingWindow(completion: completion)
         
         isPresented = true
     }
     
-    private func createHostingWindow() {
+    private func createHostingWindow(completion: @escaping (String, Int?) -> Void) {
         // Clean up existing window if any
         if let existingWindow = hostingWindow {
             existingWindow.close()
@@ -67,13 +61,21 @@ class NotesManager: NSObject, ObservableObject {
             defer: false
         )
         
-        window.title = "Session Notes"
-        window.contentViewController = hostingController
-        window.isReleasedWhenClosed = false
-        window.level = .floating
+        // CONFIGURATIONS FOR "INVISIBLE BORDER" LOOK
+        window.title = ""
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.styleMask.insert(.fullSizeContentView)
+        window.backgroundColor = NSColor.clear
+        window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.minSize = NSSize(width: 400, height: 300)
+        window.isReleasedWhenClosed = false
+        window.level = .floating
+        
+        // Set the content view controller (this was missing!)
+        window.contentViewController = hostingController
         
         // Set window delegate to handle close events
         window.delegate = self
@@ -82,6 +84,12 @@ class NotesManager: NSObject, ObservableObject {
         window.makeKeyAndOrderFront(nil)
         
         hostingWindow = window
+        
+        // Present the notes modal with completion handler
+        notesViewModel.present { [weak self] notes, mood in
+            self?.dismissNotes()
+            completion(notes, mood)
+        }
     }
     
     private func dismissNotes() {
@@ -103,11 +111,9 @@ class NotesManager: NSObject, ObservableObject {
             NSApp.activate(ignoringOtherApps: true)
         }
     }
-}
-
-// MARK: - NSWindowDelegate
-
-extension NotesManager: NSWindowDelegate {
+    
+    // MARK: - NSWindowDelegate
+    
     func windowWillClose(_ notification: Notification) {
         // Handle window close - treat as cancel if not explicitly saved
         if isPresented {
