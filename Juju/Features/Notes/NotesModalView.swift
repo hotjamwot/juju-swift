@@ -19,7 +19,7 @@ struct NotesModalView: View {
             // Footer
             footerView
         }
-        .frame(width: 600, height: 400)
+        .frame(width: 650, height: 450)
         .background(Theme.Colors.surface)
         .onAppear {
             // Focus the text field when view appears
@@ -46,34 +46,32 @@ struct NotesModalView: View {
     }
     
     // MARK: - Header View
-    
     private var headerView: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("Nice work getting into the Juju! What did you work on?")
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Spacer()
-            }
-            .padding(.horizontal, Theme.spacingLarge)
-            .padding(.top, Theme.spacingLarge)
-            .padding(.bottom, Theme.spacingMedium)
+        VStack{
+
+            Text("What did you work on?")
+                .font(Theme.Fonts.header)
+                .foregroundColor(Theme.Colors.textPrimary)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.top, Theme.spacingExtraLarge)
+        .padding(.bottom, Theme.spacingLarge)
     }
+
     
     // MARK: - Content View
     
     private var contentView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // Notes Text Editor
             ZStack(alignment: .topLeading) {
                 if viewModel.notesText.isEmpty {
                     Text("Enter your session notes here...")
-                        .font(Theme.Fonts.caption)
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary)
-                        .padding(.horizontal, Theme.spacingMedium)
-                        .padding(.vertical, Theme.spacingSmall)
+                        .padding(.horizontal, Theme.spacingLarge)
+                        .padding(.vertical, Theme.spacingMedium)
                         .allowsHitTesting(false)
                 }
                 
@@ -83,93 +81,86 @@ struct NotesModalView: View {
                     .background(Color.clear)
                     .scrollContentBackground(.hidden)
                     .focused($isTextFieldFocused)
-                    .padding(Theme.spacingSmall)
+                    .padding(Theme.spacingMedium)
             }
             .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
+                    .stroke(Theme.Colors.divider, lineWidth: 0.5)
             )
             
             // Mood Slider View
             moodSliderView
         }
-        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.horizontal, Theme.spacingExtraLarge)
         .padding(.vertical, Theme.spacingMedium)
     }
     
-    // MARK: - Mood Slider View
     
+    // MARK: - Mood Slider View
     private var moodSliderView: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+
             Text("How do you feel about the session?")
                 .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textSecondary)
-            
-            HStack(spacing: 16) {
-                // Left label
-                Text("0")
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                
-                // Slider track
-                GeometryReader(content: { geometry in
-                    ZStack {
-                        // Track background
-                        Rectangle()
-                            .fill(Theme.Colors.divider.opacity(0.3))
-                            .frame(height: 4)
-                        
-                        // Active track
-                        Rectangle()
-                            .fill(Theme.Colors.accent)
-                            .frame(width: CGFloat(viewModel.mood ?? 0) / 10 * geometry.size.width)
-                        
-                        // Slider
-                        Slider(value: Binding(
-                            get: { viewModel.mood.map { Double($0) } ?? 0 },
-                            set: { value in
-                                let intValue = Int(value.rounded())
-                                viewModel.mood = intValue
-                            }
-                        ), in: 0...10)
-                        .labelsHidden()  // Without this, it might expand too much
-                        .tint(Theme.Colors.accent)
-                        .frame(width: geometry.size.width)
-                    }
-                })
-                
-                // Right label
-                Text("10")
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
+
+            VStack(spacing: 12) {
+
+                Slider(
+                    value: Binding(
+                        get: { viewModel.mood.map { Double($0) } ?? 0 },
+                        set: { value in
+                            let intVal = Int(value.rounded())
+                            viewModel.mood = intVal
+                        }
+                    ),
+                    in: 0...10
+                )
+                .labelsHidden()
+                .tint(Theme.Colors.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 0)
+
+                HStack {
+                    Text("0")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Spacer()
+                    Text("10")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
             }
-            
-            // Current mood value display
+
             HStack {
                 if let mood = viewModel.mood {
                     Text("Selected: \(mood)")
-                        .font(Theme.Fonts.caption)
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.accent)
                 } else {
                     Text("No rating")
-                        .font(Theme.Fonts.caption)
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary)
                 }
                 Spacer()
             }
         }
+        .padding(.top, Theme.spacingSmall)
+        .padding(.bottom, Theme.spacingSmall)
     }
     
     // MARK: - Footer View
     
     private var footerView: some View {
         VStack(spacing: Theme.spacingSmall) {
+            
             HStack {
                 Spacer()
                 
-                HStack(spacing: Theme.spacingSmall) {
+                HStack(spacing: Theme.spacingMedium) {
                     // Cancel Button
                     Button("Cancel") {
                         viewModel.cancelNotes()

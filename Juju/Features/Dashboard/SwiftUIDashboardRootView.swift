@@ -2,39 +2,13 @@ import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
     @State private var selected: DashboardView = .charts
-    @State private var sidebarOpen = false
-    @State private var isHoveringSidebarButton = false
     @Environment(\.presentationMode) private var presentationMode
     
     var body: some View {
         HStack(spacing: 0) {
-            // Sidebar
-            if sidebarOpen {
-                SidebarView(selectedView: $selected)
-                    .frame(width: 220)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                    .background(Theme.Colors.sidebarBackground)
-                    .onHover { hovering in
-                        if !hovering && !isHoveringSidebarButton {
-                            withAnimation(.easeInOut) {
-                                sidebarOpen = false
-                            }
-                        }
-                    }
-            } else {
-                // Empty space for hover area
-                Rectangle()
-                    .fill(.clear)
-                    .frame(width: 48)
-                    .onHover { hovering in
-                        isHoveringSidebarButton = hovering
-                        if hovering {
-                            withAnimation(.easeInOut) {
-                                sidebarOpen = true
-                            }
-                        }
-                    }
-            }
+            // Always show sidebar - it's now permanently small with icons only
+            SidebarView(selectedView: $selected)
+                .background(Theme.Colors.background)  // Match sidebar to dashboard background
 
             // Main content
             VStack(spacing: 0) {
