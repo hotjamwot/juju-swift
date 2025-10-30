@@ -87,18 +87,6 @@ struct StackedChartEntry: Identifiable {
     }
 }
 
-struct PieChartEntry: Identifiable {
-    let id = UUID()
-    let projectName: String
-    let projectColor: String
-    let value: Double
-    let percentage: Double
-    
-    var colorSwiftUI: Color {
-        Color(hex: projectColor)
-    }
-}
-
 // MARK: - Daily Chart Data Model
 struct DailyChartEntry: Identifiable {
     let id = UUID()
@@ -124,15 +112,25 @@ struct WeeklySession: Identifiable {
     var duration: Double { endHour - startHour }
 }
 
-struct MonthlyBarData {
+struct MonthlyBarData: Identifiable {
+    let id = UUID() // Unique identifier
     let month: String
     let projects: [ProjectMonthlyData]
 }
 
-struct ProjectMonthlyData {
+struct ProjectMonthlyData: Equatable {
+    let id = UUID() // Unique identifier
     let projectName: String
     let hours: Double
     let color: String
+}
+
+private struct BarData: Identifiable, Equatable {
+    let id = UUID()
+    let monthIndex:    Int
+    let month:         String
+    let projectIndex:  Int
+    let project:       ProjectMonthlyData
 }
 
 // MARK: - Chart View Models
@@ -148,7 +146,6 @@ class ChartViewModel: ObservableObject {
     @Published var chartEntries: [ChartEntry] = []
     @Published var dailyStackedData: [DailyChartEntry] = []
     @Published var weeklyStackedData: [StackedChartEntry] = []
-    @Published var pieChartData: [PieChartEntry] = []
     @Published var projectBarData: [ProjectChartData] = []
     
     var sessions: [SessionRecord] = []

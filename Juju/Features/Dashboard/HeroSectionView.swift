@@ -8,13 +8,13 @@ struct HeroSectionView: View {
     let totalSessions: Int
     
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
+        VStack(spacing: Theme.spacingLarge) {
             // MARK: - Header & Summary Row
             HStack(alignment: .top, spacing: Theme.spacingLarge) {
                 
                 // MARK: Left: Headline + Weekly Bubbles
                 VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                    // Big friendly headline - LEFT UNCHANGED AS REQUESTED
+                    // Big friendly headline
                     HStack(spacing: 6) {
                         Text("You've spent")
                             .font(.system(size: 32, weight: .bold))
@@ -45,12 +45,19 @@ struct HeroSectionView: View {
                     SummaryMetricView(title: "Total Sessions", value: "\(totalSessions)")
                 }
             }
-            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.horizontal, Theme.spacingMedium)
             .padding(.vertical, Theme.spacingMedium)
             .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
             .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
         }
-        .padding(.horizontal)
     }
+}
+
+#Preview {
+    // Mock data for ChartDataPreparer - replace with a real mock if needed
+    let mockChartDataPreparer = ChartDataPreparer()
+    return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5, totalAllTimeHours: 150.0, totalSessions: 42)
+        .frame(width: 900) // adjust as necessary
+        .padding()
 }

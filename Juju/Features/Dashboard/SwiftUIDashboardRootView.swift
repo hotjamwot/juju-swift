@@ -44,22 +44,3 @@ struct SwiftUIDashboardRootView: View {
         NSApp.keyWindow?.close()
     }
 }
-
-// MARK: - TooltipView
-struct TooltipView: View {
-    let text: String
-    @State private var show = false
-
-    var body: some View {
-        Text(text)
-            .font(.caption2)
-            .padding(6)
-            .background(.ultraThinMaterial)
-            .cornerRadius(6)
-            .opacity(show ? 1 : 0)
-            .offset(y: -40)
-            .onHover { hovering in
-                withAnimation(.easeInOut) { show = hovering }
-            }
-    }
-}

@@ -6,7 +6,7 @@ struct DashboardNativeSwiftChartsView: View {
     @StateObject private var chartDataPreparer = ChartDataPreparer()
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -25,6 +25,7 @@ struct DashboardNativeSwiftChartsView: View {
             }
             .padding()
         }
+        .padding(20)
         .background(Theme.Colors.background)
         .onAppear {
             Task {
@@ -186,6 +187,7 @@ struct DashboardNativeSwiftChartsView: View {
             .cornerRadius(Theme.Design.cornerRadius)
         }
     }
+}
     
     // MARK: - Preview
     struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
@@ -195,4 +197,4 @@ struct DashboardNativeSwiftChartsView: View {
                 .preferredColorScheme(.dark)
         }
     }
-}
+
