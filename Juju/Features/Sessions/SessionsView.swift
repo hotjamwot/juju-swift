@@ -26,9 +26,34 @@ public struct SessionsView: View {
     @State private var exportMessage = ""
     
     // Cached data
-    @State private var filteredSessions: [SessionRecord] = []
-    
-    public var body: some View {
+@State private var filteredSessions: [SessionRecord] = []
+
+// MARK: — Computed helpers
+private var fullyFilteredSessions: [SessionRecord] {
+    // 1️⃣ Grab *all* raw sessions
+    var sessions = sessionManager.allSessions
+
+    // 2️⃣ Apply the *date* filter (only keep sessions inside currentDateInterval)
+    if let interval = currentDateInterval {
+        sessions = sessions.filter { session in
+            let start = startDateTime(session)
+            return interval.contains(start)
+        }
+    }
+
+    // 3️⃣ Apply the *project* filter
+    if projectFilter != "All" {
+        sessions = sessions.filter { $0.projectName == projectFilter }
+    }
+
+    // 4️⃣ Re‑sort by most‑recent first – the same order the UI shows
+    sessions.sort(by: { startDateTime($0) > startDateTime($1) })
+
+    // 5️⃣ Return everything (no pagination!)
+    return sessions
+}
+
+public var body: some View {
         VStack(spacing: 0) {
             // Main content area
             VStack(spacing: 0) {
@@ -150,7 +175,7 @@ public struct SessionsView: View {
                             exportSessions(format: "md")
                         }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.spacingExtraSmall) {
                             Image(systemName: "square.and.arrow.down")
                                 .font(Theme.Fonts.icon)
                             Text("Export")
@@ -262,17 +287,24 @@ public struct SessionsView: View {
         }
     }
     
-    private func exportSessions(format: String) {
-        let sessions = sessionManager.allSessions
-        
-        if let path = sessionManager.exportSessions(sessions, format: format) {
-            exportMessage = "Sessions exported to \(path.path)"
-            showingExportAlert = true
-        } else {
-            exportMessage = "Export failed. No sessions to export."
-            showingExportAlert = true
-        }
+private func exportSessions(format: String) {
+    // ←‑ Change this line
+    let sessions = fullyFilteredSessions   // 🚨 NEW
+
+    guard !sessions.isEmpty else {
+        exportMessage = "Nothing to export – no sessions match the current filter."
+        showingExportAlert = true
+        return
     }
+
+    if let path = sessionManager.exportSessions(sessions, format: format) {
+        exportMessage = "Sessions exported to \(path.path)"
+        showingExportAlert = true
+    } else {
+        exportMessage = "Export failed."
+        showingExportAlert = true
+    }
+}
     
     private func deleteSession(_ session: SessionRecord) {
         if sessionManager.deleteSession(id: session.id) {

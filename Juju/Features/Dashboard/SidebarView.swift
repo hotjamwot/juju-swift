@@ -1,5 +1,5 @@
 import SwiftUI
-import Combine // Import Combine for the Timer
+import Combine
 
 // MARK: ──  Dashboard navigation items
 enum DashboardView: String, CaseIterable, Identifiable {
@@ -7,7 +7,6 @@ enum DashboardView: String, CaseIterable, Identifiable {
     case sessions = "Sessions"
     case projects = "Projects"
 
-    // — icon for each enum case
     var icon: String {
         switch self {
         case .charts:   return "chart.xyaxis.line"
@@ -20,29 +19,26 @@ enum DashboardView: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// MARK: ──  Sidebar view
-struct SidebarView: View {
-    @Binding var selectedView: DashboardView
+ struct SidebarView: View {
+     @Binding var selectedView: DashboardView
+     // ─────  sizes that drive the width
+     private let sidebarWidth: CGFloat = 60
 
-    // ─────  sizes that drive the width
-    private let sidebarWidth: CGFloat = 60
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()   // center icons vertically
-
-            ForEach(DashboardView.allCases) { view in
-                SidebarButton(
-                    selected: $selectedView,
-                    target:   view
-                )
-            }
-
-            Spacer()
-        }
-        .frame(width: sidebarWidth)
-        .background(Theme.Colors.background)
-    }
+     var body: some View {
+         VStack(spacing: Theme.spacingMedium) {   // space between icons
+             // No top spacer – icons will start at the top
+             ForEach(DashboardView.allCases) { view in
+                 SidebarButton(
+                     selected: $selectedView,
+                     target:   view
+                 )
+             }
+             Spacer()   // keep a single spacer at the bottom
+         }
+         .padding(.top, 32)                // “some padding from the top”
+         .frame(width: sidebarWidth)       // keep the fixed 60‑pt width
+         .background(Theme.Colors.background)
+     }
 
     // MARK: ──  Sidebar button (defined inside this file)
     struct SidebarButton: View {
@@ -67,7 +63,7 @@ struct SidebarView: View {
                         .background(backgroundView)
                         .cornerRadius(Theme.Design.cornerRadius)
                         .scaleEffect(iconScale)
-                        .animation(.easeInOut(duration: 0.2), value: iconScale) // Animate scale
+                        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: iconScale)
 
                 }
                 .foregroundColor(isSelected ? .primary : .secondary)
@@ -80,11 +76,11 @@ struct SidebarView: View {
                         if isHovered {
                             Text(target.rawValue)
                                 .font(Theme.Fonts.caption)
-                                .padding(4)
+                                .padding(Theme.spacingSmall)
                                 .background(.ultraThinMaterial)
-                                .cornerRadius(4)
+                                .cornerRadius(Theme.Design.cornerRadius)
                                 .opacity(1)
-                                .offset(y: 40)
+                                .offset(y: 20)
                         }
                     }
                     .animation(.easeInOut(duration: 0.2), value: isHovered)
@@ -92,7 +88,7 @@ struct SidebarView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .onHover { hovering in
                 if hovering {
                     startTooltipTimer()

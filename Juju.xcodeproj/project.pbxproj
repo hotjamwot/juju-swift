@@ -13,8 +13,6 @@
 		666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39492EAFB53800B408B8 /* SessionFilterButton.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
-		66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E42EA8EA4000E9BB4A /* icon.png */; };
-		66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */; };
 		66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E62EA8EA4000E9BB4A /* status-active.png */; };
 		66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E72EA8EA4000E9BB4A /* status-idle.png */; };
 		66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */; };
@@ -60,8 +58,6 @@
 		666C39492EAFB53800B408B8 /* SessionFilterButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionFilterButton.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
-		66B147E42EA8EA4000E9BB4A /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "juju-icon.pdf"; sourceTree = "<group>"; };
 		66B147E62EA8EA4000E9BB4A /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
 		66B147E72EA8EA4000E9BB4A /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
 		66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -136,19 +132,9 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		66B147E32EA8EA4000E9BB4A /* Old */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Old;
-			sourceTree = "<group>";
-		};
 		66B147E82EA8EA4000E9BB4A /* icons */ = {
 			isa = PBXGroup;
 			children = (
-				66B147E32EA8EA4000E9BB4A /* Old */,
-				66B147E42EA8EA4000E9BB4A /* icon.png */,
-				66B147E52EA8EA4000E9BB4A /* juju-icon.pdf */,
 				66B147E62EA8EA4000E9BB4A /* status-active.png */,
 				66B147E72EA8EA4000E9BB4A /* status-idle.png */,
 			);
@@ -378,12 +364,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */,
-				66B147ED2EA8EA4000E9BB4A /* juju-icon.pdf in Resources */,
 				66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */,
 				66B1488D2EA8EA6000E9BB4A /* design.md in Resources */,
 				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
-				66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */,
-				66B147EC2EA8EA4000E9BB4A /* icon.png in Resources */,
 				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
 				66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */,
 				66B1488B2EA8EA6000E9BB4A /* index.json in Resources */,
