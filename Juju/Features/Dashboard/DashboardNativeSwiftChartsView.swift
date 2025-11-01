@@ -23,9 +23,15 @@ struct DashboardNativeSwiftChartsView: View {
                 
                 GroupedBarChartCardView(data: chartDataPreparer.monthlyProjectTotals())
             }
-            .padding()
+            .padding(.vertical, Theme.spacingLarge)
+            .padding(.horizontal, 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.Colors.background)
+            .cornerRadius(Theme.Design.cornerRadius)
         }
-        .padding(20)
+        .padding(.top, 20)
+        .padding(.bottom, 20)
+        .padding(.trailing, 20)
         .background(Theme.Colors.background)
         .onAppear {
             Task {
@@ -120,13 +126,13 @@ struct DashboardNativeSwiftChartsView: View {
         @ViewBuilder let content: Content
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Theme.spacingMedium) {
                 Text(title)
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textPrimary)
                 content
             }
-            .padding(Theme.spacingMedium)
+            .padding(Theme.spacingSmall)
             .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -193,7 +199,7 @@ struct DashboardNativeSwiftChartsView: View {
     struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
         static var previews: some View {
             DashboardNativeSwiftChartsView()
-                .frame(width: 1200, height: 800)
+                .frame(width: 1200, height: 900)
                 .preferredColorScheme(.dark)
         }
     }

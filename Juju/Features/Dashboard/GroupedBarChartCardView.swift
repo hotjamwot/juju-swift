@@ -5,10 +5,10 @@ struct GroupedBarChartCardView: View {
     let data: [MonthlyBarData]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingExtraLarge) {
-            Text("Your Rhythm")
+        VStack(alignment: .leading, spacing: Theme.spacingLarge) {
+            Text("This Year")
                 .font(Theme.Fonts.header)
-                .foregroundColor(Theme.Colors.textPrimary)
+                .foregroundColor(Theme.Colors.textSecondary)
 
             if data.isEmpty {
                 Text("No data for this year")
@@ -46,7 +46,7 @@ struct GroupedBarChartCardView: View {
         }
         .padding(Theme.spacingLarge)
         .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
+        .cornerRadius(Theme.Design.cornerRadius / 2)
         .shadow(radius: 2)
     }
 

@@ -35,7 +35,7 @@ public struct Theme {
 
     // MARK: Typography
     public struct Fonts {
-        public static let header   = Font.system(size: 16, weight: .semibold)
+        public static let header   = Font.system(size: 16, weight: .semibold, design: .rounded)
         public static let body     = Font.system(size: 14, weight: .regular)
         public static let caption  = Font.system(size: 10, weight: .medium)
         public static let icon     = Font.system(size: 20, weight: .regular)
@@ -50,7 +50,7 @@ public struct Theme {
 
     // MARK: Corners / Animation
     public struct Design {
-        public static let cornerRadius     = CGFloat(12)
+        public static let cornerRadius     = CGFloat(18)
         public static let animationDuration = 0.2
     }
 

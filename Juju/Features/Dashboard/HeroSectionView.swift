@@ -2,57 +2,87 @@ import SwiftUI
 import Charts
 
 struct HeroSectionView: View {
+    // MARK: - Properties
     @ObservedObject var chartDataPreparer: ChartDataPreparer
-    let totalHours: Double
-    let totalAllTimeHours: Double
-    let totalSessions: Int
     
+    // Data that you already calculate in the Presenter/Controller
+    let totalHours: Double              // Hours spent *this week*
+    let totalAllTimeHours: Double       // Total hours ever
+    let totalSessions: Int              // Total sessions ever
+    
+    // MARK: - Body
     var body: some View {
-        VStack(spacing: Theme.spacingLarge) {
-            // MARK: - Header & Summary Row
-            HStack(alignment: .top, spacing: Theme.spacingLarge) {
+        // ---------- Outer card ----------
+        VStack(spacing: Theme.spacingMedium) {
+            
+            // ---------- Top (headline) ----------
+            HStack {
+                Spacer()
+                Text("You've spent")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Text(String(format: "%.1f", totalHours) + " hours")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.accentColor, .accentColor.opacity(0.7)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                Text("in the Juju this week!")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, Theme.spacingLarge * 1.2)
+            .padding(.bottom, Theme.spacingSmall)
+            
+            // ---------- Week‑bubble chart ----------
+            WeeklyProjectBubbleChartView(data: chartDataPreparer.weeklyProjectTotals())
+                .frame(height: 200)
+                .padding(.bottom, Theme.spacingSmall)
+            
+            // --------- 3️⃣ Summary metrics with Logo ----------
+            HStack {
+                Spacer() // Pushes content away from the left edge
                 
-                // MARK: Left: Headline + Weekly Bubbles
-                VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                    // Big friendly headline
-                    HStack(spacing: 6) {
-                        Text("You've spent")
-                            .font(.system(size: 32, weight: .bold))
-                        
-                        Text(String(format: "%.1f", totalHours) + " hours")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundStyle(LinearGradient(
-                                colors: [.accentColor, .accentColor.opacity(0.7)],
-                                startPoint: .leading, endPoint: .trailing
-                            ))
-                        
-                        Text("in the Juju this week!")
-                            .font(.system(size: 32, weight: .bold))
-                    }
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    
-                    // Bubble chart for this week's projects
-                    WeeklyProjectBubbleChartView(chartDataPreparer: chartDataPreparer)
-                        .frame(height: 160)
-                }
+                // Left metric
+                SummaryMetricView(
+                    title: "Total Hours",
+                    value: String(format: "%.1f", totalAllTimeHours) + "h"
+                )
+                
+                Spacer() // Creates space between the metric and the logo
+                
+                // Juju Logo in the center
+                Image("juju_logo") // Assumes "juju_logo" is in your Assets.xcassets
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 40)
+                    .opacity(0.8) // Makes it slightly less prominent than the data
+                
+                Spacer() 
+                
+                // Right metric
+                SummaryMetricView(
+                    title: "Total Sessions",
+                    value: "\(totalSessions)"
+                )
                 
                 Spacer()
-                
-                // MARK: Right: Summary Metrics
-                VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
-                    SummaryMetricView(title: "Total Hours", value: String(format: "%.1f", totalAllTimeHours) + "h")
-                    SummaryMetricView(title: "Total Sessions", value: "\(totalSessions)")
-                }
             }
-            .padding(.horizontal, Theme.spacingMedium)
-            .padding(.vertical, Theme.spacingMedium)
-            .background(Theme.Colors.surface)
-            .cornerRadius(Theme.Design.cornerRadius)
-            .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+            .padding(.top, Theme.spacingSmall)
+            .padding(.bottom, Theme.spacingLarge)
         }
+        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.vertical, Theme.spacingLarge)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
     }
 }
+
+
 
 #Preview {
     // Mock data for ChartDataPreparer - replace with a real mock if needed

@@ -5,7 +5,7 @@ struct SummaryMetricView: View {
     let value: String
     
     var body: some View {
-        VStack(alignment: .trailing, spacing: 4) {
+        VStack(alignment: .center, spacing: 4) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .heavy))
                 .tracking(2)

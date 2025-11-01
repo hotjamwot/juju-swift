@@ -3,57 +3,75 @@ import Charts
 
 struct SessionCalendarChartView: View {
     let sessions: [WeeklySession]
-
+    
+    let weekDays = [
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday", "Sunday"
+    ]
+    
+    let dayToLetter: [String: String] = [
+            "Monday":    "M",
+            "Tuesday":   "T",
+            "Wednesday": "W",
+            "Thursday":  "T",
+            "Friday":    "F",
+            "Saturday":  "S",
+            "Sunday":    "S"
+        ]
+    
+// Mark: Body
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingLarge) {
-            Text("This Week's Sessions")
+            Text("This Week")
                 .font(Theme.Fonts.header)
-                .foregroundColor(Theme.Colors.textPrimary)
+                .foregroundColor(Theme.Colors.textSecondary)
             
+            Chart(sessions) { session in
+                RectangleMark(
+                    x: .value("Day", session.day),
+                    yStart: .value("Start Hour", session.startHour),
+                    yEnd:   .value("End Hour",   session.endHour)
+                )
+                .foregroundStyle(Color(hex: session.projectColor))
+                .cornerRadius(8)
+                .annotation(position: .overlay, alignment: .center) {
+                    Text("\(session.duration, specifier: "%.1f")h")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(.white)
+                        .bold()
+                }
+            }
+            .chartYScale(domain: 6.0 ... 23.0)
+            .chartYAxis {
+                AxisMarks(values: .automatic) { value in
+                    if let hour = value.as(Double.self) {
+                        AxisValueLabel(String(format: "%.0f", hour))
+                    }
+                }
+            }
+
+            .chartXAxis {
+                AxisMarks(values: weekDays) { value in
+                    let day = value.as(String.self) ?? ""
+                    let label = dayToLetter[day] ?? day
+                    AxisValueLabel(label)
+                }
+            }
+            .chartPlotStyle { plotArea in
+                plotArea
+                    .background(.clear)
+            }
+            .chartXScale(domain: weekDays)
+
+            .frame(height: 200)
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: 200)
-            } else {
-                Chart(sessions) { session in
-                    RectangleMark(
-                        x: .value("Day", session.day),
-                        yStart: .value("Start Hour", session.startHour),
-                        yEnd: .value("End Hour", session.endHour)
-                    )
-                    .foregroundStyle(Color(hex: session.projectColor))
-                    .annotation(position: .overlay, alignment: .center) {
-                        Text("\(session.duration, specifier: "%.1f")h")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(.white)
-                            .bold()
-                    }
-                }
-                .chartYScale(domain: 6.0 ... 23.0)
-                .frame(height: 200)
-                .chartYAxis {
-                    AxisMarks(values: .stride(by: 2.0)) { value in
-                        AxisGridLine()
-                        if let hour = value.as(Double.self) {
-                            AxisValueLabel(String(format: "%.0f", hour))
-                        }
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks { value in
-                        AxisValueLabel(value.as(String.self) ?? "")
-                        AxisGridLine()
-                    }
-                }
-                .chartPlotStyle { plotArea in
-                    plotArea.background(Theme.Colors.secondary)
-                    .cornerRadius(Theme.Design.cornerRadius)
-
-                }
             }
         }
-        .padding(Theme.spacingMedium)
+        .padding(Theme.spacingLarge)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
         .shadow(radius: 2)

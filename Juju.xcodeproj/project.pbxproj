@@ -13,8 +13,6 @@
 		666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39492EAFB53800B408B8 /* SessionFilterButton.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
-		66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E62EA8EA4000E9BB4A /* status-active.png */; };
-		66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */ = {isa = PBXBuildFile; fileRef = 66B147E72EA8EA4000E9BB4A /* status-idle.png */; };
 		66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */; };
 		66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F12EA8EA4B00E9BB4A /* Info.plist */; };
 		66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */; };
@@ -38,7 +36,6 @@
 		66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */; };
 		66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 66B148422EA8EA4B00E9BB4A /* Assets.xcassets */; };
 		66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148452EA8EA4B00E9BB4A /* Theme.swift */; };
-		66B1488B2EA8EA6000E9BB4A /* index.json in Resources */ = {isa = PBXBuildFile; fileRef = 66B148872EA8EA6000E9BB4A /* index.json */; };
 		66B1488D2EA8EA6000E9BB4A /* design.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148892EA8EA6000E9BB4A /* design.md */; };
 		66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */; };
 		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
@@ -58,8 +55,6 @@
 		666C39492EAFB53800B408B8 /* SessionFilterButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionFilterButton.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
-		66B147E62EA8EA4000E9BB4A /* status-active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-active.png"; sourceTree = "<group>"; };
-		66B147E72EA8EA4000E9BB4A /* status-idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "status-idle.png"; sourceTree = "<group>"; };
 		66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		66B147F12EA8EA4B00E9BB4A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Juju-entitlements.plist"; sourceTree = "<group>"; };
@@ -85,7 +80,6 @@
 		66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
 		66B148422EA8EA4B00E9BB4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		66B148452EA8EA4B00E9BB4A /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		66B148872EA8EA6000E9BB4A /* index.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = index.json; sourceTree = "<group>"; };
 		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		66B148892EA8EA6000E9BB4A /* design.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = design.md; sourceTree = "<group>"; };
 		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
@@ -114,9 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				66B148472EA8EA4B00E9BB4A /* Juju */,
-				66B147E82EA8EA4000E9BB4A /* icons */,
 				66B148892EA8EA6000E9BB4A /* design.md */,
-				66B148872EA8EA6000E9BB4A /* index.json */,
 				66B148882EA8EA6000E9BB4A /* README.md */,
 			);
 			name = "juju-swift";
@@ -130,15 +122,6 @@
 				666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */,
 			);
 			path = Components;
-			sourceTree = "<group>";
-		};
-		66B147E82EA8EA4000E9BB4A /* icons */ = {
-			isa = PBXGroup;
-			children = (
-				66B147E62EA8EA4000E9BB4A /* status-active.png */,
-				66B147E72EA8EA4000E9BB4A /* status-idle.png */,
-			);
-			path = icons;
 			sourceTree = "<group>";
 		};
 		66B147F62EA8EA4B00E9BB4A /* App */ = {
@@ -364,12 +347,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */,
-				66B147EE2EA8EA4000E9BB4A /* status-active.png in Resources */,
 				66B1488D2EA8EA6000E9BB4A /* design.md in Resources */,
 				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
 				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
-				66B147EF2EA8EA4000E9BB4A /* status-idle.png in Resources */,
-				66B1488B2EA8EA6000E9BB4A /* index.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
