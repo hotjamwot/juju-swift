@@ -57,8 +57,7 @@ struct SessionCalendarChartView: View {
             .chartPlotStyle { plotArea in
                 plotArea
                     .background(.clear)
-                    .border(.clear, width: 0)
-            }
+                }
             .chartXScale(domain: weekDays)
 
             .frame(height: 200)
@@ -69,10 +68,6 @@ struct SessionCalendarChartView: View {
                     .frame(height: 200)
             }
         }
-        .padding(Theme.spacingLarge)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
-        .shadow(radius: 2)
     }
 }
 

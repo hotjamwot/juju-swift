@@ -24,18 +24,21 @@ struct BubbleChartCardView: View {
                     .frame(height: 240)
             } else {
                 GeometryReader { geometry in
-                    let size = min(geometry.size.width, geometry.size.height)
+                    let maxDimensionForBubble = min(geometry.size.width, geometry.size.height)
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let maxDiameter = size * 0.45
+                    let maxDiameter = maxDimensionForBubble * 0.45
                     let diameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
-                    let circleRadius = (size / 2) - (maxDiameter / 2)
+                    
+                    // Calculate separate radii for X and Y axes
+                    let xRadius = (geometry.size.width / 2) - (maxDiameter / 2)
+                    let yRadius = (geometry.size.height / 2) - (maxDiameter / 2)
                     
                     ZStack {
                         ForEach(Array(data.enumerated()), id: \.offset) { idx, bubble in
                             let diameter = diameters[idx]
                             let angle = Double(idx) / Double(data.count) * 2 * .pi
-                            let xOffset = CGFloat(cos(angle)) * circleRadius
-                            let yOffset = CGFloat(sin(angle)) * circleRadius
+                            let xOffset = CGFloat(cos(angle)) * xRadius
+                            let yOffset = CGFloat(sin(angle)) * yRadius
                             
                             ZStack {
                                 Circle()

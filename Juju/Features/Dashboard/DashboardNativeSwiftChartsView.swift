@@ -17,43 +17,13 @@ struct DashboardNativeSwiftChartsView: View {
     @StateObject private var sessionManager   = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
 
-    // MARK: - Yearly summary helpers (new!)
-    // ---- total hours for the current year ----
-    private var yearlyTotalHours: Double {
-        let sessionsThisYear = chartDataPreparer.sessions.filter {
-            $0.startDateTime?.isInCurrentYear ?? false
-        }
-        let totalMinutes = sessionsThisYear.reduce(0) { $0 + $1.durationMinutes }
-        return Double(totalMinutes) / 60.0          // convert minutes → hours
-    }
-    // ---- total # of sessions for the current year ----
-    private var yearlyTotalSessions: Int {
-        chartDataPreparer.sessions
-            .filter { $0.startDateTime?.isInCurrentYear ?? false }
-            .count
-    }
-    // ---- average duration of a session for the current year ----
-    private var yearlyAvgDurationString: String {
-        let sessions = chartDataPreparer.sessions
-            .filter { $0.startDateTime?.isInCurrentYear ?? false }
-        guard !sessions.isEmpty else { return "0 min" }
-        let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
-        let avgMinutes = Double(totalMinutes) / Double(sessions.count)
-        let mins = Int(avgMinutes)
-        let secs = Int((avgMinutes - Double(mins)) * 60)
-        return "\(mins) min \(secs)s"
-    }
-
     // MARK: - Body
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
                 HeroSectionView(
                     chartDataPreparer: chartDataPreparer,
-                    totalHours: chartDataPreparer.weeklyTotalHours(),
-                    totalAllTimeHours: chartDataPreparer.allTimeTotalHours(),
-                    totalSessions: chartDataPreparer.allTimeTotalSessions()
-                )
+                    totalHours: chartDataPreparer.weeklyTotalHours() )
 
                 GeometryReader { geo in
                     HStack(spacing: Theme.spacingMedium) {
@@ -64,19 +34,19 @@ struct DashboardNativeSwiftChartsView: View {
 
                         VStack(spacing: Theme.spacingSmall) {
                             SummaryMetricView(
-                                title: "Hours",
-                                value: String(format: "%.1f h", yearlyTotalHours)
+                                title: "Total Hours",
+                                value: String(format: "%.1f h", chartDataPreparer.yearlyTotalHours())
                             )
                             SummaryMetricView(
-                                title: "Sessions",
-                                value: "\(yearlyTotalSessions)"
+                                title: "Total Sessions",
+                                value: "\(chartDataPreparer.yearlyTotalSessions())"
                             )
                             SummaryMetricView(
-                                title: "Avg. Dur.",
-                                value: yearlyAvgDurationString
+                                title: "Average Duration",
+                                value: chartDataPreparer.yearlyAvgDurationString()
                             )
                         }
-                        .frame(width: 400)
+                        .frame(width: 450)
                         .layoutPriority(1)
                     }
                 }

@@ -6,8 +6,6 @@ struct HeroSectionView: View {
     @ObservedObject var chartDataPreparer: ChartDataPreparer
 
     let totalHours: Double
-    let totalAllTimeHours: Double
-    let totalSessions: Int
 
     var body: some View {
         VStack(spacing: Theme.spacingMedium) {
@@ -43,7 +41,7 @@ struct HeroSectionView: View {
                 let rightWidth = totalWidth * 0.75
 
                 HStack(spacing: Theme.spacingSmall) {
-                    // Bubble chart – 35 %
+                    // Bubble chart
                     WeeklyProjectBubbleChartView(
                         data: chartDataPreparer.weeklyProjectTotals()
                     )
@@ -53,6 +51,7 @@ struct HeroSectionView: View {
                     SessionCalendarChartView(
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
+                    .padding(Theme.spacingLarge)
                     .frame(width: rightWidth, height: 200)
                     .border (.clear, width: 0)
                 }
@@ -74,7 +73,7 @@ struct HeroSectionView: View {
 #Preview {
     // Mock data for ChartDataPreparer - replace with a real mock if needed
     let mockChartDataPreparer = ChartDataPreparer()
-    return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5, totalAllTimeHours: 150.0, totalSessions: 42)
+    return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5)
         .frame(width: 900) // adjust as necessary
         .padding()
 }

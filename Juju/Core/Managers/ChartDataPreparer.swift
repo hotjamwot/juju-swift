@@ -200,14 +200,23 @@ private var currentWeekInterval: DateInterval {
         weeklyProjectTotals().reduce(0) { $0 + $1.totalHours }
     }
 
-    /// All-time total hours for summary
-    func allTimeTotalHours() -> Double {
-        aggregateProjectTotals(from: viewModel.sessions).reduce(0) { $0 + $1.totalHours }
+    /// Yearly Total Hours for SummaryMetricView
+    func yearlyTotalHours() -> Double {
+        let sessionsThisYear = sessions.filter { $0.startDateTime?.isInCurrentYear ?? false }
+        let totalMinutes = sessionsThisYear.reduce(0) { $0 + $1.durationMinutes }
+        return Double(totalMinutes) / 60.0
     }
-
-    /// All-time total sessions for summary
-    func allTimeTotalSessions() -> Int {
-        viewModel.sessions.count
+    func yearlyTotalSessions() -> Int {
+        return sessions.filter { $0.startDateTime?.isInCurrentYear ?? false }.count
+    }
+    func yearlyAvgDurationString() -> String {
+        let sessions = self.sessions.filter { $0.startDateTime?.isInCurrentYear ?? false }
+        guard !sessions.isEmpty else { return "0 min" }
+        let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
+        let avgMinutes = Double(totalMinutes) / Double(sessions.count)
+        let mins = Int(avgMinutes)
+        let secs = Int((avgMinutes - Double(mins)) * 60)
+        return "\(mins) min \(secs)s"
     }
 
     // Accessors for convenience in views
