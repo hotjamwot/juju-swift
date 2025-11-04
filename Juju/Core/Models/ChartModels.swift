@@ -1,30 +1,6 @@
 import Foundation
 import SwiftUI
 
-enum ChartTimePeriod: String, CaseIterable, Identifiable {
-    case lastMonth = "Last month"
-    case last90Days = "Last 90 days"
-    case thisYear = "This Year"
-    
-    var id: String { rawValue }
-    
-    var title: String { rawValue }
-    
-    var daysAgo: Int {
-        switch self {
-        case .lastMonth: return 30
-        case .last90Days: return 90
-        case .thisYear: return 365
-        }
-    }
-    
-    var dateInterval: DateInterval {
-        let end = Date()
-        let start = Calendar.current.date(byAdding: .day, value: -daysAgo, to: end)!
-        return DateInterval(start: start, end: end)
-    }
-}
-
 // MARK: - Unified Chart Data Model
 struct ChartEntry: Identifiable {
     let id = UUID()
@@ -74,19 +50,6 @@ struct TimeSeriesData: Identifiable {
     var comparisonLabel: String?
 }
 
-// MARK: - Stacked Chart Data Models
-struct StackedChartEntry: Identifiable {
-    let id = UUID()
-    let period: String
-    let projectName: String
-    let projectColor: String
-    let value: Double
-    
-    var colorSwiftUI: Color {
-        Color(hex: projectColor)
-    }
-}
-
 // MARK: - Daily Chart Data Model
 struct DailyChartEntry: Identifiable {
     let id = UUID()
@@ -101,6 +64,20 @@ struct DailyChartEntry: Identifiable {
     }
 }
 
+// MARK: - Stacked Area Chart
+struct MonthlyHour: Identifiable {
+    let date: Date // Use a real Date for proper sorting and axis formatting
+    let hours: Double
+    var id: Date { date }
+}
+// Represents a complete series (one layer of the stacked chart) for a single project
+struct ProjectSeriesData: Identifiable {
+    let projectName: String
+    let monthlyHours: [MonthlyHour] // An array of all data points for this project
+    let color: String
+    var id: String { projectName }
+}
+
 // MARK: - Dashboard Chart Data Models
 struct WeeklySession: Identifiable {
     let id = UUID()
@@ -110,81 +87,4 @@ struct WeeklySession: Identifiable {
     let projectName: String
     let projectColor: String
     var duration: Double { endHour - startHour }
-}
-
-struct MonthlyBarData: Identifiable {
-    let id = UUID() // Unique identifier
-    let month: String
-    let projects: [ProjectMonthlyData]
-}
-
-struct ProjectMonthlyData: Equatable {
-    let id = UUID() // Unique identifier
-    let projectName: String
-    let hours: Double
-    let color: String
-}
-
-private struct BarData: Identifiable, Equatable {
-    let id = UUID()
-    let monthIndex:    Int
-    let month:         String
-    let projectIndex:  Int
-    let project:       ProjectMonthlyData
-}
-
-// MARK: - Chart View Models
-@MainActor
-class ChartViewModel: ObservableObject {
-    @Published var yearlyData: [TimeSeriesData] = []
-    @Published var weeklyData: [TimeSeriesData] = []
-    @Published var projectDistribution: [ProjectChartData] = []
-    @Published var projectBreakdown: [TimeSeriesData] = []
-    @Published var isLoading: Bool = false
-    @Published var currentFilter: ChartTimePeriod = .last90Days
-    // New chart data arrays
-    @Published var chartEntries: [ChartEntry] = []
-    @Published var dailyStackedData: [DailyChartEntry] = []
-    @Published var weeklyStackedData: [StackedChartEntry] = []
-    @Published var projectBarData: [ProjectChartData] = []
-    
-    var sessions: [SessionRecord] = []
-    var projects: [Project] = []
-    
-    var filteredSessions: [SessionRecord] {
-        get {
-            let calendar = Calendar.current
-            let today = Date()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            
-            switch currentFilter {
-            case .lastMonth:
-                // Rolling last 30 days including today
-                let start = calendar.date(byAdding: .day, value: -29, to: today)!
-                let startStr = dateFormatter.string(from: start)
-                let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
-                
-            case .last90Days:
-                // Rolling last 90 days including today
-                let start = calendar.date(byAdding: .day, value: -89, to: today)!
-                let startStr = dateFormatter.string(from: start)
-                let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= startStr && $0.date <= todayStr }
-                
-            case .thisYear:
-                let thisYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1))!
-                let thisYearStr = dateFormatter.string(from: thisYear)
-                let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= thisYearStr && $0.date <= todayStr }
-                
-            default:
-                let thisYear = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1))!
-                let thisYearStr = dateFormatter.string(from: thisYear)
-                let todayStr = dateFormatter.string(from: today)
-                return sessions.filter { $0.date >= thisYearStr && $0.date <= todayStr }
-            }
-        }
-    }
 }

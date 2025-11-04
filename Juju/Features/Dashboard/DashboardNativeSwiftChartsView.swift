@@ -55,7 +55,7 @@ struct DashboardNativeSwiftChartsView: View {
                 .background(Theme.Colors.surface)
                 .cornerRadius(Theme.Design.cornerRadius)
 
-                GroupedBarChartCardView(
+                StackedAreaChartCardView(
                     data: chartDataPreparer.monthlyProjectTotals()
                 )
             }
