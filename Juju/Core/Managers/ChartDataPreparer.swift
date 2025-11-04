@@ -218,9 +218,9 @@ final class ChartDataPreparer: ObservableObject {
     public func yearlyTotalHours() -> Double {
         let currentYear = Calendar.current.component(.year, from: Date())
         let yearlySessions = viewModel.sessions.filter { session in
-            // FIX: Convert string to Date before getting the year component
-            guard let startDate = sessionDateFormatter.date(from: session.startTime) else { return false }
-            let sessionYear = Calendar.current.component(.year, from: startDate)
+            // FIX: Use session.date instead of session.startTime for year filtering
+            guard let sessionDate = formatterYYYYMMDD.date(from: session.date) else { return false }
+            let sessionYear = Calendar.current.component(.year, from: sessionDate)
             return sessionYear == currentYear
         }
         
@@ -234,9 +234,9 @@ final class ChartDataPreparer: ObservableObject {
     public func yearlyTotalSessions() -> Int {
         let currentYear = Calendar.current.component(.year, from: Date())
         let yearlySessions = viewModel.sessions.filter { session in
-            // FIX: Convert string to Date before getting the year component
-            guard let startDate = sessionDateFormatter.date(from: session.startTime) else { return false }
-            let sessionYear = Calendar.current.component(.year, from: startDate)
+            // FIX: Use session.date instead of session.startTime for year filtering
+            guard let sessionDate = formatterYYYYMMDD.date(from: session.date) else { return false }
+            let sessionYear = Calendar.current.component(.year, from: sessionDate)
             return sessionYear == currentYear
         }
         return yearlySessions.count
@@ -246,21 +246,22 @@ final class ChartDataPreparer: ObservableObject {
     public func yearlyAvgDurationString() -> String {
         let currentYear = Calendar.current.component(.year, from: Date())
         let yearlySessions = viewModel.sessions.filter { session in
-            // FIX: Convert string to Date before getting the year component
-            guard let startDate = sessionDateFormatter.date(from: session.startTime) else { return false }
-            let sessionYear = Calendar.current.component(.year, from: startDate)
+            // FIX: Use session.date instead of session.startTime for year filtering
+            guard let sessionDate = formatterYYYYMMDD.date(from: session.date) else { return false }
+            let sessionYear = Calendar.current.component(.year, from: sessionDate)
             return sessionYear == currentYear
         }
         
         guard !yearlySessions.isEmpty else { return "0m" }
         
+        // Calculate average duration directly in minutes
         let totalDuration = yearlySessions.reduce(into: 0.0) { result, session in
-            result += Double(session.durationMinutes) // Convert Int to Double
+            result += Double(session.durationMinutes)
         }
-        let averageSeconds = totalDuration / Double(yearlySessions.count)
+        let averageMinutes = totalDuration / Double(yearlySessions.count)
         
-        let hours = Int(averageSeconds) / 3600
-        let minutes = Int(averageSeconds) % 3600 / 60
+        let hours = Int(averageMinutes) / 60
+        let minutes = Int(averageMinutes) % 60
         
         if hours > 0 {
             return "\(hours)h \(minutes)m"
