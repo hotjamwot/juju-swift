@@ -22,9 +22,6 @@ struct SessionCalendarChartView: View {
 // Mark: Body
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingLarge) {
-            Text("This Week")
-                .font(Theme.Fonts.header)
-                .foregroundColor(Theme.Colors.textSecondary)
             
             Chart(sessions) { session in
                 RectangleMark(
@@ -60,6 +57,7 @@ struct SessionCalendarChartView: View {
             .chartPlotStyle { plotArea in
                 plotArea
                     .background(.clear)
+                    .border(.clear, width: 0)
             }
             .chartXScale(domain: weekDays)
 

@@ -4,24 +4,24 @@ import Charts
 struct HeroSectionView: View {
     // MARK: - Properties
     @ObservedObject var chartDataPreparer: ChartDataPreparer
-    
-    // Data that you already calculate in the Presenter/Controller
-    let totalHours: Double              // Hours spent *this week*
-    let totalAllTimeHours: Double       // Total hours ever
-    let totalSessions: Int              // Total sessions ever
-    
-    // MARK: - Body
+
+    let totalHours: Double
+    let totalAllTimeHours: Double
+    let totalSessions: Int
+
     var body: some View {
-        // ---------- Outer card ----------
         VStack(spacing: Theme.spacingMedium) {
-            
-            // ---------- Top (headline) ----------
-            HStack {
+            // Header
+            HStack(spacing: Theme.spacingSmall) {
                 Spacer()
-                Text("You've spent")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Image("juju_logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 38, height: 38)
+                    .shadow(radius: 1)
+
+                Text("    You've spent")
                 Text(String(format: "%.1f", totalHours) + " hours")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.accentColor, .accentColor.opacity(0.7)],
@@ -30,58 +30,45 @@ struct HeroSectionView: View {
                         )
                     )
                 Text("in the Juju this week!")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
                 Spacer()
             }
+            .font(.system(size: 32, weight: .bold, design: .rounded))
             .frame(maxWidth: .infinity)
-            .padding(.top, Theme.spacingLarge * 1.2)
-            .padding(.bottom, Theme.spacingSmall)
-            
-            // ---------- Week‑bubble chart ----------
-            WeeklyProjectBubbleChartView(data: chartDataPreparer.weeklyProjectTotals())
-                .frame(height: 200)
-                .padding(.bottom, Theme.spacingSmall)
-            
-            // --------- 3️⃣ Summary metrics with Logo ----------
-            HStack {
-                Spacer() // Pushes content away from the left edge
-                
-                // Left metric
-                SummaryMetricView(
-                    title: "Total Hours",
-                    value: String(format: "%.1f", totalAllTimeHours) + "h"
-                )
-                
-                Spacer() // Creates space between the metric and the logo
-                
-                // Juju Logo in the center
-                Image("juju_logo") // Assumes "juju_logo" is in your Assets.xcassets
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 40)
-                    .opacity(0.8) // Makes it slightly less prominent than the data
-                
-                Spacer() 
-                
-                // Right metric
-                SummaryMetricView(
-                    title: "Total Sessions",
-                    value: "\(totalSessions)"
-                )
-                
-                Spacer()
+            .padding(.vertical, Theme.spacingLarge)
+
+            // Two‑column charts
+            GeometryReader { geo in
+                let totalWidth = geo.size.width
+                let leftWidth  = totalWidth * 0.25
+                let rightWidth = totalWidth * 0.75
+
+                HStack(spacing: Theme.spacingSmall) {
+                    // Bubble chart – 35 %
+                    WeeklyProjectBubbleChartView(
+                        data: chartDataPreparer.weeklyProjectTotals()
+                    )
+                    .frame(width: leftWidth, height: 200)
+
+                    // Calendar chart
+                    SessionCalendarChartView(
+                        sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                    )
+                    .frame(width: rightWidth, height: 200)
+                    .border (.clear, width: 0)
+                }
+                .frame(width: totalWidth, height: 200)
             }
-            .padding(.top, Theme.spacingSmall)
-            .padding(.bottom, Theme.spacingLarge)
+            .frame(height: 200)
+            .padding(.bottom, Theme.spacingSmall)
+
         }
-        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.horizontal, Theme.spacingExtraSmall)
         .padding(.vertical, Theme.spacingLarge)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
         .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
     }
 }
-
 
 
 #Preview {

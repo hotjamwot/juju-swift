@@ -36,7 +36,7 @@ private var fullyFilteredSessions: [SessionRecord] {
     // 2️⃣ Apply the *date* filter (only keep sessions inside currentDateInterval)
     if let interval = currentDateInterval {
         sessions = sessions.filter { session in
-            let start = startDateTime(session)
+            guard let start = session.startDateTime else { return false }
             return interval.contains(start)
         }
     }
@@ -47,7 +47,7 @@ private var fullyFilteredSessions: [SessionRecord] {
     }
 
     // 4️⃣ Re‑sort by most‑recent first – the same order the UI shows
-    sessions.sort(by: { startDateTime($0) > startDateTime($1) })
+    sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
 
     // 5️⃣ Return everything (no pagination!)
     return sessions
@@ -235,16 +235,6 @@ public var body: some View {
         }
     }
 
-    /// Turns a SessionRecord into a Date that represents the session's
-    /// *start* moment (date + time).
-    private func startDateTime(_ session: SessionRecord) -> Date {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"          // include seconds to match CSV format
-        formatter.timeZone = TimeZone.current            // or .utc if your data is UTC
-        let combined = "\(session.date) \(session.startTime)"
-        return formatter.date(from: combined) ?? Date()
-    }
-    
     private func updateFilteredSessions() {
         DispatchQueue.main.async {
             let loadedSessions: [SessionRecord]
@@ -262,7 +252,7 @@ public var body: some View {
             }
             
             // Sort by date descending (most recent first)
-            sessions.sort(by: { startDateTime($0) > startDateTime($1) })
+            sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
             
             // Update pagination
             let totalSessions = sessions.count

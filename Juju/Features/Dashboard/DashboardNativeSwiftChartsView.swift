@@ -2,11 +2,49 @@ import SwiftUI
 import Charts
 import Foundation
 
+// 1️⃣  Extension moved out of the struct
+extension Date {
+    var isInCurrentYear: Bool {
+        let cal = Calendar.current
+        return cal.component(.year, from: self) ==
+               cal.component(.year, from: Date())
+    }
+}
+
 struct DashboardNativeSwiftChartsView: View {
+    // MARK: - State objects
     @StateObject private var chartDataPreparer = ChartDataPreparer()
-    @StateObject private var sessionManager = SessionManager.shared
+    @StateObject private var sessionManager   = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
-    
+
+    // MARK: - Yearly summary helpers (new!)
+    // ---- total hours for the current year ----
+    private var yearlyTotalHours: Double {
+        let sessionsThisYear = chartDataPreparer.sessions.filter {
+            $0.startDateTime?.isInCurrentYear ?? false
+        }
+        let totalMinutes = sessionsThisYear.reduce(0) { $0 + $1.durationMinutes }
+        return Double(totalMinutes) / 60.0          // convert minutes → hours
+    }
+    // ---- total # of sessions for the current year ----
+    private var yearlyTotalSessions: Int {
+        chartDataPreparer.sessions
+            .filter { $0.startDateTime?.isInCurrentYear ?? false }
+            .count
+    }
+    // ---- average duration of a session for the current year ----
+    private var yearlyAvgDurationString: String {
+        let sessions = chartDataPreparer.sessions
+            .filter { $0.startDateTime?.isInCurrentYear ?? false }
+        guard !sessions.isEmpty else { return "0 min" }
+        let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
+        let avgMinutes = Double(totalMinutes) / Double(sessions.count)
+        let mins = Int(avgMinutes)
+        let secs = Int((avgMinutes - Double(mins)) * 60)
+        return "\(mins) min \(secs)s"
+    }
+
+    // MARK: - Body
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -16,12 +54,40 @@ struct DashboardNativeSwiftChartsView: View {
                     totalAllTimeHours: chartDataPreparer.allTimeTotalHours(),
                     totalSessions: chartDataPreparer.allTimeTotalSessions()
                 )
-                
-                SessionCalendarChartView(sessions: chartDataPreparer.currentWeekSessionsForCalendar())
-                
-                BubbleChartCardView(data: chartDataPreparer.yearlyProjectTotals())
-                
-                GroupedBarChartCardView(data: chartDataPreparer.monthlyProjectTotals())
+
+                GeometryReader { geo in
+                    HStack(spacing: Theme.spacingMedium) {
+                        BubbleChartCardView(
+                            data: chartDataPreparer.yearlyProjectTotals()
+                        )
+                        .layoutPriority(3)
+
+                        VStack(spacing: Theme.spacingSmall) {
+                            SummaryMetricView(
+                                title: "Hours",
+                                value: String(format: "%.1f h", yearlyTotalHours)
+                            )
+                            SummaryMetricView(
+                                title: "Sessions",
+                                value: "\(yearlyTotalSessions)"
+                            )
+                            SummaryMetricView(
+                                title: "Avg. Dur.",
+                                value: yearlyAvgDurationString
+                            )
+                        }
+                        .frame(width: 400)
+                        .layoutPriority(1)
+                    }
+                }
+                .frame(height: 300)
+                .padding(Theme.spacingExtraSmall)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+
+                GroupedBarChartCardView(
+                    data: chartDataPreparer.monthlyProjectTotals()
+                )
             }
             .padding(.vertical, Theme.spacingLarge)
             .padding(.horizontal, 0)
@@ -36,18 +102,14 @@ struct DashboardNativeSwiftChartsView: View {
         .onAppear {
             Task {
                 await projectsViewModel.loadProjects()
-                print("Projects after load:", projectsViewModel.projects.count)
-                
-                let _ = sessionManager.loadAllSessions()
-                print("Sessions after load:", sessionManager.allSessions.count)
-                
-                // Force refresh the chart data
+                await sessionManager.loadAllSessions()
+
+                // Pull fresh data into the chart model
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
-                
-                // Create a new instance to force refresh
+                // (Reset the viewModel if you ever need a clean slate)
                 chartDataPreparer.viewModel = ChartViewModel()
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
@@ -60,84 +122,16 @@ struct DashboardNativeSwiftChartsView: View {
                 sessions: sessionManager.allSessions,
                 projects: projectsViewModel.projects
             )
-            // Create a new instance to force refresh
-            chartDataPreparer.viewModel = ChartViewModel()
-            chartDataPreparer.prepareAllTimeData(
-                sessions: sessionManager.allSessions,
-                projects: projectsViewModel.projects
-            )
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
             chartDataPreparer.prepareAllTimeData(
                 sessions: sessionManager.allSessions,
                 projects: projectsViewModel.projects
             )
-            // Create a new instance to force refresh
-            chartDataPreparer.viewModel = ChartViewModel()
-            chartDataPreparer.prepareAllTimeData(
-                sessions: sessionManager.allSessions,
-                projects: projectsViewModel.projects
-            )
         }
     }
-    
+
     // MARK: - Components
-    
-    struct FilterButton: View {
-        let title: String
-        let filter: ChartTimePeriod
-        @Binding var selectedPeriod: ChartTimePeriod
-        let onSelect: () -> Void
-        
-        var body: some View {
-            Button(action: {
-                withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
-                    selectedPeriod = filter
-                    onSelect()
-                }
-            }) {
-                Text(title)
-                    .font(Theme.Fonts.caption)
-                    .lineLimit(1)
-                    .padding(.horizontal, Theme.spacingSmall)
-                    .padding(.vertical, Theme.spacingExtraSmall)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .fill(Color.gray.opacity(0.25))
-                            if selectedPeriod == filter {
-                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                    .fill(Color.accentColor.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
-                                    .transition(.opacity.combined(with: .scale))
-                            }
-                        }
-                    )
-                    .foregroundColor(selectedPeriod == filter ? Theme.Colors.textPrimary :
-                                        Theme.Colors.textSecondary)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-    
-    /// Simple wrapper for consistent chart card styling
-    struct ChartCard<Content: View>: View {
-        let title: String
-        @ViewBuilder let content: Content
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                Text(title)
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                content
-            }
-            .padding(Theme.spacingSmall)
-            .background(Theme.Colors.surface)
-            .cornerRadius(Theme.Design.cornerRadius)
-        }
-    }
-    
     struct NoDataPlaceholder: View {
         var minHeight: CGFloat = 200
         var body: some View {
@@ -148,59 +142,12 @@ struct DashboardNativeSwiftChartsView: View {
                 .cornerRadius(Theme.Design.cornerRadius)
         }
     }
-    
-    // MARK: - Summary Card
-    struct SummaryCard: View {
-        let title: String
-        let value: String
-        let color: Color
-        let icon: Image?
-        
-        init(title: String, value: String, color: Color, icon: Image? = nil) {
-            self.title = title
-            self.value = value
-            self.color = color
-            self.icon = icon
-        }
-        
-        var body: some View {
-            HStack {
-                if let icon = icon {
-                    icon
-                        .foregroundColor(color)
-                        .frame(width: 16, height: 16)
-                } else {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 12, height: 12)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Text(value)
-                        .font(Theme.Fonts.header)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Theme.Colors.textPrimary)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, Theme.spacingMedium)
-            .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.surface.opacity(0.2))
-            .cornerRadius(Theme.Design.cornerRadius)
-        }
+}
+
+struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
+    static var previews: some View {
+        DashboardNativeSwiftChartsView()
+            .frame(width: 1000, height: 1200)
+            .preferredColorScheme(.dark)
     }
 }
-    
-    // MARK: - Preview
-    struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
-        static var previews: some View {
-            DashboardNativeSwiftChartsView()
-                .frame(width: 1200, height: 900)
-                .preferredColorScheme(.dark)
-        }
-    }
-
