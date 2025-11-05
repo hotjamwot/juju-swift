@@ -8,12 +8,39 @@ struct ProjectAddEditView: View {
     @State private var showingColorPicker = false
     
     let colorOptions = [
-        "#4E79A7", "#F28E2C", "#E15759", "#76B7B2", 
-        "#59A14F", "#EDC949", "#AF7AA1", "#FF9DA7",
-        "#9C755F", "#BAB0AB", "#FFB07B", "#B07AA1",
-        "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A",
-        "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E9"
+        // Row 1 - Reds & Pinks
+        "#FF3366", // Neon rose
+        "#E83F6F", // Raspberry punch
+        "#FF5C8A", // Hot pink
+        "#C41E3A", // Crimson neon
+        "#FF7096", // Watermelon
+        "#D72638", // Scarlet glow
+
+        // Row 2 - Purples & Blues
+        "#8E44AD", // Deep violet
+        "#B620E0", // Bright purple
+        "#5F0F40", // Plum neon
+        "#3A0CA3", // Royal neon blue
+        "#4361EE", // Clear azure
+        "#4895EF", // Electric sky
+
+        // Row 3 - Greens & Teals
+        "#00A896", // Deep teal
+        "#06D6A0", // Aqua neon
+        "#118AB2", // Ocean blue-green
+        "#00B4D8", // Cyan teal
+        "#2A9D8F", // Dusty emerald
+        "#20C997", // Soft neon jade
+
+        // Row 4 - Yellows & Oranges
+        "#E9C46A", // Gold sand
+        "#F4A261", // Warm amber
+        "#F77F00", // Neon orange
+        "#FF9F1C", // Tangerine pop
+        "#D98324", // Burnt neon orange
+        "#FFB703"  // Golden glow
     ]
+
     
     var project: Project?
     var onSave: (Project) -> Void
@@ -183,7 +210,7 @@ struct ProjectAddEditView: View {
         .onAppear {
             if let project = project {
                 name = project.name
-                color = project.color ?? "#4E79A7"
+                color = project.color
                 about = project.about ?? ""
             }
         }
@@ -196,14 +223,40 @@ struct ColorPickerView: View {
     @Binding var selectedColor: String
     
     let colorOptions = [
-        "#4E79A7", "#F28E2C", "#E15759", "#76B7B2", 
-        "#59A14F", "#EDC949", "#AF7AA1", "#FF9DA7",
-        "#9C755F", "#BAB0AB", "#FFB07B", "#B07AA1",
-        "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A",
-        "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E9",
-        "#2ECC71", "#E74C3C", "#3498DB", "#F39C12",
-        "#9B59B6", "#1ABC9C", "#34495E", "#95A5A6"
+        // Row 1 - Reds & Pinks
+        "#FF3366", // Neon rose
+        "#E83F6F", // Raspberry punch
+        "#FF5C8A", // Hot pink
+        "#C41E3A", // Crimson neon
+        "#FF7096", // Watermelon
+        "#D72638", // Scarlet glow
+
+        // Row 2 - Purples & Blues
+        "#8E44AD", // Deep violet
+        "#B620E0", // Bright purple
+        "#5F0F40", // Plum neon
+        "#3A0CA3", // Royal neon blue
+        "#4361EE", // Clear azure
+        "#4895EF", // Electric sky
+
+        // Row 3 - Greens & Teals
+        "#00A896", // Deep teal
+        "#06D6A0", // Aqua neon
+        "#118AB2", // Ocean blue-green
+        "#00B4D8", // Cyan teal
+        "#2A9D8F", // Dusty emerald
+        "#20C997", // Soft neon jade
+
+        // Row 4 - Yellows & Oranges
+        "#E9C46A", // Gold sand
+        "#F4A261", // Warm amber
+        "#F77F00", // Neon orange
+        "#FF9F1C", // Tangerine pop
+        "#D98324", // Burnt neon orange
+        "#FFB703"  // Golden glow
     ]
+
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {

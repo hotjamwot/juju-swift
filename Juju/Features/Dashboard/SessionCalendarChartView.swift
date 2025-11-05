@@ -21,7 +21,7 @@ struct SessionCalendarChartView: View {
     
 // Mark: Body
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingLarge) {
+        VStack(alignment: .leading, spacing: Theme.spacingExtraLarge) {
             
             Chart(sessions) { session in
                 RectangleMark(
@@ -60,12 +60,12 @@ struct SessionCalendarChartView: View {
                 }
             .chartXScale(domain: weekDays)
 
-            .frame(height: 200)
+            .frame(height: 280)
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(height: 200)
+                    .frame(height: 280)
             }
         }
     }
@@ -79,6 +79,6 @@ struct SessionCalendarChartView: View {
         WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500")
     ]
     return SessionCalendarChartView(sessions: mockSessions)
-        .frame(width: 800, height: 250)
+        .frame(width: 800, height: 300)
         .padding()
 })

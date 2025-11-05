@@ -19,7 +19,7 @@ struct WeeklyProjectBubbleChartView: View {
                 Text("No sessions this week")
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: 200)
+                    .frame(maxWidth: .infinity, minHeight: 300)
                     .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.cornerRadius)
                     .shadow(radius: 2)
@@ -28,11 +28,11 @@ struct WeeklyProjectBubbleChartView: View {
                 GeometryReader { geometry in
                       let size        = min(geometry.size.width, geometry.size.height)
                       let maxHours   = data.map { $0.totalHours }.max() ?? 1
-                      let maxDiameter = size * 0.6
+                      let maxDiameter = size * 0.5
                       // Calculate a diameter for every bubble
                       let diameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
                       // Radius that keeps all bubbles inside the bounding square
-                      let circleRadius = (size / 2) - (maxDiameter / 2)
+                      let circleRadius = (size / 3) - (maxDiameter / 8)
                       ZStack {
                           ForEach(Array(data.enumerated()), id: \.offset) { idx, bubble in
                               let diameter = diameters[idx]
@@ -51,10 +51,10 @@ struct WeeklyProjectBubbleChartView: View {
                                       .onHover { hovering in
                                           hoveredIndex = hovering ? idx : nil
                                       }
-                                  // ----- Overlay with text ----------------------------------
+                                  // Overlay with text
                                   VStack(spacing: 1) {
                                       Text(bubble.projectName)
-                                          .font(.system(size: max(10, diameter * 0.15),
+                                          .font(.system(size: max(12, diameter * 0.22),
                                                         weight: .medium,
                                                         design: .rounded))
                                           .foregroundColor(Theme.Colors.textPrimary)
@@ -62,7 +62,7 @@ struct WeeklyProjectBubbleChartView: View {
                                           .lineLimit(2)
                                           .padding(.horizontal, 4)
                                       Text("\(bubble.totalHours, specifier: "%.1f") h")
-                                          .font(.system(size: max(8, diameter * 0.08),
+                                          .font(.system(size: max(10, diameter * 0.12),
                                                         weight: .semibold,
                                                         design: .rounded))
                                           .foregroundColor(Theme.Colors.textPrimary.opacity(0.9))
@@ -79,15 +79,16 @@ struct WeeklyProjectBubbleChartView: View {
                              height: geometry.size.height,
                              alignment: .center)
                   }   // GeometryReader
-                  .frame(height: 200)
+                  .frame(height: 280)
               }
           }
           .padding(.vertical, Theme.spacingExtraSmall)
       }
 }
 
+//MARK: Preview
 #Preview {
     WeeklyProjectBubbleChartView(data: WeeklyProjectBubbleChartView.sampleData)
-        .frame(width: 400, height: 200)
+        .frame(width: 400, height: 300)
         .padding()
 }

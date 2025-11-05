@@ -47,12 +47,12 @@ struct DashboardNativeSwiftChartsView: View {
                             )
                             
                         }
-                        .frame(width: 450)
+                        .frame(width: 600)
                         .layoutPriority(1)
                     }
                 }
-                .frame(height: 300)
-                .padding(Theme.spacingExtraSmall)
+                .frame(height: 350)
+                .padding(Theme.spacingMedium)
                 .background(Theme.Colors.surface)
                 .cornerRadius(Theme.Design.cornerRadius)
                 .overlay(
@@ -124,7 +124,7 @@ struct DashboardNativeSwiftChartsView: View {
 struct DashboardNativeSwiftChartsView_Previews: PreviewProvider {
     static var previews: some View {
         DashboardNativeSwiftChartsView()
-            .frame(width: 1000, height: 1200)
+            .frame(width: 1200, height: 1200)
             .preferredColorScheme(.dark)
     }
 }

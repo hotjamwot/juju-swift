@@ -13,7 +13,7 @@ struct BubbleChartCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-            Text("This Year in Bubbles")
+            Text("This Year")
                 .font(Theme.Fonts.header)
                 .foregroundColor(Theme.Colors.textSecondary)
             
@@ -21,17 +21,17 @@ struct BubbleChartCardView: View {
                 Text("No data for this year")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(height: 240)
+                    .frame(height: 300)
             } else {
                 GeometryReader { geometry in
                     let maxDimensionForBubble = min(geometry.size.width, geometry.size.height)
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let maxDiameter = maxDimensionForBubble * 0.45
+                    let maxDiameter = maxDimensionForBubble * 0.5
                     let diameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
                     
                     // Calculate separate radii for X and Y axes
-                    let xRadius = (geometry.size.width / 2) - (maxDiameter / 2)
-                    let yRadius = (geometry.size.height / 2) - (maxDiameter / 2)
+                    let xRadius = (geometry.size.width / 3) - (maxDiameter / 8)
+                    let yRadius = (geometry.size.height / 3) - (maxDiameter / 8)
                     
                     ZStack {
                         ForEach(Array(data.enumerated()), id: \.offset) { idx, bubble in
@@ -52,7 +52,7 @@ struct BubbleChartCardView: View {
                                     }
                                 VStack(spacing: 1) {
                                     Text(bubble.projectName)
-                                        .font(.system(size: max(10, diameter * 0.15),
+                                        .font(.system(size: max(12, diameter * 0.22),
                                                       weight: .medium,
                                                       design: .rounded))
                                         .foregroundColor(Theme.Colors.textPrimary)
@@ -60,7 +60,7 @@ struct BubbleChartCardView: View {
                                         .lineLimit(2)
                                         .padding(.horizontal, 4)
                                     Text("\(bubble.totalHours, specifier: "%.1f") h")
-                                        .font(.system(size: max(8, diameter * 0.08),
+                                        .font(.system(size: max(10, diameter * 0.12),
                                                       weight: .semibold,
                                                       design: .rounded))
                                         .foregroundColor(Theme.Colors.textPrimary.opacity(0.9))
@@ -77,7 +77,7 @@ struct BubbleChartCardView: View {
                            height: geometry.size.height,
                            alignment: .center)
                 }
-                .frame(height: 240)
+                .frame(height: 300)
             }
         }
         .padding(Theme.spacingMedium)
@@ -86,6 +86,6 @@ struct BubbleChartCardView: View {
 
 #Preview {
     BubbleChartCardView(data: BubbleChartCardView.sampleData)
-        .frame(width: 800, height: 300)
+        .frame(width: 800, height: 350)
         .padding()
 }

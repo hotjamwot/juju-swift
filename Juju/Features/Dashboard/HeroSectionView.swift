@@ -52,12 +52,12 @@ struct HeroSectionView: View {
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
                     .padding(Theme.spacingLarge)
-                    .frame(width: rightWidth, height: 300)
+                    .frame(width: rightWidth, height: 280)
                     .border (.clear, width: 0)
                 }
-                .frame(width: totalWidth, height: 300)
+                .frame(width: totalWidth, height: 280)
             }
-            .frame(height: 300)
+            .frame(height: 280)
             .padding(.bottom, Theme.spacingSmall)
 
         }
@@ -73,11 +73,11 @@ struct HeroSectionView: View {
     }
 }
 
-
+// MARK: Preview
 #Preview {
-    // Mock data for ChartDataPreparer - replace with a real mock if needed
+
     let mockChartDataPreparer = ChartDataPreparer()
     return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5)
-        .frame(width: 900) // adjust as necessary
+        .frame(width: 900)
         .padding()
 }
