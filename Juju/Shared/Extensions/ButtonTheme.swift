@@ -1,156 +1,199 @@
 import SwiftUI
 
-/// Button theme extensions to provide consistent styling across the app
-public extension Theme {
+// MARK: - ButtonStyle Protocol Implementations
+
+/// Primary button style with a prominent background color.
+public struct PrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    var backgroundColor: Color = Theme.Colors.accent
     
-    // MARK: Button Styles
-    
-    /// Primary button style
-    struct ButtonStyle {
-        public let font: Font
-        public let height: CGFloat
-        public let padding: CGFloat
-        public let cornerRadius: CGFloat
-        public let animationDuration: Double
-        
-        public init(
-            font: Font = Theme.Fonts.body.weight(.semibold),
-            height: CGFloat = 36,
-            padding: CGFloat = 16,
-            cornerRadius: CGFloat = Theme.Design.cornerRadius,
-            animationDuration: Double = Theme.Design.animationDuration
-        ) {
-            self.font = font
-            self.height = height
-            self.padding = padding
-            self.cornerRadius = cornerRadius
-            self.animationDuration = animationDuration
-        }
-        
-        /// Creates a button with consistent styling
-        func makeButton<Content: View>(
-            label: @escaping () -> Content,
-            action: @escaping () -> Void,
-            isDisabled: Bool = false,
-            backgroundColor: Color? = nil
-        ) -> some View {
-            Button(action: action) {
-                label()
-            }
-            .font(font)
-            .frame(height: height)
-            .padding(.horizontal, padding)
-            .background(isDisabled ? Theme.Colors.surface.opacity(0.5) : (backgroundColor ?? Theme.Colors.accent))
-            .cornerRadius(cornerRadius)
-            .disabled(isDisabled)
-            .animation(.easeInOut(duration: animationDuration), value: isDisabled)
-        }
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.body.weight(.semibold))
+            .padding(.horizontal, 16)
+            .frame(height: 36)
+            .background(isEnabled ? backgroundColor : Theme.Colors.surface.opacity(0.9))
+            .foregroundColor(Theme.Colors.textPrimary)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
     }
-    
-    /// Secondary button style
-    struct SecondaryButtonStyle {
-        public let font: Font
-        public let height: CGFloat
-        public let padding: CGFloat
-        public let cornerRadius: CGFloat
-        public let animationDuration: Double
-        
-        public init(
-            font: Font = Theme.Fonts.body.weight(.semibold),
-            height: CGFloat = 36,
-            padding: CGFloat = 16,
-            cornerRadius: CGFloat = Theme.Design.cornerRadius,
-            animationDuration: Double = Theme.Design.animationDuration
-        ) {
-            self.font = font
-            self.height = height
-            self.padding = padding
-            self.cornerRadius = cornerRadius
-            self.animationDuration = animationDuration
-        }
-        
-        /// Creates a secondary button with consistent styling
-        func makeButton<Content: View>(
-            label: @escaping () -> Content,
-            action: @escaping () -> Void,
-            isDisabled: Bool = false
-        ) -> some View {
-            Button(action: action) {
-                label()
-            }
-            .font(font)
-            .frame(height: height)
-            .padding(.horizontal, padding)
-            .background(isDisabled ? Theme.Colors.surface.opacity(0.5) : Theme.Colors.surface)
-            .cornerRadius(cornerRadius)
-            .disabled(isDisabled)
-            .animation(.easeInOut(duration: animationDuration), value: isDisabled)
-        }
+}
+
+/// Secondary button style with a subtle background and clear emphasis.
+public struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.body)
+            .padding(.horizontal, 16)
+            .frame(height: 36)
+            .background(isEnabled ? Theme.Colors.surface.opacity(0.6) : Theme.Colors.surface.opacity(0.5))
+            .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
     }
-    
-    /// IconButton style for buttons with just icons
-    struct IconButtonStyle {
-        public let size: CGFloat
-        public let iconSize: CGFloat
-        public let cornerRadius: CGFloat
-        public let animationDuration: Double
-        
-        public init(
-            size: CGFloat = 36,
-            iconSize: CGFloat = 12,
-            cornerRadius: CGFloat = Theme.Design.cornerRadius,
-            animationDuration: Double = Theme.Design.animationDuration
-        ) {
-            self.size = size
-            self.iconSize = iconSize
-            self.cornerRadius = cornerRadius
-            self.animationDuration = animationDuration
-        }
-        
-        /// Creates an icon button with consistent styling
-        func makeIconButton<Content: View>(
-            label: @escaping () -> Content,
-            action: @escaping () -> Void,
-            isDisabled: Bool = false
-        ) -> some View {
-            Button(action: action) {
-                label()
-            }
-            .font(.system(size: iconSize))
-            .frame(width: size, height: size)
-            .background(isDisabled ? Theme.Colors.surface : Theme.Colors.surface)
-            .cornerRadius(cornerRadius)
-            .disabled(isDisabled)
-            .animation(.easeInOut(duration: animationDuration), value: isDisabled)
-        }
+}
+
+/// Style for icon-only buttons with a background.
+public struct IconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12)) // From your original iconSize
+            .frame(width: 36, height: 36) // From your original size
+            .background(Theme.Colors.surface)
+            .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .opacity(isEnabled ? 1.0 : 0.5)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
     }
-    
-    /// Simple Icon Button style for icon-only buttons without background
-    struct SimpleIconButtonStyle {
-        public let iconSize: CGFloat
-        public let animationDuration: Double
-        
-        public init(
-            iconSize: CGFloat = 16,
-            animationDuration: Double = Theme.Design.animationDuration
-        ) {
-            self.iconSize = iconSize
-            self.animationDuration = animationDuration
-        }
-        
-        /// Creates a simple icon button without background or outline
-        func makeSimpleIconButton<Content: View>(
-            label: @escaping () -> Content,
-            action: @escaping () -> Void,
-            isDisabled: Bool = false
-        ) -> some View {
-            Button(action: action) {
-                label()
+}
+
+/// Style for icon-only buttons with no background (e.g., for inline editing).
+public struct SimpleIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    var iconSize: CGFloat
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: iconSize)) // ✅ USE THE PROPERTY HERE
+            .foregroundColor(
+                isEnabled ?
+                (configuration.isPressed ? Theme.Colors.accent : Theme.Colors.textPrimary.opacity(0.6))
+                : Theme.Colors.textSecondary.opacity(0.3)
+            )
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+    }
+}
+
+
+// MARK: - Theme Extension for Easy Access
+
+public extension ButtonStyle where Self == PrimaryButtonStyle {
+    /// The primary button style for the app. Use for the most important action.
+    static var primary: PrimaryButtonStyle { PrimaryButtonStyle() }
+
+    /// A primary button style with a destructive/danger appearance.
+    static var destructive: PrimaryButtonStyle {
+        PrimaryButtonStyle(backgroundColor: .red)
+    }
+}
+
+public extension ButtonStyle where Self == SecondaryButtonStyle {
+    /// The secondary button style for the app. Use for less prominent actions.
+    static var secondary: SecondaryButtonStyle { SecondaryButtonStyle() }
+}
+
+public extension ButtonStyle where Self == IconButtonStyle {
+    /// A style for icon-only buttons with a background, like toolbar actions.
+    static var icon: IconButtonStyle { IconButtonStyle() }
+}
+
+public extension ButtonStyle where Self == SimpleIconButtonStyle {
+    /// A style for icon-only buttons without a background, using the default size (16pt).
+    static var simpleIcon: SimpleIconButtonStyle {
+        SimpleIconButtonStyle(iconSize: 16) // Pass the default size
+    }
+    /// A style for icon-only buttons without a background, with a custom icon size.
+    /// - Parameter size: The desired font size for the icon.
+    static func simpleIcon(size: CGFloat) -> SimpleIconButtonStyle { // ✅ ADD THIS STATIC FUNCTION
+        SimpleIconButtonStyle(iconSize: size)
+    }
+}
+
+// MARK: - Previews
+#if DEBUG
+struct ButtonTheme_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            // --- Light Mode ---
+            VStack(spacing: 30) {
+                // Primary
+                VStack(alignment: .leading) {
+                    Text("Primary Buttons").font(.headline)
+                    HStack {
+                        Button("Primary Action") {}.buttonStyle(.primary)
+                        Button("Disabled") {}.buttonStyle(.primary).disabled(true)
+                        Button("Destructive") {}.buttonStyle(.destructive)
+                    }
+                }
+                
+                // Secondary
+                VStack(alignment: .leading) {
+                    Text("Secondary Buttons").font(.headline)
+                    HStack {
+                        Button("Secondary Action") {}.buttonStyle(.secondary)
+                        Button("Disabled") {}.buttonStyle(.secondary).disabled(true)
+                    }
+                }
+                
+                // Icon Buttons
+                VStack(alignment: .leading) {
+                    Text("Icon Buttons").font(.headline)
+                    HStack {
+                        Button { } label: { Image(systemName: "plus") }.buttonStyle(.icon)
+                        Button { } label: { Image(systemName: "trash") }.buttonStyle(.icon).disabled(true)
+                        Text("—").padding(.horizontal)
+                        Button { } label: { Image(systemName: "pencil") }.buttonStyle(.simpleIcon)
+                        Button { } label: { Image(systemName: "paperplane") }.buttonStyle(.simpleIcon).disabled(true)
+                    }
+                }
             }
-            .font(.system(size: iconSize))
-            .foregroundColor(isDisabled ? Theme.Colors.textSecondary.opacity(0.3) : Theme.Colors.textPrimary.opacity(0.6))
-            .disabled(isDisabled)
-            .animation(.easeInOut(duration: animationDuration), value: isDisabled)
+            .padding(40)
+            .frame(width: 500)
+            .background(Color(NSColor.windowBackgroundColor))
+            .preferredColorScheme(.light)
+            .previewDisplayName("Light Mode")
+            
+            // --- Dark Mode ---
+            VStack(spacing: 30) {
+                // Primary
+                VStack(alignment: .leading) {
+                    Text("Primary Buttons").font(.headline)
+                    HStack {
+                        Button("Primary Action") {}.buttonStyle(.primary)
+                        Button("Disabled") {}.buttonStyle(.primary).disabled(true)
+                        Button("Destructive") {}.buttonStyle(.destructive)
+                    }
+                }
+                
+                // Secondary
+                VStack(alignment: .leading) {
+                    Text("Secondary Buttons").font(.headline)
+                    HStack {
+                        Button("Secondary Action") {}.buttonStyle(.secondary)
+                        // ✅ CORRECTED THIS LINE
+                        Button("Disabled") {}.buttonStyle(.secondary).disabled(true)
+                    }
+                }
+                
+                // Icon Buttons
+                VStack(alignment: .leading) {
+                    Text("Icon Buttons").font(.headline)
+                    HStack {
+                        Button { } label: { Image(systemName: "plus") }.buttonStyle(.icon)
+                        Button { } label: { Image(systemName: "trash") }.buttonStyle(.icon).disabled(true)
+                        Text("—").padding(.horizontal)
+                        Button { } label: { Image(systemName: "pencil") }.buttonStyle(.simpleIcon)
+                        Button { } label: { Image(systemName: "paperplane") }.buttonStyle(.simpleIcon).disabled(true)
+                    }
+                }
+            }
+            .padding(40)
+            .frame(width: 500)
+            .background(Theme.Colors.surface)
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Dark Mode")
         }
     }
 }
+#endif

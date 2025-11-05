@@ -120,15 +120,16 @@ struct SessionViewOptions: View {
                     
                     // Action buttons
                     HStack(spacing: Theme.spacingExtraSmall) {
-                        Theme.SimpleIconButtonStyle(iconSize: 8).makeSimpleIconButton(
-                            label: { Image(systemName: "pencil") },
-                            action: onEdit
-                        )
-                        
-                        Theme.SimpleIconButtonStyle(iconSize: 8).makeSimpleIconButton(
-                            label: { Image(systemName: "trash") },
-                            action: onDelete
-                        )
+                        Button(action: onEdit) {
+                            Image(systemName: "pencil")
+                        }
+                        .buttonStyle(.simpleIcon(size: 8))
+
+                        Button(action: onDelete) {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.simpleIcon(size: 8))
+
                     }
                 }
             }

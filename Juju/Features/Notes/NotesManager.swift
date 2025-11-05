@@ -45,7 +45,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: notesView)
         
         // Create window
-        let windowSize = NSSize(width: 600, height: 400)
+        let windowSize = NSSize(width: 750, height: 450)
         let screen = NSScreen.main
         let screenFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
         

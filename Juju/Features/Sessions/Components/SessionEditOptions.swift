@@ -204,11 +204,12 @@ struct SessionEditOptions: View {
                     action: onCancel
                 )
                 Spacer()
-                Theme.ButtonStyle().makeButton(
-                    label: { Text("Save") },
-                    action: onSave,
-                    isDisabled: isProjectEmpty
-                )
+                Button("Save") {
+                    onSave() // The action now goes inside the closure
+                }
+                .buttonStyle(.primary) // Apply the new style
+                .disabled(isProjectEmpty) // Use the standard disabled modifier
+
                 Spacer()
             }
             .padding(.top)

@@ -37,32 +37,32 @@ struct HeroSectionView: View {
             // Two‑column charts
             GeometryReader { geo in
                 let totalWidth = geo.size.width
-                let leftWidth  = totalWidth * 0.25
-                let rightWidth = totalWidth * 0.75
+                let leftWidth  = totalWidth * 0.30
+                let rightWidth = totalWidth * 0.70
 
                 HStack(spacing: Theme.spacingSmall) {
                     // Bubble chart
                     WeeklyProjectBubbleChartView(
                         data: chartDataPreparer.weeklyProjectTotals()
                     )
-                    .frame(width: leftWidth, height: 200)
+                    .frame(width: leftWidth, height: 300)
 
                     // Calendar chart
                     SessionCalendarChartView(
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
                     .padding(Theme.spacingLarge)
-                    .frame(width: rightWidth, height: 200)
+                    .frame(width: rightWidth, height: 300)
                     .border (.clear, width: 0)
                 }
-                .frame(width: totalWidth, height: 200)
+                .frame(width: totalWidth, height: 300)
             }
-            .frame(height: 200)
+            .frame(height: 300)
             .padding(.bottom, Theme.spacingSmall)
 
         }
         .padding(.horizontal, Theme.spacingExtraSmall)
-        .padding(.vertical, Theme.spacingLarge)
+        .padding(.vertical, Theme.spacingExtraLarge)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
         .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
