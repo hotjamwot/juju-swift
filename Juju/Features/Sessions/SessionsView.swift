@@ -1,6 +1,18 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Date Filter Enum
+public enum DateFilter: String, CaseIterable, Identifiable {
+    case today = "Today"
+    case thisWeek = "This Week"
+    case thisMonth = "This Month"
+    case clear = "Clear"
+    
+    public var id: String { rawValue }
+    public var title: String { rawValue }
+}
+
+// MARK: - Sessions View
 /// Main view for displaying and managing sessions
 public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
@@ -8,7 +20,7 @@ public struct SessionsView: View {
     
     // Filter state
     @State private var projectFilter = "All"
-    @State private var selectedDateFilter: DateFilter = .thisWeek
+    @State private var selectedDateFilter: DateFilter = .thisWeek // This now works!
     @State private var currentDateInterval: DateInterval? = nil
     
     // Pagination state
@@ -26,34 +38,28 @@ public struct SessionsView: View {
     @State private var exportMessage = ""
     
     // Cached data
-@State private var filteredSessions: [SessionRecord] = []
+    @State private var filteredSessions: [SessionRecord] = []
 
-// MARK: — Computed helpers
-private var fullyFilteredSessions: [SessionRecord] {
-    // 1️⃣ Grab *all* raw sessions
-    var sessions = sessionManager.allSessions
+    // MARK: — Computed helpers
+    private var fullyFilteredSessions: [SessionRecord] {
+        var sessions = sessionManager.allSessions
 
-    // 2️⃣ Apply the *date* filter (only keep sessions inside currentDateInterval)
-    if let interval = currentDateInterval {
-        sessions = sessions.filter { session in
-            guard let start = session.startDateTime else { return false }
-            return interval.contains(start)
+        if let interval = currentDateInterval {
+            sessions = sessions.filter { session in
+                guard let start = session.startDateTime else { return false }
+                return interval.contains(start)
+            }
         }
+
+        if projectFilter != "All" {
+            sessions = sessions.filter { $0.projectName == projectFilter }
+        }
+
+        sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
+        return sessions
     }
 
-    // 3️⃣ Apply the *project* filter
-    if projectFilter != "All" {
-        sessions = sessions.filter { $0.projectName == projectFilter }
-    }
-
-    // 4️⃣ Re‑sort by most‑recent first – the same order the UI shows
-    sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
-
-    // 5️⃣ Return everything (no pagination!)
-    return sessions
-}
-
-public var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             // Main content area
             VStack(spacing: 0) {
@@ -70,8 +76,7 @@ public var body: some View {
                         }
                         Spacer()
                     }
-                    .frame(height: 400)
-                    .background(Theme.Colors.background)
+                    .frame(maxHeight: .infinity)
                 } else {
                     // ScrollView for sessions
                     ScrollView {
@@ -98,25 +103,19 @@ public var body: some View {
                     if totalPages > 1 {
                         HStack {
                             Button("Previous") {
-                                if currentPage > 1 {
-                                    currentPage -= 1
-                                    updateFilteredSessions()
-                                }
+                                goToPage(currentPage - 1)
                             }
                             .disabled(currentPage <= 1)
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.secondary)
                             
                             Text("Page \(currentPage) of \(totalPages)")
                                 .font(Theme.Fonts.caption)
                             
                             Button("Next") {
-                                if currentPage < totalPages {
-                                    currentPage += 1
-                                    updateFilteredSessions()
-                                }
+                                goToPage(currentPage + 1)
                             }
                             .disabled(currentPage >= totalPages)
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.secondary)
                         }
                         .padding(.top)
                         .padding(.bottom, Theme.spacingMedium)
@@ -142,6 +141,7 @@ public var body: some View {
                         .pickerStyle(.menu)
                         .frame(width: 120)
                         .onChange(of: projectFilter) { _ in
+                            currentPage = 1 // Reset to first page on filter change
                             updateFilteredSessions()
                         }
                     }
@@ -154,9 +154,7 @@ public var body: some View {
                             SessionFilterButton(
                                 title: filter.title,
                                 isSelected: selectedDateFilter == filter,
-                                action: {
-                                    handleDateFilterSelection(filter)
-                                }
+                                action: { handleDateFilterSelection(filter) }
                             )
                         }
                     }
@@ -165,37 +163,16 @@ public var body: some View {
                     
                     // Export button
                     Menu {
-                        Button("Export as CSV") {
-                            exportSessions(format: "csv")
-                        }
-                        Button("Export as Text") {
-                            exportSessions(format: "txt")
-                        }
-                        Button("Export as Markdown") {
-                            exportSessions(format: "md")
-                        }
+                        Button("Export as CSV") { exportSessions(format: "csv") }
+                        Button("Export as Text") { exportSessions(format: "txt") }
+                        Button("Export as Markdown") { exportSessions(format: "md") }
                     } label: {
                         HStack(spacing: Theme.spacingExtraSmall) {
                             Image(systemName: "square.and.arrow.down")
-                                .font(Theme.Fonts.icon)
                             Text("Export")
-                                .font(Theme.Fonts.caption)
-                                .fontWeight(.medium)
-                        }
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .padding(.horizontal, Theme.spacingMedium)
-                        .padding(.vertical, Theme.spacingSmall)
-                        .background(Theme.Colors.accent)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .onHover { isHovered in
-                        if isHovered {
-                            NSCursor.pointingHand.set()
-                        } else {
-                            NSCursor.arrow.set()
                         }
                     }
+                    .buttonStyle(.primary)
                 }
                 .padding()
                 .background(Theme.Colors.surface)
@@ -205,67 +182,38 @@ public var body: some View {
         .task {
             await projectsViewModel.loadProjects()
         }
-        .onAppear {
-            let today = Date()
-            let calendar = Calendar.current
-            let todayStart = calendar.startOfDay(for: today)
-            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
-            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-            currentDateInterval = DateInterval(start: weekStart, end: end)
-            projectFilter = "All"
-            currentPage = 1
-            selectedDateFilter = .thisWeek
-            updateFilteredSessions()
-        }
+        .onAppear { handleDateFilterSelection(.thisWeek) }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
         } message: {
             Text(exportMessage)
         }
-        .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert) {
-            if let session = toDelete {
-                Text("Are you sure you want to delete the session for \"\(session.projectName)\" on \(session.date)?")
-                Button("Delete", role: .destructive) {
-                    deleteSession(session)
-                }
-                Button("Cancel", role: .cancel) { 
-                    toDelete = nil
-                }
+        .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
+
+            Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
+                deleteSession(session)
             }
+        } message: { session in
+             Text("Are you sure you want to delete the session for \"\(session.projectName)\" on \(session.date)? This action cannot be undone.")
         }
     }
-
+    
+    // MARK: - Data Functions
+    
+    /// ✅ REFACTORED: Now only responsible for pagination logic.
     private func updateFilteredSessions() {
         DispatchQueue.main.async {
-            let loadedSessions: [SessionRecord]
-            if let interval = currentDateInterval {
-                loadedSessions = sessionManager.loadSessions(in: interval)
-            } else {
-                loadedSessions = sessionManager.allSessions
-            }
+            // 1. Start with the already filtered and sorted list
+            let sessions = fullyFilteredSessions
             
-            var sessions = loadedSessions
-            
-            // Apply project filter
-            if projectFilter != "All" {
-                sessions = sessions.filter { $0.projectName == projectFilter }
-            }
-            
-            // Sort by date descending (most recent first)
-            sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
-            
-            // Update pagination
+            // 2. Calculate total pages based on the filtered list
             let totalSessions = sessions.count
-            totalPages = Int(ceil(Double(totalSessions) / Double(sessionsPerPage)))
+            totalPages = max(1, Int(ceil(Double(totalSessions) / Double(sessionsPerPage))))
             
-            // Ensure current page is valid
-            if currentPage > totalPages && totalPages > 0 {
-                currentPage = totalPages
-            } else if currentPage < 1 {
-                currentPage = 1
-            }
+            // 3. Ensure current page is valid
+            if currentPage > totalPages { currentPage = totalPages }
             
-            // Get paginated sessions
+            // 4. Get the slice for the current page
             let startIndex = (currentPage - 1) * sessionsPerPage
             let endIndex = min(startIndex + sessionsPerPage, totalSessions)
             
@@ -277,64 +225,50 @@ public var body: some View {
         }
     }
     
-private func exportSessions(format: String) {
-    // ←‑ Change this line
-    let sessions = fullyFilteredSessions   // 🚨 NEW
+    private func exportSessions(format: String) {
+        let sessions = fullyFilteredSessions
 
-    guard !sessions.isEmpty else {
-        exportMessage = "Nothing to export – no sessions match the current filter."
-        showingExportAlert = true
-        return
-    }
+        guard !sessions.isEmpty else {
+            exportMessage = "Nothing to export – no sessions match the current filter."
+            showingExportAlert = true
+            return
+        }
 
-    if let path = sessionManager.exportSessions(sessions, format: format) {
-        exportMessage = "Sessions exported to \(path.path)"
-        showingExportAlert = true
-    } else {
-        exportMessage = "Export failed."
+        if let path = sessionManager.exportSessions(sessions, format: format) {
+            exportMessage = "Sessions exported to \(path.path)"
+        } else {
+            exportMessage = "Export failed."
+        }
         showingExportAlert = true
     }
-}
     
     private func deleteSession(_ session: SessionRecord) {
         if sessionManager.deleteSession(id: session.id) {
-            // Update the list
-            DispatchQueue.main.async {
-                updateFilteredSessions()
-            }
+            updateFilteredSessions()
         }
         toDelete = nil
     }
     
-    private func parseDate(_ dateString: String) -> Date {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.date(from: dateString) ?? Date()
-    }
+    // MARK: - Filter & Pagination
     
-    // Pagination functions
     private func handleDateFilterSelection(_ filter: DateFilter) {
         selectedDateFilter = filter
         
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
+
         switch filter {
         case .today:
-            let today = Date()
-            let calendar = Calendar.current
-            let start = calendar.startOfDay(for: today)
-            let end = calendar.date(byAdding: .day, value: 1, to: start)!
-            currentDateInterval = DateInterval(start: start, end: end)
+            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+            currentDateInterval = DateInterval(start: todayStart, end: end)
         case .thisWeek:
-            let today = Date()
-            let calendar = Calendar.current
-            let todayStart = calendar.startOfDay(for: today)
+            // Correctly goes back 6 days from today, covering a 7-day period.
             let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
             let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
             currentDateInterval = DateInterval(start: weekStart, end: end)
         case .thisMonth:
-            let today = Date()
-            let calendar = Calendar.current
-            let todayStart = calendar.startOfDay(for: today)
-            let monthStart = calendar.date(byAdding: .day, value: -30, to: todayStart)!
+            // Goes back 30 days from today.
+            let monthStart = calendar.date(byAdding: .day, value: -29, to: todayStart)!
             let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
             currentDateInterval = DateInterval(start: monthStart, end: end)
         case .clear:
@@ -350,7 +284,20 @@ private func exportSessions(format: String) {
         currentPage = page
         updateFilteredSessions()
     }
+
+    // MARK: - Nested Filter Button Component
+    struct SessionFilterButton: View {
+        let title: String
+        let isSelected: Bool
+        let action: () -> Void
+        
+        var body: some View {
+            Button(title, action: action)
+                .buttonStyle(FilterButtonStyle(isSelected: isSelected))
+        }
+    }
 }
+
 
 // MARK: - Preview
 #if DEBUG
@@ -358,11 +305,6 @@ private func exportSessions(format: String) {
 struct SessionsView_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
-            SessionsView()
-                .frame(width: 800, height: 600)
-                .background(Color(.windowBackgroundColor))
-            
-            Divider()
             
             SessionsView()
                 .frame(width: 1000, height: 700)

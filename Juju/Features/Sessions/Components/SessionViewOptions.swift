@@ -123,12 +123,12 @@ struct SessionViewOptions: View {
                         Button(action: onEdit) {
                             Image(systemName: "pencil")
                         }
-                        .buttonStyle(.simpleIcon(size: 8))
+                        .buttonStyle(.simpleIcon(size: 12))
 
                         Button(action: onDelete) {
                             Image(systemName: "trash")
                         }
-                        .buttonStyle(.simpleIcon(size: 8))
+                        .buttonStyle(.simpleIcon(size: 12))
 
                     }
                 }

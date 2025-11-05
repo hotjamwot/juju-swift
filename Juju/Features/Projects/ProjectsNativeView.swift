@@ -1,90 +1,63 @@
 import SwiftUI
 
 struct ProjectsNativeView: View {
-    @StateObject private var viewModel = ProjectsViewModel()
-    @State private var showingAddProject = false
-    @State private var selectedProject: Project?
+
+    @StateObject private var viewModel = ProjectsViewModel.shared
+    
+    @State private var showingAddProjectSheet = false
+    @State private var selectedProjectForEdit: Project?
     
     var body: some View {
-        VStack {
-            // Header with title
+        VStack(spacing: 0) {
+            // Header
             HStack {
                 Text("Projects")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Theme.Colors.textPrimary)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity)
                 
-                Spacer()
-                
-                Button(action: {
-                    showingAddProject = true
-                }) {
-                    HStack(spacing: 4) {
+                Button {
+                    showingAddProjectSheet = true
+                } label: {
+                    HStack {
                         Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .semibold))
                         Text("Add Project")
-                            .font(Theme.Fonts.caption)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(Theme.Colors.textPrimary)
-                    .padding(.horizontal, Theme.spacingMedium)
-                    .padding(.vertical, Theme.spacingSmall)
-                    .background(Theme.Colors.accent)
-                    .cornerRadius(Theme.Design.cornerRadius)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .onHover { isHovered in
-                    if isHovered {
-                        NSCursor.pointingHand.set()
-                    } else {
-                        NSCursor.arrow.set()
                     }
                 }
+                .buttonStyle(.primary)
             }
-            .padding()
-            
+            .padding(.vertical, Theme.spacingLarge)
+            .padding(.horizontal, Theme.spacingLarge)
+            .background(Theme.Colors.background)
+
             // Projects List
             ScrollView {
-                LazyVStack(spacing: Theme.spacingMedium) {
-                    ForEach(viewModel.filteredProjects) { project in
-                        Button(action: {
-                            selectedProject = project
-                        }) {
-                            ProjectRowView(project: project)
+                if viewModel.filteredProjects.isEmpty {
+                    Text("No Projects Yet")
+                        .foregroundColor(Theme.Colors.surface)
+                        .padding(40)
+                } else {
+                    LazyVStack(spacing: Theme.spacingMedium) {
+                        ForEach(viewModel.filteredProjects) { project in
+                            Button(action: {
+                                selectedProjectForEdit = project
+                            }) {
+                                ProjectRowView(project: project)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
-                    
-                    if viewModel.filteredProjects.isEmpty {
-                        VStack(spacing: Theme.spacingSmall) {
-                            Image(systemName: "folder")
-                                .font(.system(size: 40))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            
-                            Text("No projects found")
-                                .font(Theme.Fonts.body)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            
-                            Text("Click 'Add Project' to create your first project")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding()
-                    }
+                    .padding()
                 }
-                .padding()
             }
-            .scrollContentBackground(.hidden)
-            .background(Theme.Colors.background)
         }
         .background(Theme.Colors.background)
-        .sheet(isPresented: $showingAddProject) {
+        .sheet(isPresented: $showingAddProjectSheet) {
             ProjectAddEditView(onSave: { newProject in
-                viewModel.addProject(name: newProject.name)
-                showingAddProject = false
+                viewModel.addProject(name: newProject.name, color: newProject.color, about: newProject.about)
+                showingAddProjectSheet = false
             })
         }
-        .sheet(item: $selectedProject) { project in
+        .sheet(item: $selectedProjectForEdit) { project in
             ProjectAddEditView(
                 project: project,
                 onSave: { updatedProject in
@@ -95,9 +68,6 @@ struct ProjectsNativeView: View {
                 }
             )
         }
-        .task {
-            await viewModel.loadProjects()
-        }
     }
 }
 
@@ -106,50 +76,87 @@ struct ProjectRowView: View {
     
     var body: some View {
         HStack(spacing: Theme.spacingMedium) {
-            // Project Color Indicator
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .fill(project.swiftUIColor)
-                .frame(width: 40, height: 40)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                )
+                .frame(width: 32, height: 32)
             
-            // Project Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 Text(project.name)
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textPrimary)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
                 
                 if let about = project.about, !about.isEmpty {
                     Text(about)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
             }
-            
             Spacer()
-            
-            // Navigation Arrow
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Theme.Colors.textSecondary)
+                .foregroundColor(.secondary.opacity(0.5))
         }
         .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-        .contentShape(Rectangle())
-        .onHover { isHovered in
-            if isHovered {
-                NSCursor.pointingHand.set()
-            } else {
-                NSCursor.arrow.set()
-            }
-        }
+                .stroke(Theme.Colors.divider, lineWidth: 1))
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+@available(macOS 12.0, *)
+struct ProjectsNativeView_Previews: PreviewProvider {
+    
+    static func createMockViewModel(with projects: [Project]) -> ProjectsViewModel {
+        let mockVM = ProjectsViewModel()
+        mockVM.projects = projects
+        return mockVM
+    }
+
+    struct PreviewWrapper: View {
+        @StateObject var viewModel: ProjectsViewModel
+        
+        var body: some View {
+
+            List(viewModel.filteredProjects) { project in
+                ProjectRowView(project: project)
+            }
+            .frame(width: 650, height: 600)
+        }
+    }
+
+    static var previews: some View {
+        ProjectsNativeView()
+            .frame(width: 650, height: 600)
+            .previewDisplayName("Live Data (from file)")
+
+        // --- Preview 2: Mock Data ---
+        // This is a reliable preview for testing UI with specific data,
+        // without touching your real files.
+        let mockProjects = [
+            Project(name: "Juju Time Tracking", color: "#8E44AD", about: "Internal app dev.", order: 1),
+            Project(name: "Client - Acme Inc.", color: "#3498DB", about: "Website redesign.", order: 2),
+            Project(name: "Personal Growth", color: "#2ECC71", about: "", order: 3)
+        ]
+
+        List(mockProjects) { project in
+            ProjectRowView(project: project)
+        }
+        .frame(width: 650, height: 600)
+        .previewDisplayName("Mock Data (for UI testing)")
+        
+        List {
+             Text("No Projects Yet")
+                .foregroundColor(.secondary)
+                .padding(40)
+        }
+        .frame(width: 650, height: 600)
+        .previewDisplayName("Empty State")
+    }
+}
+#endif

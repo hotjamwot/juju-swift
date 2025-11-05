@@ -23,6 +23,10 @@ struct StackedAreaChartCardView: View {
         .padding(Theme.spacingLarge)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .stroke(Theme.Colors.divider, lineWidth: 1)
+        )
         .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
     }
 
@@ -64,6 +68,7 @@ struct StackedAreaChartCardView: View {
 }
 
 
+// MARK: Preview
 #Preview {
     
     func dateFor(month: Int) -> Date {

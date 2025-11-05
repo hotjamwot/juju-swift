@@ -31,7 +31,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
             .font(Theme.Fonts.body)
             .padding(.horizontal, 16)
             .frame(height: 36)
-            .background(isEnabled ? Theme.Colors.surface.opacity(0.6) : Theme.Colors.surface.opacity(0.5))
+            .background(isEnabled ? Theme.Colors.secondary : Theme.Colors.secondary.opacity(0.5))
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .cornerRadius(Theme.Design.cornerRadius)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
@@ -46,9 +46,9 @@ public struct IconButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 12)) // From your original iconSize
-            .frame(width: 36, height: 36) // From your original size
-            .background(Theme.Colors.surface)
+            .font(.system(size: 12))
+            .frame(width: 36, height: 36)
+            .background(Theme.Colors.secondary)
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .cornerRadius(Theme.Design.cornerRadius)
             .opacity(configuration.isPressed ? 0.7 : 1.0)
@@ -64,7 +64,7 @@ public struct SimpleIconButtonStyle: ButtonStyle {
     var iconSize: CGFloat
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: iconSize)) // ✅ USE THE PROPERTY HERE
+            .font(.system(size: iconSize))
             .foregroundColor(
                 isEnabled ?
                 (configuration.isPressed ? Theme.Colors.accent : Theme.Colors.textPrimary.opacity(0.6))
@@ -74,6 +74,27 @@ public struct SimpleIconButtonStyle: ButtonStyle {
             .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
     }
 }
+
+/// Style for filter or tab-like buttons that can be selected.
+public struct FilterButtonStyle: ButtonStyle {
+    var isSelected: Bool
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.caption.weight(.medium))
+            .padding(.horizontal, 12)
+            .frame(height: 28)
+            .background(
+                isSelected ? Theme.Colors.accent :
+                    (configuration.isPressed ? Theme.Colors.surface.opacity(0.8) : Theme.Colors.surface)
+            )
+            .foregroundColor(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.15), value: isSelected)
+    }
+}
+
 
 
 // MARK: - Theme Extension for Easy Access
@@ -107,6 +128,25 @@ public extension ButtonStyle where Self == SimpleIconButtonStyle {
     /// - Parameter size: The desired font size for the icon.
     static func simpleIcon(size: CGFloat) -> SimpleIconButtonStyle { // ✅ ADD THIS STATIC FUNCTION
         SimpleIconButtonStyle(iconSize: size)
+    }
+}
+
+struct PointingHandOnHover: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .onHover { isHovered in
+                if isHovered {
+                    NSCursor.pointingHand.set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            }
+    }
+}
+public extension View {
+    /// Applies a modifier that changes the cursor to a pointing hand on hover.
+    func pointingHandOnHover() -> some View {
+        self.modifier(PointingHandOnHover())
     }
 }
 

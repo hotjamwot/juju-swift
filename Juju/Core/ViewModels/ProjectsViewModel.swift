@@ -37,9 +37,9 @@ init() {
     
     
     
-    func addProject(name: String) {
+    func addProject(name: String, color: String, about: String?) {
         let maxOrder = projects.map(\.order).max() ?? 0
-        let newProject = Project(name: name, order: maxOrder + 1)
+        let newProject = Project(name: name, color: color, about: about, order: maxOrder + 1)
         projects.append(newProject)
         projectManager.saveProjects(projects)
     }

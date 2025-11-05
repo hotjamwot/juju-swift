@@ -45,6 +45,7 @@ struct DashboardNativeSwiftChartsView: View {
                                 title: "Average Duration",
                                 value: chartDataPreparer.yearlyAvgDurationString()
                             )
+                            
                         }
                         .frame(width: 450)
                         .layoutPriority(1)
@@ -54,6 +55,10 @@ struct DashboardNativeSwiftChartsView: View {
                 .padding(Theme.spacingExtraSmall)
                 .background(Theme.Colors.surface)
                 .cornerRadius(Theme.Design.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
 
                 StackedAreaChartCardView(
                     data: chartDataPreparer.monthlyProjectTotals()
@@ -64,11 +69,13 @@ struct DashboardNativeSwiftChartsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.Colors.background)
             .cornerRadius(Theme.Design.cornerRadius)
+            
         }
         .padding(.top, 20)
         .padding(.bottom, 20)
         .padding(.trailing, 20)
         .background(Theme.Colors.background)
+        
         .onAppear {
             Task {
                 await projectsViewModel.loadProjects()

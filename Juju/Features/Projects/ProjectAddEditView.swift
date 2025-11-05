@@ -40,23 +40,14 @@ struct ProjectAddEditView: View {
                 Spacer()
                 
                 Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .frame(width: 24, height: 24)
-                .onHover { isHovered in
-                    if isHovered {
-                        NSCursor.pointingHand.set()
-                    } else {
-                        NSCursor.arrow.set()
-                    }
-                }
-            }
-            .padding(.bottom, Theme.spacingMedium)
+                                dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(.simpleIcon)
+                            .pointingHandOnHover()
+                        }
+                        .padding(.bottom, Theme.spacingMedium)
             
             // Name Field
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
@@ -113,7 +104,8 @@ struct ProjectAddEditView: View {
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
+                .pointingHandOnHover()
                 .sheet(isPresented: $showingColorPicker) {
                     ColorPickerView(selectedColor: $color)
                 }
@@ -142,26 +134,17 @@ struct ProjectAddEditView: View {
             HStack {
                 // Delete Button (only for editing)
                 if isEditing, let onDelete = onDelete, let project = project {
-                    Button("Delete Project") {
-                        onDelete(project)
-                        dismiss()
-                    }
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.error)
-                    .padding(.horizontal, Theme.spacingMedium)
-                    .padding(.vertical, Theme.spacingSmall)
-                    .background(Theme.Colors.surface.opacity(0.5))
-                    .cornerRadius(Theme.Design.cornerRadius)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .buttonStyle(PlainButtonStyle())
-                    .onHover { isHovered in
-                        if isHovered {
-                            NSCursor.pointingHand.set()
-                        } else {
-                            NSCursor.arrow.set()
-                        }
-                    }
-                }
+                                Button("Delete Project") {
+                                    onDelete(project)
+                                    dismiss()
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundColor(Theme.Colors.error)
+                                .font(Theme.Fonts.caption)
+                                .padding(.horizontal, Theme.spacingExtraSmall)
+                                .pointingHandOnHover()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                 
                 // Save/Create Button
                 Button(isEditing ? "Save Changes" : "Create Project") {
@@ -188,25 +171,14 @@ struct ProjectAddEditView: View {
                         dismiss()
                     }
                 }
-                .font(Theme.Fonts.body.weight(.semibold))
-                .foregroundColor(Theme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Theme.Colors.accent.opacity(0.8) : Theme.Colors.accent)
-                .cornerRadius(Theme.Design.cornerRadius)
+                .buttonStyle(.primary)
                 .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .buttonStyle(PlainButtonStyle())
-                .onHover { isHovered in
-                    if isHovered && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        NSCursor.pointingHand.set()
-                    } else {
-                        NSCursor.arrow.set()
-                    }
-                }
+                .pointingHandOnHover()
             }
         }
         .padding(Theme.spacingLarge)
-        .frame(minWidth: 400, minHeight: 350)
+        .frame(minWidth: 400, minHeight: 520)
         .background(Theme.Colors.background)
         .onAppear {
             if let project = project {
@@ -243,22 +215,13 @@ struct ColorPickerView: View {
                 Spacer()
                 
                 Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .frame(width: 24, height: 24)
-                .onHover { isHovered in
-                    if isHovered {
-                        NSCursor.pointingHand.set()
-                    } else {
-                        NSCursor.arrow.set()
-                    }
-                }
-            }
+                                dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(.simpleIcon)
+                            .pointingHandOnHover()
+                        }
             
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: Theme.spacingSmall) {
@@ -276,17 +239,11 @@ struct ColorPickerView: View {
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .onHover { isHovered in
-                            if isHovered {
-                                NSCursor.pointingHand.set()
-                            } else {
-                                NSCursor.arrow.set()
-                            }
+                        .pointingHandOnHover()
                         }
                     }
                 }
             }
-        }
         .padding(Theme.spacingLarge)
         .background(Theme.Colors.background)
     }
@@ -298,14 +255,14 @@ struct ProjectAddEditView_Previews: PreviewProvider {
         Group {
             // Add Project Preview
             ProjectAddEditView(onSave: { _ in })
-                .frame(minWidth: 500, minHeight: 400)
+                .frame(minWidth: 250, minHeight: 600)
                 .previewLayout(.sizeThatFits)
                 .previewDisplayName("Add Project")
             
             // Edit Project Preview
             let sampleProject = Project(name: "Sample Project", color: "#4E79A7", about: "A sample project for preview")
             ProjectAddEditView(project: sampleProject, onSave: { _ in }, onDelete: { _ in })
-                .frame(minWidth: 500, minHeight: 400)
+                .frame(minWidth: 250, minHeight: 600)
                 .previewLayout(.sizeThatFits)
                 .previewDisplayName("Edit Project")
         }

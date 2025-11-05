@@ -10,7 +10,6 @@
 		6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */; };
 		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
 		666C394C2EAFB53800B408B8 /* SessionEditOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39482EAFB53800B408B8 /* SessionEditOptions.swift */; };
-		666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39492EAFB53800B408B8 /* SessionFilterButton.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
 		66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */; };
@@ -39,7 +38,7 @@
 		66B1488D2EA8EA6000E9BB4A /* design.md in Resources */ = {isa = PBXBuildFile; fileRef = 66B148892EA8EA6000E9BB4A /* design.md */; };
 		66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */; };
 		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
-		66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */; };
+		66BDAC462EAD0AF30042A906 /* StackedAreaChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */; };
 		66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */; };
 		66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */; };
 		66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */; };
@@ -52,7 +51,6 @@
 		6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
 		666C39482EAFB53800B408B8 /* SessionEditOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionEditOptions.swift; sourceTree = "<group>"; };
-		666C39492EAFB53800B408B8 /* SessionFilterButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionFilterButton.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
 		66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -83,7 +81,7 @@
 		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		66B148892EA8EA6000E9BB4A /* design.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = design.md; sourceTree = "<group>"; };
 		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
-		66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupedBarChartCardView.swift; sourceTree = "<group>"; };
+		66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StackedAreaChartCardView.swift; sourceTree = "<group>"; };
 		66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
 		66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SummaryMetricView.swift; sourceTree = "<group>"; };
 		66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BubbleChartCardView.swift; sourceTree = "<group>"; };
@@ -118,7 +116,6 @@
 			isa = PBXGroup;
 			children = (
 				666C39482EAFB53800B408B8 /* SessionEditOptions.swift */,
-				666C39492EAFB53800B408B8 /* SessionFilterButton.swift */,
 				666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */,
 			);
 			path = Components;
@@ -180,7 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */,
-				66BDAC402EAD0AF20042A906 /* GroupedBarChartCardView.swift */,
+				66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */,
 				66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */,
 				66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */,
 				66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */,
@@ -382,13 +379,12 @@
 				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
 				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
 				66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */,
-				66BDAC462EAD0AF30042A906 /* GroupedBarChartCardView.swift in Sources */,
+				66BDAC462EAD0AF30042A906 /* StackedAreaChartCardView.swift in Sources */,
 				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
 				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
 				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,
 				66B148512EA8EA4B00E9BB4A /* ShortcutManager.swift in Sources */,
 				66BDAC4A2EAD0AF30042A906 /* HeroSectionView.swift in Sources */,
-				666C394D2EAFB53800B408B8 /* SessionFilterButton.swift in Sources */,
 				6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */,
 				666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */,
 				66B148722EA8EA4B00E9BB4A /* DashboardWindowController.swift in Sources */,
