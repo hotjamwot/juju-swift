@@ -1,6 +1,35 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Ordinal Helper
+private extension Int {
+    var ordinalSuffix: String {
+        switch (self % 100) {
+        case 11, 12, 13: return "th"
+        default:
+            switch (self % 10) {
+            case 1: return "st"
+            case 2: return "nd"
+            case 3: return "rd"
+            default: return "th"
+            }
+        }
+    }
+}
+
+// MARK: - Pretty‑date helper
+private extension Date {
+    /// “Monday, 23rd October”
+    var prettyHeader: String {
+        let cal = Calendar.current
+        let weekday = cal.weekdaySymbols[cal.component(.weekday, from: self) - 1]
+        let day     = cal.component(.day, from: self)
+        let month   = cal.monthSymbols[cal.component(.month, from: self) - 1]
+        return "\(weekday), \(day)\(day.ordinalSuffix) \(month)"
+    }
+}
+
+
 // MARK: - Date Filter Enum
 public enum DateFilter: String, CaseIterable, Identifiable {
     case today = "Today"
@@ -15,8 +44,8 @@ public enum DateFilter: String, CaseIterable, Identifiable {
 // MARK: - Sessions View
 
 struct GroupedSession: Identifiable {
-    let id = UUID() // Conforms to Identifiable
-    let date: String
+    let id      = UUID()
+    let date    : Date
     let sessions: [SessionRecord]
 }
 
@@ -28,16 +57,17 @@ struct GroupedSessionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            // 1. Date Header for the Group
-            Text(group.date)
+            // 1. Date Header – centred
+            Text(group.date.prettyHeader)
                 .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(Theme.Colors.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, Theme.spacingMedium)
 
-            // 2. 3-Column Grid for the Sessions
+            // 2. 3‑Column Grid for the Sessions …
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: Theme.spacingMedium), count: 3),
+                columns: Array(repeating: .init(.flexible(), spacing: Theme.spacingMedium), count: 3),
                 spacing: Theme.spacingMedium
             ) {
                 ForEach(group.sessions) { session in
@@ -47,9 +77,10 @@ struct GroupedSessionView: View {
                         onSave: onSave,
                         onDelete: { onDelete(session) }
                     )
+                    .frame(minHeight: 120)
                 }
             }
-            .padding(.horizontal, Theme.spacingMedium)
+            .padding(.horizontal, Theme.spacingLarge)
         }
     }
 }
@@ -102,26 +133,22 @@ public struct SessionsView: View {
     }
     
     /// Groups the filtered sessions by day for the grid view.
+    /// Groups the filtered sessions by day for the grid view.
     private var groupedSessions: [GroupedSession] {
         let sessions = fullyFilteredSessions
-        let grouped = Dictionary(grouping: sessions) { session -> String in
-            // Use a consistent date format for grouping
-            guard let date = session.startDateTime else {
-                return "Unknown Date"
-            }
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            return formatter.string(from: date)
+
+        // 1️⃣ Group by day (use the start‑of‑day date as the key)
+        let grouped = Dictionary(grouping: sessions) { session -> Date in
+            guard let start = session.startDateTime else { return Date() }
+            return Calendar.current.startOfDay(for: start)
         }
-        return grouped.sorted {
-            guard let date1 = $0.value.first?.startDateTime, let date2 = $1.value.first?.startDateTime else {
-                return false
-            }
-            return date1 > date2
-        }.map { (dateString, sessionRecords) in
-            GroupedSession(date: dateString, sessions: sessionRecords)
-        }
+
+        // 2️⃣ Sort by date descending, then map to `GroupedSession`
+        return grouped
+            .sorted { $0.key > $1.key }                    // newer first
+            .map { GroupedSession(date: $0.key, sessions: $0.value) }
     }
+
     
     // MARK: - Body
     public var body: some View {
@@ -291,7 +318,6 @@ public struct SessionsView: View {
         }
     }
 }
-
 
 
 // MARK: - Preview

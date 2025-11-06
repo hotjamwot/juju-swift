@@ -52,17 +52,65 @@ struct SessionEditOptions: View {
                 }
                 .buttonStyle(.simpleIcon(size: 12))
                 .pointingHandOnHover()
+            }
+            
+            // Form content
+            VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+                // First row: Date and Project
+                HStack(spacing: Theme.spacingLarge) {
+                    // Date
+                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                        Text("Date")
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        TextField("YYYY-MM-DD", text: $editedDate)
+                            .textFieldStyle(.plain)
+                            .padding(.horizontal, Theme.spacingMedium)
+                            .padding(.vertical, Theme.spacingSmall)
+                            .background(Theme.Colors.surface)
+                            .cornerRadius(Theme.Design.cornerRadius)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                    .stroke(Theme.Colors.divider, lineWidth: 1)
+                            )
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    // Project
+                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                        Text("Project")
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        Picker("Project", selection: $editedProject) {
+                            Text("-- Select Project --").tag("")
+                            ForEach(projects, id: \.self) { name in
+                                Text(name).tag(name)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .padding(.horizontal, Theme.spacingMedium)
+                        .padding(.vertical, Theme.spacingSmall)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Design.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                    }
+                    .frame(maxWidth: .infinity)
+                }
                 
-                // Form content
-                VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                    // First row: Date and Project
+                // Second row: Times
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Times")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
                     HStack(spacing: Theme.spacingLarge) {
-                        // Date
-                        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                            Text("Date")
+                        VStack(spacing: 4) {
+                            Text("Start")
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
-                            TextField("YYYY-MM-DD", text: $editedDate)
+                            TextField("HH:MM", text: $editedStartTime)
                                 .textFieldStyle(.plain)
                                 .padding(.horizontal, Theme.spacingMedium)
                                 .padding(.vertical, Theme.spacingSmall)
@@ -75,138 +123,89 @@ struct SessionEditOptions: View {
                         }
                         .frame(maxWidth: .infinity)
                         
-                        // Project
-                        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                            Text("Project")
+                        Text("—")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        
+                        VStack(spacing: 4) {
+                            Text("End")
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
-                            Picker("Project", selection: $editedProject) {
-                                Text("-- Select Project --").tag("")
-                                ForEach(projects, id: \.self) { name in
-                                    Text(name).tag(name)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .padding(.horizontal, Theme.spacingMedium)
-                            .padding(.vertical, Theme.spacingSmall)
-                            .background(Theme.Colors.surface)
-                            .cornerRadius(Theme.Design.cornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                    .stroke(Theme.Colors.divider, lineWidth: 1)
-                            )
+                            TextField("HH:MM", text: $editedEndTime)
+                                .textFieldStyle(.plain)
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .background(Theme.Colors.surface)
+                                .cornerRadius(Theme.Design.cornerRadius)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    
-                    // Second row: Times
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Times")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        HStack(spacing: Theme.spacingLarge) {
-                            VStack(spacing: 4) {
-                                Text("Start")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                TextField("HH:MM", text: $editedStartTime)
-                                    .textFieldStyle(.plain)
-                                    .padding(.horizontal, Theme.spacingMedium)
-                                    .padding(.vertical, Theme.spacingSmall)
-                                    .background(Theme.Colors.surface)
-                                    .cornerRadius(Theme.Design.cornerRadius)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                                    )
-                            }
-                            .frame(maxWidth: .infinity)
-                            
-                            Text("—")
-                                .font(Theme.Fonts.body)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            
-                            VStack(spacing: 4) {
-                                Text("End")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                TextField("HH:MM", text: $editedEndTime)
-                                    .textFieldStyle(.plain)
-                                    .padding(.horizontal, Theme.spacingMedium)
-                                    .padding(.vertical, Theme.spacingSmall)
-                                    .background(Theme.Colors.surface)
-                                    .cornerRadius(Theme.Design.cornerRadius)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                                    )
-                            }
-                            .frame(maxWidth: .infinity)
+                }
+                
+                // Third row: Mood
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Mood (0-10)")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Picker("Mood", selection: $selectedMood) {
+                        Text("-- No mood --").tag("")
+                        ForEach(0...10, id: \.self) { mood in
+                            Text("\(mood)").tag("\(mood)")
                         }
                     }
-                    
-                    // Third row: Mood
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Mood (0-10)")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        Picker("Mood", selection: $selectedMood) {
-                            Text("-- No mood --").tag("")
-                            ForEach(0...10, id: \.self) { mood in
-                                Text("\(mood)").tag("\(mood)")
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, Theme.spacingMedium)
-                        .padding(.vertical, Theme.spacingSmall)
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                }
+                
+                // Fourth row: Notes (full width)
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Notes")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    TextEditor(text: $editedNotes)
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .frame(height: 120)
+                        .padding(Theme.spacingLarge)
                         .background(Theme.Colors.surface)
                         .cornerRadius(Theme.Design.cornerRadius)
                         .overlay(
                             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                                 .stroke(Theme.Colors.divider, lineWidth: 1)
                         )
-                    }
-                    
-                    // Fourth row: Notes (full width)
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Notes")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        TextEditor(text: $editedNotes)
-                            .font(Theme.Fonts.body)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .frame(height: 120)
-                            .padding(Theme.spacingLarge)
-                            .background(Theme.Colors.surface)
-                            .cornerRadius(Theme.Design.cornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                    .stroke(Theme.Colors.divider, lineWidth: 1)
-                            )
-                    }
                 }
-                
-                // Buttons
-                HStack {
-                    Spacer()
-
-                    Button("Cancel", role: .cancel, action: onCancel)
-                        .buttonStyle(.secondary)
-                        .pointingHandOnHover()
-                    Spacer()
-                    Button("Save", action: onSave)
-                        .buttonStyle(.primary)
-                        .disabled(isProjectEmpty)
-                        .pointingHandOnHover()
-                    Spacer()
-                }
-                .padding(.top)
-                
             }
-            .frame(minHeight: 500)
-            .padding(Theme.spacingLarge)
-            .background(Theme.Colors.background)
+            
+            // Buttons
+            HStack {
+                Spacer()
+
+                Button("Cancel", role: .cancel, action: onCancel)
+                    .buttonStyle(.secondary)
+                    .pointingHandOnHover()
+                Spacer()
+                Button("Save", action: onSave)
+                    .buttonStyle(.primary)
+                    .disabled(isProjectEmpty)
+                    .pointingHandOnHover()
+                Spacer()
+            }
+            .padding(.top)
         }
+        .frame(minHeight: 500)
+        .padding(Theme.spacingLarge)
+        .background(Theme.Colors.background)
     }
 }
 

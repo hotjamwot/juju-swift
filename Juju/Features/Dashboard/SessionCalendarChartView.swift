@@ -30,7 +30,7 @@ struct SessionCalendarChartView: View {
                     yEnd:   .value("End Hour",   session.endHour)
                 )
                 .foregroundStyle(Color(hex: session.projectColor))
-                .cornerRadius(8)
+                .cornerRadius(Theme.Design.cornerRadius / 4)
                 .annotation(position: .overlay, alignment: .center) {
                     Text("\(session.duration, specifier: "%.1f")h")
                         .font(Theme.Fonts.caption)

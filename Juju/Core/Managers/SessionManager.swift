@@ -114,7 +114,8 @@ class SessionManager: ObservableObject {
         self.jujuPath = appSupportPath?.appendingPathComponent("Juju")
         self.dataFile = jujuPath?.appendingPathComponent("data.csv")
         if fileExists() {
-            _ = loadAllSessions()
+            // Only load recent sessions by default (last 40) for performance
+            loadRecentSessions(limit: 40)
         }
     }
     
@@ -647,6 +648,14 @@ public func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
         let csv = header + rows.joined(separator: "\n") + "\n"
         writeToFile(csv)
         print("[SessionManager] Rewritten CSV with IDs for all sessions.")
+    }
+    
+    /// Load only the most recent sessions for better performance
+    func loadRecentSessions(limit: Int = 40) {
+        let allSessions = loadAllSessions()
+        let recentSessions = Array(allSessions.prefix(limit))
+        self.allSessions = recentSessions
+        print("✅ Loaded only \(recentSessions.count) recent sessions (out of \(allSessions.count) total)")
     }
     
     // Helper class for export

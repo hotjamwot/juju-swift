@@ -21,78 +21,81 @@ struct SessionViewOptions: View {
 
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            // --- TOP ROW: Project Info & Actions ---
-            HStack {
-                HStack(spacing: Theme.spacingSmall) {
-                    Circle()
-                        .fill(sessionProjectColor)
-                        .frame(width: 12, height: 12)
-                    Text(session.projectName)
-                        .font(Theme.Fonts.body.weight(.semibold))
-                        .lineLimit(1)
-                }
-                .help(session.projectName) // Add a tooltip for truncated project names
-                
-                Spacer()
-                
-                HStack(spacing: Theme.spacingExtraSmall) {
-                    Button(action: onEdit) { Image(systemName: "pencil") }
-                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
-
-                    Button(action: onDelete) { Image(systemName: "trash") }
-                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
-                }
-            }
-
-            // --- MIDDLE ROW: Time & Duration ---
-            HStack {
-                HStack(spacing: Theme.spacingSmall) {
-                    Image(systemName: "clock")
-                    Text("\(formattedStartTime) - \(formattedEndTime)")
-                }
-                .font(Theme.Fonts.caption)
-                .foregroundColor(Theme.Colors.textSecondary)
-                
-                Spacer()
-                
-                Text(formatDuration(session.durationMinutes))
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textSecondary)
-            }
-            
-            // --- NOTES SECTION (if they exist) ---
-            if !session.notes.isEmpty {
-                Text(session.notes)
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            // --- BOTTOM ROW: Mood (if it exists) ---
-            if let mood = session.mood {
-                HStack {
-                    Spacer()
-                    HStack(spacing: Theme.spacingSmall) {
-                        Image(systemName: "star.fill")
-                        Text("Mood: \(mood)/10")
-                    }
-                    .font(Theme.Fonts.caption)
-                    .padding(.horizontal, Theme.spacingSmall)
-                    .padding(.vertical, Theme.spacingExtraSmall)
-                    .foregroundColor(moodColor(for: mood))
-                    .background(moodColor(for: mood).opacity(0.1))
-                    .clipShape(Capsule())
-                }
-            }
-            // Add a spacer to push content up if notes are short or non-existent
-            if session.notes.isEmpty {
-                Spacer(minLength: 0)
-            }
-        }
-    }
+        HStack(spacing: 0) {
+            // --- Card content ------------------------------------
+              VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+                  /* ────── TOP ROW: Project + Mood ───────────── */
+                  HStack {
+                      // Project name (left)
+                      Text(session.projectName)
+                          .font(Theme.Fonts.header)
+                          .lineLimit(1)
+                          .help(session.projectName)     // tooltip for truncated names
+                      
+                      Spacer()
+                      
+                      // Mood (right, only if set)
+                      if let mood = session.mood {
+                          HStack(spacing: Theme.spacingSmall) {
+                              Image(systemName: "star.fill")
+                              Text("Mood: \(mood)/10")
+                          }
+                          .font(Theme.Fonts.caption)
+                          .foregroundColor(moodColor(for: mood))
+                          .background(.clear)
+                          .clipShape(Capsule())
+                      }
+                  }
+                  
+                  /* ────── MIDDLE ROW: Time & Duration ────── */
+                  HStack {
+                      HStack(spacing: Theme.spacingSmall) {
+                          Image(systemName: "clock")
+                          Text("\(formattedStartTime) - \(formattedEndTime)")
+                      }
+                      .font(Theme.Fonts.caption)
+                      .foregroundColor(Theme.Colors.textSecondary)
+                      
+                      Spacer()
+                      
+                      Text(formatDuration(session.durationMinutes))
+                          .font(Theme.Fonts.caption.weight(.semibold))
+                          .foregroundColor(Theme.Colors.textSecondary)
+                  }
+                  
+                  /* ────── NOTES SECTION (if present) ────── */
+                  if !session.notes.isEmpty {
+                      Text(session.notes)
+                          .font(Theme.Fonts.body)
+                          .foregroundColor(Theme.Colors.textPrimary)
+                          .lineLimit(3)
+                          .fixedSize(horizontal: false, vertical: true)
+                          .frame(maxWidth: .infinity, alignment: .leading)
+                  }
+                  
+                  /* ────── BOTTOM ROW: Edit / Delete ────── */
+                  HStack {
+                      Spacer()
+                      HStack(spacing: Theme.spacingExtraSmall) {
+                          Button(action: onEdit) {
+                              Image(systemName: "pencil")
+                          }
+                          .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+                          
+                          Button(action: onDelete) {
+                              Image(systemName: "trash")
+                          }
+                          .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+                      }
+                  }
+                  
+                  // If there’s no notes, push everything up
+                  if session.notes.isEmpty { Spacer() }
+              }
+              .padding(.vertical, Theme.spacingMedium)
+              .padding(.horizontal, Theme.spacingMedium)
+          }
+      }
 
     
     private var sessionProjectColor: Color {
@@ -177,10 +180,10 @@ struct SessionViewOptions: View {
     private func moodColor(for mood: Int) -> Color {
         switch mood {
         case 1...4: return Theme.Colors.error
-        case 5...7: return Theme.Colors.surface
-        case 8: return Theme.Colors.accent.opacity(0.6)
-        case 9: return Theme.Colors.accent.opacity(0.85)
-        case 10: return Theme.Colors.accent
+        case 5...7: return Theme.Colors.secondary
+        case 8: return sessionProjectColor.opacity(0.6)
+        case 9: return sessionProjectColor.opacity(0.85)
+        case 10: return sessionProjectColor
         default: return Theme.Colors.error
         }
     }
@@ -211,8 +214,8 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 300, height: 100)
-            .background(Color(.windowBackgroundColor))
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
             
             Divider()
             
@@ -235,9 +238,9 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 300, height: 120)
-            .background(Color(.windowBackgroundColor))
-            
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
+
             Divider()
             
             // Preview with no mood
@@ -259,9 +262,9 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 300, height: 100)
-            .background(Color(.windowBackgroundColor))
-            
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
+
             Divider()
             
             // Preview with no notes
@@ -284,8 +287,8 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 300, height: 100)
-            .background(Color(.windowBackgroundColor))
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
         }
         .padding()
         .previewLayout(.sizeThatFits)

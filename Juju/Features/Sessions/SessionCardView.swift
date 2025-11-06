@@ -15,6 +15,11 @@ struct SessionCardView: View {
     @State private var editedNotes = ""
     @State private var selectedMood: String = ""
     
+    private var sessionProjectColor: Color {
+        let project = projects.first { $0.name == session.projectName }
+        return project?.swiftUIColor ?? Color.gray
+    }
+    
     var projectNames: [String] {
         projects.map { $0.name }
     }
@@ -35,54 +40,65 @@ struct SessionCardView: View {
         self.onDelete = onDelete
     }
 
+    
+    // MARK: BODY
+    
     var body: some View {
-        Group {
-            if isEditing {
-                SessionEditOptions(
-                    editedDate: $editedDate,
-                    editedStartTime: $editedStartTime,
-                    editedEndTime: $editedEndTime,
-                    editedProject: $editedProject,
-                    selectedMood: $selectedMood,
-                    editedNotes: $editedNotes,
-                    projects: projectNames,
-                    onSave: saveSession,
-                    onCancel: cancelEdit,
-                    isProjectEmpty: isProjectEmpty
-                )
-            } else {
-                SessionViewOptions(
-                    session: session,
-                    projects: projects,
-                    onEdit: { isEditing = true },
-                    onDelete: onDelete
-                )
+        // 1️⃣  Card – gradient + content
+        ZStack(alignment: .leading) {
+            // --- Gradient strip
+            LinearGradient(
+                colors: [
+                    sessionProjectColor,
+                    sessionProjectColor.opacity(0.6)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(width: 8)
+            .clipped()
+            // --- Card content
+            Group {
+                if isEditing {
+                    SessionEditOptions(
+                        editedDate: $editedDate,
+                        editedStartTime: $editedStartTime,
+                        editedEndTime: $editedEndTime,
+                        editedProject: $editedProject,
+                        selectedMood: $selectedMood,
+                        editedNotes: $editedNotes,
+                        projects: projectNames,
+                        onSave: saveSession,
+                        onCancel: cancelEdit,
+                        isProjectEmpty: isProjectEmpty
+                    )
+                } else {
+                    SessionViewOptions(
+                        session: session,
+                        projects: projects,
+                        onEdit: { isEditing = true },
+                        onDelete: onDelete
+                    )
+                }
             }
+            .padding(Theme.spacingMedium)
         }
-        .padding(Theme.spacingMedium)
-        .frame(minHeight: 100)
+        // 3️⃣  Card background + border (MOVED UP!)
         .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
+
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)) // Clip AFTER background/overlay
+        // 4️⃣  Final layout tweaks
+        .frame(minHeight: 180)
         .contentShape(Rectangle())
-        .onHover { isHovered in
-            if isHovered {
-                NSCursor.pointingHand.set()
-            } else {
-                NSCursor.arrow.set()
-            }
-        }
-        .onChange(of: isEditing) { newValue, _ in
-            if newValue {
-                startEditing()
-            } else {
-                resetToOriginalValues()
-            }
+        .onChange(of: isEditing) { newValue in
+            newValue ? startEditing() : resetToOriginalValues()
         }
     }
+
     
     private func startEditing() {
         editedDate = session.date
@@ -133,8 +149,7 @@ struct SessionCardView: View {
 @available(macOS 12.0, *)
 struct SessionCardView_Previews: PreviewProvider {
     static var previews: some View {
-        // Create a more comprehensive preview showing different states
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             // Preview with short notes
             SessionCardView(
                 session: SessionRecord(
@@ -154,10 +169,11 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 300, height: 120)
-            .background(Color(.windowBackgroundColor))
-            
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
+
             Divider()
+
             
             // Preview with long notes
             SessionCardView(
@@ -179,8 +195,8 @@ struct SessionCardView_Previews: PreviewProvider {
                 onDelete: { print("Deleted") }
             )
             .frame(width: 300, height: 140)
-            .background(Color(.windowBackgroundColor))
-            
+            .background(Theme.Colors.surface)
+
             Divider()
             
             // Preview with mood
@@ -202,7 +218,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 300, height: 120)
+            .frame(width: 300, height: 140)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -226,7 +242,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 300, height: 120)
+            .frame(width: 300, height: 140)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -251,7 +267,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onDelete: { print("Deleted") }
             )
             .frame(width: 300, height: 140)
-            .background(Color(.windowBackgroundColor))
+            .background(Theme.Colors.surface)
             
             Divider()
             
@@ -275,8 +291,8 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 300, height: 120)
-            .background(Color(.windowBackgroundColor))
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.background)
         }
         .padding()
         .previewLayout(.sizeThatFits)
