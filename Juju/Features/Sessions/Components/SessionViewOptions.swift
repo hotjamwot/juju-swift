@@ -18,124 +18,82 @@ struct SessionViewOptions: View {
         self.onEdit = onEdit
         self.onDelete = onDelete
     }
-    
+
+
     public var body: some View {
-        HStack(alignment: .top, spacing: Theme.spacingMedium) {
-            // LEFT: Project and Date (35% width)
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                // Project name with color indicator
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+            // --- TOP ROW: Project Info & Actions ---
+            HStack {
                 HStack(spacing: Theme.spacingSmall) {
                     Circle()
                         .fill(sessionProjectColor)
                         .frame(width: 12, height: 12)
-                        .overlay(
-                            Circle()
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                    
                     Text(session.projectName)
                         .font(Theme.Fonts.body.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(1)
-                        .truncationMode(.tail)
                 }
+                .help(session.projectName) // Add a tooltip for truncated project names
                 
-                // Date
-                Text(formattedDate)
-                    .font(Theme.Fonts.caption)
+                Spacer()
+                
+                HStack(spacing: Theme.spacingExtraSmall) {
+                    Button(action: onEdit) { Image(systemName: "pencil") }
+                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+
+                    Button(action: onDelete) { Image(systemName: "trash") }
+                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+                }
+            }
+
+            // --- MIDDLE ROW: Time & Duration ---
+            HStack {
+                HStack(spacing: Theme.spacingSmall) {
+                    Image(systemName: "clock")
+                    Text("\(formattedStartTime) - \(formattedEndTime)")
+                }
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+                
+                Spacer()
+                
+                Text(formatDuration(session.durationMinutes))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(width: 100)
             
-            // CENTER: Time and Duration (20% width)
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                // Time Range - horizontal layout
-                HStack(alignment: .top, spacing: Theme.spacingSmall) {
-                    Image(systemName: "play.fill")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Text(formattedStartTime)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Text("—") 
-                        .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Image(systemName: "stop.fill")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Text(formattedEndTime)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-                
-                // Duration - horizontal layout
-                HStack(spacing: Theme.spacingSmall) {
-                    Image(systemName: "clock.fill")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Text(formatDuration(session.durationMinutes))
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
+            // --- NOTES SECTION (if they exist) ---
+            if !session.notes.isEmpty {
+                Text(session.notes)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            // --- BOTTOM ROW: Mood (if it exists) ---
+            if let mood = session.mood {
+                HStack {
+                    Spacer()
+                    HStack(spacing: Theme.spacingSmall) {
+                        Image(systemName: "star.fill")
+                        Text("Mood: \(mood)/10")
+                    }
+                    .font(Theme.Fonts.caption)
+                    .padding(.horizontal, Theme.spacingSmall)
+                    .padding(.vertical, Theme.spacingExtraSmall)
+                    .foregroundColor(moodColor(for: mood))
+                    .background(moodColor(for: mood).opacity(0.1))
+                    .clipShape(Capsule())
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(width: 140)
-            
-            // RIGHT: Notes and Actions (45% width)
-            HStack(spacing: Theme.spacingMedium) {
-                // Notes (takes up most of the space)
-                VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                    if !session.notes.isEmpty {
-                        Text(session.notes)
-                            .font(Theme.Fonts.body)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(4)
-                            .multilineTextAlignment(.leading)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                // Actions (takes minimal space)
-                VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
-                    // Mood
-                    if let mood = session.mood {
-                        HStack(spacing: Theme.spacingSmall) {
-                            Image(systemName: "star.fill")
-                                .font(Theme.Fonts.caption)
-                            Text("\(mood)")
-                                .font(Theme.Fonts.caption.weight(.semibold))
-                        }
-                        .padding(.horizontal, Theme.spacingSmall)
-                        .padding(.vertical, Theme.spacingExtraSmall)
-                        .foregroundColor(moodColor(for: mood))
-                        .background(Theme.Colors.accent.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                    }
-                    
-                    // Action buttons
-                    HStack(spacing: Theme.spacingExtraSmall) {
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                        }
-                        .buttonStyle(.simpleIcon(size: 12))
-
-                        Button(action: onDelete) {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.simpleIcon(size: 12))
-
-                    }
-                }
+            // Add a spacer to push content up if notes are short or non-existent
+            if session.notes.isEmpty {
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
+
     
     private var sessionProjectColor: Color {
         // Find the project and return its color
@@ -146,11 +104,10 @@ struct SessionViewOptions: View {
     }
     
     private var formattedDate: String {
-        let date = parseDate()
-        let day = Calendar.current.component(.day, from: date)
-        let month = DateFormatter().monthSymbols[Calendar.current.component(.month, from: date) - 1]
-        let ordinal = ordinalSuffix(for: day)
-        return "\(day)\(ordinal) \(month)"
+        // Use consistent date formatting for display
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: parseDate())
     }
     
     private var formattedStartTime: String {
@@ -254,7 +211,7 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 800, height: 80)
+            .frame(width: 300, height: 100)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -278,7 +235,7 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 800, height: 80)
+            .frame(width: 300, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -302,7 +259,32 @@ struct SessionViewOptions_Previews: PreviewProvider {
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
             )
-            .frame(width: 800, height: 80)
+            .frame(width: 300, height: 100)
+            .background(Color(.windowBackgroundColor))
+            
+            Divider()
+            
+            // Preview with no notes
+            SessionViewOptions(
+                session: SessionRecord(
+                    id: "4",
+                    date: "2024-01-17",
+                    startTime: "13:00:00",
+                    endTime: "14:30:00",
+                    durationMinutes: 90,
+                    projectName: "Project Gamma",
+                    notes: "",
+                    mood: 5
+                ),
+                projects: [
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0),
+                    Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0)
+                ],
+                onEdit: { print("Edit clicked") },
+                onDelete: { print("Delete clicked") }
+            )
+            .frame(width: 300, height: 100)
             .background(Color(.windowBackgroundColor))
         }
         .padding()

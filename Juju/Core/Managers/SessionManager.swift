@@ -156,7 +156,10 @@ class SessionManager: ObservableObject {
         // Save to CSV
         saveSessionToCSV(sessionData, mood: mood)
         
-        _ = loadAllSessions()
+        // Load sessions in background to update UI
+        DispatchQueue.global(qos: .background).async {
+            _ = self.loadAllSessions()
+        }
         
         // Reset state
         isSessionActive = false

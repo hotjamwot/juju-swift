@@ -13,34 +13,76 @@ public enum DateFilter: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Sessions View
-/// Main view for displaying and managing sessions
+
+struct GroupedSession: Identifiable {
+    let id = UUID() // Conforms to Identifiable
+    let date: String
+    let sessions: [SessionRecord]
+}
+
+struct GroupedSessionView: View {
+    let group: GroupedSession
+    let projects: [Project]
+    let onSave: () -> Void
+    let onDelete: (SessionRecord) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+            // 1. Date Header for the Group
+            Text(group.date)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(Theme.Colors.textPrimary)
+                .padding(.horizontal, Theme.spacingMedium)
+
+            // 2. 3-Column Grid for the Sessions
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: Theme.spacingMedium), count: 3),
+                spacing: Theme.spacingMedium
+            ) {
+                ForEach(group.sessions) { session in
+                    SessionCardView(
+                        session: session,
+                        projects: projects,
+                        onSave: onSave,
+                        onDelete: { onDelete(session) }
+                    )
+                }
+            }
+            .padding(.horizontal, Theme.spacingMedium)
+        }
+    }
+}
+
+/// Main view for displaying and managing sessions in a grouped grid
 public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
+
+    
+    // MARK: - State Properties
     
     // Filter state
     @State private var projectFilter = "All"
-    @State private var selectedDateFilter: DateFilter = .thisWeek // This now works!
+    @State private var selectedDateFilter: DateFilter = .thisWeek
     @State private var currentDateInterval: DateInterval? = nil
-    
-    // Pagination state
-    @State private var currentPage = 1
-    @State private var sessionsPerPage = 20
-    @State private var totalPages = 1
     
     // Editing state
     @State private var showingDeleteAlert = false
     @State private var toDelete: SessionRecord? = nil
     
     // UI state
-    @State private var isLoading = false
+    @State private var isLoading = false // This can be used for initial load if needed
     @State private var showingExportAlert = false
     @State private var exportMessage = ""
     
-    // Cached data
-    @State private var filteredSessions: [SessionRecord] = []
+    // --- NEW: "Load More" Pagination State ---
+    @State private var visibleGroupCount = 5
+    private let groupsPerPage = 5
 
-    // MARK: — Computed helpers
+    // MARK: - Computed Properties
+    
+    /// The source of truth for all filtering and sorting.
     private var fullyFilteredSessions: [SessionRecord] {
         var sessions = sessionManager.allSessions
 
@@ -58,98 +100,96 @@ public struct SessionsView: View {
         sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
         return sessions
     }
-
+    
+    /// Groups the filtered sessions by day for the grid view.
+    private var groupedSessions: [GroupedSession] {
+        let sessions = fullyFilteredSessions
+        let grouped = Dictionary(grouping: sessions) { session -> String in
+            // Use a consistent date format for grouping
+            guard let date = session.startDateTime else {
+                return "Unknown Date"
+            }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.string(from: date)
+        }
+        return grouped.sorted {
+            guard let date1 = $0.value.first?.startDateTime, let date2 = $1.value.first?.startDateTime else {
+                return false
+            }
+            return date1 > date2
+        }.map { (dateString, sessionRecords) in
+            GroupedSession(date: dateString, sessions: sessionRecords)
+        }
+    }
+    
+    // MARK: - Body
     public var body: some View {
         VStack(spacing: 0) {
-            // Main content area
-            VStack(spacing: 0) {
-                // Empty state or sessions list
-                if filteredSessions.isEmpty {
-                    HStack {
-                        Spacer()
-                        if isLoading {
-                            ProgressView("Loading sessions...")
-                                .progressViewStyle(CircularProgressViewStyle())
-                        } else {
-                            Text("No sessions found")
-                                .foregroundColor(Theme.Colors.textPrimary)
+            
+            // --- Main Content Area ---
+            if groupedSessions.isEmpty {
+                // Empty state view
+                VStack {
+                    Spacer()
+                    Text("No sessions found for the selected filters.")
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Grid View
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
+                        // Iterate over the visible groups based on pagination
+                        ForEach(groupedSessions.prefix(visibleGroupCount), id: \.id) { group in
+                            GroupedSessionView(
+                                group: group,
+                                projects: projectsViewModel.projects,
+                                onSave: { sessionManager.loadAllSessions() },
+                                onDelete: { session in
+                                    toDelete = session
+                                    showingDeleteAlert = true
+                                }
+                            )
                         }
-                        Spacer()
                     }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    // ScrollView for sessions
-                    ScrollView {
-                        LazyVStack(spacing: Theme.spacingMedium) {
-                            ForEach(filteredSessions, id: \.id) { session in
-                                SessionCardView(
-                                    session: session,
-                                    projects: projectsViewModel.projects,
-                                    onSave: {
-                                        updateFilteredSessions()
-                                    },
-                                    onDelete: {
-                                        toDelete = session
-                                        showingDeleteAlert = true
-                                    }
-                                )
-                            }
-                        }
-                        .padding(Theme.spacingMedium)
-                    }
-                    .scrollContentBackground(.hidden)
+                    .padding(.vertical, Theme.spacingMedium)
+
                     
-                    // Pagination controls
-                    if totalPages > 1 {
-                        HStack {
-                            Button("Previous") {
-                                goToPage(currentPage - 1)
-                            }
-                            .disabled(currentPage <= 1)
-                            .buttonStyle(.secondary)
-                            
-                            Text("Page \(currentPage) of \(totalPages)")
-                                .font(Theme.Fonts.caption)
-                            
-                            Button("Next") {
-                                goToPage(currentPage + 1)
-                            }
-                            .disabled(currentPage >= totalPages)
-                            .buttonStyle(.secondary)
+                    // --- NEW: "Load More" Button ---
+                    if visibleGroupCount < groupedSessions.count {
+                        Button("Load More...") {
+                            visibleGroupCount += groupsPerPage
                         }
-                        .padding(.top)
-                        .padding(.bottom, Theme.spacingMedium)
+                        .buttonStyle(.primary)
+                        .padding()
                     }
                 }
+                .scrollContentBackground(.hidden)
             }
-            .background(Theme.Colors.background)
             
-            // Sticky filter header at the bottom
+            // --- Sticky filter header at the bottom ---
             VStack(spacing: 0) {
-                // Filter controls
                 HStack {
                     // Project filter
                     HStack {
                         Text("Project:")
-                            .font(Theme.Fonts.caption)
                         Picker(selection: $projectFilter, label: EmptyView()) {
                             Text("All").tag("All")
-                            ForEach(projectsViewModel.projects, id: \.id) { project in
-                                Text(project.name).tag(project.name)
-                            }
+                            ForEach(projectsViewModel.projects) { Text($0.name).tag($0.name) }
                         }
                         .pickerStyle(.menu)
                         .frame(width: 120)
-                        .onChange(of: projectFilter) { _ in
-                            currentPage = 1 // Reset to first page on filter change
-                            updateFilteredSessions()
+                        .onChange(of: projectFilter) { _, _ in
+                            // CHANGED: Reset pagination on filter change
+                            visibleGroupCount = groupsPerPage
                         }
                     }
                     
                     // Date filters
                     HStack(spacing: Theme.spacingSmall) {
                         Text("Date Range:")
-                            .font(Theme.Fonts.caption)
                         ForEach(DateFilter.allCases) { filter in
                             SessionFilterButton(
                                 title: filter.title,
@@ -179,55 +219,24 @@ public struct SessionsView: View {
             }
         }
         .background(Theme.Colors.background)
-        .task {
-            await projectsViewModel.loadProjects()
-        }
+        .task { await projectsViewModel.loadProjects() }
         .onAppear { handleDateFilterSelection(.thisWeek) }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
-        } message: {
-            Text(exportMessage)
-        }
+        } message: { Text(exportMessage) }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
-
             Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
                 deleteSession(session)
             }
         } message: { session in
-             Text("Are you sure you want to delete the session for \"\(session.projectName)\" on \(session.date)? This action cannot be undone.")
+             Text("Are you sure? This action cannot be undone.")
         }
     }
     
     // MARK: - Data Functions
     
-    /// ✅ REFACTORED: Now only responsible for pagination logic.
-    private func updateFilteredSessions() {
-        DispatchQueue.main.async {
-            // 1. Start with the already filtered and sorted list
-            let sessions = fullyFilteredSessions
-            
-            // 2. Calculate total pages based on the filtered list
-            let totalSessions = sessions.count
-            totalPages = max(1, Int(ceil(Double(totalSessions) / Double(sessionsPerPage))))
-            
-            // 3. Ensure current page is valid
-            if currentPage > totalPages { currentPage = totalPages }
-            
-            // 4. Get the slice for the current page
-            let startIndex = (currentPage - 1) * sessionsPerPage
-            let endIndex = min(startIndex + sessionsPerPage, totalSessions)
-            
-            if startIndex < endIndex {
-                self.filteredSessions = Array(sessions[startIndex..<endIndex])
-            } else {
-                self.filteredSessions = []
-            }
-        }
-    }
-    
     private func exportSessions(format: String) {
         let sessions = fullyFilteredSessions
-
         guard !sessions.isEmpty else {
             exportMessage = "Nothing to export – no sessions match the current filter."
             showingExportAlert = true
@@ -244,12 +253,11 @@ public struct SessionsView: View {
     
     private func deleteSession(_ session: SessionRecord) {
         if sessionManager.deleteSession(id: session.id) {
-            updateFilteredSessions()
         }
         toDelete = nil
     }
     
-    // MARK: - Filter & Pagination
+    // MARK: - Filter Handling
     
     private func handleDateFilterSelection(_ filter: DateFilter) {
         selectedDateFilter = filter
@@ -259,30 +267,16 @@ public struct SessionsView: View {
 
         switch filter {
         case .today:
-            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-            currentDateInterval = DateInterval(start: todayStart, end: end)
+            currentDateInterval = DateInterval(start: todayStart, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
         case .thisWeek:
-            // Correctly goes back 6 days from today, covering a 7-day period.
-            let weekStart = calendar.date(byAdding: .day, value: -6, to: todayStart)!
-            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-            currentDateInterval = DateInterval(start: weekStart, end: end)
+            currentDateInterval = DateInterval(start: calendar.date(byAdding: .day, value: -6, to: todayStart)!, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
         case .thisMonth:
-            // Goes back 30 days from today.
-            let monthStart = calendar.date(byAdding: .day, value: -29, to: todayStart)!
-            let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
-            currentDateInterval = DateInterval(start: monthStart, end: end)
+            currentDateInterval = DateInterval(start: calendar.date(byAdding: .day, value: -29, to: todayStart)!, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
         case .clear:
             currentDateInterval = nil
         }
         
-        currentPage = 1
-        updateFilteredSessions()
-    }
-    
-    private func goToPage(_ page: Int) {
-        guard page >= 1 && page <= totalPages else { return }
-        currentPage = page
-        updateFilteredSessions()
+        visibleGroupCount = groupsPerPage
     }
 
     // MARK: - Nested Filter Button Component
@@ -299,15 +293,60 @@ public struct SessionsView: View {
 }
 
 
+
 // MARK: - Preview
 #if DEBUG
 @available(macOS 12.0, *)
 struct SessionsView_Previews: PreviewProvider {
     static var previews: some View {
-        VStack {
-            
+        // Create sample data for preview
+        let sampleSessions = [
+            SessionRecord(
+                id: "1",
+                date: "2024-01-15",
+                startTime: "09:00:00",
+                endTime: "10:30:00",
+                durationMinutes: 90,
+                projectName: "Project Alpha",
+                notes: "Quick meeting about the new features.",
+                mood: 7
+            ),
+            SessionRecord(
+                id: "2",
+                date: "2024-01-15",
+                startTime: "14:00:00",
+                endTime: "16:00:00",
+                durationMinutes: 120,
+                projectName: "Project Beta",
+                notes: "Long detailed notes about the implementation process.",
+                mood: 9
+            ),
+            SessionRecord(
+                id: "3",
+                date: "2024-01-16",
+                startTime: "10:00:00",
+                endTime: "11:00:00",
+                durationMinutes: 60,
+                projectName: "Project Alpha",
+                notes: "Review session",
+                mood: 8
+            )
+        ]
+        
+        // Create a mock session manager with sample data
+        let mockSessionManager = SessionManager.shared
+        mockSessionManager.allSessions = sampleSessions
+        
+        // Create a mock projects view model
+        let mockProjectsViewModel = ProjectsViewModel()
+        mockProjectsViewModel.projects = [
+            Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
+            Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0)
+        ]
+        
+        return VStack {
             SessionsView()
-                .frame(width: 1000, height: 700)
+                .frame(width: 1200, height: 800)
                 .background(Color(.windowBackgroundColor))
         }
         .padding()

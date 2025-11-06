@@ -133,6 +133,7 @@ struct SessionCardView: View {
 @available(macOS 12.0, *)
 struct SessionCardView_Previews: PreviewProvider {
     static var previews: some View {
+        // Create a more comprehensive preview showing different states
         VStack(spacing: 20) {
             // Preview with short notes
             SessionCardView(
@@ -153,7 +154,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 800, height: 120)
+            .frame(width: 300, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -177,7 +178,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 800, height: 140)
+            .frame(width: 300, height: 140)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -201,7 +202,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 800, height: 120)
+            .frame(width: 300, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -225,7 +226,7 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 800, height: 120)
+            .frame(width: 300, height: 120)
             .background(Color(.windowBackgroundColor))
             
             Divider()
@@ -249,7 +250,32 @@ struct SessionCardView_Previews: PreviewProvider {
                 onSave: { print("Saved") },
                 onDelete: { print("Deleted") }
             )
-            .frame(width: 800, height: 140)
+            .frame(width: 300, height: 140)
+            .background(Color(.windowBackgroundColor))
+            
+            Divider()
+            
+            // Preview with no notes
+            SessionCardView(
+                session: SessionRecord(
+                    id: "6",
+                    date: "2024-01-19",
+                    startTime: "11:00:00",
+                    endTime: "12:00:00",
+                    durationMinutes: 60,
+                    projectName: "Project Gamma",
+                    notes: "",
+                    mood: 5
+                ),
+                projects: [
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0),
+                    Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0)
+                ],
+                onSave: { print("Saved") },
+                onDelete: { print("Deleted") }
+            )
+            .frame(width: 300, height: 120)
             .background(Color(.windowBackgroundColor))
         }
         .padding()

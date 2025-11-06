@@ -126,10 +126,11 @@ public extension ButtonStyle where Self == SimpleIconButtonStyle {
     }
     /// A style for icon-only buttons without a background, with a custom icon size.
     /// - Parameter size: The desired font size for the icon.
-    static func simpleIcon(size: CGFloat) -> SimpleIconButtonStyle { // ✅ ADD THIS STATIC FUNCTION
+    static func simpleIcon(size: CGFloat) -> SimpleIconButtonStyle { 
         SimpleIconButtonStyle(iconSize: size)
     }
 }
+
 
 struct PointingHandOnHover: ViewModifier {
     func body(content: Content) -> some View {
