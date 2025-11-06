@@ -330,11 +330,11 @@ extension SessionManager {
         }
         
         do {
-            // Optimized: Read file in chunks for better performance
+            // Read file content
             let content = try String(contentsOf: dataFile, encoding: .utf8)
             print("🔍 CSV Content length: \(content.count)")
             
-            // Optimized: Direct string manipulation instead of complex CSV parsing
+            // Split into lines
             let lines = content.components(separatedBy: .newlines)
             print("🔍 Processed \(lines.count) lines")
             
@@ -355,61 +355,50 @@ extension SessionManager {
             var sessions: [SessionRecord] = []
             var needsRewrite = false
             
-            // Optimized batch processing
-            let batchSize = 2000  // Increased batch size for better performance
-            for batchStart in stride(from: 0, to: numberOfDataRows, by: batchSize) {
-                let batchEnd = min(batchStart + batchSize, numberOfDataRows)
-                let batch = Array(dataLines[batchStart..<batchEnd])
+            // Process all lines in one go for better performance
+            for (index, line) in dataLines.enumerated() {
+                let rowIndex = index + 1  // +1 to skip header
                 
-                for (batchIndex, line) in batch.enumerated() {
-                    let rowIndex = batchStart + batchIndex + 1  // +1 to skip header
-                    
-                    // Optimized CSV parsing - split by comma and handle quotes
-                    let fields = parseCSVLineOptimized(line)
-                    
-                    // Ensure minimum fields
-                    var safeFields = fields + Array(repeating: "", count: max(0, 8 - fields.count))
-                    
-                    var id: String
-                    if hasIdColumn {
-                        id = cleanField(safeFields[0])
-                    } else {
-                        // No ID column, generate one
-                        id = UUID().uuidString
-                        needsRewrite = true
-                        print("[SessionManager] Assigned new ID \(id) to row \(rowIndex)")
-                        safeFields.insert(id, at: 0)
-                    }
-                    
-                    // Ensure all required fields exist after potential ID insertion
-                    while safeFields.count < 8 {
-                        safeFields.append("")
-                    }
-                    
-                    let dateStr = cleanField(safeFields[1])
-                    guard !dateStr.isEmpty, dateFormatter.date(from: dateStr) != nil else {
-                        print("⚠️ Skipping invalid date in row \(rowIndex): \(dateStr)")
-                        continue
-                    }
-                    
-                    // Optimized field extraction
-                    let record = SessionRecord(
-                        id: id,
-                        date: dateStr,
-                        startTime: cleanField(safeFields[2]),
-                        endTime: cleanField(safeFields[3]),
-                        durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
-                        projectName: cleanField(safeFields[5]),
-                        notes: cleanField(safeFields[6]),
-                        mood: safeFields[7].isEmpty ? nil : Int(cleanField(safeFields[7]))
-                    )
-                    sessions.append(record)
+                // Optimized CSV parsing - split by comma and handle quotes
+                let fields = parseCSVLineOptimized(line)
+                
+                // Ensure minimum fields
+                var safeFields = fields + Array(repeating: "", count: max(0, 8 - fields.count))
+                
+                var id: String
+                if hasIdColumn {
+                    id = cleanField(safeFields[0])
+                } else {
+                    // No ID column, generate one
+                    id = UUID().uuidString
+                    needsRewrite = true
+                    print("[SessionManager] Assigned new ID \(id) to row \(rowIndex)")
+                    safeFields.insert(id, at: 0)
                 }
                 
-                // Update published property periodically for UI feedback
-                DispatchQueue.main.async {
-                    self.allSessions = sessions
+                // Ensure all required fields exist after potential ID insertion
+                while safeFields.count < 8 {
+                    safeFields.append("")
                 }
+                
+                let dateStr = cleanField(safeFields[1])
+                guard !dateStr.isEmpty, dateFormatter.date(from: dateStr) != nil else {
+                    print("⚠️ Skipping invalid date in row \(rowIndex): \(dateStr)")
+                    continue
+                }
+                
+                // Optimized field extraction
+                let record = SessionRecord(
+                    id: id,
+                    date: dateStr,
+                    startTime: cleanField(safeFields[2]),
+                    endTime: cleanField(safeFields[3]),
+                    durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
+                    projectName: cleanField(safeFields[5]),
+                    notes: cleanField(safeFields[6]),
+                    mood: safeFields[7].isEmpty ? nil : Int(cleanField(safeFields[7]))
+                )
+                sessions.append(record)
             }
             
             print("🔍 Successfully loaded \(sessions.count) sessions")
@@ -586,6 +575,8 @@ public func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
         let hasIdColumn = headerLine.lowercased().contains("id")
         let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         var sessions: [SessionRecord] = []
+        
+        // Process all lines in one go for better performance
         for line in dataLines {
             let fields = parseCSVLineOptimized(line)
             let fieldCount = fields.count

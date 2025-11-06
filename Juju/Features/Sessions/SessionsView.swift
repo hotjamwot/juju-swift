@@ -107,9 +107,10 @@ public struct SessionsView: View {
     @State private var showingExportAlert = false
     @State private var exportMessage = ""
     
-    // --- NEW: "Load More" Pagination State ---
+    // Pagination state
     @State private var visibleGroupCount = 5
     private let groupsPerPage = 5
+    @State private var allGroupedSessions: [GroupedSession] = []
 
     // MARK: - Computed Properties
     
@@ -133,20 +134,9 @@ public struct SessionsView: View {
     }
     
     /// Groups the filtered sessions by day for the grid view.
-    /// Groups the filtered sessions by day for the grid view.
     private var groupedSessions: [GroupedSession] {
-        let sessions = fullyFilteredSessions
-
-        // 1️⃣ Group by day (use the start‑of‑day date as the key)
-        let grouped = Dictionary(grouping: sessions) { session -> Date in
-            guard let start = session.startDateTime else { return Date() }
-            return Calendar.current.startOfDay(for: start)
-        }
-
-        // 2️⃣ Sort by date descending, then map to `GroupedSession`
-        return grouped
-            .sorted { $0.key > $1.key }                    // newer first
-            .map { GroupedSession(date: $0.key, sessions: $0.value) }
+        // Return the pre-computed grouped sessions
+        return Array(allGroupedSessions.prefix(visibleGroupCount))
     }
 
     
@@ -155,21 +145,32 @@ public struct SessionsView: View {
         VStack(spacing: 0) {
             
             // --- Main Content Area ---
-            if groupedSessions.isEmpty {
-                // Empty state view
-                VStack {
-                    Spacer()
-                    Text("No sessions found for the selected filters.")
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    Spacer()
+            if allGroupedSessions.isEmpty {
+                if isLoading {
+                    // Loading indicator
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading sessions...")
+                            .scaleEffect(1.5)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // Empty state view
+                    VStack {
+                        Spacer()
+                        Text("No sessions found for the selected filters.")
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 // Grid View
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
                         // Iterate over the visible groups based on pagination
-                        ForEach(groupedSessions.prefix(visibleGroupCount), id: \.id) { group in
+                        ForEach(groupedSessions, id: \.id) { group in
                             GroupedSessionView(
                                 group: group,
                                 projects: projectsViewModel.projects,
@@ -185,7 +186,7 @@ public struct SessionsView: View {
 
                     
                     // --- NEW: "Load More" Button ---
-                    if visibleGroupCount < groupedSessions.count {
+                    if visibleGroupCount < allGroupedSessions.count {
                         Button("Load More...") {
                             visibleGroupCount += groupsPerPage
                         }
@@ -246,7 +247,13 @@ public struct SessionsView: View {
             }
         }
         .background(Theme.Colors.background)
-        .task { await projectsViewModel.loadProjects() }
+        .task { 
+            await projectsViewModel.loadProjects()
+            // Load sessions when view appears
+            Task {
+                await loadGroupedSessions()
+            }
+        }
         .onAppear { handleDateFilterSelection(.thisWeek) }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
@@ -258,6 +265,29 @@ public struct SessionsView: View {
         } message: { session in
              Text("Are you sure? This action cannot be undone.")
         }
+    }
+    
+    // MARK: - Data Loading Functions
+    
+    private func loadGroupedSessions() async {
+        isLoading = true
+        // Load all sessions first
+        let sessions = sessionManager.loadAllSessions()
+        
+        // Group sessions by date
+        let grouped = Dictionary(grouping: sessions) { session -> Date in
+            guard let start = session.startDateTime else { return Date() }
+            return Calendar.current.startOfDay(for: start)
+        }
+        
+        // Sort by date descending, then map to `GroupedSession`
+        let sortedGroupedSessions = grouped
+            .sorted { $0.key > $1.key }                    // newer first
+            .map { GroupedSession(date: $0.key, sessions: $0.value) }
+        
+        allGroupedSessions = sortedGroupedSessions
+        visibleGroupCount = groupsPerPage
+        isLoading = false
     }
     
     // MARK: - Data Functions

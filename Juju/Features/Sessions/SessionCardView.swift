@@ -15,10 +15,8 @@ struct SessionCardView: View {
     @State private var editedNotes = ""
     @State private var selectedMood: String = ""
     
-    private var sessionProjectColor: Color {
-        let project = projects.first { $0.name == session.projectName }
-        return project?.swiftUIColor ?? Color.gray
-    }
+    // Cache the project color to avoid repeated lookups
+    @State private var sessionProjectColor: Color = Color.gray
     
     var projectNames: [String] {
         projects.map { $0.name }
@@ -38,6 +36,10 @@ struct SessionCardView: View {
         self.projects = projects
         self.onSave = onSave
         self.onDelete = onDelete
+        
+        // Initialize the project color
+        let project = projects.first { $0.name == session.projectName }
+        self._sessionProjectColor = State(initialValue: project?.swiftUIColor ?? Color.gray)
     }
 
     
@@ -96,6 +98,11 @@ struct SessionCardView: View {
         .contentShape(Rectangle())
         .onChange(of: isEditing) { newValue in
             newValue ? startEditing() : resetToOriginalValues()
+        }
+        .onChange(of: projects) { _, newProjects in
+            // Update the project color when projects change
+            let project = newProjects.first { $0.name == session.projectName }
+            sessionProjectColor = project?.swiftUIColor ?? Color.gray
         }
     }
 
