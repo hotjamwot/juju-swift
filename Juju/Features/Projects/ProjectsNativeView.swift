@@ -82,7 +82,7 @@ struct ProjectRowView: View {
             
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                 Text(project.name)
-                    .font(.body)
+                    .font(Theme.Fonts.header)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                 

@@ -47,15 +47,11 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         // Create window
         let windowSize = NSSize(width: 750, height: 450)
         let screen = NSScreen.main
-        let screenFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
+        _ = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
         
-        // Position at center of screen
-        let x = screenFrame.midX - windowSize.width / 2
-        let y = screenFrame.midY - windowSize.height / 2
-        let windowRect = NSRect(x: x, y: y, width: windowSize.width, height: windowSize.height)
-        
+        // Create window with proper centering
         let window = NSWindow(
-            contentRect: windowRect,
+            contentRect: NSRect(x: 0, y: 0, width: windowSize.width, height: windowSize.height),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -70,18 +66,21 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.minSize = NSSize(width: 400, height: 300)
+        window.minSize = NSSize(width: 750, height: 450)
         window.isReleasedWhenClosed = false
         window.level = .floating
         
-        // Set the content view controller (this was missing!)
+        // Set the content view controller
         window.contentViewController = hostingController
         
         // Set window delegate to handle close events
         window.delegate = self
         
-        // Show the window
+        // Show the window BEFORE centering to ensure proper positioning
         window.makeKeyAndOrderFront(nil)
+        
+        // Center the window after it's shown
+        window.center()
         
         hostingWindow = window
         

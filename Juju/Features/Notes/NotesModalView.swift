@@ -14,6 +14,7 @@ struct NotesModalView: View {
             contentView
             footerView
         }
+        .frame(minWidth: 750, minHeight: 450)
         .background(Theme.Colors.surface)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -45,7 +46,7 @@ struct NotesModalView: View {
                     .frame(width: 38, height: 38)
                     .shadow(radius: 1)
 
-                Text("Nice Juju session!")
+                Text("Ooh yeah, get in the Juju!")
             }
             .font(.system(size: 32, weight: .bold, design: .rounded))
             .foregroundColor(Theme.Colors.textPrimary)
