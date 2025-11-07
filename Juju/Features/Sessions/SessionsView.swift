@@ -19,7 +19,7 @@ private extension Int {
 
 // MARK: - Pretty‑date helper
 private extension Date {
-    /// “Monday, 23rd October”
+    /// "Monday, 23rd October"
     var prettyHeader: String {
         let cal = Calendar.current
         let weekday = cal.weekdaySymbols[cal.component(.weekday, from: self) - 1]
@@ -255,6 +255,12 @@ public struct SessionsView: View {
             }
         }
         .onAppear { handleDateFilterSelection(.thisWeek) }
+        .onChange(of: sessionManager.allSessions.count) { _ in
+            // Auto-refresh when session data changes (after edit, delete, etc.)
+            Task {
+                await loadGroupedSessions()
+            }
+        }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
         } message: { Text(exportMessage) }
@@ -283,7 +289,7 @@ public struct SessionsView: View {
         // Sort by date descending, then map to `GroupedSession`
         let sortedGroupedSessions = grouped
             .sorted { $0.key > $1.key }                    // newer first
-            .map { GroupedSession(date: $0.key, sessions: $0.value) }
+            .map { GroupedSession(date: $0.key, sessions: $0.value.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }) }
         
         allGroupedSessions = sortedGroupedSessions
         visibleGroupCount = groupsPerPage
