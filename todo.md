@@ -1,33 +1,22 @@
-# Task: Refine Time Selection Interface in Session Edit View
+# Swift Tuple Access Errors - Fix Plan
 
-## Objective
-Improve the time selection interface in the Session Edit view by removing redundant "Hour" and "Minute" labels and showing just the dropdown menus with actual time values.
+## Task Overview
+Fix tuple access errors in BubbleChartCardView.swift and WeeklyProjectBubbleChartView.swift
 
-## Current Issue
-- Time interface shows "Hour" and "Minute" labels which clutter the interface
-- Users see: "Hour" → dropdown → "Minute" → dropdown → "Hour" → dropdown → "Minute" → dropdown
+## Errors to Fix
+- Line 46-47 in BubbleChartCardView.swift: Tuple has no member 'bubble' and 'index'
+- Line 47-48 in WeeklyProjectBubbleChartView.swift: Tuple has no member 'bubble' and 'index'
 
-## Desired Improvement
-- Remove "Hour" and "Minute" labels
-- Show clean dropdown menus with formatted time values
-- Example: Session 8:05 to 9:15 should show dropdowns with "08", "05", "09", "15"
-- Add visual separator ":" between hour and minute dropdowns
+## Root Cause
+The code creates tuples `(index, bubble, diameter: CGFloat)` but tries to access them as named properties instead of tuple elements.
 
-## Implementation Plan
+## Implementation Steps
+- [ ] Create a struct to replace tuple for better type safety
+- [ ] Fix BubbleChartCardView.swift tuple access patterns
+- [ ] Fix WeeklyProjectBubbleChartView.swift tuple access patterns  
+- [ ] Test the fixes by compiling the code
+- [ ] Verify all errors are resolved
 
-### Phase 1: Clean up Time Interface
-- [ ] Remove "Hour" and "Minute" label text
-- [ ] Keep dropdown functionality but make them more compact
-- [ ] Add visual separator ":" between hour and minute dropdowns
-- [ ] Ensure proper time formatting (zero-padded values)
-
-### Phase 2: Test and Verify
-- [ ] Test time selection functionality
-- [ ] Verify time values display correctly
-- [ ] Ensure smooth user experience
-
-## Key Benefits:
-- **Cleaner Interface**: Less visual clutter with no redundant labels
-- **Intuitive Design**: Focus on actual time values rather than labels
-- **Better UX**: More streamlined time editing experience
-- **Consistent Formatting**: Zero-padded time values for clarity
+## Files to Modify
+- Juju/Features/Dashboard/BubbleChartCardView.swift
+- Juju/Features/Dashboard/WeeklyProjectBubbleChartView.swift

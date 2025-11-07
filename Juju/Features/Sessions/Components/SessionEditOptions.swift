@@ -106,7 +106,7 @@ struct SessionEditOptions: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 45)
+                            .frame(width: 60)
                             
                             Text(":")
                             
@@ -121,7 +121,7 @@ struct SessionEditOptions: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 45)
+                            .frame(width: 60)
                         }
                         
                         Text("—")
@@ -139,7 +139,7 @@ struct SessionEditOptions: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 45)
+                            .frame(width: 60)
                             
                             Text(":")
                             
@@ -154,7 +154,7 @@ struct SessionEditOptions: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 45)
+                            .frame(width: 60)
                         }
                     }
                     .font(Theme.Fonts.caption)
@@ -165,7 +165,7 @@ struct SessionEditOptions: View {
                 TextEditor(text: $editedNotes)
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
-                    .frame(height: 80)
+                    .frame(height: 60)
                     .padding(Theme.spacingMedium)
                     .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.cornerRadius)
@@ -242,7 +242,7 @@ struct SessionEditOptions_Previews: PreviewProvider {
                 onCancel: { print("Cancel clicked") },
                 isProjectEmpty: false
             )
-            .frame(width: 300, height: 140)
+            .frame(width: 400, height: 200)
             .background(Theme.Colors.surface)
             
             Divider()
@@ -260,7 +260,7 @@ struct SessionEditOptions_Previews: PreviewProvider {
                 onCancel: { print("Cancel clicked") },
                 isProjectEmpty: false
             )
-            .frame(width: 300, height: 180)
+            .frame(width: 400, height: 200)
             .background(Theme.Colors.surface)
             
             Divider()
@@ -278,7 +278,7 @@ struct SessionEditOptions_Previews: PreviewProvider {
                 onCancel: { print("Cancel clicked") },
                 isProjectEmpty: false
             )
-            .frame(width: 300, height: 120)
+            .frame(width: 400, height: 200)
             .background(Theme.Colors.surface)
         }
         .padding()
