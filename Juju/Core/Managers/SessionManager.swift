@@ -92,6 +92,7 @@ class SessionManager: ObservableObject {
     static let shared = SessionManager()
     
     @Published var allSessions: [SessionRecord] = []
+    @Published var lastUpdated = Date()
     
     // Session state
     public var isSessionActive = false
@@ -156,6 +157,9 @@ class SessionManager: ObservableObject {
         
         // Save to CSV
         saveSessionToCSV(sessionData, mood: mood)
+        
+        // Update timestamp to trigger UI refresh
+        lastUpdated = Date()
         
         // Load sessions in background to update UI
         DispatchQueue.global(qos: .background).async {
@@ -454,7 +458,7 @@ extension SessionManager {
     }
 
     private func minutesBetween(start: String, end: String) -> Int {
-    // Accept “HH:mm” or “HH:mm:ss”; if seconds are missing we’ll pad them.
+    // Accept "HH:mm" or "HH:mm:ss"; if seconds are missing we'll pad them.
     let formatter = DateFormatter()
     formatter.dateFormat = "HH:mm:ss"
 
@@ -502,6 +506,10 @@ func updateSession(id: String, field: String, value: String) -> Bool {
     if let index = allSessions.firstIndex(where: { $0.id == id }) {
         allSessions[index] = updated
         saveAllSessions(allSessions)          // writes the CSV
+        
+        // Update timestamp to trigger UI refresh
+        lastUpdated = Date()
+        
         print("✅ Updated session \(id) field \(field) to \(value)")
         return true
     }
@@ -520,6 +528,10 @@ func updateSession(id: String, field: String, value: String) -> Bool {
         
         allSessions.removeAll { $0.id == id }
         saveAllSessions(allSessions)
+        
+        // Update timestamp to trigger UI refresh
+        lastUpdated = Date()
+        
         print("✅ Deleted session \(id)")
         return true
     }

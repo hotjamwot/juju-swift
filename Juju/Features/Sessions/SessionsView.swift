@@ -255,7 +255,7 @@ public struct SessionsView: View {
             }
         }
         .onAppear { handleDateFilterSelection(.thisWeek) }
-        .onChange(of: sessionManager.allSessions.count) { _ in
+        .onChange(of: sessionManager.lastUpdated) { _ in
             // Auto-refresh when session data changes (after edit, delete, etc.)
             Task {
                 await loadGroupedSessions()

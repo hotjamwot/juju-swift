@@ -38,174 +38,187 @@ struct SessionEditOptions: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            // Header
-            HStack {
-                Text("Edit Session")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Spacer()
-                
-                Button(action: onCancel) {
-                    Image(systemName: "xmark")
-                }
-                .buttonStyle(.simpleIcon(size: 12))
-                .pointingHandOnHover()
-            }
-            
-            // Form content
+        VStack(alignment: .leading, spacing: 0) {
+            // Card content - matches SessionViewOptions structure
             VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-                // First row: Date and Project
-                HStack(spacing: Theme.spacingLarge) {
-                    // Date
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Date")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        TextField("YYYY-MM-DD", text: $editedDate)
-                            .textFieldStyle(.plain)
-                            .padding(.horizontal, Theme.spacingMedium)
-                            .padding(.vertical, Theme.spacingSmall)
-                            .background(Theme.Colors.surface)
-                            .cornerRadius(Theme.Design.cornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                    .stroke(Theme.Colors.divider, lineWidth: 1)
-                            )
+                /* ────── TOP ROW: Project + Mood ───────────── */
+                HStack {
+                    // Project name (left) - using picker
+                    Picker("Project", selection: $editedProject) {
+                        Text("-- Select Project --").tag("")
+                        ForEach(projects, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
                     }
+                    .pickerStyle(.menu)
                     .frame(maxWidth: .infinity)
                     
-                    // Project
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Project")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        Picker("Project", selection: $editedProject) {
-                            Text("-- Select Project --").tag("")
-                            ForEach(projects, id: \.self) { name in
-                                Text(name).tag(name)
+                    Spacer()
+                    
+                    // Mood dropdown (right)
+                    if let moodInt = Int(selectedMood) {
+                        Picker("Mood", selection: $selectedMood) {
+                            Text("-- No mood --").tag("")
+                            ForEach(0...10, id: \.self) { mood in
+                                Text("\(mood)").tag("\(mood)")
                             }
                         }
                         .pickerStyle(.menu)
-                        .padding(.horizontal, Theme.spacingMedium)
-                        .padding(.vertical, Theme.spacingSmall)
-                        .background(Theme.Colors.surface)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
+                        .frame(width: 120)
+                    } else {
+                        Picker("Mood", selection: $selectedMood) {
+                            Text("-- No mood --").tag("")
+                            ForEach(0...10, id: \.self) { mood in
+                                Text("\(mood)").tag("\(mood)")
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 120)
                     }
-                    .frame(maxWidth: .infinity)
                 }
                 
-                // Second row: Times
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Times")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    HStack(spacing: Theme.spacingLarge) {
-                        VStack(spacing: 4) {
-                            Text("Start")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            TextField("HH:MM", text: $editedStartTime)
-                                .textFieldStyle(.plain)
-                                .padding(.horizontal, Theme.spacingMedium)
-                                .padding(.vertical, Theme.spacingSmall)
-                                .background(Theme.Colors.surface)
-                                .cornerRadius(Theme.Design.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                                )
+                /* ────── MIDDLE ROW: Time & Date ────── */
+                HStack {
+                    HStack(spacing: Theme.spacingSmall) {
+                        Image(systemName: "calendar")
+                        Text("Date:")
+                        TextField("YYYY-MM-DD", text: $editedDate)
+                            .textFieldStyle(.plain)
+                            .frame(width: 110)
+                    }
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    Spacer()
+                    
+                    HStack(spacing: Theme.spacingSmall) {
+                        Image(systemName: "clock")
+                        // Start time with dropdowns
+                        HStack(spacing: 2) {
+                            Picker("", selection: Binding(
+                                get: { startHour },
+                                set: { newHour in
+                                    editedStartTime = String(format: "%02d:%02d", newHour, startMinute)
+                                }
+                            )) {
+                                ForEach(0...23, id: \.self) { hour in
+                                    Text(String(format: "%02d", hour)).tag(hour)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 45)
+                            
+                            Text(":")
+                            
+                            Picker("", selection: Binding(
+                                get: { startMinute },
+                                set: { newMinute in
+                                    editedStartTime = String(format: "%02d:%02d", startHour, newMinute)
+                                }
+                            )) {
+                                ForEach(0...59, id: \.self) { minute in
+                                    Text(String(format: "%02d", minute)).tag(minute)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 45)
                         }
-                        .frame(maxWidth: .infinity)
                         
                         Text("—")
-                            .font(Theme.Fonts.body)
-                            .foregroundColor(Theme.Colors.textSecondary)
                         
-                        VStack(spacing: 4) {
-                            Text("End")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            TextField("HH:MM", text: $editedEndTime)
-                                .textFieldStyle(.plain)
-                                .padding(.horizontal, Theme.spacingMedium)
-                                .padding(.vertical, Theme.spacingSmall)
-                                .background(Theme.Colors.surface)
-                                .cornerRadius(Theme.Design.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                                )
+                        // End time with dropdowns
+                        HStack(spacing: 2) {
+                            Picker("", selection: Binding(
+                                get: { endHour },
+                                set: { newHour in
+                                    editedEndTime = String(format: "%02d:%02d", newHour, endMinute)
+                                }
+                            )) {
+                                ForEach(0...23, id: \.self) { hour in
+                                    Text(String(format: "%02d", hour)).tag(hour)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 45)
+                            
+                            Text(":")
+                            
+                            Picker("", selection: Binding(
+                                get: { endMinute },
+                                set: { newMinute in
+                                    editedEndTime = String(format: "%02d:%02d", endHour, newMinute)
+                                }
+                            )) {
+                                ForEach(0...59, id: \.self) { minute in
+                                    Text(String(format: "%02d", minute)).tag(minute)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 45)
                         }
-                        .frame(maxWidth: .infinity)
                     }
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 }
                 
-                // Third row: Mood
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Mood (0-10)")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    Picker("Mood", selection: $selectedMood) {
-                        Text("-- No mood --").tag("")
-                        ForEach(0...10, id: \.self) { mood in
-                            Text("\(mood)").tag("\(mood)")
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, Theme.spacingMedium)
-                    .padding(.vertical, Theme.spacingSmall)
+                /* ────── NOTES SECTION (always visible in edit mode) ────── */
+                TextEditor(text: $editedNotes)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .frame(height: 80)
+                    .padding(Theme.spacingMedium)
                     .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.cornerRadius)
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
+                
+                /* ────── BOTTOM ROW: Save / Cancel ────── */
+                HStack {
+                    Spacer()
+                    HStack(spacing: Theme.spacingExtraSmall) {
+                        Button(action: onCancel) {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+                        
+                        Button(action: onSave) {
+                            Image(systemName: "checkmark")
+                        }
+                        .buttonStyle(SimpleIconButtonStyle(iconSize: 12))
+                        .disabled(isProjectEmpty)
+                    }
                 }
                 
-                // Fourth row: Notes (full width)
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Notes")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    TextEditor(text: $editedNotes)
-                        .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .frame(height: 120)
-                        .padding(Theme.spacingLarge)
-                        .background(Theme.Colors.surface)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                }
+                // If no notes, add spacer to maintain consistent layout
+                if editedNotes.isEmpty { Spacer() }
             }
-            
-            // Buttons
-            HStack {
-                Spacer()
-
-                Button("Cancel", role: .cancel, action: onCancel)
-                    .buttonStyle(.secondary)
-                    .pointingHandOnHover()
-                Spacer()
-                Button("Save", action: onSave)
-                    .buttonStyle(.primary)
-                    .disabled(isProjectEmpty)
-                    .pointingHandOnHover()
-                Spacer()
-            }
-            .padding(.top)
+            .padding(.vertical, Theme.spacingMedium)
+            .padding(.horizontal, Theme.spacingMedium)
         }
-        .frame(minHeight: 500)
-        .padding(Theme.spacingLarge)
-        .background(Theme.Colors.background)
+        .background(Theme.Colors.surface)
+    }
+    
+    // Helper computed properties for time parsing
+    private var startHour: Int {
+        let parts = editedStartTime.components(separatedBy: ":")
+        return Int(parts[0]) ?? 0
+    }
+    
+    private var startMinute: Int {
+        let parts = editedStartTime.components(separatedBy: ":")
+        return parts.count > 1 ? Int(parts[1]) ?? 0 : 0
+    }
+    
+    private var endHour: Int {
+        let parts = editedEndTime.components(separatedBy: ":")
+        return Int(parts[0]) ?? 0
+    }
+    
+    private var endMinute: Int {
+        let parts = editedEndTime.components(separatedBy: ":")
+        return parts.count > 1 ? Int(parts[1]) ?? 0 : 0
     }
 }
 
@@ -216,23 +229,60 @@ struct SessionEditOptions_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 20) {
             
-            // Edit Session preview
+            // Edit Session preview with short notes
             SessionEditOptions(
                 editedDate: .constant("2024-01-16"),
                 editedStartTime: .constant("14:00"),
                 editedEndTime: .constant("16:00"),
                 editedProject: .constant("Project Beta"),
-                selectedMood: .constant(""),
-                editedNotes: .constant("This is a much longer set of notes that should demonstrate how the notes field behaves with more content. This helps to see if the text editor properly handles longer text strings and if the layout adjusts appropriately to accommodate the content."),
+                selectedMood: .constant("7"),
+                editedNotes: .constant("Short notes"),
                 projects: ["Project Alpha", "Project Beta", "Project Gamma"],
                 onSave: { print("Save clicked") },
                 onCancel: { print("Cancel clicked") },
                 isProjectEmpty: false
             )
-            .frame(width: 800, height: 500)
-            .background(Color(.windowBackgroundColor))
+            .frame(width: 300, height: 140)
+            .background(Theme.Colors.surface)
             
+            Divider()
+            
+            // Edit Session preview with long notes
+            SessionEditOptions(
+                editedDate: .constant("2024-01-16"),
+                editedStartTime: .constant("09:30"),
+                editedEndTime: .constant("11:45"),
+                editedProject: .constant("Project Alpha"),
+                selectedMood: .constant("9"),
+                editedNotes: .constant("This is a much longer set of notes that should demonstrate how the notes field behaves with more content."),
+                projects: ["Project Alpha", "Project Beta", "Project Gamma"],
+                onSave: { print("Save clicked") },
+                onCancel: { print("Cancel clicked") },
+                isProjectEmpty: false
+            )
+            .frame(width: 300, height: 180)
+            .background(Theme.Colors.surface)
+            
+            Divider()
+            
+            // Edit Session preview with no mood
+            SessionEditOptions(
+                editedDate: .constant("2024-01-17"),
+                editedStartTime: .constant("10:00"),
+                editedEndTime: .constant("11:00"),
+                editedProject: .constant("Project Gamma"),
+                selectedMood: .constant(""),
+                editedNotes: .constant(""),
+                projects: ["Project Alpha", "Project Beta", "Project Gamma"],
+                onSave: { print("Save clicked") },
+                onCancel: { print("Cancel clicked") },
+                isProjectEmpty: false
+            )
+            .frame(width: 300, height: 120)
+            .background(Theme.Colors.surface)
         }
+        .padding()
+        .previewLayout(.sizeThatFits)
     }
 }
 #endif
