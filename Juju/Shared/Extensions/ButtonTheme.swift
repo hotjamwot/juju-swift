@@ -19,6 +19,8 @@ public struct PrimaryButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
     }
 }
 
@@ -37,6 +39,8 @@ public struct SecondaryButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.8 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
     }
 }
 
@@ -55,6 +59,8 @@ public struct IconButtonStyle: ButtonStyle {
             .opacity(isEnabled ? 1.0 : 0.5)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
     }
 }
 
@@ -72,6 +78,7 @@ public struct SimpleIconButtonStyle: ButtonStyle {
             )
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
     }
 }
 
@@ -92,6 +99,8 @@ public struct FilterButtonStyle: ButtonStyle {
             .cornerRadius(Theme.Design.cornerRadius)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: 0.15), value: isSelected)
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
     }
 }
 
@@ -131,7 +140,6 @@ public extension ButtonStyle where Self == SimpleIconButtonStyle {
     }
 }
 
-
 struct PointingHandOnHover: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -144,10 +152,16 @@ struct PointingHandOnHover: ViewModifier {
             }
     }
 }
+
 public extension View {
     /// Applies a modifier that changes the cursor to a pointing hand on hover.
     func pointingHandOnHover() -> some View {
         self.modifier(PointingHandOnHover())
+    }
+    
+    /// Removes the focus ring from buttons and other focusable elements.
+    func removeFocusRing() -> some View {
+        self.buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -212,7 +226,6 @@ struct ButtonTheme_Previews: PreviewProvider {
                     Text("Secondary Buttons").font(.headline)
                     HStack {
                         Button("Secondary Action") {}.buttonStyle(.secondary)
-                        // ✅ CORRECTED THIS LINE
                         Button("Disabled") {}.buttonStyle(.secondary).disabled(true)
                     }
                 }
