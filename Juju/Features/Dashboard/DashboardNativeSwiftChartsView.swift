@@ -1,6 +1,5 @@
 import SwiftUI
 import Charts
-import Foundation
 
 // 1️⃣  Extension moved out of the struct
 extension Date {
@@ -25,9 +24,10 @@ struct DashboardNativeSwiftChartsView: View {
                     chartDataPreparer: chartDataPreparer,
                     totalHours: chartDataPreparer.weeklyTotalHours() )
 
+                // First pane: YearlyTotalBarChart (replacing BubbleChartCardView)
                 GeometryReader { geo in
                     HStack(spacing: Theme.spacingMedium) {
-                        BubbleChartCardView(
+                        YearlyTotalBarChartView(
                             data: chartDataPreparer.yearlyProjectTotals()
                         )
                         .layoutPriority(3)
@@ -52,6 +52,34 @@ struct DashboardNativeSwiftChartsView: View {
                     }
                 }
                 .frame(height: 350)
+                .padding(Theme.spacingMedium)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
+
+                // Second pane: BubbleChartView (new chart with all sessions)
+                GeometryReader { geo in
+                    BubbleChartView(
+                        sessions: chartDataPreparer.sessions.map { session in
+                            // Get the project color from the projects list
+                            let projectColor = chartDataPreparer.projects.first { $0.name == session.projectName }?.color ?? "#999999"
+                            return ChartEntry(
+                                date: session.startDateTime ?? Date(),
+                                projectName: session.projectName,
+                                projectColor: projectColor,
+                                durationMinutes: session.durationMinutes,
+                                startTime: session.startTime,
+                                endTime: session.endTime,
+                                notes: session.notes,
+                                mood: session.mood
+                            )
+                        }
+                    )
+                }
+                .frame(height: 300)
                 .padding(Theme.spacingMedium)
                 .background(Theme.Colors.surface)
                 .cornerRadius(Theme.Design.cornerRadius)

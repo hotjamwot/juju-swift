@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		662BB3892EC2697200B36792 /* BubbleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662BB3882EC2697200B36792 /* BubbleChartView.swift */; };
+		662BB38B2EC2697800B36792 /* YearlyTotalBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662BB38A2EC2697800B36792 /* YearlyTotalBarChartView.swift */; };
 		6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */; };
 		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
 		666C394C2EAFB53800B408B8 /* SessionEditOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39482EAFB53800B408B8 /* SessionEditOptions.swift */; };
@@ -41,13 +43,14 @@
 		66BDAC462EAD0AF30042A906 /* StackedAreaChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */; };
 		66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */; };
 		66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */; };
-		66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */; };
 		66BDAC4A2EAD0AF30042A906 /* HeroSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */; };
 		66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */; };
 		66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C452FA2EB4133200DE7FE6 /* TooltipView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		662BB3882EC2697200B36792 /* BubbleChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BubbleChartView.swift; sourceTree = "<group>"; };
+		662BB38A2EC2697800B36792 /* YearlyTotalBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyTotalBarChartView.swift; sourceTree = "<group>"; };
 		6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
 		666C39482EAFB53800B408B8 /* SessionEditOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionEditOptions.swift; sourceTree = "<group>"; };
@@ -84,7 +87,6 @@
 		66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StackedAreaChartCardView.swift; sourceTree = "<group>"; };
 		66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
 		66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SummaryMetricView.swift; sourceTree = "<group>"; };
-		66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BubbleChartCardView.swift; sourceTree = "<group>"; };
 		66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeroSectionView.swift; sourceTree = "<group>"; };
 		66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyProjectBubbleChartView.swift; sourceTree = "<group>"; };
 		66C452FA2EB4133200DE7FE6 /* TooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TooltipView.swift; sourceTree = "<group>"; };
@@ -176,7 +178,8 @@
 		66B148322EA8EA4B00E9BB4A /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
-				66BDAC432EAD0AF20042A906 /* BubbleChartCardView.swift */,
+				662BB38A2EC2697800B36792 /* YearlyTotalBarChartView.swift */,
+				662BB3882EC2697200B36792 /* BubbleChartView.swift */,
 				66BDAC402EAD0AF20042A906 /* StackedAreaChartCardView.swift */,
 				66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */,
 				66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */,
@@ -359,10 +362,10 @@
 			files = (
 				66B1484F2EA8EA4B00E9BB4A /* MenuManager.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
+				662BB3892EC2697200B36792 /* BubbleChartView.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
 				666C394C2EAFB53800B408B8 /* SessionEditOptions.swift in Sources */,
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
-				66BDAC492EAD0AF30042A906 /* BubbleChartCardView.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */,
@@ -380,6 +383,7 @@
 				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
 				66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */,
 				66BDAC462EAD0AF30042A906 /* StackedAreaChartCardView.swift in Sources */,
+				662BB38B2EC2697800B36792 /* YearlyTotalBarChartView.swift in Sources */,
 				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
 				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
 				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,
