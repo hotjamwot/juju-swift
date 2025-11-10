@@ -28,7 +28,7 @@ struct BubbleChartCardView: View {
                 GeometryReader { geometry in
                     let minSide = min(geometry.size.width, geometry.size.height)
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let maxDiameter = minSide * 0.5
+                    let maxDiameter = minSide * 0.7
 
                     // Calculate diameters
                     let diameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
@@ -41,7 +41,7 @@ struct BubbleChartCardView: View {
 
                             ZStack {
                                 Circle()
-                                    .fill(Color(hex: bubbleData.color))
+                                    .fill( Color(hex: bubbleData.color))
                                     .frame(width: diameter, height: diameter)
                                     .scaleEffect(hoveredIndex == idx ? 1.10 : 1)
                                     .animation(.easeInOut(duration: Theme.Design.animationDuration),
@@ -86,7 +86,7 @@ struct BubbleChartCardView: View {
                         }
                     }
                 }
-                .frame(height: 240)
+                .frame(height: 200)
             }
         }
         .padding(Theme.spacingMedium)
@@ -98,7 +98,20 @@ struct BubbleChartCardView: View {
         lastSize = size
         // Run off-main thread to keep UI snappy
         DispatchQueue.global(qos: .userInitiated).async {
-            let packed = PackedCircleLayout.pack(bubbles: bubbles,
+            // Find the index of the largest bubble (highest radius)
+            let largestIndex = bubbles.indices.max { bubbles[$0].radius < bubbles[$1].radius } ?? 0
+            
+            // Create a copy of bubbles to modify
+            var mutableBubbles = bubbles
+            
+            // Move the largest bubble to the front so it gets positioned in the center
+            if largestIndex != 0 {
+                let largestBubble = mutableBubbles[largestIndex]
+                mutableBubbles.remove(at: largestIndex)
+                mutableBubbles.insert(largestBubble, at: 0)
+            }
+            
+            let packed = PackedCircleLayout.pack(bubbles: mutableBubbles,
                                                  in: size,
                                                  padding: Theme.spacingExtraSmall)
             DispatchQueue.main.async {
@@ -125,10 +138,16 @@ fileprivate struct PackedCircleLayout {
         let maxIterations = 200
         let centre = CGPoint(x: size.width / 2, y: size.height / 2)
 
-        // Random start positions near centre
-        for i in 0..<result.count {
-            result[i].x = CGFloat.random(in: -size.width/8...size.width/8)
-            result[i].y = CGFloat.random(in: -size.height/8...size.height/8)
+        // Set first bubble (largest) to be at the center
+        if !result.isEmpty {
+            result[0].x = 0
+            result[0].y = 0
+        }
+        
+        // Set random start positions for other bubbles near the center
+        for i in 1..<result.count {
+            result[i].x = CGFloat.random(in: -size.width/12...size.width/12)
+            result[i].y = CGFloat.random(in: -size.height/12...size.height/12)
         }
 
         // Iteratively push apart overlapping bubbles
@@ -161,7 +180,13 @@ fileprivate struct PackedCircleLayout {
 }
 
 #Preview {
-    BubbleChartCardView(data: BubbleChartCardView.sampleData)
-        .frame(width: 800, height: 350)
-        .padding()
+    BubbleChartCardView(data: [
+        ProjectChartData(projectName: "Work", color: "#4E79A7", totalHours: 120, percentage: 45.0),
+        ProjectChartData(projectName: "Personal", color: "#F28E2C", totalHours: 80, percentage: 30.0),
+        ProjectChartData(projectName: "Learning", color: "#E15759", totalHours: 40, percentage: 15.0),
+        ProjectChartData(projectName: "Other", color: "#76B7B2", totalHours: 20, percentage: 7.5),
+        ProjectChartData(projectName: "Hobby", color: "#59A14F", totalHours: 60, percentage: 22.5)
+    ])
+    .frame(width: 800, height: 350)
+    .padding()
 }

@@ -37,6 +37,7 @@ extension Color {
     }
 }
 
+
 // MARK: - ClosureSleeve for button/colorWell actions
 class ClosureSleeve: NSObject {
     let closure: () -> Void
