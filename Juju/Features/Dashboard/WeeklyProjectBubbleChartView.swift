@@ -8,10 +8,10 @@ struct WeeklyProjectBubbleChartView: View {
     @State private var lastSize: CGSize = .zero
 
     static let sampleData: [ProjectChartData] = [
-        ProjectChartData(projectName: "Work", color: "#4E79A7", totalHours: 8.0, percentage: 40.0),
-        ProjectChartData(projectName: "Personal", color: "#F28E2C", totalHours: 4.0, percentage: 20.0),
-        ProjectChartData(projectName: "Learning", color: "#E15759", totalHours: 6.0, percentage: 30.0),
-        ProjectChartData(projectName: "Other", color: "#76B7B2", totalHours: 2.0, percentage: 10.0)
+        ProjectChartData(projectName: "Work", color: "#4E79A7", emoji: "💼", totalHours: 8.0, percentage: 40.0),
+        ProjectChartData(projectName: "Personal", color: "#F28E2C", emoji: "🏠", totalHours: 4.0, percentage: 20.0),
+        ProjectChartData(projectName: "Learning", color: "#E15759", emoji: "📚", totalHours: 6.0, percentage: 30.0),
+        ProjectChartData(projectName: "Other", color: "#76B7B2", emoji: "📁", totalHours: 2.0, percentage: 10.0)
     ]
 
     var body: some View {
@@ -52,14 +52,18 @@ struct WeeklyProjectBubbleChartView: View {
                                     }
 
                                 VStack(spacing: 1) {
-                                    Text(bubbleData.projectName)
-                                        .font(.system(size: max(12, diameter * 0.22),
+                                    HStack(spacing: 2) {
+                                        Text(bubbleData.emoji)
+                                            .font(.system(size: max(10, diameter * 0.18), design: .rounded))
+                                        Text(bubbleData.projectName)
+                                            .font(.system(size: max(12, diameter * 0.20),
                                                       weight: .medium,
                                                       design: .rounded))
-                                        .foregroundColor(Theme.Colors.textPrimary)
-                                        .multilineTextAlignment(.center)
-                                        .lineLimit(2)
-                                        .padding(.horizontal, 4)
+                                            .foregroundColor(Theme.Colors.textPrimary)
+                                            .multilineTextAlignment(.center)
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.horizontal, 4)
 
                                     Text("\(bubbleData.totalHours, specifier: "%.1f") h")
                                         .font(.system(size: max(10, diameter * 0.12),
@@ -183,10 +187,10 @@ fileprivate struct PackedCircleLayout {
 // MARK: - Preview
 #Preview {
     WeeklyProjectBubbleChartView(data: [
-        ProjectChartData(projectName: "Work", color: "#4E79A7", totalHours: 8.0, percentage: 40.0),
-        ProjectChartData(projectName: "Personal", color: "#F28E2C", totalHours: 4.0, percentage: 20.0),
-        ProjectChartData(projectName: "Learning", color: "#E15759", totalHours: 6.0, percentage: 30.0),
-        ProjectChartData(projectName: "Other", color: "#76B7B2", totalHours: 2.0, percentage: 10.0)
+        ProjectChartData(projectName: "Work", color: "#4E79A7", emoji: "💼", totalHours: 8.0, percentage: 40.0),
+        ProjectChartData(projectName: "Personal", color: "#F28E2C", emoji: "🏠", totalHours: 4.0, percentage: 20.0),
+        ProjectChartData(projectName: "Learning", color: "#E15759", emoji: "📚", totalHours: 6.0, percentage: 30.0),
+        ProjectChartData(projectName: "Other", color: "#76B7B2", emoji: "📁", totalHours: 2.0, percentage: 10.0)
     ])
     .frame(width: 400, height: 300)
     .padding()

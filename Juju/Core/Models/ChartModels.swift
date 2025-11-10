@@ -7,6 +7,7 @@ struct ChartEntry: Identifiable {
     let date: Date
     let projectName: String
     let projectColor: String
+    let projectEmoji: String
     let durationMinutes: Int
     let startTime: String
     let endTime: String
@@ -34,6 +35,7 @@ struct ProjectChartData: Identifiable {
     let id = UUID()
     let projectName: String
     let color: String
+    let emoji: String
     let totalHours: Double
     let percentage: Double
     
@@ -57,6 +59,7 @@ struct DailyChartEntry: Identifiable {
     let dateString: String
     let projectName: String
     let projectColor: String
+    let projectEmoji: String
     let durationHours: Double
     
     var colorSwiftUI: Color {
@@ -75,6 +78,7 @@ struct ProjectSeriesData: Identifiable {
     let projectName: String
     let monthlyHours: [MonthlyHour] // An array of all data points for this project
     let color: String
+    let emoji: String
     var id: String { projectName }
 }
 
@@ -86,5 +90,6 @@ struct WeeklySession: Identifiable {
     let endHour: Double
     let projectName: String
     let projectColor: String
+    let projectEmoji: String
     var duration: Double { endHour - startHour }
 }

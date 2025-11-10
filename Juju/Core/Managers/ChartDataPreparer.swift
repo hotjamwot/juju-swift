@@ -76,10 +76,13 @@ final class ChartDataPreparer: ObservableObject {
         
         let totalHours = totals.values.reduce(0, +)
         return totals.map { (name, hours) in
-            let color = viewModel.projects.first(where: { $0.name == name })?.color ?? "#999999"
+            let project = viewModel.projects.first(where: { $0.name == name })
+            let color = project?.color ?? "#999999"
+            let emoji = project?.emoji ?? "📁"
             return ProjectChartData(
                 projectName: name,
                 color: color,
+                emoji: emoji,
                 totalHours: hours,
                 percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
             )
@@ -195,14 +198,17 @@ final class ChartDataPreparer: ObservableObject {
             weekdayFormatter.dateFormat = "EEEE"
             let day = weekdayFormatter.string(from: date)
 
-            let projectColor = viewModel.projects.first(where: { $0.name == session.projectName })?.color ?? "#999999"
+            let project = viewModel.projects.first(where: { $0.name == session.projectName })
+            let projectColor = project?.color ?? "#999999"
+            let projectEmoji = project?.emoji ?? "📁"
 
             return WeeklySession(
                 day: day,
                 startHour: startHour,
                 endHour: endHour,
                 projectName: session.projectName,
-                projectColor: projectColor
+                projectColor: projectColor,
+                projectEmoji: projectEmoji
             )
         }
     }
@@ -310,13 +316,16 @@ final class ChartDataPreparer: ObservableObject {
             }
             
             completeMonthlyHours.sort(by: { $0.date < $1.date })
-            let projectColor = viewModel.projects.first(where: { $0.name == projectName })?.color ?? "#999999"
+            let project = viewModel.projects.first(where: { $0.name == projectName })
+            let projectColor = project?.color ?? "#999999"
+            let projectEmoji = project?.emoji ?? "📁"
             
             finalData.append(
                 ProjectSeriesData(
                     projectName: projectName,
                     monthlyHours: completeMonthlyHours,
-                    color: projectColor
+                    color: projectColor,
+                    emoji: projectEmoji
                 )
             )
         }
@@ -355,12 +364,15 @@ final class ChartDataPreparer: ObservableObject {
     func bubbleChartEntries() -> [ChartEntry] {
         viewModel.sessions.compactMap { session in
             guard let date = formatterYYYYMMDD.date(from: session.date) else { return nil }
-            let projectColor = viewModel.projects.first { $0.name == session.projectName }?.color ?? "#999999"
+            let project = viewModel.projects.first { $0.name == session.projectName }
+            let projectColor = project?.color ?? "#999999"
+            let projectEmoji = project?.emoji ?? "📁"
             
             return ChartEntry(
                 date: date,
                 projectName: session.projectName,
                 projectColor: projectColor,
+                projectEmoji: projectEmoji,
                 durationMinutes: session.durationMinutes,
                 startTime: session.startTime,
                 endTime: session.endTime,

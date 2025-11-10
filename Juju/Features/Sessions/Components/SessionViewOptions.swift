@@ -26,11 +26,15 @@ struct SessionViewOptions: View {
               VStack(alignment: .leading, spacing: Theme.spacingMedium) {
                   /* ────── TOP ROW: Project + Mood ───────────── */
                   HStack {
-                      // Project name (left)
-                      Text(session.projectName)
-                          .font(Theme.Fonts.header)
-                          .lineLimit(1)
-                          .help(session.projectName)     // tooltip for truncated names
+                      // Project name with emoji (left)
+                      HStack(spacing: Theme.spacingSmall) {
+                          Text(sessionProjectEmoji)
+                              .font(Theme.Fonts.header)
+                          Text(session.projectName)
+                              .font(Theme.Fonts.header)
+                              .lineLimit(1)
+                              .help(session.projectName)     // tooltip for truncated names
+                      }
                       
                       Spacer()
                       
@@ -89,7 +93,7 @@ struct SessionViewOptions: View {
                       }
                   }
                   
-                  // If there’s no notes, push everything up
+                  // If there's no notes, push everything up
                   if session.notes.isEmpty { Spacer() }
               }
               .padding(.vertical, Theme.spacingMedium)
@@ -104,6 +108,14 @@ struct SessionViewOptions: View {
             return project.swiftUIColor
         }
         return Theme.Colors.accentColor
+    }
+    
+    private var sessionProjectEmoji: String {
+        // Find the project and return its emoji
+        if let project = projects.first(where: { $0.name == session.projectName }) {
+            return project.emoji
+        }
+        return "📁" // Default fallback emoji
     }
     
     private var formattedDate: String {
@@ -208,8 +220,8 @@ struct SessionViewOptions_Previews: PreviewProvider {
                     mood: 7
                 ),
                 projects: [
-                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0)
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼"),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
                 ],
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
@@ -232,8 +244,8 @@ struct SessionViewOptions_Previews: PreviewProvider {
                     mood: 9
                 ),
                 projects: [
-                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0)
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼"),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
                 ],
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
@@ -256,8 +268,8 @@ struct SessionViewOptions_Previews: PreviewProvider {
                     mood: nil
                 ),
                 projects: [
-                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0)
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼"),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
                 ],
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }
@@ -280,9 +292,9 @@ struct SessionViewOptions_Previews: PreviewProvider {
                     mood: 5
                 ),
                 projects: [
-                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0),
-                    Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0)
+                    Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼"),
+                    Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠"),
+                    Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0, emoji: "📚")
                 ],
                 onEdit: { print("Edit clicked") },
                 onDelete: { print("Delete clicked") }

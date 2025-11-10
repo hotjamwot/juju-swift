@@ -81,10 +81,15 @@ struct ProjectRowView: View {
                 .frame(width: 32, height: 32)
             
             VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-                Text(project.name)
-                    .font(Theme.Fonts.header)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                // Project name with emoji
+                HStack(spacing: Theme.spacingSmall) {
+                    Text(project.emoji)
+                        .font(Theme.Fonts.header)
+                    Text(project.name)
+                        .font(Theme.Fonts.header)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
                 
                 if let about = project.about, !about.isEmpty {
                     Text(about)
@@ -139,9 +144,9 @@ struct ProjectsNativeView_Previews: PreviewProvider {
         // This is a reliable preview for testing UI with specific data,
         // without touching your real files.
         let mockProjects = [
-            Project(name: "Juju Time Tracking", color: "#8E44AD", about: "Internal app dev.", order: 1),
-            Project(name: "Client - Acme Inc.", color: "#3498DB", about: "Website redesign.", order: 2),
-            Project(name: "Personal Growth", color: "#2ECC71", about: "", order: 3)
+            Project(name: "Juju Time Tracking", color: "#8E44AD", about: "Internal app dev.", order: 1, emoji: "💼"),
+            Project(name: "Client - Acme Inc.", color: "#3498DB", about: "Website redesign.", order: 2, emoji: "🌐"),
+            Project(name: "Personal Growth", color: "#2ECC71", about: "", order: 3, emoji: "📚")
         ]
 
         List(mockProjects) { project in

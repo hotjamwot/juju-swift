@@ -14,9 +14,10 @@ struct Project: Codable, Identifiable, Hashable {
     var color: String
     var about: String?
     var order: Int
+    var emoji: String
     
     enum CodingKeys: String, CodingKey {
-        case id, name, color, about, order
+        case id, name, color, about, order, emoji
     }
     
     // Computed SwiftUI Color from hex string (avoids storing Color)
@@ -24,20 +25,22 @@ struct Project: Codable, Identifiable, Hashable {
         Color(hex: color)
     }
     
-    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0) {
+    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁") {
         self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
         self.name = name
         self.color = color
         self.about = about
         self.order = order
+        self.emoji = emoji
     }
     
-    init(id: String, name: String, color: String, about: String?, order: Int) {
+    init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = "📁") {
         self.id = id
         self.name = name
         self.color = color
         self.about = about
         self.order = order
+        self.emoji = emoji
     }
     
     init(from decoder: Decoder) throws {
@@ -47,6 +50,7 @@ struct Project: Codable, Identifiable, Hashable {
         color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#4E79A7"
         about = try container.decodeIfPresent(String.self, forKey: .about)
         order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
+        emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? "📁"
     }
     
     func encode(to encoder: Encoder) throws {
@@ -56,6 +60,7 @@ struct Project: Codable, Identifiable, Hashable {
         try container.encode(color, forKey: .color)
         try container.encodeIfPresent(about, forKey: .about)
         try container.encode(order, forKey: .order)
+        try container.encode(emoji, forKey: .emoji)
     }
     
     func hash(into hasher: inout Hasher) {
@@ -137,11 +142,19 @@ class ProjectManager {
                 needsRewrite = true
                 print("Found project with invalid color, setting to default")
             }
+            
             // Ensure project has an about field (allow empty string by default)
             if project.about == nil {
                 project.about = ""
                 needsRewrite = true
                 print("Adding missing 'about' field to project \(project.name)")
+            }
+            
+            // Ensure project has an emoji field (use default folder emoji)
+            if project.emoji.isEmpty {
+                project.emoji = "📁"
+                needsRewrite = true
+                print("Adding missing 'emoji' field to project \(project.name)")
             }
             
             migratedProjects.append(project)
@@ -157,10 +170,10 @@ class ProjectManager {
     
     private func createDefaultProjects() -> [Project] {
         let defaults = [
-            Project(name: "Work", color: "#4E79A7"),
-            Project(name: "Personal", color: "#F28E2C"),
-            Project(name: "Learning", color: "#E15759"),
-            Project(name: "Other", color: "#76B7B2")
+            Project(name: "Work", color: "#4E79A7", emoji: "💼"),
+            Project(name: "Personal", color: "#F28E2C", emoji: "🏠"),
+            Project(name: "Learning", color: "#E15759", emoji: "📚"),
+            Project(name: "Other", color: "#76B7B2", emoji: "📁")
         ]
         print("Created default projects")
         saveProjects(defaults)

@@ -85,7 +85,8 @@ struct StackedAreaChartCardView: View {
                 MonthlyHour(date: dateFor(month: 2), hours: 10), // Feb
                 MonthlyHour(date: dateFor(month: 3), hours: 0)   // Mar (add 0 to make the line continuous)
             ],
-            color: "#FFA500"
+            color: "#FFA500",
+            emoji: "🎬"
         ),
         ProjectSeriesData(
             projectName: "Writing",
@@ -94,7 +95,8 @@ struct StackedAreaChartCardView: View {
                 MonthlyHour(date: dateFor(month: 2), hours: 0),   // Feb (add 0)
                 MonthlyHour(date: dateFor(month: 3), hours: 12)  // Mar
             ],
-            color: "#800080"
+            color: "#800080",
+            emoji: "✍️"
         ),
         ProjectSeriesData(
             projectName: "Design",
@@ -103,7 +105,8 @@ struct StackedAreaChartCardView: View {
                 MonthlyHour(date: dateFor(month: 2), hours: 5),  // Feb
                 MonthlyHour(date: dateFor(month: 3), hours: 8)   // Mar
             ],
-            color: "#0000FF"
+            color: "#0000FF",
+            emoji: "🎨"
         )
     ]
     

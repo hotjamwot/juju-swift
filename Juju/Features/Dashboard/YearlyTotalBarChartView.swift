@@ -31,9 +31,13 @@ struct YearlyTotalBarChartView: View {
                                         .fill(Color(hex: projectData.color))
                                         .frame(width: Theme.spacingMedium, height: Theme.spacingMedium)
                                     
-                                    Text(projectData.projectName)
-                                        .font(Theme.Fonts.body)
-                                        .foregroundColor(Theme.Colors.textPrimary)
+                                    HStack(spacing: Theme.spacingSmall) {
+                                        Text(projectData.emoji)
+                                            .font(Theme.Fonts.body)
+                                        Text(projectData.projectName)
+                                            .font(Theme.Fonts.body)
+                                            .foregroundColor(Theme.Colors.textPrimary)
+                                    }
                                 }
                                 .frame(width: Theme.spacingLarge * 6, alignment: .leading)
                                 
@@ -81,11 +85,11 @@ struct YearlyTotalBarChartView: View {
 
 #Preview {
     YearlyTotalBarChartView(data: [
-        ProjectChartData(projectName: "Work", color: "#4E79A7", totalHours: 120, percentage: 45.0),
-        ProjectChartData(projectName: "Personal", color: "#F28E2C", totalHours: 80, percentage: 30.0),
-        ProjectChartData(projectName: "Learning", color: "#E15759", totalHours: 40, percentage: 15.0),
-        ProjectChartData(projectName: "Other", color: "#76B7B2", totalHours: 20, percentage: 7.5),
-        ProjectChartData(projectName: "Hobby", color: "#59A14F", totalHours: 60, percentage: 22.5)
+        ProjectChartData(projectName: "Work", color: "#4E79A7", emoji: "💼", totalHours: 120, percentage: 45.0),
+        ProjectChartData(projectName: "Personal", color: "#F28E2C", emoji: "🏠", totalHours: 80, percentage: 30.0),
+        ProjectChartData(projectName: "Learning", color: "#E15759", emoji: "📚", totalHours: 40, percentage: 15.0),
+        ProjectChartData(projectName: "Other", color: "#76B7B2", emoji: "📁", totalHours: 20, percentage: 7.5),
+        ProjectChartData(projectName: "Hobby", color: "#59A14F", emoji: "🎨", totalHours: 60, percentage: 22.5)
     ])
     .frame(width: 1000, height: 300)
     .padding()

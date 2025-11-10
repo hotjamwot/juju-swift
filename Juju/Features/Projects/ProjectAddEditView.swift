@@ -4,8 +4,10 @@ struct ProjectAddEditView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var color: String = "#4E79A7"
+    @State private var emoji: String = "📁"
     @State private var about: String = ""
     @State private var showingColorPicker = false
+    @State private var showingEmojiPicker = false
     
     let colorOptions = [
         // Row 1 - Reds & Pinks
@@ -41,7 +43,38 @@ struct ProjectAddEditView: View {
         "#FFB703"  // Golden glow
     ]
 
-    
+    let emojiOptions = [
+        // Work & Business
+        "💼", "📊", "💻", "📱", "🔧", "⚙️", "📈", "📝",
+        
+        // Personal & Lifestyle
+        "🏠", "👨‍👩‍👧‍👦", "🎨", "🎵", "📚", "🏃‍♂️", "🍳", "🛋️",
+        
+        // Learning & Development
+        "🎓", "💡", "🔬", "📖", "🧠", "💭", "✨", "🎯",
+        
+        // Creative & Design
+        "🎭", "🎨", "🖌️", "📷", "🎬", "🎪", "🎊", "🎉",
+        
+        // Nature & Outdoors
+        "🌱", "🌳", "🌊", "⛰️", "🏔️", "🌸", "🍁", "☀️",
+        
+        // Food & Drink
+        "🍕", "🍔", "🍝", "🍰", "☕", "🍷", "🥗", "🍜",
+        
+        // Technology & Science
+        "🤖", "🔬", "⚡", "🚀", "💻", "📡", "🔋", "🛠️",
+        
+        // Sports & Fitness
+        "⚽", "🏀", "🏃‍♂️", "🏊‍♀️", "🎾", "🏋️‍♀️", "⛷️", "🚴‍♂️",
+        
+        // Travel & Adventure
+        "✈️", "🗺️", "🏖️", "🏰", "🎒", "🗻", "🌆", "🗽",
+        
+        // Health & Wellness
+        "🏥", "💊", "🧘‍♀️", "🧪", "❤️", "💪", "🌟", "🔋"
+    ]
+
     var project: Project?
     var onSave: (Project) -> Void
     var onDelete: ((Project) -> Void)?
@@ -93,6 +126,51 @@ struct ProjectAddEditView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
+            }
+            
+            // Emoji Section
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Text("Emoji")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                
+                Button(action: {
+                    showingEmojiPicker = true
+                }) {
+                    HStack(spacing: Theme.spacingSmall) {
+                        Text(emoji)
+                            .font(.system(size: 24))
+                            .frame(width: 32, height: 32)
+                            .background(Theme.Colors.surface)
+                            .cornerRadius(Theme.Design.cornerRadius / 1.5)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 1.5)
+                                    .stroke(Theme.Colors.divider, lineWidth: 1)
+                            )
+                        
+                        Text("Choose Emoji")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textPrimary)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    .padding(Theme.spacingMedium)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .pointingHandOnHover()
+                .sheet(isPresented: $showingEmojiPicker) {
+                    EmojiPickerView(selectedEmoji: $emoji)
+                }
             }
             
             // Color Section
@@ -186,12 +264,18 @@ struct ProjectAddEditView: View {
                                 name: finalName,
                                 color: color,
                                 about: finalAbout,
-                                order: project.order
+                                order: project.order,
+                                emoji: emoji
                             )
                             onSave(updatedProject)
                         } else {
                             // Create new project
-                            let newProject = Project(name: finalName, color: color, about: finalAbout)
+                            let newProject = Project(
+                                name: finalName,
+                                color: color,
+                                about: finalAbout,
+                                emoji: emoji
+                            )
                             onSave(newProject)
                         }
                         
@@ -211,6 +295,7 @@ struct ProjectAddEditView: View {
             if let project = project {
                 name = project.name
                 color = project.color
+                emoji = project.emoji
                 about = project.about ?? ""
             }
         }
@@ -302,6 +387,90 @@ struct ColorPickerView: View {
     }
 }
 
+// MARK: - Emoji Picker View
+struct EmojiPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedEmoji: String
+    
+    let emojiOptions = [
+        // Work & Business
+        "💼", "📊", "💻", "📱", "🔧", "⚙️", "📈", "📝",
+        
+        // Personal & Lifestyle
+        "🏠", "👨‍👩‍👧‍👦", "🎨", "🎵", "📚", "🏃‍♂️", "🍳", "🛋️",
+        
+        // Learning & Development
+        "🎓", "💡", "🔬", "📖", "🧠", "💭", "✨", "🎯",
+        
+        // Creative & Design
+        "🎭", "🎨", "🖌️", "📷", "🎬", "🎪", "🎊", "🎉",
+        
+        // Nature & Outdoors
+        "🌱", "🌳", "🌊", "⛰️", "🏔️", "🌸", "🍁", "☀️",
+        
+        // Food & Drink
+        "🍕", "🍔", "🍝", "🍰", "☕", "🍷", "🥗", "🍜",
+        
+        // Technology & Science
+        "🤖", "🔬", "⚡", "🚀", "💻", "📡", "🔋", "🛠️",
+        
+        // Sports & Fitness
+        "⚽", "🏀", "🏃‍♂️", "🏊‍♀️", "🎾", "🏋️‍♀️", "⛷️", "🚴‍♂️",
+        
+        // Travel & Adventure
+        "✈️", "🗺️", "🏖️", "🏰", "🎒", "🗻", "🌆", "🗽",
+        
+        // Health & Wellness
+        "🏥", "💊", "🧘‍♀️", "🧪", "❤️", "💪", "🌟", "🔋"
+    ]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+            HStack {
+                Text("Choose an Emoji")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Spacer()
+                
+                Button(action: {
+                                dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(.simpleIcon)
+                            .pointingHandOnHover()
+                        }
+            
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: Theme.spacingSmall) {
+                    ForEach(emojiOptions, id: \.self) { emojiOption in
+                        Button(action: {
+                            selectedEmoji = emojiOption
+                            dismiss()
+                        }) {
+                            Text(emojiOption)
+                                .font(.system(size: 24))
+                                .frame(width: 40, height: 40)
+                                .background(selectedEmoji == emojiOption ? Theme.Colors.surface : Color.clear)
+                                .cornerRadius(Theme.Design.cornerRadius / 1.5)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 1.5)
+                                        .stroke(selectedEmoji == emojiOption ? Theme.Colors.accentColor : Theme.Colors.divider,
+                                               lineWidth: selectedEmoji == emojiOption ? 2 : 1)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        }
+                    }
+                }
+            }
+        .padding(Theme.spacingLarge)
+        .background(Theme.Colors.background)
+    }
+}
+
 // MARK: - Preview
 struct ProjectAddEditView_Previews: PreviewProvider {
     static var previews: some View {
@@ -313,7 +482,12 @@ struct ProjectAddEditView_Previews: PreviewProvider {
                 .previewDisplayName("Add Project")
             
             // Edit Project Preview
-            let sampleProject = Project(name: "Sample Project", color: "#4E79A7", about: "A sample project for preview")
+            let sampleProject = Project(
+                name: "Sample Project", 
+                color: "#4E79A7", 
+                about: "A sample project for preview",
+                emoji: "💼"
+            )
             ProjectAddEditView(project: sampleProject, onSave: { _ in }, onDelete: { _ in })
                 .frame(minWidth: 250, minHeight: 600)
                 .previewLayout(.sizeThatFits)
