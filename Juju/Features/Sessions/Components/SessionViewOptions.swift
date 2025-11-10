@@ -103,7 +103,7 @@ struct SessionViewOptions: View {
         if let project = projects.first(where: { $0.name == session.projectName }) {
             return project.swiftUIColor
         }
-        return Theme.Colors.accent
+        return Theme.Colors.accentColor
     }
     
     private var formattedDate: String {
@@ -180,7 +180,7 @@ struct SessionViewOptions: View {
     private func moodColor(for mood: Int) -> Color {
         switch mood {
         case 1...4: return Theme.Colors.error
-        case 5...7: return Theme.Colors.secondary
+        case 5...7: return Theme.Colors.surface
         case 8: return sessionProjectColor.opacity(0.6)
         case 9: return sessionProjectColor.opacity(0.85)
         case 10: return sessionProjectColor

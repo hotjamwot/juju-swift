@@ -113,7 +113,7 @@ struct NotesModalView: View {
                         in: 0...10
                     )
                     .labelsHidden()
-                    .tint(Theme.Colors.accent)
+                    .tint(Theme.Colors.accentColor)
 
                     HStack {
                         Text("0").font(Theme.Fonts.caption).foregroundColor(Theme.Colors.textSecondary)
@@ -125,7 +125,7 @@ struct NotesModalView: View {
                 if let mood = viewModel.mood {
                     Text("Selected: \(mood)")
                         .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.accent)
+                        .foregroundColor(Theme.Colors.accentColor)
                 } else {
                     Text("No rating")
                         .font(Theme.Fonts.body)

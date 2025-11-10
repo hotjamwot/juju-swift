@@ -91,6 +91,7 @@ Context of Juju app:
 │   │   │   └── ProjectsNativeView.swift
 │   │   └── Sessions/
 │   │       ├── Components/
+
 │   │       ├── SessionCardView.swift
 │   │       └── SessionsView.swift
 │   ├── Resources/

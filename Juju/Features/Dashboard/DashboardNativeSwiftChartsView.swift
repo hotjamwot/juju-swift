@@ -24,7 +24,6 @@ struct DashboardNativeSwiftChartsView: View {
                     chartDataPreparer: chartDataPreparer,
                     totalHours: chartDataPreparer.weeklyTotalHours() )
 
-                // First pane: YearlyTotalBarChart (replacing BubbleChartCardView)
                 GeometryReader { geo in
                     HStack(spacing: Theme.spacingMedium) {
                         YearlyTotalBarChartView(
@@ -60,23 +59,12 @@ struct DashboardNativeSwiftChartsView: View {
                         .stroke(Theme.Colors.divider, lineWidth: 1)
                 )
 
-                // Second pane: BubbleChartView (new chart with all sessions)
                 GeometryReader { geo in
                     BubbleChartView(
-                        sessions: chartDataPreparer.sessions.map { session in
-                            // Get the project color from the projects list
-                            let projectColor = chartDataPreparer.projects.first { $0.name == session.projectName }?.color ?? "#999999"
-                            return ChartEntry(
-                                date: session.startDateTime ?? Date(),
-                                projectName: session.projectName,
-                                projectColor: projectColor,
-                                durationMinutes: session.durationMinutes,
-                                startTime: session.startTime,
-                                endTime: session.endTime,
-                                notes: session.notes,
-                                mood: session.mood
-                            )
-                        }
+                        bubbleData: chartDataPreparer.bubbleChartData(
+                            for: chartDataPreparer.bubbleChartEntries(),
+                            chartSize: geo.size
+                        )
                     )
                 }
                 .frame(height: 300)

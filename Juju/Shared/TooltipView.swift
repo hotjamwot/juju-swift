@@ -16,7 +16,7 @@ struct TooltipView: View {
                 .foregroundColor(.white)
         }
         .padding(8)
-        .background(Theme.Colors.primary)
+        .background(Theme.Colors.background)
         .cornerRadius(8)
         .shadow(radius: 2)
     }

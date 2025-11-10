@@ -5,7 +5,7 @@ import SwiftUI
 /// Primary button style with a prominent background color.
 public struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
-    var backgroundColor: Color = Theme.Colors.accent
+    var backgroundColor: Color = Theme.Colors.accentColor
     
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -31,7 +31,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
             .font(Theme.Fonts.body)
             .padding(.horizontal, 16)
             .frame(height: 36)
-            .background(isEnabled ? Theme.Colors.secondary : Theme.Colors.secondary.opacity(0.5))
+            .background(isEnabled ? Theme.Colors.surface : Theme.Colors.surface.opacity(0.5))
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .cornerRadius(Theme.Design.cornerRadius)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
@@ -48,7 +48,7 @@ public struct IconButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12))
             .frame(width: 36, height: 36)
-            .background(Theme.Colors.secondary)
+            .background(Theme.Colors.surface)
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .cornerRadius(Theme.Design.cornerRadius)
             .opacity(configuration.isPressed ? 0.7 : 1.0)
@@ -67,7 +67,7 @@ public struct SimpleIconButtonStyle: ButtonStyle {
             .font(.system(size: iconSize))
             .foregroundColor(
                 isEnabled ?
-                (configuration.isPressed ? Theme.Colors.accent : Theme.Colors.textPrimary.opacity(0.6))
+                (configuration.isPressed ? Theme.Colors.accentColor : Theme.Colors.textPrimary.opacity(0.6))
                 : Theme.Colors.textSecondary.opacity(0.3)
             )
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
@@ -85,7 +85,7 @@ public struct FilterButtonStyle: ButtonStyle {
             .padding(.horizontal, 12)
             .frame(height: 28)
             .background(
-                isSelected ? Theme.Colors.accent :
+                isSelected ? Theme.Colors.accentColor :
                     (configuration.isPressed ? Theme.Colors.surface.opacity(0.8) : Theme.Colors.surface)
             )
             .foregroundColor(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)

@@ -349,6 +349,90 @@ final class ChartDataPreparer: ObservableObject {
         return viewModel.sessions.count
     }
 
+    // MARK: - Bubble Chart Data Preparation
+    
+    /// Returns ChartEntry array specifically prepared for bubble chart display
+    func bubbleChartEntries() -> [ChartEntry] {
+        viewModel.sessions.compactMap { session in
+            guard let date = formatterYYYYMMDD.date(from: session.date) else { return nil }
+            let projectColor = viewModel.projects.first { $0.name == session.projectName }?.color ?? "#999999"
+            
+            return ChartEntry(
+                date: date,
+                projectName: session.projectName,
+                projectColor: projectColor,
+                durationMinutes: session.durationMinutes,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                notes: session.notes,
+                mood: session.mood
+            )
+        }
+    }
+    
+    /// Calculates bubble positions and visual properties for a given set of sessions
+    func bubbleChartData(for entries: [ChartEntry], chartSize: CGSize) -> [BubbleChartData] {
+        guard !entries.isEmpty else { return [] }
+        
+        let startDate = calendar.date(from: DateComponents(year: calendar.component(.year, from: Date()), month: 1, day: 1))!
+        let endDate = calendar.date(from: DateComponents(year: calendar.component(.year, from: Date()), month: 12, day: 31))!
+        let totalDays = calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 365
+        
+        var bubbles: [BubbleChartData] = []
+        
+        for entry in entries {
+            // X Position: mapped linearly from 1 Jan → 31 Dec
+            let daysFromStart = calendar.dateComponents([.day], from: startDate, to: entry.date).day ?? 0
+            let x = CGFloat(daysFromStart) / CGFloat(totalDays) * chartSize.width
+            
+            // Y Position: consistent jitter per project
+            let y = yJitter(for: entry.projectName, totalHeight: chartSize.height)
+            
+            // Size: scaled by duration
+            let diameter = bubbleSize(for: entry.durationMinutes)
+            
+            // Color: from project
+            let projectColor = Color(hex: entry.projectColor)
+            
+            // Opacity: based on mood tag
+            let opacity = entry.mood != nil ? 0.6 : 0.8
+            
+            // Shadow: based on mood
+            let shadow = entry.mood != nil
+            
+            bubbles.append(BubbleChartData(
+                x: x - diameter/2,
+                y: y - diameter/2,
+                diameter: diameter,
+                color: projectColor,
+                opacity: opacity,
+                shadow: shadow
+            ))
+        }
+        
+        return bubbles
+    }
+    
+    // MARK: - Private Bubble Chart Helpers
+    
+    private func yJitter(for projectName: String, totalHeight: CGFloat) -> CGFloat {
+        // Create a consistent jitter per project to maintain some structure
+        let hash = projectName.hashValue
+        let randomValue = Double(hash) / Double(Int.max)
+        return 50 + CGFloat(randomValue * (totalHeight - 100))
+    }
+    
+    private func bubbleSize(for durationMinutes: Int) -> CGFloat {
+        // Scale bubble size to preserve visibility of small sessions while keeping large sessions proportionate
+        let baseSize: CGFloat = 4
+        let maxSize: CGFloat = 20
+        let durationHours = Double(durationMinutes) / 60.0
+        
+        // Use logarithmic scaling to better handle large differences
+        let scaledSize = baseSize + log10(max(durationHours, 1)) * 3
+        return min(scaledSize, maxSize)
+    }
+
     // Accessors for convenience in views
     var projects: [Project] { viewModel.projects }
     var sessions: [SessionRecord] { viewModel.sessions }
@@ -364,4 +448,15 @@ extension DateFormatter {
         f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()
+}
+
+// MARK: - Bubble Chart Data Model
+struct BubbleChartData: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let diameter: CGFloat
+    let color: Color
+    let opacity: Double
+    let shadow: Bool
 }
