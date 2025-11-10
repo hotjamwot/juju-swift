@@ -24,35 +24,47 @@ struct DashboardNativeSwiftChartsView: View {
                     chartDataPreparer: chartDataPreparer,
                     totalHours: chartDataPreparer.weeklyTotalHours() )
 
-                GeometryReader { geo in
-                    HStack(spacing: Theme.spacingMedium) {
-                        YearlyTotalBarChartView(
-                            data: chartDataPreparer.yearlyProjectTotals()
-                        )
-                        .layoutPriority(3)
+                VStack(spacing: Theme.spacingMedium) {
+                    // Header for the container
+                    Text("This Year")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    GeometryReader { geo in
+                        HStack(spacing: Theme.spacingMedium) {
+                            YearlyTotalBarChartView(
+                                data: chartDataPreparer.yearlyProjectTotals()
+                            )
+                            .layoutPriority(3)
+                            .frame(maxHeight: .infinity, alignment: .center)
 
-                        VStack(spacing: Theme.spacingSmall) {
-                            SummaryMetricView(
-                                title: "Total Hours",
-                                value: String(format: "%.1f h", chartDataPreparer.yearlyTotalHours())
-                            )
-                            SummaryMetricView(
-                                title: "Total Sessions",
-                                value: "\(chartDataPreparer.yearlyTotalSessions())"
-                            )
-                            SummaryMetricView(
-                                title: "Average Duration",
-                                value: chartDataPreparer.yearlyAvgDurationString()
-                            )
-                            
+                            VStack(alignment: .center, spacing: Theme.spacingMedium) {
+                                SummaryMetricView(
+                                    title: "Total Hours",
+                                    value: String(format: "%.1f h", chartDataPreparer.yearlyTotalHours())
+                                )
+                                SummaryMetricView(
+                                    title: "Total Sessions",
+                                    value: "\(chartDataPreparer.yearlyTotalSessions())"
+                                )
+                                SummaryMetricView(
+                                    title: "Average Duration",
+                                    value: chartDataPreparer.yearlyAvgDurationString()
+                                )
+                                
+                            }
+                            .frame(width: 400)
+                            .layoutPriority(1)
+                            .frame(maxHeight: .infinity, alignment: .center)
                         }
-                        .frame(width: 600)
-                        .layoutPriority(1)
                     }
+                    .frame(height: 300)
                 }
-                .frame(height: 350)
-                .padding(Theme.spacingMedium)
-                .background(Theme.Colors.surface)
+                .padding(Theme.spacingLarge)
+                .background(
+                    Theme.Colors.surface
+                )
                 .cornerRadius(Theme.Design.cornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)

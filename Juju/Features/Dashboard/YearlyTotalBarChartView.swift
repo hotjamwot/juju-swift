@@ -6,70 +6,76 @@ struct YearlyTotalBarChartView: View {
     let data: [ProjectChartData]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-            Text("This Year")
-                .font(Theme.Fonts.header)
+        if data.isEmpty {
+            Text("No data for this year")
                 .foregroundColor(Theme.Colors.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(height: 300)
+        } else {
+            // Sort data descending by total hours
+            let sortedData = data.sorted { $0.totalHours > $1.totalHours }
             
-            if data.isEmpty {
-                Text("No data for this year")
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(height: 300)
-            } else {
-                // Sort data descending by total hours
-                let sortedData = data.sorted { $0.totalHours > $1.totalHours }
-                
-                GeometryReader { geometry in
-                    VStack(alignment: .leading, spacing: 12) {
+            GeometryReader { geometry in
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0) // This will push content to center
+                    
+                    VStack(alignment: .leading, spacing: Theme.spacingMedium) {
                         ForEach(sortedData.indices, id: \.self) { index in
                             let projectData = sortedData[index]
                             let maxValue = sortedData.first?.totalHours ?? 1
-                            let barWidth = (projectData.totalHours / maxValue) * (geometry.size.width - 100)
+                            let barWidth = (projectData.totalHours / maxValue) * (geometry.size.width - 150) // Adjusted for text space
                             
-                            HStack(spacing: 12) {
-                                // Project label with icon
-                                HStack(spacing: 8) {
-                                    // Project icon (placeholder - will be replaced with actual icon)
+                            HStack(spacing: Theme.spacingMedium) {
+                                HStack(spacing: Theme.spacingExtraSmall) {
                                     Circle()
                                         .fill(Color(hex: projectData.color))
-                                        .frame(width: 16, height: 16)
+                                        .frame(width: Theme.spacingMedium, height: Theme.spacingMedium)
                                     
                                     Text(projectData.projectName)
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(Theme.Fonts.body)
                                         .foregroundColor(Theme.Colors.textPrimary)
                                 }
-                                .frame(width: 150, alignment: .leading)
+                                .frame(width: Theme.spacingLarge * 6, alignment: .leading)
                                 
-                                // Bar chart
                                 ZStack(alignment: .leading) {
+                                    // Invisible background bar for left alignment (very transparent)
                                     Rectangle()
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 20)
-                                        .cornerRadius(4)
+                                        .fill(Theme.Colors.divider.opacity(0.00)) // Almost invisible for alignment
+                                        .frame(height: Theme.Design.cornerRadius + 2)
+                                        .cornerRadius(Theme.Design.cornerRadius)
                                     
+                                    // Main colored bar
                                     Rectangle()
                                         .fill(Color(hex: projectData.color))
-                                        .frame(width: barWidth, height: 20)
-                                        .cornerRadius(4)
+                                        .frame(width: barWidth, height: Theme.Design.cornerRadius + 2)
+                                        .cornerRadius(Theme.Design.cornerRadius)
                                     
-                                    // Value label at the end of the bar
-                                    Text("\(String(format: "%.1f", projectData.totalHours)) h")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(Theme.Colors.textPrimary)
-                                        .padding(.horizontal, 8)
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                    // Text positioned inside the bar if wide enough, otherwise outside
+                                    if barWidth > 60 {
+                                        Text("\(String(format: "%.1f", projectData.totalHours)) h")
+                                            .font(Theme.Fonts.caption)
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, Theme.spacingExtraSmall)
+                                            .frame(maxWidth: barWidth - 8, alignment: .trailing)
+                                            .offset(x: 4) // Small offset to prevent clipping
+                                    } else {
+                                        // Text outside the bar when bar is too small
+                                        Text("\(String(format: "%.1f", projectData.totalHours)) h")
+                                            .font(Theme.Fonts.body)
+                                            .foregroundColor(Theme.Colors.textPrimary)
+                                            .frame(minWidth: 50, alignment: .trailing)
+                                    }
                                 }
                                 .frame(maxWidth: .infinity)
                             }
                         }
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    
+                    Spacer(minLength: 0) // This will push content to center
                 }
-                .frame(height: CGFloat(sortedData.count) * 40 + 20)
             }
         }
-        .padding(Theme.spacingMedium)
     }
 }
 
@@ -81,6 +87,7 @@ struct YearlyTotalBarChartView: View {
         ProjectChartData(projectName: "Other", color: "#76B7B2", totalHours: 20, percentage: 7.5),
         ProjectChartData(projectName: "Hobby", color: "#59A14F", totalHours: 60, percentage: 22.5)
     ])
-    .frame(width: 800, height: 350)
+    .frame(width: 1000, height: 300)
     .padding()
+    .background(Theme.Colors.background)
 }

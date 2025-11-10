@@ -5,7 +5,7 @@ struct SummaryMetricView: View {
     let value: String
     
     var body: some View {
-        VStack(alignment: .center, spacing: 8) {
+        VStack(alignment: .center, spacing: Theme.spacingMedium) {
             Text(title.uppercased())
                 .font(.system(size: 12, weight: .heavy))
                 .tracking(2)
@@ -21,5 +21,6 @@ struct SummaryMetricView: View {
                     startPoint: .leading, endPoint: .trailing
                 ))
         }
+        .frame(maxWidth: .infinity) // Ensure it takes full width for proper centering
     }
 }
