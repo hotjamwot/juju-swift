@@ -28,12 +28,16 @@ struct WeeklyStackedBarChartView: View {
     private let uniqueProjects: [String]
     private let projectColorMap: [String: Color]
     
+    // Global project ordering based on total duration (descending)
+    private let globalProjectOrder: [String]
+    
     init(data: [WeeklyStackedBarChartData]) {
         self.data = data
         
         // Pre-compute expensive operations once
         var projectSet = Set<String>()
         var colorMap = [String: Color]()
+        var projectTotals = [String: Double]()
         
         for weeklyData in data {
             for projectData in weeklyData.projectData {
@@ -41,11 +45,23 @@ struct WeeklyStackedBarChartView: View {
                 if colorMap[projectData.projectName] == nil {
                     colorMap[projectData.projectName] = Color(hex: projectData.projectColor)
                 }
+                // Calculate total duration for each project across all weeks
+                projectTotals[projectData.projectName, default: 0] += projectData.hours
             }
         }
         
         self.uniqueProjects = Array(projectSet).sorted()
         self.projectColorMap = colorMap
+        
+        // Create global ordering by total duration (descending), then by name for consistency
+        self.globalProjectOrder = projectTotals
+            .sorted { 
+                if $0.value == $1.value {
+                    return $0.key < $1.key // Alphabetical fallback for equal durations
+                }
+                return $0.value > $1.value 
+            }
+            .map { $0.key }
     }
     
     var body: some View {
@@ -67,7 +83,7 @@ struct WeeklyStackedBarChartView: View {
         return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .fill(Theme.Colors.surface)
-                .frame(height: 250)
+                .frame(height: 280)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                         .stroke(Theme.Colors.foreground.opacity(0.1), lineWidth: 1)
@@ -78,7 +94,10 @@ struct WeeklyStackedBarChartView: View {
                 Spacer(minLength: 10)
                 
                 Chart(data, id: \.week.weekNumber) { weeklyData in
-                    ForEach(weeklyData.projectData) { projectData in
+                    // Create data in global project order for consistent stacking
+                    let orderedProjectData = createOrderedProjectData(from: weeklyData.projectData)
+                    
+                    ForEach(orderedProjectData) { projectData in
                         BarMark(
                             x: .value("Week", weeklyData.week.weekNumber),
                             y: .value("Hours", projectData.hours),
@@ -86,7 +105,7 @@ struct WeeklyStackedBarChartView: View {
                         )
                         .foregroundStyle(projectData.colorSwiftUI)
                         .opacity(hoveredWeek == nil || hoveredWeek == weeklyData.week.weekNumber ? 1.0 : 0.3)
-                        .cornerRadius(2)
+                        .cornerRadius(8)
                     }
                 }
                 .chartXAxis {
@@ -95,8 +114,8 @@ struct WeeklyStackedBarChartView: View {
                            let index = monthCenters.firstIndex(of: centerWeek) {
                             AxisValueLabel {
                                 Text(monthBoundaries[index].label)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
                             }
                         }
                     }
@@ -117,11 +136,11 @@ struct WeeklyStackedBarChartView: View {
                 }
                 .chartForegroundStyleScale(range: createColorRange())
                 .chartYScale(domain: 0...maxWeeklyHours)
-                .chartXScale(domain: 1...52)
+                .chartXScale(domain: 0...53)
                 .chartScrollableAxes(.horizontal)
                 .chartXVisibleDomain(length: 52)
                 .padding(.horizontal, Theme.spacingMedium)
-                .padding(.bottom, 30)
+                .padding(.bottom, Theme.spacingMedium)
                 
                 Spacer(minLength: 0)
             }
@@ -150,6 +169,19 @@ struct WeeklyStackedBarChartView: View {
         }
     }
     
+    // Helper method to create ordered project data using global ordering
+    private func createOrderedProjectData(from projectData: [ProjectWeeklyData]) -> [ProjectWeeklyData] {
+        return projectData.sorted { project1, project2 in
+            // Get positions in global order
+            guard let index1 = globalProjectOrder.firstIndex(of: project1.projectName),
+                  let index2 = globalProjectOrder.firstIndex(of: project2.projectName) else {
+                // Fallback to original order if not found
+                return false
+            }
+            return index1 < index2
+        }
+    }
+    
     private func createTooltipView(for weekData: WeeklyStackedBarChartData, geometry: GeometryProxy) -> some View {
         let tooltipWidth: CGFloat = 200
         let tooltipHeight: CGFloat = CGFloat(weekData.projectData.count * 25 + 60)
@@ -171,11 +203,13 @@ struct WeeklyStackedBarChartView: View {
                 Divider()
                     .background(Theme.Colors.divider)
                 
-                ForEach(weekData.projectData.sorted(by: { $0.hours > $1.hours }), id: \.id) { project in
+                // Use global order in tooltip too for consistency
+                let orderedProjectData = createOrderedProjectData(from: weekData.projectData)
+                ForEach(orderedProjectData, id: \.id) { project in
                     HStack(spacing: 8) {
                         Circle()
                             .fill(project.colorSwiftUI)
-                            .frame(width: 8, height: 8)
+                            .frame(width: 12, height: 8)
                         
                         Text("\(project.projectEmoji) \(project.projectName)")
                             .font(.system(size: 11))
@@ -190,7 +224,7 @@ struct WeeklyStackedBarChartView: View {
                     }
                 }
             }
-            .padding(12)
+            .padding(Theme.spacingMedium)
         }
         .frame(width: tooltipWidth, height: tooltipHeight)
         .position(x: geometry.size.width - tooltipWidth - 20, y: 20)
@@ -201,7 +235,7 @@ struct WeeklyStackedBarChartView: View {
     private func createLegendView() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                ForEach(uniqueProjects, id: \.self) { projectName in
+                ForEach(globalProjectOrder, id: \.self) { projectName in
                     HStack(spacing: 6) {
                         Circle()
                             .fill(projectColorMap[projectName] ?? Color.gray)
@@ -221,7 +255,7 @@ struct WeeklyStackedBarChartView: View {
     }
     
     private func createColorRange() -> [Color] {
-        uniqueProjects.compactMap { projectName in
+        globalProjectOrder.compactMap { projectName in
             projectColorMap[projectName]
         }
     }

@@ -10,18 +10,27 @@ struct SessionCalendarChartView: View {
     ]
     
     let dayToLetter: [String: String] = [
-            "Monday":    "M",
-            "Tuesday":   "T",
-            "Wednesday": "W",
-            "Thursday":  "T",
-            "Friday":    "F",
-            "Saturday":  "S",
-            "Sunday":    "S"
+            "Monday":    "MON",
+            "Tuesday":   "TUE",
+            "Wednesday": "WED",
+            "Thursday":  "THU",
+            "Friday":    "FRI",
+            "Saturday":  "SAT",
+            "Sunday":    "SUN"
         ]
+    
+    // Calculate total duration for each day
+    private var dailyTotals: [String: Double] {
+        var totals: [String: Double] = [:]
+        for session in sessions {
+            totals[session.day, default: 0] += session.duration
+        }
+        return totals
+    }
     
 // Mark: Body
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingExtraLarge) {
+        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             
             Chart(sessions) { session in
                 RectangleMark(
@@ -51,7 +60,19 @@ struct SessionCalendarChartView: View {
                 AxisMarks(values: weekDays) { value in
                     let day = value.as(String.self) ?? ""
                     let label = dayToLetter[day] ?? day
-                    AxisValueLabel(label)
+                    
+                    AxisValueLabel {
+                        VStack(spacing: 2) {
+                            Text(label)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
+                                Text("\(dailyTotal, specifier: "%.1f")h")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                            }
+                        }
+                    }
                 }
             }
             .chartPlotStyle { plotArea in
@@ -61,6 +82,7 @@ struct SessionCalendarChartView: View {
             .chartXScale(domain: weekDays)
 
             .frame(height: 280)
+            
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -79,6 +101,6 @@ struct SessionCalendarChartView: View {
         WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬")
     ]
     return SessionCalendarChartView(sessions: mockSessions)
-        .frame(width: 800, height: 300)
+        .frame(width: 800, height: 350)
         .padding()
 })

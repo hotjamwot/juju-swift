@@ -27,13 +27,11 @@ struct YearlyTotalBarChartView: View {
                             
                             HStack(spacing: Theme.spacingMedium) {
                                 HStack(spacing: Theme.spacingExtraSmall) {
-                                    Circle()
-                                        .fill(Color(hex: projectData.color))
-                                        .frame(width: Theme.spacingMedium, height: Theme.spacingMedium)
                                     
                                     HStack(spacing: Theme.spacingSmall) {
                                         Text(projectData.emoji)
                                             .font(Theme.Fonts.body)
+                                        
                                         Text(projectData.projectName)
                                             .font(Theme.Fonts.body)
                                             .foregroundColor(Theme.Colors.textPrimary)
