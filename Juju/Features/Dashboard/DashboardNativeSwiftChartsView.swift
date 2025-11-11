@@ -72,11 +72,8 @@ struct DashboardNativeSwiftChartsView: View {
                 )
 
                 GeometryReader { geo in
-                    BubbleChartView(
-                        bubbleData: chartDataPreparer.bubbleChartData(
-                            for: chartDataPreparer.bubbleChartEntries(),
-                            chartSize: geo.size
-                        )
+                    WeeklyStackedBarChartView(
+                        data: chartDataPreparer.weeklyStackedBarChartData()
                     )
                 }
                 .frame(height: 300)

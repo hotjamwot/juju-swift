@@ -93,3 +93,46 @@ struct WeeklySession: Identifiable {
     let projectEmoji: String
     var duration: Double { endHour - startHour }
 }
+
+// MARK: - Weekly Stacked Bar Chart Data Models
+
+/// Represents a single week of the year with its associated data
+struct WeekOfYear: Identifiable {
+    let id = UUID()
+    let weekNumber: Int // 1-52
+    let year: Int
+    let month: Int // 1-12 for month abbreviation mapping
+    var monthLabel: String {
+        let monthAbbreviations = ["", "J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+        return monthAbbreviations[month]
+    }
+    let startDate: Date
+    let endDate: Date
+    
+    var id_legacy: Int { weekNumber } // For SwiftUI Charts compatibility
+}
+
+/// Represents individual project data for a specific week
+struct ProjectWeeklyData: Identifiable {
+    let id = UUID()
+    let projectName: String
+    let projectColor: String
+    let projectEmoji: String
+    let hours: Double
+    let weekId: Int // Reference to WeekOfYear.weekNumber
+    
+    var colorSwiftUI: Color {
+        Color(hex: projectColor)
+    }
+}
+
+/// Represents the complete weekly stacked bar chart data
+struct WeeklyStackedBarChartData: Identifiable {
+    let id = UUID()
+    let week: WeekOfYear
+    let projectData: [ProjectWeeklyData]
+    
+    var totalHours: Double {
+        projectData.reduce(0) { $0 + $1.hours }
+    }
+}

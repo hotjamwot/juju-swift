@@ -52,23 +52,21 @@ struct WeeklyProjectBubbleChartView: View {
                                     }
 
                                 VStack(spacing: 1) {
-                                    HStack(spacing: 2) {
-                                        Text(bubbleData.emoji)
-                                            .font(.system(size: max(10, diameter * 0.18), design: .rounded))
-                                        Text(bubbleData.projectName)
-                                            .font(.system(size: max(12, diameter * 0.20),
-                                                      weight: .medium,
-                                                      design: .rounded))
-                                            .foregroundColor(Theme.Colors.textPrimary)
-                                            .multilineTextAlignment(.center)
-                                            .lineLimit(1)
-                                    }
-                                    .padding(.horizontal, 4)
-
+                                    Text(bubbleData.emoji)
+                                        .font(.system(size: max(10, diameter * 0.18), design: .rounded))
+                                    
+                                    Text(bubbleData.projectName)
+                                        .font(.system(size: max(12, diameter * 0.20),
+                                                  weight: .medium,
+                                                  design: .rounded))
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(1)
+                                    
                                     Text("\(bubbleData.totalHours, specifier: "%.1f") h")
                                         .font(.system(size: max(10, diameter * 0.12),
-                                                      weight: .semibold,
-                                                      design: .rounded))
+                                                  weight: .semibold,
+                                                  design: .rounded))
                                         .foregroundColor(Theme.Colors.textPrimary.opacity(0.9))
                                 }
                                 .help("""
