@@ -63,7 +63,7 @@ struct DashboardNativeSwiftChartsView: View {
                 }
                 .padding(Theme.spacingLarge)
                 .background(
-                    Theme.Colors.surface
+                    Theme.Colors.surface.opacity(0.5)
                 )
                 .cornerRadius(Theme.Design.cornerRadius)
                 .overlay(
@@ -78,7 +78,7 @@ struct DashboardNativeSwiftChartsView: View {
                 }
                 .frame(height: 300)
                 .padding(Theme.spacingMedium)
-                .background(Theme.Colors.surface)
+                .background(Theme.Colors.surface.opacity(0.5))
                 .cornerRadius(Theme.Design.cornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
@@ -140,7 +140,7 @@ struct DashboardNativeSwiftChartsView: View {
             Text("No data available")
                 .foregroundColor(Theme.Colors.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: minHeight)
-                .background(Theme.Colors.surface.opacity(0.2))
+                .background(Theme.Colors.background.opacity(0.2))
                 .cornerRadius(Theme.Design.cornerRadius)
         }
     }

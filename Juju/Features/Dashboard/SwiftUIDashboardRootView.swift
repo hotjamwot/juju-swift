@@ -8,7 +8,6 @@ struct SwiftUIDashboardRootView: View {
         HStack(spacing: 0) {
             // Always show sidebar - it's now permanently small with icons only
             SidebarView(selectedView: $selected)
-                .background(Theme.Colors.background)  // Match sidebar to dashboard background
 
             // Main content
             VStack(spacing: 0) {
@@ -33,8 +32,8 @@ struct SwiftUIDashboardRootView: View {
                 .padding(.bottom, Theme.spacingLarge)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Theme.Colors.background)
         }
-        .background(Theme.Colors.background)
         .ignoresSafeArea(edges: .top)
     }
     
@@ -42,5 +41,15 @@ struct SwiftUIDashboardRootView: View {
     
     private func closeWindow() {
         NSApp.keyWindow?.close()
+    }
+}
+
+// MARK: - Preview
+
+struct SwiftUIDashboardRootView_Previews: PreviewProvider {
+    static var previews: some View {
+        SwiftUIDashboardRootView()
+            .frame(width: 1400, height: 1000)
+            .preferredColorScheme(.dark)
     }
 }

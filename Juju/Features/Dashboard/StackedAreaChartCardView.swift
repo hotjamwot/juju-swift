@@ -21,7 +21,7 @@ struct StackedAreaChartCardView: View {
             }
         }
         .padding(Theme.spacingLarge)
-        .background(Theme.Colors.surface)
+        .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)

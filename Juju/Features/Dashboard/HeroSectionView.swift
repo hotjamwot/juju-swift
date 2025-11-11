@@ -63,7 +63,7 @@ struct HeroSectionView: View {
         }
         .padding(.horizontal, Theme.spacingExtraSmall)
         .padding(.vertical, Theme.spacingExtraLarge)
-        .background(Theme.Colors.surface)
+        .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)

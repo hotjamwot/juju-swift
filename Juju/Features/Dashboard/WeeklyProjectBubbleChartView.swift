@@ -21,7 +21,7 @@ struct WeeklyProjectBubbleChartView: View {
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 300)
-                    .background(Theme.Colors.surface)
+                    .background(Theme.Colors.surface.opacity(0.5))
                     .cornerRadius(Theme.Design.cornerRadius)
                     .shadow(radius: 2)
                     .padding(.horizontal)

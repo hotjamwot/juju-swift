@@ -82,7 +82,7 @@ struct WeeklyStackedBarChartView: View {
     private func createContentView(geometry: GeometryProxy) -> some View {
         return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .fill(Theme.Colors.surface)
+                .fill(.clear)
                 .frame(height: 280)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
@@ -107,6 +107,10 @@ struct WeeklyStackedBarChartView: View {
                         .opacity(hoveredWeek == nil || hoveredWeek == weeklyData.week.weekNumber ? 1.0 : 0.3)
                         .cornerRadius(8)
                     }
+                }
+                .chartPlotStyle { plotArea in
+                    plotArea
+                        .background(Color.clear)
                 }
                 .chartXAxis {
                     AxisMarks(position: .bottom, values: monthCenters) { value in
@@ -142,7 +146,7 @@ struct WeeklyStackedBarChartView: View {
                 .padding(.horizontal, Theme.spacingMedium)
                 .padding(.bottom, Theme.spacingMedium)
                 
-                Spacer(minLength: 0)
+                Spacer(minLength: Theme.spacingMedium)
             }
             
             createMonthDividers(geometry: geometry)
@@ -188,7 +192,7 @@ struct WeeklyStackedBarChartView: View {
         
         return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 8)
-                .fill(Theme.Colors.surface)
+                .fill(Theme.Colors.surface.opacity(0.5))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Theme.Colors.divider, lineWidth: 1)
@@ -265,7 +269,7 @@ struct WeeklyStackedBarChartView: View {
     private func createEmptyStateView() -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .fill(Theme.Colors.surface)
+                .fill(Theme.Colors.surface.opacity(0.5))
                 .frame(height: 250)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
