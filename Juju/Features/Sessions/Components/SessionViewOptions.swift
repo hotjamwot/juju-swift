@@ -72,7 +72,7 @@ struct SessionViewOptions: View {
                       Text(session.notes)
                           .font(Theme.Fonts.body)
                           .foregroundColor(Theme.Colors.textPrimary)
-                          .lineLimit(3)
+                          .lineLimit(4)
                           .fixedSize(horizontal: false, vertical: true)
                           .frame(maxWidth: .infinity, alignment: .leading)
                   }

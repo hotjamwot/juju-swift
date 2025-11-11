@@ -15,7 +15,7 @@ struct NotesModalView: View {
             footerView
         }
         .frame(minWidth: 750, minHeight: 450)
-        .background(Theme.Colors.surface)
+        .background(Theme.Colors.background)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isTextFieldFocused = true

@@ -13,7 +13,7 @@ public struct Theme {
         public static let divider     = Color("Divider")  // rgba(255,255,255,0.1)
         public static let foreground  = Color("foreground") // #E5E5E7
         public static let error       = Color("error")  // #B02A21
-        public static let accentColor       = Color("accentColor")  // #E100FF
+        public static let accentColor       = Color("AppAccentColor")  // #E100FF or #C800C8 in dark mode
 
         /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)
         public static func nsColor(_ color: Color) -> NSColor? {
@@ -32,7 +32,7 @@ public struct Theme {
     // MARK: Typography
     public struct Fonts {
         public static let header   = Font.system(size: 16, weight: .semibold, design: .rounded)
-        public static let body     = Font.system(size: 14, weight: .regular)
+        public static let body     = Font.system(size: 12, weight: .regular)
         public static let caption  = Font.system(size: 10, weight: .medium)
         public static let icon     = Font.system(size: 20, weight: .regular)
     }
