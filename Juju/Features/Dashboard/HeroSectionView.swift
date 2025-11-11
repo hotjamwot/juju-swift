@@ -22,7 +22,7 @@ struct HeroSectionView: View {
                 Text(String(format: "%.1f", totalHours) + " hours")
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.accentColor, .accentColor.opacity(0.7)],
+                            colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )

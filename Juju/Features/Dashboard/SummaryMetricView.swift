@@ -15,8 +15,8 @@ struct SummaryMetricView: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(LinearGradient(
                     colors: [
-                        Color.accentColor,
-                        Color.accentColor.opacity(0.7)
+                        Theme.Colors.accentColor,
+                        Theme.Colors.accentColor.opacity(0.7)
                     ],
                     startPoint: .leading, endPoint: .trailing
                 ))
