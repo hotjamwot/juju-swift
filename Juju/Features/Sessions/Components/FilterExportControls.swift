@@ -23,6 +23,7 @@ public enum SessionsDateFilter: String, CaseIterable, Identifiable {
     case today = "Today"
     case thisWeek = "This Week"
     case thisMonth = "This Month"
+    case thisYear = "This Year"
     case custom = "Custom Range"
     case clear = "Clear"
     
@@ -83,7 +84,8 @@ struct FilterExportControls: View {
     let onCustomDateRangeChange: (DateRange?) -> Void
     let onProjectFilterChange: (String) -> Void
     let onExport: (ExportFormat) -> Void
-    let onInvoicePreviewToggle: (() -> Void)? = nil
+    var onInvoicePreviewToggle: (() -> Void)? = nil
+    let onApplyFilters: () -> Void
     
     // Animation
     @State private var animationOffset: CGFloat = 0
@@ -96,7 +98,8 @@ struct FilterExportControls: View {
         onCustomDateRangeChange: @escaping (DateRange?) -> Void,
         onProjectFilterChange: @escaping (String) -> Void,
         onExport: @escaping (ExportFormat) -> Void,
-        onInvoicePreviewToggle: (() -> Void)? = nil
+        onInvoicePreviewToggle: (() -> Void)? = nil,
+        onApplyFilters: @escaping () -> Void
     ) {
         self.state = state
         self.projects = projects
@@ -105,7 +108,8 @@ struct FilterExportControls: View {
         self.onCustomDateRangeChange = onCustomDateRangeChange
         self.onProjectFilterChange = onProjectFilterChange
         self.onExport = onExport
-        // self.onInvoicePreviewToggle = onInvoicePreviewToggle
+        self.onInvoicePreviewToggle = onInvoicePreviewToggle
+        self.onApplyFilters = onApplyFilters
     }
     
     public var body: some View {
@@ -138,41 +142,44 @@ struct FilterExportControls: View {
     
     private var controlsPanel: some View {
         VStack(spacing: Theme.spacingMedium) {
-            // Main Controls Section
-            VStack(spacing: Theme.spacingLarge) {
-                // Project Filter
-                ProjectFilterSection
+            // Horizontal Filter Controls
+            HStack(spacing: Theme.spacingMedium) {
+                // Project Filter Dropdown
+                ProjectFilterDropdown
                 
-                // Date Filter Section
-                DateFilterSection
+                // Date Filter Dropdown  
+                DateFilterDropdown
                 
-                // Export Section
-                ExportSection
+                // Export Dropdown
+                ExportDropdown
                 
-                // Invoice Preview Section (Future)
-                if onInvoicePreviewToggle != nil {
-                    InvoicePreviewSection
-                }
+                // Spacer to push apply and close buttons to right
+                Spacer()
+                
+                // Apply Filters Button
+                ApplyFiltersButton
+                
+                // Close Button
+                CloseButton
             }
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
+            
+            // Custom Date Range Picker (when custom is selected)
+            if state.selectedDateFilter == .custom {
+                CustomDateRangePicker
+            }
         }
     }
     
-    private var ProjectFilterSection: some View {
+    // MARK: - New Horizontal Layout Components
+    
+    private var ProjectFilterDropdown: some View {
         VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-            HStack {
-                Text("Project Filter:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Spacer()
-                
-                Text("\(filteredSessionsCount) sessions")
-                    .font(.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
-            }
+            Text("Project")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(Theme.Colors.textSecondary)
             
             Picker("Project", selection: $state.projectFilter) {
                 Text("All Projects").tag("All")
@@ -185,126 +192,142 @@ struct FilterExportControls: View {
                 onProjectFilterChange(newValue)
             }
         }
+        .frame(minWidth: 120)
     }
     
-    private var DateFilterSection: some View {
+    private var DateFilterDropdown: some View {
         VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-            Text("Date Range:")
-                .font(.subheadline)
+            Text("Date")
+                .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(Theme.Colors.textPrimary)
+                .foregroundColor(Theme.Colors.textSecondary)
             
-            // Quick Filter Buttons
-            HStack(spacing: Theme.spacingExtraSmall) {
+            Picker("Date Filter", selection: $state.selectedDateFilter) {
                 ForEach(SessionsDateFilter.allCases.filter { $0 != .custom }, id: \.id) { filter in
-                    FilterButton(
-                        title: filter.title,
-                        isSelected: state.selectedDateFilter == filter,
-                        action: {
-                            state.selectedDateFilter = filter
-                            onDateFilterChange(filter)
-                            if filter == .custom {
-                                state.customDateRange = DateRange(
-                                    startDate: Calendar.current.startOfDay(for: Date()),
-                                    endDate: Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
-                                )
-                            }
-                        }
+                    Text(filter.title).tag(filter)
+                }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: state.selectedDateFilter) { _, newValue in
+                onDateFilterChange(newValue)
+                if newValue == .custom {
+                    state.customDateRange = DateRange(
+                        startDate: Calendar.current.startOfDay(for: Date()),
+                        endDate: Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
                     )
                 }
             }
-            
-            // Custom Date Range Picker (when custom is selected)
-            if state.selectedDateFilter == .custom, let range = state.customDateRange {
-                VStack(spacing: Theme.spacingExtraSmall) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-                            Text("From:")
-                                .font(.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            DatePicker(
-                                "Start Date",
-                                selection: Binding(
-                                    get: { range.startDate },
-                                    set: { newDate in
-                                        state.customDateRange = DateRange(startDate: newDate, endDate: range.endDate)
-                                        onCustomDateRangeChange(state.customDateRange)
-                                    }
-                                ),
-                                displayedComponents: .date
-                            )
-                            .datePickerStyle(.compact)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-                            Text("To:")
-                                .font(.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            DatePicker(
-                                "End Date",
-                                selection: Binding(
-                                    get: { range.endDate },
-                                    set: { newDate in
-                                        state.customDateRange = DateRange(startDate: range.startDate, endDate: newDate)
-                                        onCustomDateRangeChange(state.customDateRange)
-                                    }
-                                ),
-                                displayedComponents: .date
-                            )
-                            .datePickerStyle(.compact)
-                        }
-                        
-                        Spacer()
-                    }
-                    
-                    if !range.isValid {
-                        Text("Invalid date range")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.error)
-                    } else {
-                        Text("Range: \(range.durationDescription)")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                    }
-                }
-                .padding(.horizontal, Theme.spacingSmall)
-                .padding(.vertical, Theme.spacingExtraSmall)
-                .background(Theme.Colors.background)
-                .cornerRadius(Theme.Design.cornerRadius / 2)
-            }
         }
+        .frame(minWidth: 100)
     }
     
-    private var ExportSection: some View {
+    private var ExportDropdown: some View {
         VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-            HStack {
-                Text("Export:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(Theme.Colors.textPrimary)
+            Text("Export")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(Theme.Colors.textSecondary)
+            
+            Picker("Export Format", selection: $state.exportFormat) {
+                ForEach(ExportFormat.allCases, id: \.id) { format in
+                    Text(format.title).tag(format)
+                }
+            }
+            .pickerStyle(.menu)
+            .disabled(state.isExporting)
+            .onChange(of: state.exportFormat) { _, newValue in
+                onExport(newValue)
+            }
+        }
+        .frame(minWidth: 80)
+    }
+    
+    private var ApplyFiltersButton: some View {
+        Button(action: onApplyFilters) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(Theme.Colors.accentColor)
+        }
+        .help("Apply current filters to update session list")
+        .buttonStyle(.simpleIcon)
+    }
+    
+    private var CloseButton: some View {
+        Button(action: toggleExpansion) {
+            Image(systemName: "chevron.down")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(Theme.Colors.textSecondary)
+        }
+        .help("Close filters")
+        .buttonStyle(.simpleIcon)
+    }
+    
+    private var CustomDateRangePicker: some View {
+        VStack(spacing: Theme.spacingSmall) {
+            HStack(spacing: Theme.spacingMedium) {
+                VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
+                    Text("From:")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    DatePicker(
+                        "Start Date",
+                        selection: Binding(
+                            get: { 
+                                state.customDateRange?.startDate ?? Date()
+                            },
+                            set: { newDate in
+                                if var existingRange = state.customDateRange {
+                                    existingRange.startDate = newDate
+                                    state.customDateRange = existingRange
+                                    onCustomDateRangeChange(state.customDateRange)
+                                }
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.compact)
+                }
+                
+                VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
+                    Text("To:")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    DatePicker(
+                        "End Date",
+                        selection: Binding(
+                            get: { 
+                                state.customDateRange?.endDate ?? Date()
+                            },
+                            set: { newDate in
+                                if var existingRange = state.customDateRange {
+                                    existingRange.endDate = newDate
+                                    state.customDateRange = existingRange
+                                    onCustomDateRangeChange(state.customDateRange)
+                                }
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.compact)
+                }
                 
                 Spacer()
-                
-                if state.isExporting {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                }
             }
             
-            HStack(spacing: Theme.spacingExtraSmall) {
-                ForEach(ExportFormat.allCases, id: \.id) { format in
-                    ExportButton(
-                        title: format.title,
-                        isSelected: state.exportFormat == format,
-                        isDisabled: state.isExporting,
-                        action: {
-                            state.exportFormat = format
-                            onExport(format)
-                        }
-                    )
-                }
+            if let range = state.customDateRange, !range.isValid {
+                Text("Invalid date range")
+                    .font(.caption)
+                    .foregroundColor(Theme.Colors.error)
+            } else if let range = state.customDateRange {
+                Text("Range: \(range.durationDescription)")
+                    .font(.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
             }
         }
+        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.vertical, Theme.spacingSmall)
+        .background(Theme.Colors.background)
+        .cornerRadius(Theme.Design.cornerRadius / 2)
     }
     
     private var InvoicePreviewSection: some View {
@@ -337,9 +360,13 @@ struct FilterExportToggleButton: View {
     let action: () -> Void
     
     var body: some View {
-        HStack {
-            // Left side: Text and session count (when expanded)
-            if isExpanded {
+        if isExpanded {
+            // When expanded, show minimal UI (close handled in menu)
+            EmptyView()
+        } else {
+            // When collapsed, show the original button with text
+            HStack {
+                // Left side: Text and session count
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Filters & Export")
                         .font(.subheadline)
@@ -350,26 +377,21 @@ struct FilterExportToggleButton: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                 }
                 .foregroundColor(Theme.Colors.textPrimary)
-            } else {
-                // When collapsed, just show a small amount of space
+                
                 Spacer()
-                    .frame(width: 20)
+                
+                // Right side: Circular toggle button
+                Button(action: action) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                }
+                .buttonStyle(.circularToggleIcon)
+                .help("Show filters & export")
             }
-            
-            Spacer()
-            
-            // Right side: Circular toggle button
-            Button(action: action) {
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 12, weight: .medium))
-                    .rotationEffect(.degrees(isExpanded ? 0 : 180))
-                    .animation(.easeInOut(duration: 0.3), value: isExpanded)
-            }
-            .buttonStyle(.circularToggleIcon)
-            .help(isExpanded ? "Hide controls" : "Show filters & export")
+            .padding(.horizontal, Theme.spacingLarge)
+            .padding(.vertical, Theme.spacingSmall)
         }
-        .padding(.horizontal, Theme.spacingLarge)
-        .padding(.vertical, Theme.spacingSmall)
     }
 }
 
@@ -440,7 +462,8 @@ struct FilterExportControls_Previews: PreviewProvider {
                 onDateFilterChange: { _ in },
                 onCustomDateRangeChange: { _ in },
                 onProjectFilterChange: { _ in },
-                onExport: { _ in }
+                onExport: { _ in },
+                onApplyFilters: { }
             )
         }
         .padding()

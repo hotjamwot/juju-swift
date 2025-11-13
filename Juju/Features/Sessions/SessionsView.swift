@@ -196,7 +196,8 @@ public struct SessionsView: View {
                         onInvoicePreviewToggle: {
                             // Future invoice preview functionality
                             print("Invoice preview requested")
-                        }
+                        },
+                        onApplyFilters: applyFilters
                     )
                     .padding(.trailing, Theme.spacingLarge)
                     .padding(.bottom, Theme.spacingLarge)
@@ -326,6 +327,66 @@ public struct SessionsView: View {
     
     private func handleCustomDateRangeChange(_ range: DateRange?) {
         filterExportState.customDateRange = range
+    }
+    
+    private func applyFilters() {
+        // Apply filters and update the session list
+        Task {
+            // Start with all sessions instead of just current week
+            var filteredSessions = sessionManager.allSessions
+            
+            // Apply project filtering first
+            if filterExportState.projectFilter != "All" {
+                filteredSessions = filteredSessions.filter { $0.projectName == filterExportState.projectFilter }
+            }
+            
+            // Apply date filtering based on selected filter
+            switch filterExportState.selectedDateFilter {
+            case .today:
+                let today = Calendar.current.startOfDay(for: Date())
+                filteredSessions = filteredSessions.filter { session in
+                    guard let start = session.startDateTime else { return false }
+                    return Calendar.current.isDate(start, inSameDayAs: today)
+                }
+            case .thisWeek:
+                let calendar = Calendar.current
+                let today = Date()
+                guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
+                filteredSessions = filteredSessions.filter { session in
+                    guard let start = session.startDateTime else { return false }
+                    return start >= weekRange.start && start <= weekRange.end
+                }
+            case .thisMonth:
+                let calendar = Calendar.current
+                let today = Date()
+                guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
+                filteredSessions = filteredSessions.filter { session in
+                    guard let start = session.startDateTime else { return false }
+                    return start >= monthRange.start && start <= monthRange.end
+                }
+            case .thisYear:
+                let calendar = Calendar.current
+                let today = Date()
+                guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
+                filteredSessions = filteredSessions.filter { session in
+                    guard let start = session.startDateTime else { return false }
+                    return start >= yearRange.start && start <= yearRange.end
+                }
+            case .custom:
+                if let customRange = filterExportState.customDateRange {
+                    filteredSessions = filteredSessions.filter { session in
+                        guard let start = session.startDateTime else { return false }
+                        return start >= customRange.startDate && start <= customRange.endDate
+                    }
+                }
+            case .clear:
+                // No additional filtering - use all sessions
+                break
+            }
+            
+            // Update the grouped sessions with filtered results
+            currentWeekSessions = groupSessionsByDate(filteredSessions)
+        }
     }
 
     // MARK: - Nested Filter Button Component
