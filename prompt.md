@@ -102,9 +102,9 @@ Context of Juju app:
 │   │   │   └── ProjectsNativeView.swift # Project management interface
 │   │   └── Sessions/
 │   │       ├── Components/
-│   │       │   ├── SessionEditOptions.swift # Inline session editing controls
 │   │       │   └── SessionViewOptions.swift # Session display options
 │   │       ├── SessionCardView.swift # Individual session display component
+│   │       ├── SessionEditModalView.swift # Modal session editing interface
 │   │       └── SessionsView.swift # Sessions list and management interface
 │   ├── Resources/
 │   │   └── Assets.xcassets/ etc

@@ -7,23 +7,13 @@ struct SessionCardView: View {
     let onSave: () -> Void
     let onDelete: () -> Void
 
-    @State private var isEditing = false
-    @State private var editedDate = ""
-    @State private var editedStartTime = ""
-    @State private var editedEndTime = ""
-    @State private var editedProject = ""
-    @State private var editedNotes = ""
-    @State private var selectedMood: String = ""
+    @State private var showingEditModal = false
     
     // Cache the project color to avoid repeated lookups
     @State private var sessionProjectColor: Color = Color.gray
     
     var projectNames: [String] {
         projects.map { $0.name }
-    }
-    
-    var isProjectEmpty: Bool {
-        editedProject.isEmpty
     }
 
     init(
@@ -60,29 +50,12 @@ struct SessionCardView: View {
             .frame(width: 8)
             .clipped()
             // --- Card content
-            Group {
-                if isEditing {
-                    SessionEditOptions(
-                        editedDate: $editedDate,
-                        editedStartTime: $editedStartTime,
-                        editedEndTime: $editedEndTime,
-                        editedProject: $editedProject,
-                        selectedMood: $selectedMood,
-                        editedNotes: $editedNotes,
-                        projects: projectNames,
-                        onSave: saveSession,
-                        onCancel: cancelEdit,
-                        isProjectEmpty: isProjectEmpty
-                    )
-                } else {
-                    SessionViewOptions(
-                        session: session,
-                        projects: projects,
-                        onEdit: { isEditing = true },
-                        onDelete: onDelete
-                    )
-                }
-            }
+            SessionViewOptions(
+                session: session,
+                projects: projects,
+                onEdit: { showingEditModal = true },
+                onDelete: onDelete
+            )
             .padding(Theme.spacingSmall)
         }
         // 3️⃣  Card background + border (MOVED UP!)
@@ -96,59 +69,21 @@ struct SessionCardView: View {
         // 4️⃣  Final layout tweaks
         .frame(minHeight: 180)
         .contentShape(Rectangle())
-        .onChange(of: isEditing) { newValue in
-            newValue ? startEditing() : resetToOriginalValues()
-        }
         .onChange(of: projects) { _, newProjects in
             // Update the project color when projects change
             let project = newProjects.first { $0.name == session.projectName }
             sessionProjectColor = project?.swiftUIColor ?? Color.gray
         }
+        .sheet(isPresented: $showingEditModal) {
+            SessionEditModalView(
+                session: session,
+                projects: projects,
+                onSave: { _ in onSave() }
+            )
+        }
     }
 
     
-    private func startEditing() {
-        editedDate = session.date
-        editedStartTime = String(session.startTime.prefix(5))
-        editedEndTime = String(session.endTime.prefix(5))
-        editedProject = session.projectName
-        editedNotes = session.notes
-        selectedMood = session.mood.map { "\($0)" } ?? ""
-    }
-    
-    private func resetToOriginalValues() {
-        editedDate = session.date
-        editedStartTime = String(session.startTime.prefix(5))
-        editedEndTime = String(session.endTime.prefix(5))
-        editedProject = session.projectName
-        editedNotes = session.notes
-        selectedMood = session.mood.map { "\($0)" } ?? ""
-    }
-    
-    private func saveSession() {
-        let moodInt = selectedMood.isEmpty ? nil : Int(selectedMood)
-        if SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: editedDate,
-            startTime: editedStartTime + ":00",
-            endTime: editedEndTime + ":00",
-            projectName: editedProject,
-            notes: editedNotes,
-            mood: moodInt
-        ) {
-            // Only call onSave if the update was successful
-            DispatchQueue.main.async {
-                onSave()
-                isEditing = false
-            }
-        }
-    }
-    
-    private func cancelEdit() {
-        // Reset to original values and exit edit mode
-        resetToOriginalValues()
-        isEditing = false
-    }
 }
 
 // MARK: - Preview
