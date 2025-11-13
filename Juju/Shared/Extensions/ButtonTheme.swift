@@ -104,6 +104,33 @@ public struct FilterButtonStyle: ButtonStyle {
     }
 }
 
+/// Style for a circular toggle button with an icon.
+public struct CircularToggleIconStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .medium))
+            .frame(width: 36, height: 36)
+            .background(
+                isEnabled ?
+                (configuration.isPressed ? Theme.Colors.surface.opacity(0.8) : Theme.Colors.surface)
+                : Theme.Colors.surface.opacity(0.5)
+            )
+            .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .cornerRadius(18) // Perfect circle
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Theme.Colors.divider, lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
+    }
+}
+
 
 
 // MARK: - Theme Extension for Easy Access
@@ -138,6 +165,11 @@ public extension ButtonStyle where Self == SimpleIconButtonStyle {
     static func simpleIcon(size: CGFloat) -> SimpleIconButtonStyle { 
         SimpleIconButtonStyle(iconSize: size)
     }
+}
+
+public extension ButtonStyle where Self == CircularToggleIconStyle {
+    /// A circular toggle button style with an icon, perfect for show/hide controls.
+    static var circularToggleIcon: CircularToggleIconStyle { CircularToggleIconStyle() }
 }
 
 struct PointingHandOnHover: ViewModifier {
@@ -200,6 +232,16 @@ struct ButtonTheme_Previews: PreviewProvider {
                         Text("—").padding(.horizontal)
                         Button { } label: { Image(systemName: "pencil") }.buttonStyle(.simpleIcon)
                         Button { } label: { Image(systemName: "paperplane") }.buttonStyle(.simpleIcon).disabled(true)
+                    }
+                }
+                
+                // Toggle Buttons
+                VStack(alignment: .leading) {
+                    Text("Toggle Buttons").font(.headline)
+                    HStack {
+                        Button { } label: { Image(systemName: "chevron.down") }.buttonStyle(.circularToggleIcon)
+                        Button { } label: { Image(systemName: "chevron_up") }.buttonStyle(.circularToggleIcon)
+                        Button { } label: { Image(systemName: "slider") }.buttonStyle(.circularToggleIcon)
                     }
                 }
             }

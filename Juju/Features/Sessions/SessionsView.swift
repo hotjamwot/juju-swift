@@ -90,13 +90,10 @@ public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
 
-    
     // MARK: - State Properties
     
-    // Filter state
-    @State private var projectFilter = "All"
-    @State private var selectedDateFilter: DateFilter = .thisWeek
-    @State private var currentDateInterval: DateInterval? = nil
+    // Filter and export state (now managed by the modular component)
+    @StateObject private var filterExportState = FilterExportState()
     
     // Editing state
     @State private var showingDeleteAlert = false
@@ -107,26 +104,22 @@ public struct SessionsView: View {
     @State private var showingExportAlert = false
     @State private var exportMessage = ""
     
-    // Pagination state
-    @State private var visibleGroupCount = 5
-    private let groupsPerPage = 5
-    @State private var allGroupedSessions: [GroupedSession] = []
+    // Current week sessions only - no pagination needed
+    @State private var currentWeekSessions: [GroupedSession] = []
 
     // MARK: - Computed Properties
     
     /// The source of truth for all filtering and sorting.
     private var fullyFilteredSessions: [SessionRecord] {
-        var sessions = sessionManager.allSessions
+        var sessions: [SessionRecord]
+        
+        // Always use current week sessions for display
+        // Filter panel expansion should NOT change the underlying data
+        sessions = getCurrentWeekSessions()
 
-        if let interval = currentDateInterval {
-            sessions = sessions.filter { session in
-                guard let start = session.startDateTime else { return false }
-                return interval.contains(start)
-            }
-        }
-
-        if projectFilter != "All" {
-            sessions = sessions.filter { $0.projectName == projectFilter }
+        // Apply project filtering only (simplified for now)
+        if filterExportState.projectFilter != "All" {
+            sessions = sessions.filter { $0.projectName == filterExportState.projectFilter }
         }
 
         sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
@@ -135,17 +128,16 @@ public struct SessionsView: View {
     
     /// Groups the filtered sessions by day for the grid view.
     private var groupedSessions: [GroupedSession] {
-        // Return the pre-computed grouped sessions
-        return Array(allGroupedSessions.prefix(visibleGroupCount))
+        // Always use current week sessions - filter panel is just UI
+        return currentWeekSessions
     }
 
     
     // MARK: - Body
     public var body: some View {
-        VStack(spacing: 0) {
-            
+        ZStack {
             // --- Main Content Area ---
-            if allGroupedSessions.isEmpty {
+            if groupedSessions.isEmpty {
                 if isLoading {
                     // Loading indicator
                     VStack {
@@ -169,7 +161,6 @@ public struct SessionsView: View {
                 // Grid View
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
-                        // Iterate over the visible groups based on pagination
                         ForEach(groupedSessions, id: \.id) { group in
                             GroupedSessionView(
                                 group: group,
@@ -183,83 +174,68 @@ public struct SessionsView: View {
                         }
                     }
                     .padding(.vertical, Theme.spacingMedium)
-
-                    
-                    // --- NEW: "Load More" Button ---
-                    if visibleGroupCount < allGroupedSessions.count {
-                        Button("Load More...") {
-                            visibleGroupCount += groupsPerPage
-                        }
-                        .buttonStyle(.primary)
-                        .padding()
-                    }
                 }
                 .scrollContentBackground(.hidden)
             }
             
-            // --- Sticky filter header at the bottom ---
-            VStack(spacing: 0) {
+            // --- Floating Filter Toggle Button ---
+            VStack {
+                Spacer()
                 HStack {
-                    // Project filter
-                    HStack {
-                        Text("Project:")
-                        Picker(selection: $projectFilter, label: EmptyView()) {
-                            Text("All").tag("All")
-                            ForEach(projectsViewModel.projects) { Text($0.name).tag($0.name) }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(width: 120)
-                        .onChange(of: projectFilter) { _, _ in
-                            // CHANGED: Reset pagination on filter change
-                            visibleGroupCount = groupsPerPage
-                        }
-                    }
-                    
-                    // Date filters
-                    HStack(spacing: Theme.spacingSmall) {
-                        Text("Date Range:")
-                        ForEach(DateFilter.allCases) { filter in
-                            SessionFilterButton(
-                                title: filter.title,
-                                isSelected: selectedDateFilter == filter,
-                                action: { handleDateFilterSelection(filter) }
-                            )
-                        }
-                    }
-                    
                     Spacer()
-                    
-                    // Export button
-                    Menu {
-                        Button("Export as CSV") { exportSessions(format: "csv") }
-                        Button("Export as Text") { exportSessions(format: "txt") }
-                        Button("Export as Markdown") { exportSessions(format: "md") }
-                    } label: {
-                        HStack(spacing: Theme.spacingExtraSmall) {
-                            Image(systemName: "square.and.arrow.down")
-                            Text("Export")
+                    FilterExportControls(
+                        state: filterExportState,
+                        projects: projectsViewModel.projects,
+                        filteredSessionsCount: fullyFilteredSessions.count,
+                        onDateFilterChange: handleDateFilterSelection,
+                        onCustomDateRangeChange: handleCustomDateRangeChange,
+                        onProjectFilterChange: { _ in },
+                        onExport: { format in
+                            exportSessions(format: format.fileExtension)
+                        },
+                        onInvoicePreviewToggle: {
+                            // Future invoice preview functionality
+                            print("Invoice preview requested")
                         }
-                    }
-                    .buttonStyle(.primary)
+                    )
+                    .padding(.trailing, Theme.spacingLarge)
+                    .padding(.bottom, Theme.spacingLarge)
                 }
-                .padding()
-                .background(Theme.Colors.surface)
             }
         }
         .background(Theme.Colors.background)
         .task { 
             await projectsViewModel.loadProjects()
-            // Load sessions when view appears
+            // Load current week sessions when view appears
             Task {
-                await loadGroupedSessions()
+                await loadCurrentWeekSessions()
             }
         }
-        .onAppear { handleDateFilterSelection(.thisWeek) }
+        .onAppear { 
+            // Initialize with current week filter
+            filterExportState.selectedDateFilter = .thisWeek
+        }
         .onChange(of: sessionManager.lastUpdated) { _ in
             // Auto-refresh when session data changes (after edit, delete, etc.)
             Task {
-                await loadGroupedSessions()
+                if !filterExportState.isExpanded {
+                    await loadCurrentWeekSessions()
+                }
             }
+        }
+        .onChange(of: filterExportState.isExpanded) { _, isExpanded in
+            // Filter panel toggle should NOT load different data
+            // The panel is just UI controls - data loading happens when filters are applied
+            if !isExpanded {
+                // When filter is closed, go back to current week only
+                Task {
+                    await loadCurrentWeekSessions()
+                }
+            }
+            // When filter is opened, do nothing - keep current data visible
+        }
+        .onChange(of: filterExportState.projectFilter) { _, _ in
+            // No pagination needed anymore
         }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }
@@ -275,25 +251,44 @@ public struct SessionsView: View {
     
     // MARK: - Data Loading Functions
     
-    private func loadGroupedSessions() async {
+    /// Load only current week sessions for default view
+    private func loadCurrentWeekSessions() async {
         isLoading = true
-        // Load all sessions first
-        let sessions = sessionManager.loadAllSessions()
+        let sessions = getCurrentWeekSessions()
+        currentWeekSessions = groupSessionsByDate(sessions)
+        isLoading = false
+    }
+    
+    /// Get sessions from current week only
+    private func getCurrentWeekSessions() -> [SessionRecord] {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekStart = calendar.startOfDay(for: today)
         
-        // Group sessions by date
+        // Get start of current week (Sunday)
+        let currentWeekStart: Date
+        if let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) {
+            currentWeekStart = weekRange.start
+        } else {
+            currentWeekStart = weekStart
+        }
+        
+        return sessionManager.allSessions.filter { session in
+            guard let start = session.startDateTime else { return false }
+            return start >= currentWeekStart && start <= today
+        }
+    }
+    
+    /// Group sessions by date for display
+    private func groupSessionsByDate(_ sessions: [SessionRecord]) -> [GroupedSession] {
         let grouped = Dictionary(grouping: sessions) { session -> Date in
             guard let start = session.startDateTime else { return Date() }
             return Calendar.current.startOfDay(for: start)
         }
         
-        // Sort by date descending, then map to `GroupedSession`
-        let sortedGroupedSessions = grouped
+        return grouped
             .sorted { $0.key > $1.key }                    // newer first
             .map { GroupedSession(date: $0.key, sessions: $0.value.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }) }
-        
-        allGroupedSessions = sortedGroupedSessions
-        visibleGroupCount = groupsPerPage
-        isLoading = false
     }
     
     // MARK: - Data Functions
@@ -322,24 +317,15 @@ public struct SessionsView: View {
     
     // MARK: - Filter Handling
     
-    private func handleDateFilterSelection(_ filter: DateFilter) {
-        selectedDateFilter = filter
+    private func handleDateFilterSelection(_ filter: SessionsDateFilter) {
+        filterExportState.selectedDateFilter = filter
         
-        let calendar = Calendar.current
-        let todayStart = calendar.startOfDay(for: Date())
-
-        switch filter {
-        case .today:
-            currentDateInterval = DateInterval(start: todayStart, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
-        case .thisWeek:
-            currentDateInterval = DateInterval(start: calendar.date(byAdding: .day, value: -6, to: todayStart)!, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
-        case .thisMonth:
-            currentDateInterval = DateInterval(start: calendar.date(byAdding: .day, value: -29, to: todayStart)!, end: calendar.date(byAdding: .day, value: 1, to: todayStart)!)
-        case .clear:
-            currentDateInterval = nil
-        }
-        
-        visibleGroupCount = groupsPerPage
+        // Note: Date filtering logic simplified for now
+        // Will be reimplemented when needed
+    }
+    
+    private func handleCustomDateRangeChange(_ range: DateRange?) {
+        filterExportState.customDateRange = range
     }
 
     // MARK: - Nested Filter Button Component
