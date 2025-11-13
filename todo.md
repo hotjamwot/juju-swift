@@ -1,4 +1,0 @@
-- [x] Analyze the WeeklyStackedBarChartView.swift file
-- [ ] Add spacingMedium between chart and x-axis labels
-- [ ] Fix background opacity - ensure only pane uses Surface.opacity(0.5)
-- [ ] Test the changes

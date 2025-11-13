@@ -63,11 +63,19 @@ Context of Juju app:
 │   │   │   ├── ChartDataPreparer.swift # Processes data for dashboard charts
 │   │   │   ├── IconManager.swift # Manages dynamic menu bar icons
 │   │   │   ├── MenuManager.swift # Handles menu bar dropdown functionality
-│   │   │   ├── SessionManager.swift # Core session tracking and data management
-│   │   │   └── ShortcutManager.swift # Keyboard shortcuts for quick actions
+│   │   │   ├── SessionManager.swift # Main session coordinator (refactored)
+│   │   │   ├── ShortcutManager.swift # Keyboard shortcuts for quick actions
+│   │   │   ├── File/ # File system operations
+│   │   │   │   └── SessionFileManager.swift # Thread-safe file operations
+│   │   │   ├── Data/ # Data processing and management
+│   │   │   │   ├── SessionDataParser.swift # CSV parsing and data conversion
+│   │   │   │   └── SessionDataManager.swift # Session CRUD operations
+│   │   │   └── Session/ # Session lifecycle management
+│   │   │       └── SessionOperationsManager.swift # Session state management
 │   │   ├── Models/
 │   │   │   ├── ChartModels.swift # Data models for chart components
-│   │   │   └── Project.swift # Project entity model
+│   │   │   ├── Project.swift # Project entity model
+│   │   │   └── SessionModels.swift # Session data structures
 │   │   └── ViewModels/
 │   │       └── ProjectsViewModel.swift # Projects data binding and business logic
 │   ├── Features/

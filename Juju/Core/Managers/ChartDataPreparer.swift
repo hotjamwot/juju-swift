@@ -43,6 +43,17 @@ final class ChartDataPreparer: ObservableObject {
         
         print("[ChartDataPreparer] Prepared all-time data")
     }
+    
+    /// Background version for heavy data processing (FIX: Background chart prep)
+    func prepareAllTimeDataInBackground(sessions: [SessionRecord], projects: [Project]) async {
+        await Task.detached {
+            await MainActor.run {
+                self.viewModel.sessions = sessions
+                self.viewModel.projects = projects
+            }
+            print("[ChartDataPreparer] Background preparation complete")
+        }
+    }
 
     private let sessionDateFormatter: DateFormatter = {
         let formatter = DateFormatter()

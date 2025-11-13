@@ -3,6 +3,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let projectsDidChange = Notification.Name("projectsDidChange")
+    static let sessionDidEnd = Notification.Name("sessionDidEnd")
 }
 
     // No Color extensions here - use JujuUtils
