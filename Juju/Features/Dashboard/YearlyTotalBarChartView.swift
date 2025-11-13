@@ -16,6 +16,10 @@ struct YearlyTotalBarChartView: View {
             let sortedData = data.sorted { $0.totalHours > $1.totalHours }
             
             GeometryReader { geometry in
+                let calculatedMinWidth = calculateMinimumWidth(for: sortedData)
+                let availableWidth = max(geometry.size.width, calculatedMinWidth)
+                let textSpaceWidth = calculateConsistentTextSpaceWidth(for: sortedData)
+                
                 VStack(spacing: 0) {
                     Spacer(minLength: 0) // This will push content to center
                     
@@ -23,11 +27,10 @@ struct YearlyTotalBarChartView: View {
                         ForEach(sortedData.indices, id: \.self) { index in
                             let projectData = sortedData[index]
                             let maxValue = sortedData.first?.totalHours ?? 1
-                            let barWidth = (projectData.totalHours / maxValue) * (geometry.size.width - 150) // Adjusted for text space
+                            let barWidth = (projectData.totalHours / maxValue) * (availableWidth - textSpaceWidth - Theme.spacingMedium * 2)
                             
                             HStack(spacing: Theme.spacingMedium) {
                                 HStack(spacing: Theme.spacingExtraSmall) {
-                                    
                                     HStack(spacing: Theme.spacingSmall) {
                                         Text(projectData.emoji)
                                             .font(Theme.Fonts.body)
@@ -37,7 +40,7 @@ struct YearlyTotalBarChartView: View {
                                             .foregroundColor(Theme.Colors.textPrimary)
                                     }
                                 }
-                                .frame(width: Theme.spacingLarge * 6, alignment: .leading)
+                                .frame(width: textSpaceWidth, alignment: .leading)
                                 
                                 ZStack(alignment: .leading) {
                                     // Invisible background bar for left alignment (very transparent)
@@ -77,7 +80,61 @@ struct YearlyTotalBarChartView: View {
                     Spacer(minLength: 0) // This will push content to center
                 }
             }
+            .frame(minWidth: calculateMinimumWidth(for: data))
         }
+    }
+    
+    /// Calculate the minimum width required to properly display all project data
+    private func calculateMinimumWidth(for data: [ProjectChartData]) -> CGFloat {
+        if data.isEmpty { return 400 }
+        
+        // Calculate space needed for the longest project name + emoji
+        let longestProjectName = data.max { $0.projectName.count < $1.projectName.count }?.projectName ?? ""
+        let longestProjectLength = longestProjectName.count
+        
+        // Calculate text space requirements
+        let emojiWidth: CGFloat = 20
+        let charWidth: CGFloat = 10  // Approximate width per character
+        let baseTextSpace: CGFloat = 60  // Minimum space for emoji + some text
+        let textSpaceWidth = max(baseTextSpace, emojiWidth + CGFloat(longestProjectLength) * charWidth + Theme.spacingSmall * 2)
+        
+        // Calculate space needed for value text (e.g., "120.0 h")
+        let maxValueLength = data.max { $0.totalHours < $1.totalHours }?.totalHours ?? 0
+        let maxValueText = String(format: "%.1f h", maxValueLength)
+        let valueTextWidth: CGFloat = CGFloat(maxValueText.count) * 8  // Approximate width per character for smaller font
+        
+        // Add some padding for bars and spacing
+        let minimumBarWidth: CGFloat = 100
+        let spacingWidth: CGFloat = Theme.spacingMedium * 3  // Spacing between elements
+        
+        return textSpaceWidth + minimumBarWidth + valueTextWidth + spacingWidth + Theme.spacingMedium * 2
+    }
+    
+    /// Calculate consistent text space width for all projects based on the longest name
+    private func calculateConsistentTextSpaceWidth(for data: [ProjectChartData]) -> CGFloat {
+        if data.isEmpty { return 60 }
+        
+        // Find the longest project name
+        let longestProjectName = data.max { $0.projectName.count < $1.projectName.count }?.projectName ?? ""
+        let longestProjectLength = longestProjectName.count
+        
+        // Calculate text space requirements
+        let emojiWidth: CGFloat = 20
+        let charWidth: CGFloat = 10
+        let baseTextSpace: CGFloat = 60
+        let spacingWidth: CGFloat = Theme.spacingSmall * 2
+        
+        return max(baseTextSpace, emojiWidth + CGFloat(longestProjectLength) * charWidth + spacingWidth)
+    }
+    
+    /// Calculate optimal text space width for a specific project (legacy function)
+    private func calculateTextSpaceWidth(for projectData: ProjectChartData) -> CGFloat {
+        let emojiWidth: CGFloat = 20
+        let charWidth: CGFloat = 10
+        let textLength = projectData.projectName.count
+        let baseWidth: CGFloat = 60
+        
+        return max(baseWidth, emojiWidth + CGFloat(textLength) * charWidth + Theme.spacingSmall * 2)
     }
 }
 

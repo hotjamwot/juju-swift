@@ -63,7 +63,7 @@ struct DashboardNativeSwiftChartsView: View {
                     .frame(maxHeight: .infinity, alignment: .center)
                 }
             }
-            .frame(height: 300)
+            .frame(height: calculateThisYearSectionHeight())
         }
         .padding(Theme.spacingLarge)
         .background(
@@ -74,6 +74,34 @@ struct DashboardNativeSwiftChartsView: View {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
+    }
+    
+    /// Calculate dynamic height for the "This Year" section based on number of projects
+    private func calculateThisYearSectionHeight() -> CGFloat {
+        let data = chartDataPreparer.yearlyProjectTotals()
+        
+        if data.isEmpty {
+            // If no data, use minimum height
+            return 300
+        }
+        
+        // Calculate height needed for each project row
+        let projectCount = data.count
+        let barHeight: CGFloat = Theme.Design.cornerRadius + 2  // Height of each bar
+        let rowSpacing: CGFloat = Theme.spacingMedium  // Spacing between rows
+        let chartPadding: CGFloat = Theme.spacingMedium * 2  // Top and bottom padding in chart
+        
+        // Calculate total height needed for the chart
+        let chartHeight = CGFloat(projectCount) * (barHeight + rowSpacing) + chartPadding
+        
+        // Calculate height needed for summary metrics (3 metrics with spacing)
+        let summaryMetricHeight: CGFloat = 3 * 60 + (2 * Theme.spacingMedium)  // Approximate height per metric + spacing
+        
+        // Return the maximum of chart height and summary metrics height, with a minimum
+        let minHeight: CGFloat = 300
+        let maxHeight: CGFloat = 800  // Maximum reasonable height to prevent excessive stretching
+        
+        return max(minHeight, min(maxHeight, max(chartHeight, summaryMetricHeight)))
     }
     
     private var weeklyStackedBarChart: some View {
