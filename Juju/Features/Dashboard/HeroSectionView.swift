@@ -61,7 +61,7 @@ struct HeroSectionView: View {
             .padding(.bottom, Theme.spacingSmall)
 
         }
-        .padding(.horizontal, Theme.spacingExtraSmall)
+        .padding(.horizontal, Theme.spacingLarge)
         .padding(.vertical, Theme.spacingExtraLarge)
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)

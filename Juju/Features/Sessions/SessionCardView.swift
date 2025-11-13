@@ -83,7 +83,7 @@ struct SessionCardView: View {
                     )
                 }
             }
-            .padding(Theme.spacingMedium)
+            .padding(Theme.spacingSmall)
         }
         // 3️⃣  Card background + border (MOVED UP!)
         .background(Theme.Colors.surface)

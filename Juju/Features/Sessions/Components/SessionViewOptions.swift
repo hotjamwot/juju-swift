@@ -20,14 +20,16 @@ struct SessionViewOptions: View {
     }
 
 
+    @State private var isExpanded = false
+    
     public var body: some View {
         HStack(spacing: 0) {
             // --- Card content ------------------------------------
-              VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+              VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                   /* ────── TOP ROW: Project + Mood ───────────── */
                   HStack {
                       // Project name with emoji (left)
-                      HStack(spacing: Theme.spacingSmall) {
+                      HStack(spacing: Theme.spacingExtraSmall) {
                           Text(sessionProjectEmoji)
                               .font(Theme.Fonts.header)
                           Text(session.projectName)
@@ -40,7 +42,7 @@ struct SessionViewOptions: View {
                       
                       // Mood (right, only if set)
                       if let mood = session.mood {
-                          HStack(spacing: Theme.spacingSmall) {
+                          HStack(spacing: Theme.spacingExtraSmall) {
                               Image(systemName: "star.fill")
                               Text("Mood: \(mood)/10")
                           }
@@ -53,7 +55,7 @@ struct SessionViewOptions: View {
                   
                   /* ────── MIDDLE ROW: Time & Duration ────── */
                   HStack {
-                      HStack(spacing: Theme.spacingSmall) {
+                      HStack(spacing: Theme.spacingExtraSmall) {
                           Image(systemName: "clock")
                           Text("\(formattedStartTime) - \(formattedEndTime)")
                       }
@@ -69,12 +71,24 @@ struct SessionViewOptions: View {
                   
                   /* ────── NOTES SECTION (if present) ────── */
                   if !session.notes.isEmpty {
-                      Text(session.notes)
-                          .font(Theme.Fonts.body)
-                          .foregroundColor(Theme.Colors.textPrimary)
-                          .lineLimit(4)
-                          .fixedSize(horizontal: false, vertical: true)
-                          .frame(maxWidth: .infinity, alignment: .leading)
+                      VStack(alignment: .leading, spacing: 0) {
+                          Text(session.notes)
+                              .font(Theme.Fonts.body)
+                              .foregroundColor(Theme.Colors.textPrimary)
+                              .lineLimit(isExpanded ? nil : 3)
+                              .fixedSize(horizontal: false, vertical: true)
+                              .frame(maxWidth: .infinity, alignment: .leading)
+                          
+                          // Expand/Collapse button for long notes
+                          if session.notes.count > 100 {
+                              Button(isExpanded ? "Show Less" : "Show More") {
+                                  isExpanded.toggle()
+                              }
+                              .font(.caption)
+                              .foregroundColor(Theme.Colors.textSecondary)
+                              .buttonStyle(PlainButtonStyle())
+                          }
+                      }
                   }
                   
                   /* ────── BOTTOM ROW: Edit / Delete ────── */
@@ -96,8 +110,15 @@ struct SessionViewOptions: View {
                   // If there's no notes, push everything up
                   if session.notes.isEmpty { Spacer() }
               }
-              .padding(.vertical, Theme.spacingMedium)
-              .padding(.horizontal, Theme.spacingMedium)
+              .padding(.vertical, Theme.spacingSmall)
+              .padding(.horizontal, Theme.spacingSmall)
+              .contentShape(Rectangle())
+              .onTapGesture {
+                  // Expand notes on tap if there are notes and they're long
+                  if !session.notes.isEmpty && session.notes.count > 100 {
+                      isExpanded.toggle()
+                  }
+              }
           }
       }
 

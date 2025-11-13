@@ -65,9 +65,9 @@ struct GroupedSessionView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, Theme.spacingMedium)
 
-            // 2. 3‑Column Grid for the Sessions …
+            // 2. 4‑Column Grid for the Sessions …
             LazyVGrid(
-                columns: Array(repeating: .init(.flexible(), spacing: Theme.spacingMedium), count: 3),
+                columns: Array(repeating: .init(.flexible(), spacing: Theme.spacingMedium), count: 4),
                 spacing: Theme.spacingMedium
             ) {
                 ForEach(group.sessions) { session in
@@ -77,7 +77,7 @@ struct GroupedSessionView: View {
                         onSave: onSave,
                         onDelete: { onDelete(session) }
                     )
-                    .frame(minHeight: 120)
+                    .frame(minHeight: 180)
                 }
             }
             .padding(.horizontal, Theme.spacingLarge)
