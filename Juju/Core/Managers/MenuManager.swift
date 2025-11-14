@@ -20,6 +20,7 @@ class MenuManager {
             name: .projectsDidChange,
             object: nil
         )
+        
     }
     
     deinit {
@@ -30,6 +31,7 @@ class MenuManager {
         projects = ProjectManager.shared.loadProjects()
         updateProjects(projects)
     }
+    
     
     func createMenu(with projects: [Project]) {
         self.projects = projects

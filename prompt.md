@@ -9,6 +9,7 @@ Context of Juju app:
 - End Session: Finish your session and log notes and mood.
 - View Dashboard: Open a clean analytics window.
 - Quit: Exit Juju.
+
 ### ⏱ Session Tracking
 - Precise start/end auto-timestamps for each session.
 - Automatic duration calculation.
@@ -16,10 +17,12 @@ Context of Juju app:
 - Post-session notes: Add context or reflections.
 - Mood tracking: Rate your session (0–10) to capture how you felt.
 - All data saved as CSV for transparency and portability.
+
 ### 📁 Local Storage
 - Sessions: ~/Library/Application Support/juju/data.csv
 - Projects: projects.json in the same folder.
 - Flat file system: No cloud, no lock-in, no hidden database.
+
 ### 📊 Dashboard
 **Charts (default tab):**
 1. 🪩 Hero Section – "This Week in Juju"
@@ -29,25 +32,32 @@ Context of Juju app:
 2. A vertical Monday -> Sunday chart with coloured bars for sessions
 3. Full-width Bubble Chart for Yearly Overview
 4. Grouped Bar Chart for Monthly Trends
+
 **Session Table (Sessions):**
 - Inline editing: Edit date, project, times, notes, and mood directly in the table.
 - Pagination for large datasets.
 - Delete sessions with confirmation.
+
 **Project Manager (Projects):**
 - Add, edit, and delete projects.
 - Color picker for project color-coding.
-**Filtering:**
-- Filter sessions by project.
-- Filter by date range (quick presets or custom).
-- Combined filters for precise data views.
+
+**Filtering & Export System:**
+- **Project Filter**: Dropdown to filter by specific projects
+- **Date Filter**: Dropdown with options: Today, This Week, This Month, This Year, Custom Range
+- **Export Functionality**: Dropdown to select export format (CSV, TXT, Markdown, PDF)
+- **Real-time Filtering**: Proper date filtering logic for all time periods
+- **Session Count Display**: Shows number of sessions matching current filters
+
 **Export Sessions:**
-- Export filtered sessions to CSV, Markdown, or TXT.
-- Choose export format and save anywhere via native macOS save dialog.
-- Export includes: Date, Project, Start Time, End Time, Duration, Notes, Mood, and a summary of filters used.
+- Export filtered sessions to CSV, Markdown, TXT, or PDF.
+- Choose export format via dropdown menu.
+- Save anywhere via native macOS save dialog.
+- Export includes: Date, Project, Start Time, End Time, Duration, Notes, Mood, and filter summary.
 
 ---
 
-### Current filetree:
+### Current filetree (Updated):
 
 ```
 ├── Juju/
@@ -102,10 +112,11 @@ Context of Juju app:
 │   │   │   └── ProjectsNativeView.swift # Project management interface
 │   │   └── Sessions/
 │   │       ├── Components/
+│   │       │   ├── FilterExportControls.swift # NEW: Modular filter and export controls
 │   │       │   └── SessionViewOptions.swift # Session display options
 │   │       ├── SessionCardView.swift # Individual session display component
 │   │       ├── SessionEditModalView.swift # Modal session editing interface
-│   │       └── SessionsView.swift # Sessions list and management interface
+│   │       └── SessionsView.swift # Sessions list with enhanced filter integration
 │   ├── Resources/
 │   │   └── Assets.xcassets/ etc
 │   └── Shared/
@@ -127,10 +138,10 @@ Context of Juju app:
 └── prompt.md
 ```
 
+
 # TODO LIST RECOMMENDED
 
 When starting a new task, it is recommended to create a todo list.
-
 
 1. Include the task_progress parameter in your next tool call
 2. Create a comprehensive checklist of all steps needed

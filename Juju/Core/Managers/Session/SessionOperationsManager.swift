@@ -67,16 +67,16 @@ class SessionOperationsManager: ObservableObject {
             }
             
             if success {
-                // Notify that session ended
-                NotificationCenter.default.post(name: .sessionDidEnd, object: nil)
+                // Reset state first
+                self.isSessionActive = false
+                self.currentProjectName = nil
+                self.sessionStartTime = nil
                 
                 // Update timestamp to trigger UI refresh
                 self.lastUpdated = Date()
                 
-                // Reset state
-                self.isSessionActive = false
-                self.currentProjectName = nil
-                self.sessionStartTime = nil
+                // Notify that session ended (after state is reset)
+                NotificationCenter.default.post(name: .sessionDidEnd, object: nil)
             }
             
             completion(success)

@@ -31,6 +31,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Create the menu
         menuManager.createMenu(with: projects)
         
+        // Register for session end notifications to refresh menu
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onSessionDidEnd),
+            name: .sessionDidEnd,
+            object: nil
+        )
+        
         // Register global shortcut
         shortcutManager.registerGlobalShortcut()
         
@@ -121,6 +129,11 @@ NSApp.mainMenu = mainMenu
     func refreshMenu() {
         projects = ProjectManager.shared.loadProjects()
         menuManager.updateProjects(projects)
+    }
+    
+    @objc private func onSessionDidEnd() {
+        print("[AppDelegate] Session did end notification received, refreshing menu")
+        refreshMenu()
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {
