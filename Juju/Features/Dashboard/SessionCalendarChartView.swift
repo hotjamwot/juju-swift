@@ -32,19 +32,46 @@ struct SessionCalendarChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             
-            Chart(sessions) { session in
+            Chart {
+                // Add continuous workday background highlighting (9 AM - 5 PM) across entire chart
                 RectangleMark(
-                    x: .value("Day", session.day),
-                    yStart: .value("Start Hour", session.startHour),
-                    yEnd:   .value("End Hour",   session.endHour)
+                    xStart: .value("Start", "Monday"),
+                    xEnd: .value("End", "Sunday"),
+                    yStart: .value("Start", 9.0),
+                    yEnd: .value("End", 17.0)
                 )
-                .foregroundStyle(Color(hex: session.projectColor))
-                .cornerRadius(Theme.Design.cornerRadius / 4)
-                .annotation(position: .overlay, alignment: .center) {
-                    Text("\(session.duration, specifier: "%.1f")h")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(.white)
-                        .bold()
+                .foregroundStyle(Color.gray.opacity(0.08))
+                .cornerRadius(2)
+                
+                // Add subtle grid lines only for key hours: 6 AM, 9 AM, 5 PM, 11 PM
+                ForEach([6.0, 23.0], id: \.self) { hour in
+                    RuleMark(
+                        y: .value("Hour", hour)
+                    )
+                    .foregroundStyle(Color.gray.opacity(0.3))
+                    .lineStyle(StrokeStyle(lineWidth: 1.0, dash: [3, 6]))
+                }
+                
+                ForEach(sessions) { session in
+                    RectangleMark(
+                        x: .value("Day", session.day),
+                        yStart: .value("Start Hour", session.startHour),
+                        yEnd:   .value("End Hour",   session.endHour)
+                    )
+                    .foregroundStyle(Color(hex: session.projectColor))
+                    .cornerRadius(Theme.Design.cornerRadius / 4)
+                    .annotation(position: .overlay, alignment: .center) {
+                        HStack(spacing: 4) {
+                            Text(session.projectEmoji)
+                                .font(.caption)
+                            Text("\(session.duration, specifier: "%.1f")h")
+                                .font(Theme.Fonts.caption)
+                                .bold()
+                        }
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                    }
                 }
             }
             .chartYScale(domain: 6.0 ... 23.0)

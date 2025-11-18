@@ -9,56 +9,62 @@ struct HeroSectionView: View {
 
     var body: some View {
         VStack(spacing: Theme.spacingMedium) {
-            // Header
-            HStack(spacing: Theme.spacingSmall) {
-                Spacer()
-                Image("juju_logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 38, height: 38)
-                    .shadow(radius: 1)
-
-                Text("    You've spent")
-                Text(String(format: "%.1f", totalHours) + " hours")
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Text("in the Juju this week!")
-                Spacer()
-            }
-            .font(.system(size: 32, weight: .bold, design: .rounded))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Theme.spacingLarge)
-
-            // Two‑column charts
+            // First Row: Two Columns
             GeometryReader { geo in
                 let totalWidth = geo.size.width
-                let leftWidth  = totalWidth * 0.30
-                let rightWidth = totalWidth * 0.70
+                let leftColumnWidth = totalWidth * 0.40
+                let rightColumnWidth = totalWidth * 0.60
 
-                HStack(spacing: Theme.spacingSmall) {
-                    // Bubble chart
+                HStack(spacing: Theme.spacingLarge) {
+                    // Left Column: Logo and Text
+                    VStack(alignment: .center, spacing: Theme.spacingSmall) {
+                        // Juju Logo
+                        Image("juju_logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                            .shadow(radius: 1)
+
+                        // Text Elements
+                        VStack(alignment: .center, spacing: Theme.spacingExtraSmall) {
+                            Text("You've spent")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.textPrimary)
+
+                            Text(String(format: "%.1f", totalHours) + " hours")
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+
+                            Text("in the Juju this week!")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                        }
+                    }
+                    .frame(width: leftColumnWidth, alignment: .center)
+
+                    // Right Column: Weekly Project Bubble Chart
                     WeeklyProjectBubbleChartView(
                         data: chartDataPreparer.weeklyProjectTotals()
                     )
-                    .frame(width: leftWidth, height: 300)
-
-                    // Calendar chart
-                    SessionCalendarChartView(
-                        sessions: chartDataPreparer.currentWeekSessionsForCalendar()
-                    )
-                    .padding(Theme.spacingLarge)
-                    .frame(width: rightWidth, height: 280)
-                    .border (.clear, width: 0)
+                    .frame(width: rightColumnWidth, height: 350)
                 }
-                .frame(width: totalWidth, height: 280)
+                .frame(width: totalWidth)
             }
-            .frame(height: 280)
-            .padding(.bottom, Theme.spacingSmall)
+            .frame(height: 400)
+
+            // Second Row: Full Width Session Calendar Chart
+            SessionCalendarChartView(
+                sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+            )
+            .padding(Theme.spacingLarge)
+            .frame(height: 350)
+            .border(.clear, width: 0)
 
         }
         .padding(.horizontal, Theme.spacingLarge)
@@ -78,6 +84,6 @@ struct HeroSectionView: View {
 
     let mockChartDataPreparer = ChartDataPreparer()
     return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5)
-        .frame(width: 900)
+        .frame(width: 1000)
         .padding()
 }

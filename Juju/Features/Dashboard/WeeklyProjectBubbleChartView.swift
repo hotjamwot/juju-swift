@@ -15,7 +15,7 @@ struct WeeklyProjectBubbleChartView: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+        VStack(alignment: .center, spacing: Theme.spacingSmall) {
             if data.isEmpty {
                 Text("No sessions this week")
                     .font(Theme.Fonts.header)
