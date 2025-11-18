@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Import simple preview helpers
+import Juju
+
 struct NotesModalView: View {
     @StateObject private var viewModel: NotesViewModel
     @FocusState private var isTextFieldFocused: Bool
@@ -158,14 +161,8 @@ struct NotesModalView: View {
 // MARK: - Preview
 struct NotesModalView_Previews: PreviewProvider {
     static var previews: some View {
-        Group {
+        SimplePreviewHelpers.modal {
             NotesModalView(viewModel: NotesViewModel.preview)
-                .previewDisplayName("Light Mode")
-                .preferredColorScheme(.light)
-            
-            NotesModalView(viewModel: NotesViewModel.preview)
-                .previewDisplayName("Dark Mode")
-                .preferredColorScheme(.dark)
         }
     }
 }

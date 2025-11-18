@@ -81,9 +81,50 @@ struct HeroSectionView: View {
 
 // MARK: Preview
 #Preview {
-
-    let mockChartDataPreparer = ChartDataPreparer()
-    return HeroSectionView(chartDataPreparer: mockChartDataPreparer, totalHours: 12.5)
-        .frame(width: 1000)
+    return HeroSectionView_PreviewsContent()
+        .frame(width: 1000, height: 800)
+        .background(Color(NSColor.windowBackgroundColor))
         .padding()
+}
+
+struct HeroSectionView_PreviewsContent: View {
+    @StateObject var chartDataPreparer = ChartDataPreparer()
+    @StateObject var sessionManager = SessionManager.shared
+    @StateObject var projectsViewModel = ProjectsViewModel.shared
+    
+    var body: some View {
+        HeroSectionView(
+            chartDataPreparer: chartDataPreparer,
+            totalHours: chartDataPreparer.weeklyTotalHours()
+        )
+        .onAppear {
+            // Load data just like DashboardNativeSwiftChartsView does
+            Task {
+                await projectsViewModel.loadProjects()
+                await sessionManager.loadAllSessions()
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
+        }
+        .onChange(of: sessionManager.allSessions.count) { _ in
+            // Update chart data when session data changes
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
+        }
+        .onChange(of: projectsViewModel.projects.count) { _ in
+            // Update chart data when project data changes
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
+        }
+    }
 }

@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		662BB38B2EC2697800B36792 /* YearlyTotalBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662BB38A2EC2697800B36792 /* YearlyTotalBarChartView.swift */; };
 		6633F0DD2EAB6EFD003AA3AA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */; };
+		663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663A91BF2ECD19E500A7771E /* SimplePreviewHelpers.swift */; };
+		663A91C22ECD19E500A7771E /* SimplePreviewTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663A91C02ECD19E500A7771E /* SimplePreviewTest.swift */; };
 		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
@@ -57,6 +59,8 @@
 /* Begin PBXFileReference section */
 		662BB38A2EC2697800B36792 /* YearlyTotalBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyTotalBarChartView.swift; sourceTree = "<group>"; };
 		6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		663A91BF2ECD19E500A7771E /* SimplePreviewHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimplePreviewHelpers.swift; sourceTree = "<group>"; };
+		663A91C02ECD19E500A7771E /* SimplePreviewTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimplePreviewTest.swift; sourceTree = "<group>"; };
 		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
@@ -116,6 +120,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		663A91B82ECD160900A7771E /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				663A91BF2ECD19E500A7771E /* SimplePreviewHelpers.swift */,
+				663A91C02ECD19E500A7771E /* SimplePreviewTest.swift */,
+			);
+			path = Preview;
+			sourceTree = "<group>";
+		};
 		6657F6952E0313200016F333 /* juju-swift */ = {
 			isa = PBXGroup;
 			children = (
@@ -270,6 +283,7 @@
 		66B148462EA8EA4B00E9BB4A /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				663A91B82ECD160900A7771E /* Preview */,
 				66C452FA2EB4133200DE7FE6 /* TooltipView.swift */,
 				66B148452EA8EA4B00E9BB4A /* Theme.swift */,
 				66B148442EA8EA4B00E9BB4A /* Extensions */,
@@ -423,12 +437,14 @@
 				66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */,
 				66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */,
 				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
+				663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */,
 				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
 				66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */,
 				66881FCA2EC653E300AB32F1 /* FilterExportControls.swift in Sources */,
 				66BDAC462EAD0AF30042A906 /* StackedAreaChartCardView.swift in Sources */,
 				662BB38B2EC2697800B36792 /* YearlyTotalBarChartView.swift in Sources */,
 				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
+				663A91C22ECD19E500A7771E /* SimplePreviewTest.swift in Sources */,
 				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
 				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,
 				66EF3E792EC5F2B200A6952E /* SessionFileManager.swift in Sources */,

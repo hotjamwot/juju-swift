@@ -408,58 +408,27 @@ public struct SessionsView: View {
 @available(macOS 12.0, *)
 struct SessionsView_Previews: PreviewProvider {
     static var previews: some View {
-        // Create sample data for preview
-        let sampleSessions = [
-            SessionRecord(
-                id: "1",
-                date: "2024-01-15",
-                startTime: "09:00:00",
-                endTime: "10:30:00",
-                durationMinutes: 90,
-                projectName: "Project Alpha",
-                notes: "Quick meeting about the new features.",
-                mood: 7
-            ),
-            SessionRecord(
-                id: "2",
-                date: "2024-01-15",
-                startTime: "14:00:00",
-                endTime: "16:00:00",
-                durationMinutes: 120,
-                projectName: "Project Beta",
-                notes: "Long detailed notes about the implementation process.",
-                mood: 9
-            ),
-            SessionRecord(
-                id: "3",
-                date: "2024-01-16",
-                startTime: "10:00:00",
-                endTime: "11:00:00",
-                durationMinutes: 60,
-                projectName: "Project Alpha",
-                notes: "Review session",
-                mood: 8
-            )
-        ]
-        
-        // Create a mock session manager with sample data
-        let mockSessionManager = SessionManager.shared
-        mockSessionManager.allSessions = sampleSessions
-        
-        // Create a mock projects view model
-        let mockProjectsViewModel = ProjectsViewModel()
-        mockProjectsViewModel.projects = [
-            Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-            Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0)
-        ]
-        
-        return VStack {
-            SessionsView()
-                .frame(width: 1200, height: 800)
-                .background(Color(.windowBackgroundColor))
-        }
-        .padding()
-        .previewLayout(.sizeThatFits)
+        return SessionsView_PreviewsContent()
+            .frame(width: 1200, height: 800)
+            .background(Color(.windowBackgroundColor))
+            .padding()
+            .previewLayout(.sizeThatFits)
+    }
+}
+
+struct SessionsView_PreviewsContent: View {
+    @StateObject var sessionManager = SessionManager.shared
+    @StateObject var projectsViewModel = ProjectsViewModel.shared
+    
+    var body: some View {
+        SessionsView()
+            .onAppear {
+                // Load data just like the main app does
+                Task {
+                    await projectsViewModel.loadProjects()
+                    await sessionManager.loadAllSessions()
+                }
+            }
     }
 }
 #endif
