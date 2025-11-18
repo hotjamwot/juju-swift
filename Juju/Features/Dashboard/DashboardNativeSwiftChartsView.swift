@@ -149,7 +149,6 @@ struct DashboardNativeSwiftChartsView: View {
             .cornerRadius(Theme.Design.cornerRadius)
         }
         .padding(.top, 20)
-        .padding(.bottom, 20)
         .padding(.trailing, 20)
         .background(Theme.Colors.background)
         

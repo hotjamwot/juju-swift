@@ -88,7 +88,6 @@ struct WeeklyProjectBubbleChartView: View {
                         }
                     }
                 }
-                .frame(height: 200)
             }
         }
         .padding(.vertical, Theme.spacingExtraSmall)

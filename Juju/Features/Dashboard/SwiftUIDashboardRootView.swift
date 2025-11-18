@@ -29,7 +29,6 @@ struct SwiftUIDashboardRootView: View {
                 .animation(.easeInOut(duration: 0.2), value: selected)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, Theme.spacingLarge)
-                .padding(.bottom, Theme.spacingLarge)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.Colors.background)

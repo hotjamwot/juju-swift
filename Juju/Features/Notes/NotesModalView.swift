@@ -86,7 +86,7 @@ struct NotesModalView: View {
             .cornerRadius(Theme.Design.cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 0.5)
+                    .stroke(Theme.Colors.divider, lineWidth: 1)
             )
         }
         .padding(.horizontal, Theme.spacingExtraLarge)
