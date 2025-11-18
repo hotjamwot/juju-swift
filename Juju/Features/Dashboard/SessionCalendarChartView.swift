@@ -108,13 +108,13 @@ struct SessionCalendarChartView: View {
                 }
             .chartXScale(domain: weekDays)
 
-            .frame(height: 280)
+            .frame(height: 380)
             
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(height: 280)
+                    .frame(height: 380)
             }
         }
     }

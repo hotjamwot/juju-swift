@@ -52,18 +52,18 @@ struct HeroSectionView: View {
                     WeeklyProjectBubbleChartView(
                         data: chartDataPreparer.weeklyProjectTotals()
                     )
-                    .frame(width: rightColumnWidth, height: 350)
+                    .frame(width: rightColumnWidth, height: 250)
                 }
                 .frame(width: totalWidth)
             }
-            .frame(height: 400)
+            .frame(height: 250)
 
             // Second Row: Full Width Session Calendar Chart
             SessionCalendarChartView(
                 sessions: chartDataPreparer.currentWeekSessionsForCalendar()
             )
             .padding(Theme.spacingLarge)
-            .frame(height: 350)
+            .frame(height: 450)
             .border(.clear, width: 0)
 
         }
