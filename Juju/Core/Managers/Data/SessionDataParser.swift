@@ -12,7 +12,7 @@ class SessionDataParser {
     // MARK: - CSV to SessionRecord Conversion
     
     func parseSessionsFromCSV(_ csvContent: String, hasIdColumn: Bool = true) -> ([SessionRecord], Bool) {
-        let lines = csvContent.components(separatedBy: .newlines)
+        let lines = parseCSVContentWithProperQuoting(csvContent)
         
         guard let headerLine = lines.first, !headerLine.isEmpty else {
             return ([], false)
@@ -70,7 +70,7 @@ class SessionDataParser {
     }
     
     func parseSessionsFromCSVForDateRange(_ csvContent: String, hasIdColumn: Bool, dateInterval: DateInterval) -> [SessionRecord] {
-        let lines = csvContent.components(separatedBy: .newlines)
+        let lines = parseCSVContentWithProperQuoting(csvContent)
         
         guard let headerLine = lines.first, !headerLine.isEmpty else {
             return []
@@ -160,6 +160,30 @@ class SessionDataParser {
     
     private func cleanField(_ field: String) -> String {
         return field.trimmingCharacters(in: CharacterSet(charactersIn: "\"")).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Parse CSV content properly, handling quoted fields that contain line breaks
+    private func parseCSVContentWithProperQuoting(_ content: String) -> [String] {
+        var lines: [String] = []
+        var currentLine = ""
+        var inQuotes = false
+        
+        for char in content {
+            if char == "\"" {
+                inQuotes.toggle()
+            } else if char == "\n" && !inQuotes {
+                lines.append(currentLine)
+                currentLine = ""
+                continue
+            }
+            currentLine.append(char)
+        }
+        
+        if !currentLine.isEmpty {
+            lines.append(currentLine)
+        }
+        
+        return lines
     }
     
     // MARK: - Session Record to CSV Conversion
