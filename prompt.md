@@ -24,36 +24,58 @@ Context of Juju app:
 - Flat file system: No cloud, no lock-in, no hidden database.
 
 ### 📊 Dashboard
-**Charts (default tab):**
-1. 🪩 Hero Section – "This Week in Juju"
-- **Headline Text:** "You've spent {time} in the Juju this week!"
-- This Week Bubble Chart:
-- Summary Stats (right side): Total Hours (all-time), **Total Sessions (all-time)
-2. A vertical Monday -> Sunday chart with coloured bars for sessions
-3. Full-width Bubble Chart for Yearly Overview
-4. Grouped Bar Chart for Monthly Trends
+**Navigation:**
+- **Sidebar**: Permanent sidebar with icons for Charts, Sessions, and Projects
+- **Charts Tab** (default): Main analytics dashboard
+- **Sessions Tab**: Session management with filtering and export
+- **Projects Tab**: Project management interface
 
-**Session Table (Sessions):**
-- Inline editing: Edit date, project, times, notes, and mood directly in the table.
-- Pagination for large datasets.
-- Delete sessions with confirmation.
+**Charts Tab (Default):**
+1. **Hero Section** – "This Week in Juju"
+   - Juju logo with headline: "You've spent {X.X} hours in the Juju this week!"
+   - Right side: Weekly Project Bubble Chart showing time distribution by project
+   - Full-width Session Calendar Chart below showing daily activity
 
-**Project Manager (Projects):**
-- Add, edit, and delete projects.
-- Color picker for project color-coding.
+2. **This Year Section**
+   - Header: "This Year" with yearly overview
+   - Left: Yearly Total Bar Chart showing project time distribution
+   - Right: Summary Metrics (Total Hours, Total Sessions, Average Duration)
+
+3. **Weekly Stacked Bar Chart**
+   - Vertical Monday -> Sunday chart with colored bars for sessions
+   - Shows daily breakdown with project color coding
+
+4. **Stacked Area Chart**
+   - Monthly trends visualization showing project time distribution over time
+   - Full-width chart for historical analysis
+
+**Sessions Tab:**
+- **Grouped Grid View**: Sessions organized by date (Monday, 23rd October, etc.)
+- **4-Column Layout**: Each session displayed as a card
+- **Current Week Focus**: Default view shows only current week sessions
+- **Filter & Export Controls**: Floating panel with:
+  - Date Filter: Today, This Week, This Month, This Year, Custom Range, Clear
+  - Project Filter: Dropdown to filter by specific projects
+  - Export: Dropdown to select format (CSV, TXT, Markdown, PDF)
+  - Session Count: Shows number of sessions matching current filters
+- **Session Cards**: Display project, duration, start/end times, mood
+- **Inline Actions**: Edit and delete session functionality
+- **No Pagination**: Simplified view focused on current week with optional filtering
+
+**Projects Tab:**
+- **Project List**: Vertical list of all projects
+- **Project Cards**: Each showing color swatch, name with emoji, and optional description
+- **Add Project**: Button to create new projects
+- **Edit/Delete**: Full CRUD operations with modal interface
+- **Color Management**: Color picker for project color-coding
+- **About Field**: Optional project description
 
 **Filtering & Export System:**
-- **Project Filter**: Dropdown to filter by specific projects
-- **Date Filter**: Dropdown with options: Today, This Week, This Month, This Year, Custom Range
-- **Export Functionality**: Dropdown to select export format (CSV, TXT, Markdown, PDF)
-- **Real-time Filtering**: Proper date filtering logic for all time periods
+- **Date Filtering**: Real-time filtering with options for Today, This Week, This Month, This Year, Custom Range, and Clear
+- **Project Filtering**: Dropdown to filter sessions by specific projects
+- **Export Functionality**: Export filtered sessions to CSV, Markdown, TXT, or PDF
 - **Session Count Display**: Shows number of sessions matching current filters
-
-**Export Sessions:**
-- Export filtered sessions to CSV, Markdown, TXT, or PDF.
-- Choose export format via dropdown menu.
-- Save anywhere via native macOS save dialog.
-- Export includes: Date, Project, Start Time, End Time, Duration, Notes, Mood, and filter summary.
+- **Floating Controls**: Filter panel can be expanded/collapsed as needed
 
 ---
 
