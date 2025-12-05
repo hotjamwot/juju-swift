@@ -48,6 +48,13 @@ class SessionManager: ObservableObject {
         }
     }
     
+    var currentProjectID: String? {
+        get { operationsManager.currentProjectID }
+        set { 
+            operationsManager.currentProjectID = newValue
+        }
+    }
+    
     var sessionStartTime: Date? {
         get { operationsManager.sessionStartTime }
         set { 
@@ -67,7 +74,7 @@ class SessionManager: ObservableObject {
         self.jujuPath = appSupportPath?.appendingPathComponent("Juju")
         self.dataFileURL = jujuPath?.appendingPathComponent("data.csv")
         
-        guard let dataFileURL = dataFileURL else {
+        guard let dataFileURL = dataFileURL, let jujuPath = jujuPath else {
             fatalError("Could not create data file URL")
         }
         
@@ -78,6 +85,12 @@ class SessionManager: ObservableObject {
         
         // Setup observers to sync state changes
         setupObservers()
+        
+        // Run migration if necessary (async, non-blocking)
+        Task {
+            let migrationManager = SessionMigrationManager(sessionFileManager: sessionFileManager, jujuPath: jujuPath)
+            _ = await migrationManager.migrateIfNecessary()
+        }
     }
     
     private func setupObservers() {
@@ -88,18 +101,36 @@ class SessionManager: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             // Reload sessions after session ends
-            self?.dataManager.loadRecentSessions(limit: 40)
+            // This is in a notification handler, so we can't await
+            // We'll use Task to run it asynchronously
+            Task {
+                await self?.dataManager.loadRecentSessions(limit: 40)
+            }
         }
     }
     
     // MARK: - Session State Management (Delegated to Operations Manager)
     
-    func startSession(for projectName: String) {
-        operationsManager.startSession(for: projectName)
+    func startSession(for projectName: String, projectID: String? = nil) {
+        operationsManager.startSession(for: projectName, projectID: projectID)
     }
     
-    func endSession(notes: String = "", mood: Int? = nil, completion: ((Bool) -> Void)? = nil) {
-        operationsManager.endSession(notes: notes, mood: mood, completion: completion ?? { _ in })
+    func endSession(
+        notes: String = "",
+        mood: Int? = nil,
+        activityTypeID: String? = nil,
+        projectPhaseID: String? = nil,
+        milestoneText: String? = nil,
+        completion: ((Bool) -> Void)? = nil
+    ) {
+        operationsManager.endSession(
+            notes: notes,
+            mood: mood,
+            activityTypeID: activityTypeID,
+            projectPhaseID: projectPhaseID,
+            milestoneText: milestoneText,
+            completion: completion ?? { _ in }
+        )
     }
     
     func getCurrentSessionDuration() -> String {
@@ -108,16 +139,16 @@ class SessionManager: ObservableObject {
     
     // MARK: - Session Data Operations (Delegated to Data Manager)
     
-    func loadAllSessions() -> [SessionRecord] {
-        dataManager.loadAllSessions()
+    func loadAllSessions() async -> [SessionRecord] {
+        await dataManager.loadAllSessions()
     }
     
-    func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
-        dataManager.loadSessions(in: dateInterval)
+    func loadSessions(in dateInterval: DateInterval?) async -> [SessionRecord] {
+        await dataManager.loadSessions(in: dateInterval)
     }
     
-    func loadRecentSessions(limit: Int = 40) {
-        dataManager.loadRecentSessions(limit: limit)
+    func loadRecentSessions(limit: Int = 40) async {
+        await dataManager.loadRecentSessions(limit: limit)
     }
     
     func updateSession(id: String, field: String, value: String) -> Bool {

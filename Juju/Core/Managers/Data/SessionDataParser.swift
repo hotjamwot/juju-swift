@@ -18,6 +18,11 @@ class SessionDataParser {
             return ([], false)
         }
         
+        // Detect format based on header
+        let headerFields = parseCSVLineOptimized(headerLine)
+        let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
+        let expectedColumnCount = hasNewFields ? 12 : 8
+        
         let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         var sessions: [SessionRecord] = []
         var needsRewrite = false
@@ -27,8 +32,8 @@ class SessionDataParser {
             
             let fields = parseCSVLineOptimized(line)
             
-            // Ensure minimum fields
-            var safeFields = fields + Array(repeating: "", count: max(0, 8 - fields.count))
+            // Ensure minimum fields based on format
+            var safeFields = fields + Array(repeating: "", count: max(0, expectedColumnCount - fields.count))
             
             var id: String
             if hasIdColumn {
@@ -42,7 +47,7 @@ class SessionDataParser {
             }
             
             // Ensure all required fields exist after potential ID insertion
-            while safeFields.count < 8 {
+            while safeFields.count < expectedColumnCount {
                 safeFields.append("")
             }
             
@@ -52,16 +57,31 @@ class SessionDataParser {
                 continue
             }
             
-            // Optimized field extraction
+            // Extract fields based on format
+            let projectName = cleanField(safeFields[5])
+            let projectID = hasNewFields && safeFields.count > 6 ? (cleanField(safeFields[6]).isEmpty ? nil : cleanField(safeFields[6])) : nil
+            let activityTypeID = hasNewFields && safeFields.count > 7 ? (cleanField(safeFields[7]).isEmpty ? nil : cleanField(safeFields[7])) : nil
+            let projectPhaseID = hasNewFields && safeFields.count > 8 ? (cleanField(safeFields[8]).isEmpty ? nil : cleanField(safeFields[8])) : nil
+            let milestoneText = hasNewFields && safeFields.count > 9 ? (cleanField(safeFields[9]).isEmpty ? nil : cleanField(safeFields[9])) : nil
+            let notesIndex = hasNewFields ? 10 : 6
+            let moodIndex = hasNewFields ? 11 : 7
+            let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
+            let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+            
+            // Create session record with all fields
             let record = SessionRecord(
                 id: id,
                 date: dateStr,
                 startTime: cleanField(safeFields[2]),
                 endTime: cleanField(safeFields[3]),
                 durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
-                projectName: cleanField(safeFields[5]),
-                notes: cleanField(safeFields[6]),
-                mood: safeFields[7].isEmpty ? nil : Int(cleanField(safeFields[7]))
+                projectName: projectName,
+                projectID: projectID,
+                activityTypeID: activityTypeID,
+                projectPhaseID: projectPhaseID,
+                milestoneText: milestoneText,
+                notes: notes,
+                mood: mood
             )
             sessions.append(record)
         }
@@ -75,6 +95,10 @@ class SessionDataParser {
         guard let headerLine = lines.first, !headerLine.isEmpty else {
             return []
         }
+        
+        // Detect format based on header
+        let headerFields = parseCSVLineOptimized(headerLine)
+        let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
         
         let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         var sessions: [SessionRecord] = []
@@ -97,13 +121,20 @@ class SessionDataParser {
             let endIndex = hasIdColumn ? 3 : 2
             let durIndex = hasIdColumn ? 4 : 3
             let projIndex = hasIdColumn ? 5 : 4
-            let notesIndex = hasIdColumn ? 6 : 5
-            let moodIndex = hasIdColumn ? 7 : 6
             
             let startTime = (startIndex < fieldCount) ? cleanField(fields[startIndex]) : ""
             let endTime = (endIndex < fieldCount) ? cleanField(fields[endIndex]) : ""
             let durationStr = (durIndex < fieldCount) ? cleanField(fields[durIndex]) : "0"
             let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
+            
+            // Extract new fields if available
+            let projectID = hasNewFields && fieldCount > 6 ? (cleanField(fields[6]).isEmpty ? nil : cleanField(fields[6])) : nil
+            let activityTypeID = hasNewFields && fieldCount > 7 ? (cleanField(fields[7]).isEmpty ? nil : cleanField(fields[7])) : nil
+            let projectPhaseID = hasNewFields && fieldCount > 8 ? (cleanField(fields[8]).isEmpty ? nil : cleanField(fields[8])) : nil
+            let milestoneText = hasNewFields && fieldCount > 9 ? (cleanField(fields[9]).isEmpty ? nil : cleanField(fields[9])) : nil
+            let notesIndex = hasNewFields ? 10 : 6
+            let moodIndex = hasNewFields ? 11 : 7
+            
             let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
             let moodStr = (moodIndex < fieldCount) ? fields[moodIndex] : ""
             let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
@@ -116,6 +147,10 @@ class SessionDataParser {
                 endTime: endTime,
                 durationMinutes: durationMinutes,
                 projectName: projectName,
+                projectID: projectID,
+                activityTypeID: activityTypeID,
+                projectPhaseID: projectPhaseID,
+                milestoneText: milestoneText,
                 notes: notes,
                 mood: mood
             )
@@ -189,14 +224,18 @@ class SessionDataParser {
     // MARK: - Session Record to CSV Conversion
     
     func convertSessionsToCSV(_ sessions: [SessionRecord]) -> String {
-        let header = "id,date,start_time,end_time,duration_minutes,project,notes,mood\n"
+        let header = "id,date,start_time,end_time,duration_minutes,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
         let rows = sessions.map { s in
             let project = csvEscape(s.projectName)
+            let projectID = s.projectID.map { csvEscape($0) } ?? ""
+            let activityTypeID = s.activityTypeID.map { csvEscape($0) } ?? ""
+            let projectPhaseID = s.projectPhaseID.map { csvEscape($0) } ?? ""
+            let milestoneText = s.milestoneText.map { csvEscape($0) } ?? ""
             let notes = csvEscape(s.notes)
             let moodStr = s.mood.map(String.init) ?? ""
             let start = ensureSeconds(s.startTime)
             let end = ensureSeconds(s.endTime)
-            return "\(s.id),\(s.date),\(start),\(end),\(s.durationMinutes),\(project),\(notes),\(moodStr)"
+            return "\(s.id),\(s.date),\(start),\(end),\(s.durationMinutes),\(project),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"
     }

@@ -13,11 +13,16 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     
     // MARK: - Presentation Methods
     
-    func presentNotes(completion: @escaping (String, Int?) -> Void) {
+    func presentNotes(
+        projectID: String?,
+        projectName: String?,
+        projects: [Project],
+        completion: @escaping (String, Int?, String?, String?, String?) -> Void
+    ) {
         // Ensure we're on main thread
         guard Thread.isMainThread else {
             DispatchQueue.main.async {
-                self.presentNotes(completion: completion)
+                self.presentNotes(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
             }
             return
         }
@@ -26,12 +31,17 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         
         // Create and configure the hosting window
-        createHostingWindow(completion: completion)
+        createHostingWindow(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
         
         isPresented = true
     }
     
-    private func createHostingWindow(completion: @escaping (String, Int?) -> Void) {
+    private func createHostingWindow(
+        projectID: String?,
+        projectName: String?,
+        projects: [Project],
+        completion: @escaping (String, Int?, String?, String?, String?) -> Void
+    ) {
         // Clean up existing window if any
         if let existingWindow = hostingWindow {
             existingWindow.close()
@@ -66,7 +76,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.minSize = NSSize(width: 750, height: 450)
+        window.minSize = NSSize(width: 750, height: 600)
         window.isReleasedWhenClosed = false
         window.level = .floating
         
@@ -85,9 +95,13 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         hostingWindow = window
         
         // Present the notes modal with completion handler
-        notesViewModel.present { [weak self] notes, mood in
+        notesViewModel.present(
+            projectID: projectID,
+            projectName: projectName,
+            projects: projects
+        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, milestoneText in
             self?.dismissNotes()
-            completion(notes, mood)
+            completion(notes, mood, activityTypeID, projectPhaseID, milestoneText)
         }
     }
     
@@ -133,6 +147,9 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
 extension NotesManager {
     /// Legacy method to match the old NotesModalWindowController interface
     func present(completion: @escaping (String, Int?) -> Void) {
-        presentNotes(completion: completion)
+        // For backward compatibility, use empty project info
+        presentNotes(projectID: nil, projectName: nil, projects: []) { notes, mood, _, _, _ in
+            completion(notes, mood)
+        }
     }
 }

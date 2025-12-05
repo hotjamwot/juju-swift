@@ -70,7 +70,7 @@ struct GroupedSessionView: View {
                 columns: Array(repeating: .init(.flexible(), spacing: Theme.spacingMedium), count: 4),
                 spacing: Theme.spacingMedium
             ) {
-                ForEach(group.sessions) { session in
+                        ForEach(group.sessions) { session in
                     SessionCardView(
                         session: session,
                         projects: projects,
@@ -165,7 +165,12 @@ public struct SessionsView: View {
                             GroupedSessionView(
                                 group: group,
                                 projects: projectsViewModel.projects,
-                                onSave: { sessionManager.loadAllSessions() },
+                                onSave: { 
+                                    Task {
+                                        // Reload current week sessions after save
+                                        await loadCurrentWeekSessions()
+                                    }
+                                },
                                 onDelete: { session in
                                     toDelete = session
                                     showingDeleteAlert = true
@@ -208,6 +213,12 @@ public struct SessionsView: View {
         .task { 
             await projectsViewModel.loadProjects()
             // Load current week sessions when view appears
+            Task {
+                await loadCurrentWeekSessions()
+            }
+        }
+        .onAppear {
+            // Ensure we only have current week sessions loaded
             Task {
                 await loadCurrentWeekSessions()
             }

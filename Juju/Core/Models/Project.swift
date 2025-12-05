@@ -8,6 +8,17 @@ extension Notification.Name {
 
     // No Color extensions here - use JujuUtils
 
+// MARK: - Phase Structure
+struct Phase: Codable, Identifiable, Hashable {
+    let id: String
+    let name: String
+    
+    init(id: String = UUID().uuidString, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
 // Project structure to match the original app
 struct Project: Codable, Identifiable, Hashable {
     let id: String
@@ -16,9 +27,10 @@ struct Project: Codable, Identifiable, Hashable {
     var about: String?
     var order: Int
     var emoji: String
+    var phases: [Phase]  // New: Project lifecycle phases
     
     enum CodingKeys: String, CodingKey {
-        case id, name, color, about, order, emoji
+        case id, name, color, about, order, emoji, phases
     }
     
     // Computed SwiftUI Color from hex string (avoids storing Color)
@@ -26,22 +38,24 @@ struct Project: Codable, Identifiable, Hashable {
         Color(hex: color)
     }
     
-    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁") {
+    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁", phases: [Phase] = []) {
         self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
         self.name = name
         self.color = color
         self.about = about
         self.order = order
         self.emoji = emoji
+        self.phases = phases
     }
     
-    init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = "📁") {
+    init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = "📁", phases: [Phase] = []) {
         self.id = id
         self.name = name
         self.color = color
         self.about = about
         self.order = order
         self.emoji = emoji
+        self.phases = phases
     }
     
     init(from decoder: Decoder) throws {
@@ -52,6 +66,7 @@ struct Project: Codable, Identifiable, Hashable {
         about = try container.decodeIfPresent(String.self, forKey: .about)
         order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
         emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? "📁"
+        phases = try container.decodeIfPresent([Phase].self, forKey: .phases) ?? []  // Default to empty array for legacy projects
     }
     
     func encode(to encoder: Encoder) throws {
@@ -62,6 +77,7 @@ struct Project: Codable, Identifiable, Hashable {
         try container.encodeIfPresent(about, forKey: .about)
         try container.encode(order, forKey: .order)
         try container.encode(emoji, forKey: .emoji)
+        try container.encode(phases, forKey: .phases)
     }
     
     func hash(into hasher: inout Hasher) {
@@ -125,6 +141,23 @@ class ProjectManager {
         }
     }
     
+    // MARK: - Legacy Data Handling Helpers
+    
+    /// Get phase display name for a given project and phase ID, with fallback for legacy data
+    func getPhaseDisplay(projectID: String?, phaseID: String?) -> String? {
+        guard let projectID = projectID, let phaseID = phaseID else {
+            return nil
+        }
+        
+        let projects = loadProjects()
+        guard let project = projects.first(where: { $0.id == projectID }),
+              let phase = project.phases.first(where: { $0.id == phaseID }) else {
+            return nil
+        }
+        
+        return phase.name
+    }
+    
     private func migrateProjects(_ loadedProjects: [Project]) -> [Project] {
         var needsRewrite = false
         var migratedProjects: [Project] = []
@@ -156,6 +189,11 @@ class ProjectManager {
                 project.emoji = "📁"
                 needsRewrite = true
                 print("Adding missing 'emoji' field to project \(project.name)")
+            }
+            
+            // Ensure project has a phases array (default to empty for legacy projects)
+            if project.phases.isEmpty && !needsRewrite {
+                // Only mark for rewrite if phases is truly missing (will be handled by decoder default)
             }
             
             migratedProjects.append(project)

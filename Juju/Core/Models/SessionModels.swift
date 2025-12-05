@@ -7,7 +7,11 @@ public struct SessionRecord: Identifiable {
     let startTime: String
     let endTime: String
     let durationMinutes: Int
-    let projectName: String
+    let projectName: String  // Kept for backward compatibility; use projectID for new sessions
+    let projectID: String?  // New: Project identifier (optional to support interim state)
+    let activityTypeID: String?  // New: Activity Type identifier (nil during active session, set at end)
+    let projectPhaseID: String?  // New: Project Phase identifier (optional)
+    let milestoneText: String?  // New: Milestone text (optional)
     let notes: String
     let mood: Int?
 
@@ -56,6 +60,38 @@ public struct SessionRecord: Identifiable {
         guard let start = startDateTime, let end = endDateTime else { return false }
         return start < interval.end && end > interval.start
     }
+    
+    // Convenience initializer for backward compatibility (legacy sessions without new fields)
+    init(id: String, date: String, startTime: String, endTime: String, durationMinutes: Int, projectName: String, notes: String, mood: Int?) {
+        self.id = id
+        self.date = date
+        self.startTime = startTime
+        self.endTime = endTime
+        self.durationMinutes = durationMinutes
+        self.projectName = projectName
+        self.projectID = nil  // Legacy sessions don't have projectID
+        self.activityTypeID = nil
+        self.projectPhaseID = nil
+        self.milestoneText = nil
+        self.notes = notes
+        self.mood = mood
+    }
+    
+    // Full initializer with all fields
+    init(id: String, date: String, startTime: String, endTime: String, durationMinutes: Int, projectName: String, projectID: String?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, notes: String, mood: Int?) {
+        self.id = id
+        self.date = date
+        self.startTime = startTime
+        self.endTime = endTime
+        self.durationMinutes = durationMinutes
+        self.projectName = projectName
+        self.projectID = projectID
+        self.activityTypeID = activityTypeID
+        self.projectPhaseID = projectPhaseID
+        self.milestoneText = milestoneText
+        self.notes = notes
+        self.mood = mood
+    }
 }
 
 extension SessionRecord {
@@ -65,6 +101,10 @@ extension SessionRecord {
         let newStartTime = field == "start_time" ? value : startTime
         let newEndTime = field == "end_time" ? value : endTime
         let newProject = field == "project" ? value : projectName
+        let newProjectID = field == "project_id" ? value : projectID
+        let newActivityTypeID = field == "activity_type_id" ? value : activityTypeID
+        let newProjectPhaseID = field == "project_phase_id" ? value : projectPhaseID
+        let newMilestoneText = field == "milestone_text" ? value : milestoneText
         let newNotes = field == "notes" ? value : notes
         
         return SessionRecord(
@@ -74,9 +114,41 @@ extension SessionRecord {
             endTime: newEndTime,
             durationMinutes: durationMinutes,
             projectName: newProject,
+            projectID: newProjectID,
+            activityTypeID: newActivityTypeID,
+            projectPhaseID: newProjectPhaseID,
+            milestoneText: newMilestoneText,
             notes: newNotes,
             mood: newMood
         )
+    }
+    
+    // MARK: - Legacy Data Handling Helpers
+    
+    /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
+    func getActivityTypeDisplay() -> (name: String, emoji: String) {
+        return ActivityTypeManager.shared.getActivityTypeDisplay(id: activityTypeID)
+    }
+    
+    /// Get project phase display name with fallback for legacy sessions
+    func getProjectPhaseDisplay() -> String? {
+        guard let projectPhaseID = projectPhaseID,
+              let projectID = projectID else {
+            return nil
+        }
+        
+        let projects = ProjectManager.shared.loadProjects()
+        guard let project = projects.first(where: { $0.id == projectID }),
+              let phase = project.phases.first(where: { $0.id == projectPhaseID }) else {
+            return nil
+        }
+        
+        return phase.name
+    }
+    
+    /// Check if this is a legacy session (missing activity type or phase)
+    var isLegacySession: Bool {
+        return activityTypeID == nil && projectPhaseID == nil
     }
 }
 
@@ -85,6 +157,10 @@ struct SessionData {
     let startTime: Date
     let endTime: Date
     let durationMinutes: Int
-    let projectName: String
+    let projectName: String  // Kept for backward compatibility
+    let projectID: String?  // New: Project identifier
+    let activityTypeID: String?  // New: Activity Type identifier
+    let projectPhaseID: String?  // New: Project Phase identifier
+    let milestoneText: String?  // New: Milestone text
     let notes: String
 }

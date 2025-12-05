@@ -17,7 +17,7 @@ struct NotesModalView: View {
             contentView
             footerView
         }
-        .frame(minWidth: 750, minHeight: 450)
+        .frame(minWidth: 750, minHeight: 600)
         .background(Theme.Colors.background)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -67,33 +67,164 @@ struct NotesModalView: View {
     
     // MARK: - Content View
     private var contentView: some View {
-        VStack(spacing: 20) {
-            ZStack(alignment: .topLeading) {
-                if viewModel.notesText.isEmpty {
-                    Text("Enter your session notes here...")
-                        .font(Theme.Fonts.body)
+        ScrollView {
+            VStack(spacing: Theme.spacingMedium) {
+                // 1. Project (locked) - pre-filled from session start
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Project")
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
-                        .padding(.horizontal, Theme.spacingLarge)
-                        .padding(.vertical, Theme.spacingMedium)
-                        .allowsHitTesting(false)
+                    
+                    HStack {
+                        Text(viewModel.currentProjectName ?? "Unknown Project")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        Spacer()
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.surface.opacity(0.5))
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
                 }
-                TextEditor(text: $viewModel.notesText)
+                
+                // 2. Activity Type dropdown - with last used default for this project
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Activity Type")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    Picker("Activity Type", selection: $viewModel.selectedActivityTypeID) {
+                        Text("Select Activity Type").tag(nil as String?)
+                        ForEach(viewModel.activityTypes) { activityType in
+                            HStack {
+                                Text(activityType.emoji)
+                                Text(activityType.name)
+                            }
+                            .tag(activityType.id as String?)
+                        }
+                    }
+                    .pickerStyle(.menu)
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
-                    .background(Color.clear)
-                    .scrollContentBackground(.hidden)
-                    .focused($isTextFieldFocused)
-                    .padding(Theme.spacingMedium)
+                    .padding(.horizontal, Theme.spacingMedium)
+                    .padding(.vertical, Theme.spacingSmall)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                }
+                
+                // 3. Phase dropdown - with last used default for this project
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Phase")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    if viewModel.availablePhases.isEmpty {
+                        HStack {
+                            Text("No phases available")
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            Spacer()
+                            Button("Add Phase") {
+                                // TODO: Implement add phase functionality
+                            }
+                            .font(Theme.Fonts.caption)
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, Theme.spacingMedium)
+                        .padding(.vertical, Theme.spacingSmall)
+                        .background(Theme.Colors.surface.opacity(0.5))
+                        .cornerRadius(Theme.Design.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                    } else {
+                        Picker("Phase", selection: $viewModel.selectedProjectPhaseID) {
+                            Text("Select Phase").tag(nil as String?)
+                            ForEach(viewModel.availablePhases) { phase in
+                                Text(phase.name).tag(phase.id as String?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .padding(.horizontal, Theme.spacingMedium)
+                        .padding(.vertical, Theme.spacingSmall)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Design.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                    }
+                }
+                
+                // 4. Milestone
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Milestone (Optional)")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    TextField("e.g., Finished Act I", text: $viewModel.milestoneText)
+                        .textFieldStyle(.plain)
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .padding(.horizontal, Theme.spacingMedium)
+                        .padding(.vertical, Theme.spacingSmall)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Design.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                }
+                
+                // 5. Notes
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Notes")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    ZStack(alignment: .topLeading) {
+                        if viewModel.notesText.isEmpty {
+                            Text("Enter your session notes here...")
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .allowsHitTesting(false)
+                        }
+                        TextEditor(text: $viewModel.notesText)
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .background(Color.clear)
+                            .scrollContentBackground(.hidden)
+                            .focused($isTextFieldFocused)
+                            .frame(minHeight: 100)
+                            .padding(Theme.spacingSmall)
+                    }
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                }
             }
-            .background(Theme.Colors.surface)
-            .cornerRadius(Theme.Design.cornerRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
-            )
+            .padding(.horizontal, Theme.spacingExtraLarge)
+            .padding(.vertical, Theme.spacingMedium)
         }
-        .padding(.horizontal, Theme.spacingExtraLarge)
-        .padding(.vertical, Theme.spacingMedium)
     }
     
     // MARK: - Footer View

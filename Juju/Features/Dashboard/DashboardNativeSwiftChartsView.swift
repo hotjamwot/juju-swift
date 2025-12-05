@@ -178,37 +178,29 @@ struct DashboardNativeSwiftChartsView: View {
                 await projectsViewModel.loadProjects()
                 isLoading = true
                 
-                // Load only recent sessions first for faster initial display (FIX: Lazy loading)
+                // Load all sessions from current year for dashboard charts
                 await MainActor.run {
-                    sessionManager.loadRecentSessions(limit: 40)
+                    Task {
+                        await sessionManager.loadAllSessions()
+                    }
                 }
                 
-                // Prepare minimal data for initial display
+                // Prepare data for initial display
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
                 
                 isLoading = false
-                
-                // Load full dataset in background (FIX: Background loading)
-                Task.detached {
-                    let allSessions = await SessionManager.shared.loadAllSessions()
-                    await MainActor.run {
-                        SessionManager.shared.allSessions = allSessions
-                        chartDataPreparer.prepareAllTimeData(
-                            sessions: allSessions,
-                            projects: projectsViewModel.projects
-                        )
-                    }
-                }
             }
         }
         // Event-driven reload when session ends (FIX: Remove artificial delay)
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
             Task {
                 await MainActor.run {
-                    sessionManager.loadRecentSessions(limit: 40)
+                    Task {
+                        await sessionManager.loadRecentSessions(limit: 40)
+                    }
                     chartDataPreparer.prepareAllTimeData(
                         sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects

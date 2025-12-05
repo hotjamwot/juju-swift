@@ -4,40 +4,57 @@ import Foundation
 class SessionOperationsManager: ObservableObject {
     // Session state
     @Published var isSessionActive = false
-    @Published var currentProjectName: String?
+    @Published var currentProjectName: String?  // Kept for backward compatibility
+    @Published var currentProjectID: String?  // New: Project identifier stored from session start
+    @Published var currentActivityTypeID: String?  // New: Activity Type (nil during active session, set at end)
+    @Published var currentProjectPhaseID: String?  // New: Project Phase (nil during active session, set at end)
     @Published var sessionStartTime: Date?
     @Published var lastUpdated = Date()
     
     private let sessionFileManager: SessionFileManager
     private let csvManager: SessionCSVManager
     private let parser: SessionDataParser
-    private let dataFileURL: URL
+    private let jujuPath: URL
+    private let dataFileURL: URL? // Kept for backward compatibility during migration
     
     init(sessionFileManager: SessionFileManager, dataFileURL: URL) {
         self.sessionFileManager = sessionFileManager
-        self.dataFileURL = dataFileURL
-        self.csvManager = SessionCSVManager(fileManager: sessionFileManager, dataFileURL: dataFileURL)
+        self.jujuPath = dataFileURL.deletingLastPathComponent()
+        self.dataFileURL = dataFileURL // Keep for backward compatibility
+        
+        // Initialize CSV manager with jujuPath for year-based file support
+        self.csvManager = SessionCSVManager(fileManager: sessionFileManager, jujuPath: jujuPath)
         self.parser = SessionDataParser()
         
         // Ensure data directory exists
-        try? csvManager.ensureDataDirectoryExists()
+        csvManager.ensureDataDirectoryExists()
     }
     
     // MARK: - Session State Management
     
-    func startSession(for projectName: String) {
+    func startSession(for projectName: String, projectID: String? = nil) {
         guard !isSessionActive else {
             print("⚠️ Session already active")
             return
         }
         
-        print("✅ Starting session for project: \(projectName)")
+        print("✅ Starting session for project: \(projectName) (ID: \(projectID ?? "nil"))")
         isSessionActive = true
         currentProjectName = projectName
+        currentProjectID = projectID  // Store projectID from the beginning
+        currentActivityTypeID = nil  // Will be set at session end
+        currentProjectPhaseID = nil  // Will be set at session end
         sessionStartTime = Date()
     }
     
-    func endSession(notes: String = "", mood: Int? = nil, completion: @escaping (Bool) -> Void) {
+    func endSession(
+        notes: String = "",
+        mood: Int? = nil,
+        activityTypeID: String? = nil,
+        projectPhaseID: String? = nil,
+        milestoneText: String? = nil,
+        completion: @escaping (Bool) -> Void
+    ) {
         guard isSessionActive, let projectName = currentProjectName, let startTime = sessionStartTime else {
             print("⚠️ No active session to end")
             completion(false)
@@ -49,13 +66,18 @@ class SessionOperationsManager: ObservableObject {
         let durationMinutes = Int(round(durationMs / 60))
         
         print("✅ Ending session for \(projectName) - Duration: \(durationMinutes) minutes")
+        print("   Activity: \(activityTypeID ?? "none"), Phase: \(projectPhaseID ?? "none"), Milestone: \(milestoneText ?? "none")")
         
-        // Create session data
+        // Create session data with new fields
         let sessionData = SessionData(
             startTime: startTime,
             endTime: endTime,
             durationMinutes: durationMinutes,
             projectName: projectName,
+            projectID: currentProjectID,
+            activityTypeID: activityTypeID,
+            projectPhaseID: projectPhaseID,
+            milestoneText: milestoneText,
             notes: notes
         )
         
@@ -70,6 +92,9 @@ class SessionOperationsManager: ObservableObject {
                 // Reset state first
                 self.isSessionActive = false
                 self.currentProjectName = nil
+                self.currentProjectID = nil
+                self.currentActivityTypeID = nil
+                self.currentProjectPhaseID = nil
                 self.sessionStartTime = nil
                 
                 // Update timestamp to trigger UI refresh
@@ -125,25 +150,24 @@ class SessionOperationsManager: ObservableObject {
         let id = UUID().uuidString
         let moodStr = mood.map { String($0) } ?? ""
         
-        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\(csvManager.csvEscape(sessionData.projectName)),\(csvManager.csvEscape(sessionData.notes)),\(moodStr)\n"
+        // Build CSV row with new fields
+        let projectID = sessionData.projectID.map { csvManager.csvEscape($0) } ?? ""
+        let activityTypeID = sessionData.activityTypeID.map { csvManager.csvEscape($0) } ?? ""
+        let projectPhaseID = sessionData.projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
+        let milestoneText = sessionData.milestoneText.map { csvManager.csvEscape($0) } ?? ""
         
-        // Check if file exists and needs header
-        let needsHeader = !FileManager.default.fileExists(atPath: dataFileURL.path) || 
-                         (FileManager.default.fileExists(atPath: dataFileURL.path) && 
-                          (try? FileManager.default.attributesOfItem(atPath: dataFileURL.path)[.size] as? Int64) ?? 0 == 0)
+        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\(csvManager.csvEscape(sessionData.projectName)),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(csvManager.csvEscape(sessionData.notes)),\(moodStr)\n"
         
-        let contentToWrite = needsHeader ? 
-            "id,date,start_time,end_time,duration_minutes,project,notes,mood\n" + csvRow : csvRow
+        // Determine year from session start date (use start_date.year, not end_date)
+        let year = Calendar.current.component(.year, from: sessionData.startTime)
         
         Task {
             do {
-                if needsHeader {
-                    try await csvManager.writeToFile(contentToWrite)
-                    print("✅ Created new CSV file with header and session data (with IDs and mood)")
-                } else {
-                    try await csvManager.appendToFile(csvRow)
-                    print("✅ Appended session data to existing CSV file (with ID and mood)")
-                }
+                // Use year-based file system: append to the appropriate year file
+                // The appendToYearFile method handles header checking automatically
+                try await csvManager.appendToYearFile(csvRow, for: year)
+                print("✅ Appended session data to \(year)-data.csv file")
+                
                 await MainActor.run {
                     completion(true)
                 }

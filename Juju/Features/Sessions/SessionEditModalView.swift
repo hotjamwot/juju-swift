@@ -232,7 +232,7 @@ struct SessionEditModalView: View {
             notes: editedNotes,
             mood: moodInt
         ) {
-            // Create updated session record to pass back
+            // Create updated session record to pass back, preserving new fields
             let updatedSession = SessionRecord(
                 id: session.id,
                 date: editedDate,
@@ -240,6 +240,10 @@ struct SessionEditModalView: View {
                 endTime: editedEndTime + ":00",
                 durationMinutes: session.durationMinutes, // Recalculate if needed
                 projectName: editedProject,
+                projectID: session.projectID,
+                activityTypeID: session.activityTypeID,
+                projectPhaseID: session.projectPhaseID,
+                milestoneText: session.milestoneText,
                 notes: editedNotes,
                 mood: moodInt
             )

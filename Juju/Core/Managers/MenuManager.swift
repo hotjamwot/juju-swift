@@ -117,8 +117,8 @@ class MenuManager {
         if let project = sender.representedObject as? Project {
             print("Starting session for project: \(project.name) (ID: \(project.id))")
             
-            // Start the session
-            sessionManager.startSession(for: project.name)
+            // Start the session with projectID
+            sessionManager.startSession(for: project.name, projectID: project.id)
             
             // Update UI
             appDelegate?.updateMenuBarIcon(isActive: true)
@@ -131,15 +131,29 @@ class MenuManager {
         print("[MenuManager] endCurrentSession called")
         stopUpdateTimer()
         
+        // Get current project info
+        let projectID = sessionManager.currentProjectID
+        let projectName = sessionManager.currentProjectName
+        
         print("[MenuManager] Presenting SwiftUI Notes modal")
         // Show the new SwiftUI-based modal
         Task { @MainActor in
             await MainActor.run {
-                self.notesManager.present { [weak self] (note: String?, mood: Int?) in
-                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil")")
+                self.notesManager.presentNotes(
+                    projectID: projectID,
+                    projectName: projectName,
+                    projects: self.projects
+                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?) in
+                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Milestone: \(milestoneText ?? "nil")")
                     // Only end the session if notes are provided (not empty)
                     if let note = note, !note.isEmpty {
-                        self?.sessionManager.endSession(notes: note, mood: mood)
+                        self?.sessionManager.endSession(
+                            notes: note,
+                            mood: mood,
+                            activityTypeID: activityTypeID,
+                            projectPhaseID: projectPhaseID,
+                            milestoneText: milestoneText
+                        )
                         self?.appDelegate?.updateMenuBarIcon(isActive: false)
                         self?.refreshMenu()
                     } else {

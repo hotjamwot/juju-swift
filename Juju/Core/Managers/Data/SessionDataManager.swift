@@ -8,7 +8,8 @@ class SessionDataManager: ObservableObject {
     private let sessionFileManager: SessionFileManager
     private let csvManager: SessionCSVManager
     private let parser: SessionDataParser
-    private let dataFileURL: URL
+    private let jujuPath: URL
+    private let dataFileURL: URL? // Kept for backward compatibility during migration
     private var lastLoadedDate = Date.distantPast
     
     private lazy var dateFormatter: DateFormatter = {
@@ -19,45 +20,93 @@ class SessionDataManager: ObservableObject {
     
     init(sessionFileManager: SessionFileManager, dataFileURL: URL) {
         self.sessionFileManager = sessionFileManager
-        self.dataFileURL = dataFileURL
-        self.csvManager = SessionCSVManager(fileManager: sessionFileManager, dataFileURL: dataFileURL)
+        self.jujuPath = dataFileURL.deletingLastPathComponent()
+        self.dataFileURL = dataFileURL // Keep for backward compatibility
+        
+        // Initialize CSV manager with jujuPath for year-based file support
+        self.csvManager = SessionCSVManager(fileManager: sessionFileManager, jujuPath: jujuPath)
         self.parser = SessionDataParser()
         
-        // Load recent sessions by default for performance
-        loadRecentSessions(limit: 40)
+        // Load all sessions from current year by default for dashboard
+        Task {
+            await loadAllSessions()
+        }
     }
     
     // MARK: - Session Loading
     
-    func loadAllSessions() -> [SessionRecord] {
-        guard FileManager.default.fileExists(atPath: dataFileURL.path) else {
-            print("❌ No session data file found at \(dataFileURL.path)")
-            return []
-        }
+    func loadAllSessions() async -> [SessionRecord] {
+        let availableYears = csvManager.getAvailableYears()
+        var allSessions: [SessionRecord] = []
         
-        do {
-            let content = try String(contentsOf: dataFileURL, encoding: .utf8)
-            print("🔍 CSV Content length: \(content.count)")
+        if !availableYears.isEmpty {
+            for year in availableYears {
+                do {
+                    let content = try await csvManager.readFromYearFile(for: year)
+                    let lines = content.components(separatedBy: .newlines)
+                    guard let headerLine = lines.first, !headerLine.isEmpty else {
+                        print("⚠️ No header found in \(year)-data.csv")
+                        continue
+                    }
+                    
+                    let hasIdColumn = headerLine.lowercased().contains("id")
+                    let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
+                    
+                    print("✅ Loaded \(sessions.count) sessions from \(year)-data.csv")
+                    
+                    allSessions.append(contentsOf: sessions)
+                    
+                    // If rewrite needed, save back to the year file
+                    if needsRewrite {
+                        let csvContent = parser.convertSessionsToCSV(sessions)
+                        try await csvManager.writeToYearFile(csvContent, for: year)
+                    }
+                } catch {
+                    print("❌ Error loading sessions from \(year)-data.csv: \(error)")
+                }
+            }
             
-            // Find header and validate
+            // Sort by date descending
+            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            
+            self.allSessions = allSessions
+            self.lastUpdated = Date()
+            return allSessions
+        }
+    
+        // Fallback to legacy data.csv file if it exists
+        if let legacyURL = dataFileURL, FileManager.default.fileExists(atPath: legacyURL.path) {
+            let sessions = loadSessionsFromLegacyFile(legacyURL)
+            self.allSessions = sessions
+            self.lastUpdated = Date()
+            return sessions
+        }
+    
+        print("❌ No session data files found")
+        self.allSessions = []
+        self.lastUpdated = Date()
+        return []
+    }
+    
+    /// Load sessions from legacy data.csv file (backward compatibility)
+    private func loadSessionsFromLegacyFile(_ url: URL) -> [SessionRecord] {
+        do {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            print("🔍 Loading from legacy data.csv, content length: \(content.count)")
+            
             let lines = content.components(separatedBy: .newlines)
-            guard let headerLine = lines.first, !headerLine.isEmpty else { 
-                print("❌ No header found")
-                return [] 
+            guard let headerLine = lines.first, !headerLine.isEmpty else {
+                print("❌ No header found in legacy file")
+                return []
             }
             
             let hasIdColumn = headerLine.lowercased().contains("id")
-            print("🔍 Has ID column: \(hasIdColumn)")
-            
-            // Parse sessions using the dedicated parser
             let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
             
-            print("🔍 Successfully loaded \(sessions.count) sessions")
+            print("✅ Loaded \(sessions.count) sessions from legacy file")
             
-            // If any IDs were assigned, rewrite the CSV with IDs
             if needsRewrite {
-                print("[SessionManager] Rewriting CSV to add IDs to all rows...")
-                saveAllSessions(sessions)
+                print("⚠️ Legacy file needs rewrite - consider migrating to year-based files")
             }
             
             DispatchQueue.main.async { [weak self] in
@@ -67,39 +116,89 @@ class SessionDataManager: ObservableObject {
             
             return sessions
         } catch {
-            print("❌ Error loading sessions: \(error)")
-            DispatchQueue.main.async { [weak self] in
-                self?.allSessions = []
-                self?.lastUpdated = Date()
-            }
+            print("❌ Error loading legacy file: \(error)")
             return []
         }
     }
     
-    func loadSessions(in dateInterval: DateInterval?) -> [SessionRecord] {
-        guard FileManager.default.fileExists(atPath: dataFileURL.path) else {
-            return []
-        }
-        
+    func loadSessions(in dateInterval: DateInterval?) async -> [SessionRecord] {
         if dateInterval == nil {
-            return loadAllSessions()
+            return await loadAllSessions()
         }
         
         let interval = dateInterval!
         
+        // Determine which years to load based on date interval
+        let startYear = Calendar.current.component(.year, from: interval.start)
+        let endYear = Calendar.current.component(.year, from: interval.end)
+        let availableYears = csvManager.getAvailableYears()
+        let yearsToLoad = availableYears.filter { $0 >= startYear && $0 <= endYear }
+        
+        if yearsToLoad.isEmpty {
+            // Fallback to legacy file if no year files found
+            if let legacyURL = dataFileURL, FileManager.default.fileExists(atPath: legacyURL.path) {
+                return loadSessionsFromLegacyFileForDateRange(legacyURL, dateInterval: interval)
+            }
+            return []
+        }
+        
+        // Load sessions from relevant year files
+        var allSessions: [SessionRecord] = []
+        
+        // Use TaskGroup for concurrent loading
+        let loadedSessions = await withTaskGroup(of: [SessionRecord].self) { group in
+            for year in yearsToLoad {
+                group.addTask { [weak self] in
+                    guard let self = self else { return [] }
+                    
+                    do {
+                        let content = try await self.csvManager.readFromYearFile(for: year)
+                        let lines = content.components(separatedBy: .newlines)
+                        guard let headerLine = lines.first, !headerLine.isEmpty else {
+                            return []
+                        }
+                        let hasIdColumn = headerLine.lowercased().contains("id")
+                        
+                        // Parse sessions for date range
+                        return self.parser.parseSessionsFromCSVForDateRange(content, hasIdColumn: hasIdColumn, dateInterval: interval)
+                    } catch {
+                        print("❌ Error loading \(year)-data.csv: \(error)")
+                        return []
+                    }
+                }
+            }
+            
+            var allLoaded: [SessionRecord] = []
+            for await sessions in group {
+                allLoaded.append(contentsOf: sessions)
+            }
+            return allLoaded
+        }
+        
+        // Sort by date descending
+        let sortedSessions = loadedSessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+        
+        // Update the UI on main thread
+        await MainActor.run { [weak self] in
+            self?.allSessions = sortedSessions
+            self?.lastUpdated = Date()
+        }
+        
+        return sortedSessions
+    }
+    
+    /// Load sessions from legacy file for a specific date range
+    private func loadSessionsFromLegacyFileForDateRange(_ url: URL, dateInterval: DateInterval) -> [SessionRecord] {
         do {
-            let content = try String(contentsOf: dataFileURL, encoding: .utf8)
+            let content = try String(contentsOf: url, encoding: .utf8)
             let lines = content.components(separatedBy: .newlines)
             guard let headerLine = lines.first, !headerLine.isEmpty else {
                 return []
             }
             let hasIdColumn = headerLine.lowercased().contains("id")
             
-            // Parse sessions for date range using dedicated parser
-            let sessions = parser.parseSessionsFromCSVForDateRange(content, hasIdColumn: hasIdColumn, dateInterval: interval)
-            
-            // Sort by date descending (string comparison works for yyyy-MM-dd)
-            let sortedSessions = sessions.sorted { $0.date > $1.date }
+            let sessions = parser.parseSessionsFromCSVForDateRange(content, hasIdColumn: hasIdColumn, dateInterval: dateInterval)
+            let sortedSessions = sessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
             
             DispatchQueue.main.async { [weak self] in
                 self?.allSessions = sortedSessions
@@ -108,18 +207,14 @@ class SessionDataManager: ObservableObject {
             
             return sortedSessions
         } catch {
-            print("❌ Error loading filtered sessions: \(error)")
-            DispatchQueue.main.async { [weak self] in
-                self?.allSessions = []
-                self?.lastUpdated = Date()
-            }
+            print("❌ Error loading filtered sessions from legacy file: \(error)")
             return []
         }
     }
     
     /// Load only the most recent sessions for better performance
-    func loadRecentSessions(limit: Int = 40) {
-        let allSessions = loadAllSessions()
+    func loadRecentSessions(limit: Int = 40) async {
+        let allSessions = await loadAllSessions()
         let recentSessions = Array(allSessions.prefix(limit))
         DispatchQueue.main.async { [weak self] in
             self?.allSessions = recentSessions
@@ -142,7 +237,7 @@ class SessionDataManager: ObservableObject {
         // 2️⃣  Re‑calculate duration if a time was changed
         if field == "start_time" || field == "end_time" {
             let newDuration = minutesBetween(start: updated.startTime, end: updated.endTime)
-            // Replace the immutable durationMinutes field
+            // Replace the immutable durationMinutes field, preserving all fields
             updated = SessionRecord(
                 id: updated.id,
                 date: updated.date,
@@ -150,6 +245,10 @@ class SessionDataManager: ObservableObject {
                 endTime: updated.endTime,
                 durationMinutes: newDuration,
                 projectName: updated.projectName,
+                projectID: updated.projectID,
+                activityTypeID: updated.activityTypeID,
+                projectPhaseID: updated.projectPhaseID,
+                milestoneText: updated.milestoneText,
                 notes: updated.notes,
                 mood: updated.mood
             )
@@ -222,16 +321,37 @@ class SessionDataManager: ObservableObject {
     // MARK: - Data Persistence
     
     func saveAllSessions(_ sessions: [SessionRecord]) {
-        let csvContent = parser.convertSessionsToCSV(sessions)
+        // Group sessions by year (based on start date)
+        var sessionsByYear: [Int: [SessionRecord]] = [:]
+        
+        for session in sessions {
+            guard let startDate = session.startDateTime else { continue }
+            let year = Calendar.current.component(.year, from: startDate)
+            if sessionsByYear[year] == nil {
+                sessionsByYear[year] = []
+            }
+            sessionsByYear[year]?.append(session)
+        }
+        
+        // Create a local copy to avoid capturing the mutable dictionary
+        let yearsToSave = sessionsByYear.keys.sorted()
+        let sessionsCopy = sessionsByYear
+        
+        // Save each year's sessions to its respective file
         Task {
-            do {
-                try await csvManager.writeToFile(csvContent)
-                await MainActor.run { [weak self] in
-                    self?.lastUpdated = Date()
+            for year in yearsToSave {
+                guard let yearSessions = sessionsCopy[year] else { continue }
+                do {
+                    let csvContent = SessionDataParser().convertSessionsToCSV(yearSessions)
+                    try await csvManager.writeToYearFile(csvContent, for: year)
+                    print("✅ Saved \(yearSessions.count) sessions to \(year)-data.csv")
+                } catch {
+                    print("❌ Error saving sessions to \(year)-data.csv: \(error)")
                 }
-                print("[SessionManager] Rewritten CSV with IDs for all sessions.")
-            } catch {
-                print("❌ Error saving sessions: \(error)")
+            }
+            
+            await MainActor.run { [weak self] in
+                self?.lastUpdated = Date()
             }
         }
     }
