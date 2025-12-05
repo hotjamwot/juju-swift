@@ -44,6 +44,14 @@ struct ProjectChartData: Identifiable {
     }
 }
 
+struct ActivityChartData: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}
+
 struct TimeSeriesData: Identifiable {
     let id = UUID()
     let period: String
@@ -91,6 +99,7 @@ struct WeeklySession: Identifiable {
     let projectName: String
     let projectColor: String
     let projectEmoji: String
+    let activityEmoji: String
     var duration: Double { endHour - startHour }
 }
 

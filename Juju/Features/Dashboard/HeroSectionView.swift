@@ -4,8 +4,8 @@ import Charts
 struct HeroSectionView: View {
     // MARK: - Properties
     @ObservedObject var chartDataPreparer: ChartDataPreparer
-
-    let totalHours: Double
+    @StateObject var editorialEngine: EditorialEngine
+    @State private var headlineText: String = "Loading your creative story..."
 
     var body: some View {
         VStack(spacing: Theme.spacingMedium) {
@@ -16,7 +16,7 @@ struct HeroSectionView: View {
                 let rightColumnWidth = totalWidth * 0.60
 
                 HStack(spacing: Theme.spacingLarge) {
-                    // Left Column: Logo and Text
+                    // Left Column: Logo and Dynamic Narrative
                     VStack(alignment: .center, spacing: Theme.spacingSmall) {
                         // Juju Logo
                         Image("juju_logo")
@@ -25,32 +25,31 @@ struct HeroSectionView: View {
                             .frame(width: 48, height: 48)
                             .shadow(radius: 1)
 
-                        // Text Elements
+                        // Dynamic Narrative Headline
                         VStack(alignment: .center, spacing: Theme.spacingExtraSmall) {
-                            Text("You've spent")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                            Text(headlineText)
+                                .font(.system(size: 20, weight: .semibold, design: .rounded))
                                 .foregroundColor(Theme.Colors.textPrimary)
-
-                            Text(String(format: "%.1f", totalHours) + " hours")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-
-                            Text("in the Juju this week!")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundColor(Theme.Colors.textPrimary)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(nil)
+                                .padding(.horizontal, Theme.spacingLarge)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        .padding(.vertical, Theme.spacingMedium)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                .fill(Theme.Colors.background)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
+                        )
                     }
                     .frame(width: leftColumnWidth, alignment: .center)
 
-                    // Right Column: Weekly Project Bubble Chart
-                    WeeklyProjectBubbleChartView(
-                        data: chartDataPreparer.weeklyProjectTotals()
+                    // Right Column: Weekly Activity Bubble Chart
+                    WeeklyActivityBubbleChartView(
+                        data: chartDataPreparer.weeklyActivityTotals()
                     )
                     .frame(width: rightColumnWidth, height: 250)
                 }
@@ -76,6 +75,14 @@ struct HeroSectionView: View {
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+        .onAppear {
+            // Generate initial headline
+            editorialEngine.generateWeeklyHeadline()
+            headlineText = editorialEngine.getCurrentHeadlineText()
+        }
+        .onChange(of: editorialEngine.currentHeadline) { _ in
+            headlineText = editorialEngine.getCurrentHeadlineText()
+        }
     }
 }
 
@@ -91,11 +98,12 @@ struct HeroSectionView_PreviewsContent: View {
     @StateObject var chartDataPreparer = ChartDataPreparer()
     @StateObject var sessionManager = SessionManager.shared
     @StateObject var projectsViewModel = ProjectsViewModel.shared
+    @StateObject var editorialEngine = EditorialEngine()
     
     var body: some View {
         HeroSectionView(
             chartDataPreparer: chartDataPreparer,
-            totalHours: chartDataPreparer.weeklyTotalHours()
+            editorialEngine: editorialEngine
         )
         .onAppear {
             // Load data just like DashboardNativeSwiftChartsView does
@@ -106,6 +114,7 @@ struct HeroSectionView_PreviewsContent: View {
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
+                editorialEngine.generateWeeklyHeadline()
             }
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
@@ -115,6 +124,7 @@ struct HeroSectionView_PreviewsContent: View {
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
+                editorialEngine.generateWeeklyHeadline()
             }
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
@@ -124,6 +134,7 @@ struct HeroSectionView_PreviewsContent: View {
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
+                editorialEngine.generateWeeklyHeadline()
             }
         }
     }

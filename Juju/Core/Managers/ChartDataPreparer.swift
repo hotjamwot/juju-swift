@@ -100,6 +100,30 @@ final class ChartDataPreparer: ObservableObject {
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
+    /// Sums total hours per activity type (for activity bubble charts).
+    private func aggregateActivityTotals(from sessions: [SessionRecord]) -> [ActivityChartData] {
+        var totals: [String: Double] = [:]
+        
+        for session in sessions {
+            let activityID = session.activityTypeID ?? "uncategorized"
+            let hours = Double(session.durationMinutes) / 60.0
+            totals[activityID, default: 0] += hours
+        }
+        
+        let totalHours = totals.values.reduce(0, +)
+        return totals.map { (activityID, hours) in
+            let activityTypeManager = ActivityTypeManager.shared
+            let activityType = activityTypeManager.getActivityType(id: activityID) ??
+                              activityTypeManager.getUncategorizedActivityType()
+            return ActivityChartData(
+                activityName: activityType.name,
+                emoji: activityType.emoji,
+                totalHours: hours,
+                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
+            )
+        }.sorted { $0.totalHours > $1.totalHours }
+    }
+    
     /// Filters sessions based on the selected time period
     private func filterSessions(sessions: [SessionRecord], filter: ChartTimePeriod) -> [SessionRecord] {
         switch filter {
@@ -195,6 +219,14 @@ final class ChartDataPreparer: ObservableObject {
         return aggregateProjectTotals(from: filteredSessions)
     }
 
+    /// Current week activity totals for activity bubbles
+    func weeklyActivityTotals() -> [ActivityChartData] {
+        let filteredSessions = viewModel.sessions.filter { session in
+            formatterYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
+        }
+        return aggregateActivityTotals(from: filteredSessions)
+    }
+
     /// Current week sessions transformed for calendar chart (WeeklySession format)
     func currentWeekSessionsForCalendar() -> [WeeklySession] {
         let weekSessions = viewModel.sessions.filter { session in
@@ -212,6 +244,9 @@ final class ChartDataPreparer: ObservableObject {
             let project = viewModel.projects.first(where: { $0.name == session.projectName })
             let projectColor = project?.color ?? "#999999"
             let projectEmoji = project?.emoji ?? "📁"
+            
+            // Get activity emoji with fallback to project emoji
+            let activityEmoji = session.getActivityTypeDisplay().emoji
 
             return WeeklySession(
                 day: day,
@@ -219,7 +254,8 @@ final class ChartDataPreparer: ObservableObject {
                 endHour: endHour,
                 projectName: session.projectName,
                 projectColor: projectColor,
-                projectEmoji: projectEmoji
+                projectEmoji: projectEmoji,
+                activityEmoji: activityEmoji
             )
         }
     }
@@ -349,9 +385,9 @@ final class ChartDataPreparer: ObservableObject {
         return prepareStackedAreaData()
     }
 
-    /// Weekly total hours for headline
+    /// Weekly total hours for headline (uses activity totals for consistency)
     func weeklyTotalHours() -> Double {
-        weeklyProjectTotals().reduce(into: 0.0) { result, value in
+        weeklyActivityTotals().reduce(into: 0.0) { result, value in
             result += value.totalHours
         }
     }
@@ -468,6 +504,13 @@ extension DateFormatter {
     static let yyyyMMdd: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+    
+    static let HHmm: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
         f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()

@@ -31,10 +31,11 @@ Context of Juju app:
 - **Projects Tab**: Project management interface
 
 **Charts Tab (Default):**
-1. **Hero Section** – "This Week in Juju"
-   - Juju logo with headline: "You've spent {X.X} hours in the Juju this week!"
-   - Right side: Weekly Project Bubble Chart showing time distribution by project
-   - Full-width Session Calendar Chart below showing daily activity
+1. **Hero Section** – "This Week in Juju" (TRANSFORMED)
+   - **Juju logo** with **dynamic narrative headline**: "This week you logged 13h. Your focus was **Writing** on **Project X**, where you reached a milestone: **'Finished Act I'**."
+   - **Left side**: Active Session Status showing current activity type and progress
+   - **Right side**: **Weekly Activity Bubble Chart** showing time distribution by activity type (Writing, Editing, Admin, etc.)
+   - **Full-width Session Calendar Chart** below showing daily activity with **activity emojis** on session bars
 
 2. **This Year Section**
    - Header: "This Year" with yearly overview
@@ -112,16 +113,20 @@ Context of Juju app:
 │   │       └── ProjectsViewModel.swift # Projects data binding and business logic
 │   ├── Features/
 │   │   ├── Dashboard/
+│   │   │   ├── ActiveSessionStatusView.swift # NEW: Real-time active session display
 │   │   │   ├── BubbleChartCardView.swift # Circular bubble chart for time visualization
 │   │   │   ├── DashboardNativeSwiftChartsView.swift # Main dashboard container
 │   │   │   ├── DashboardWindowController.swift # Dashboard window management
+│   │   │   ├── EditorialEngine.swift # NEW: Narrative headline generation engine
 │   │   │   ├── GroupedBarChartCardView.swift # Monthly trends bar chart
-│   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section
-│   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view
+│   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section (TRANSFORMED)
+│   │   │   ├── Phase2TestView.swift # NEW: Comprehensive Phase 2 testing interface
+│   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view (ENHANCED with activity emojis)
 │   │   │   ├── SidebarView.swift # Dashboard navigation sidebar
 │   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
-│   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
 │   │   │   ├── StackedAreaChartCardView.swift # Yearly overview area chart
+│   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
+│   │   │   ├── WeeklyActivityBubbleChartView.swift # NEW: Activity-focused bubble chart
 │   │   │   ├── WeeklyProjectBubbleChartView.swift # Weekly project breakdown
 │   │   │   ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars
 │   │   │   └── YearlyTotalBarChartView.swift # Yearly total overview chart
@@ -175,12 +180,14 @@ When starting a new task, it is recommended to create a todo list.
 	- Nothing gets forgotten or missed
 	- Users can see, monitor, and edit the plan
 
-**Example structure:**```
+**Example structure:**
+```
 - [ ] Analyze requirements
 - [ ] Set up necessary files
 - [ ] Implement main functionality
 - [ ] Handle edge cases
 - [ ] Test the implementation
-- [ ] Verify results```
+- [ ] Verify results
+```
 
 Keeping the todo list updated helps track progress and ensures nothing is missed.

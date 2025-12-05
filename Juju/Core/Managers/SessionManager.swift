@@ -63,6 +63,49 @@ class SessionManager: ObservableObject {
         }
     }
     
+    // MARK: - Active Session Property
+    
+    /// The currently active session as a SessionRecord, or nil if no session is active
+    var activeSession: SessionRecord? {
+        get {
+            guard isSessionActive,
+                  let projectName = operationsManager.currentProjectName,
+                  let startTime = operationsManager.sessionStartTime else {
+                return nil
+            }
+            
+            // Create a SessionRecord for the active session
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm:ss"
+            
+            let date = dateFormatter.string(from: startTime)
+            let startTimeString = timeFormatter.string(from: startTime)
+            
+            return SessionRecord(
+                id: "active-session", // Use a fixed ID for the active session
+                date: date,
+                startTime: startTimeString,
+                endTime: "",
+                durationMinutes: getCurrentSessionDurationMinutes(),
+                projectName: projectName,
+                projectID: operationsManager.currentProjectID,
+                activityTypeID: operationsManager.currentActivityTypeID,
+                projectPhaseID: operationsManager.currentProjectPhaseID,
+                milestoneText: nil,
+                notes: "",
+                mood: nil
+            )
+        }
+    }
+    
+    private func getCurrentSessionDurationMinutes() -> Int {
+        guard let startTime = operationsManager.sessionStartTime else { return 0 }
+        let durationMs = Date().timeIntervalSince(startTime)
+        return Int(round(durationMs / 60))
+    }
+    
     // MARK: - CSV file path
     private let appSupportPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     private let jujuPath: URL?

@@ -15,16 +15,29 @@ struct DashboardNativeSwiftChartsView: View {
     @StateObject private var chartDataPreparer = ChartDataPreparer()
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
+    @StateObject private var editorialEngine = EditorialEngine()
     
     // MARK: - Loading state
     @State private var isLoading = false
     
     // MARK: - Component Views
     private var heroSection: some View {
-        HeroSectionView(
-            chartDataPreparer: chartDataPreparer,
-            totalHours: chartDataPreparer.weeklyTotalHours()
-        )
+        VStack(spacing: 32) {
+            // Top Row: Active Session Status and Hero Section
+            HStack(spacing: 32) {
+                // Left: Active Session Status
+                ActiveSessionStatusView(sessionManager: sessionManager)
+                    .frame(width: 400)
+                
+                // Right: Hero Section
+                HeroSectionView(
+                    chartDataPreparer: chartDataPreparer,
+                    editorialEngine: editorialEngine
+                )
+            }
+            
+            // Continue with existing sections...
+        }
     }
     
     private var thisYearSection: some View {
