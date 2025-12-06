@@ -50,7 +50,6 @@
 		66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */; };
 		66BDAC482EAD0AF30042A906 /* SummaryMetricView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */; };
 		66BDAC4A2EAD0AF30042A906 /* HeroSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */; };
-		66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */; };
 		66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C452FA2EB4133200DE7FE6 /* TooltipView.swift */; };
 		66E746792EE3249200A353C1 /* ActivityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E746782EE3249200A353C1 /* ActivityType.swift */; };
 		66E7467B2EE3254F00A353C1 /* SessionMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E7467A2EE3254F00A353C1 /* SessionMigrationManager.swift */; };
@@ -108,7 +107,6 @@
 		66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
 		66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SummaryMetricView.swift; sourceTree = "<group>"; };
 		66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeroSectionView.swift; sourceTree = "<group>"; };
-		66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyProjectBubbleChartView.swift; sourceTree = "<group>"; };
 		66C452FA2EB4133200DE7FE6 /* TooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TooltipView.swift; sourceTree = "<group>"; };
 		66E746782EE3249200A353C1 /* ActivityType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityType.swift; sourceTree = "<group>"; };
 		66E7467A2EE3254F00A353C1 /* SessionMigrationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionMigrationManager.swift; sourceTree = "<group>"; };
@@ -237,7 +235,6 @@
 				66BDAC442EAD0AF20042A906 /* HeroSectionView.swift */,
 				66BDAC412EAD0AF20042A906 /* SessionCalendarChartView.swift */,
 				66BDAC422EAD0AF20042A906 /* SummaryMetricView.swift */,
-				66BDAC452EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift */,
 				6633F0DC2EAB6EFD003AA3AA /* SidebarView.swift */,
 				66B1482C2EA8EA4B00E9BB4A /* DashboardNativeSwiftChartsView.swift */,
 				66B1482E2EA8EA4B00E9BB4A /* DashboardWindowController.swift */,
@@ -462,7 +459,6 @@
 				66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */,
 				66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */,
 				66EF3E782EC5F2B200A6952E /* SessionOperationsManager.swift in Sources */,
-				66BDAC4B2EAD0AF30042A906 /* WeeklyProjectBubbleChartView.swift in Sources */,
 				66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */,
 				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
 				663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */,

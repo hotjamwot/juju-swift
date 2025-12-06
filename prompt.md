@@ -19,19 +19,21 @@ Context of Juju app:
 - All data saved as CSV for transparency and portability.
 
 ### 📁 Local Storage
-- Sessions: ~/Library/Application Support/juju/data.csv
+- Sessions: ~/Library/Application Support/juju/YYYY-data.csv
 - Projects: projects.json in the same folder.
+- Activity Types: activityTypes.json in the same folder
 - Flat file system: No cloud, no lock-in, no hidden database.
 
 ### 📊 Dashboard
 **Navigation:**
-- **Sidebar**: Permanent sidebar with icons for Charts, Sessions, and Projects
+- **Sidebar**: Permanent sidebar with icons for Charts, Sessions, Projects, and Activity Types
 - **Charts Tab** (default): Main analytics dashboard
 - **Sessions Tab**: Session management with filtering and export
 - **Projects Tab**: Project management interface
+- **Activity Types Tab**: Activity type management with emoji picker and archiving
 
 **Charts Tab (Default):**
-1. **Hero Section** – "This Week in Juju" (TRANSFORMED)
+1. **Hero Section** – "This Week in Juju"
    - **Juju logo** with **dynamic narrative headline**: "This week you logged 13h. Your focus was **Writing** on **Project X**, where you reached a milestone: **'Finished Act I'**."
    - **Left side**: Active Session Status showing current activity type and progress
    - **Right side**: **Weekly Activity Bubble Chart** showing time distribution by activity type (Writing, Editing, Admin, etc.)
@@ -70,6 +72,15 @@ Context of Juju app:
 - **Edit/Delete**: Full CRUD operations with modal interface
 - **Color Management**: Color picker for project color-coding
 - **About Field**: Optional project description
+
+**Activity Types Tab:**
+- **Activity Types List**: Vertical list of all activity types
+- **Activity Type Cards**: Each showing emoji, name, and optional description
+- **Add Activity Type**: Button to create new activity types with emoji picker
+- **Edit/Delete**: Full CRUD operations with modal interface
+- **Archive/Unarchive**: Toggle functionality to hide/show activity types
+- **Emoji Picker Integration**: Shared emoji picker with search functionality
+- **Protected Fallback**: Uncensored "Uncategorized" type cannot be deleted
 
 **Filtering & Export System:**
 - **Date Filtering**: Real-time filtering with options for Today, This Week, This Month, This Year, Custom Range, and Clear
@@ -136,6 +147,10 @@ Context of Juju app:
 │   │   ├── Projects/
 │   │   │   ├── ProjectAddEditView.swift # Create/edit project modal
 │   │   │   └── ProjectsNativeView.swift # Project management interface
+│   │   ├── ActivityTypes/
+│   │   │   ├── ActivityTypeAddEditView.swift # Create/edit activity type modal
+│   │   │   ├── ActivityTypesView.swift # Activity type management interface
+│   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
 │   │   └── Sessions/
 │   │       ├── Components/
 │   │       │   ├── FilterExportControls.swift # NEW: Modular filter and export controls

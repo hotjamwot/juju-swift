@@ -139,6 +139,10 @@ Add immutable UUIDs to Activity Types and Phases, create Activity Types Manager 
 - [ ] **Add "Archive" action** in Projects Manager
 - [ ] **Ensure archived projects** still appear in historical views
 
+### 5. Add Activity Type Archiving Logic
+
+CREATE TO-DO LIST HERE BASED ON PROJECT ARCHIVE LOGIC
+
 ---
 
 ## 📋 PHASE 3: Annual Project Story View (The "Killer Feature")
