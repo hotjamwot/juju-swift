@@ -1,6 +1,6 @@
 # 🚀 Juju Refactor - Comprehensive Todo List
 
-**Current Status:** Phase 2 Complete ✅ | **Next Phase:** Phase 2.5 (Metadata & Session Architecture Improvements)
+**Current Status:** Phase 2.5 Complete ✅
 
 This document provides a detailed, actionable todo list for implementing Phase 2.5 and beyond, based on the requirements in Phase2.5.md and aligned with the overall refactor plan.
 
@@ -17,41 +17,41 @@ Add immutable UUIDs to Activity Types and Phases, create Activity Types Manager 
 
 #### 1.1 Activity Types JSON Schema Update
 - [x] **ActivityType model** includes `id` field ✅
-- [ ] **Add `description` field** to ActivityType struct
-- [ ] **Add `archived` field** to ActivityType struct
-- [ ] **Update ActivityTypeManager** to handle new fields in CRUD operations
-- [ ] **Update JSON encoding/decoding** to include new fields
-- [ ] **Create migration logic** for existing Activity Types:
-  - [ ] Generate stable IDs for legacy types (if needed)
-  - [ ] Add default descriptions for existing types
-  - [ ] Set `archived: false` for all existing types
+- [x] **Add `description` field** to ActivityType struct ✅
+- [x] **Add `archived` field** to ActivityType struct ✅
+- [x] **Update ActivityTypeManager** to handle new fields in CRUD operations ✅
+- [x] **Update JSON encoding/decoding** to include new fields ✅
+- [x] **Create migration logic** for existing Activity Types:
+  - [x] Generate stable IDs for legacy types (if needed) ✅
+  - [x] Add default descriptions for existing types ✅
+  - [x] Set `archived: false` for all existing types ✅
 
 #### 1.2 Project Phases Schema Update
 - [x] **Phase model** includes `id` field ✅
-- [ ] **Add `archived` field** to Phase struct
-- [ ] **Update ProjectManager** to handle archived phases in CRUD operations
-- [ ] **Update JSON encoding/decoding** to include new fields
-- [ ] **Create migration logic** for existing Project Phases:
-  - [ ] Set `archived: false` for all existing phases
+- [x] **Add `archived` field** to Phase struct ✅
+- [x] **Update ProjectManager** to handle archived phases in CRUD operations ✅
+- [x] **Update JSON encoding/decoding** to include new fields ✅
+- [x] **Create migration logic** for existing Project Phases:
+  - [x] Set `archived: false` for all existing phases ✅
 
 #### 1.3 Retroactive Migration Rules
-- [ ] **Create migration logic** for existing Activity Types:
-  - [ ] Generate stable IDs for old types on first-run
-  - [ ] Keep names stable until user edits
-  - [ ] Add default descriptions for legacy types
-  - [ ] Set `archived: false` for all existing types
-- [ ] **Create migration logic** for existing Project Phases:
-  - [ ] Generate stable IDs for existing phases
-  - [ ] Maintain order and relationships
-  - [ ] Set `archived: false` for all existing phases
-- [ ] **Update Session model** to store `activityTypeId` and `phaseId` (already implemented ✅)
-- [ ] **Update all referencing logic** to use IDs instead of names (already implemented ✅)
+- [x] **Create migration logic** for existing Activity Types:
+  - [x] Generate stable IDs for old types on first-run ✅
+  - [x] Keep names stable until user edits ✅
+  - [x] Add default descriptions for legacy types ✅
+  - [x] Set `archived: false` for all existing types ✅
+- [x] **Create migration logic** for existing Project Phases:
+  - [x] Generate stable IDs for existing phases ✅
+  - [x] Maintain order and relationships ✅
+  - [x] Set `archived: false` for all existing phases ✅
+- [x] **Update Session model** to store `activityTypeId` and `phaseId` (already implemented ✅)
+- [x] **Update all referencing logic** to use IDs instead of names (already implemented ✅)
 
 #### 1.4 Developer Brief Implementation
-- [ ] **Add `id` fields** to Activity Types and Project Phases (partially done ✅)
-- [ ] **Migrate existing entries**: generate stable IDs and rewrite JSON
-- [ ] **Update Session model** to store IDs instead of names (done ✅)
-- [ ] **Update all referencing logic** to use IDs (done ✅)
+- [x] **Add `id` fields** to Activity Types and Project Phases (partially done ✅)
+- [x] **Migrate existing entries**: generate stable IDs and rewrite JSON ✅
+- [x] **Update Session model** to store IDs instead of names (done ✅)
+- [x] **Update all referencing logic** to use IDs (done ✅)
 
 ---
 
@@ -316,11 +316,11 @@ Prepare comprehensive documentation and release notes for users and developers.
 ## 🎯 SUCCESS CRITERIA
 
 ### Phase 2.5 Must-Have
-- [ ] Activity Types have immutable UUIDs and descriptions
-- [ ] Project Phases have immutable UUIDs and archived status
-- [ ] Activity Types Manager View is functional and user-friendly
-- [ ] Project Archiving works correctly across all views
-- [ ] All existing functionality remains intact
+- [x] Activity Types have immutable UUIDs and descriptions ✅
+- [x] Project Phases have immutable UUIDs and archived status ✅
+- [x] Activity Types Manager View is functional and user-friendly ✅
+- [x] Project Archiving works correctly across all views ✅
+- [x] All existing functionality remains intact ✅
 
 ### Phase 3 Must-Have
 - [ ] Annual Project Story View displays correctly

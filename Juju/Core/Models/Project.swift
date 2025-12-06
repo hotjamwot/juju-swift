@@ -12,10 +12,12 @@ extension Notification.Name {
 struct Phase: Codable, Identifiable, Hashable {
     let id: String
     let name: String
+    var archived: Bool
     
-    init(id: String = UUID().uuidString, name: String) {
+    init(id: String = UUID().uuidString, name: String, archived: Bool = false) {
         self.id = id
         self.name = name
+        self.archived = archived
     }
 }
 
@@ -112,8 +114,21 @@ class ProjectManager {
             do {
                 let data = try Data(contentsOf: projectsFile)
                 let loadedProjects = try JSONDecoder().decode([Project].self, from: data)
-                let migratedProjects = migrateProjects(loadedProjects)
-                print("Loaded \(migratedProjects.count) projects from \(projectsFile.path)")
+                print("Loaded \(loadedProjects.count) projects from \(projectsFile.path)")
+                
+                // Check if migration is needed (old format without archived fields)
+                let needsMigration = loadedProjects.contains { project in
+                    project.phases.contains { phase in
+                        phase.archived != phase.archived
+                    }
+                }
+                
+                let migratedProjects = needsMigration ? migrateProjects(loadedProjects) : loadedProjects
+                
+                if needsMigration {
+                    print("🔄 Migrating projects to new schema...")
+                }
+                
                 return migratedProjects
             } catch {
                 print("Error loading projects: \(error)")
@@ -151,11 +166,77 @@ class ProjectManager {
         
         let projects = loadProjects()
         guard let project = projects.first(where: { $0.id == projectID }),
-              let phase = project.phases.first(where: { $0.id == phaseID }) else {
+              let phase = project.phases.first(where: { $0.id == phaseID && !$0.archived }) else {
             return nil
         }
         
         return phase.name
+    }
+    
+    // MARK: - Phase Management with Archiving
+    
+    /// Add a phase to a project
+    func addPhase(to projectID: String, phase: Phase) {
+        var projects = loadProjects()
+        if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
+            var project = projects[projectIndex]
+            project.phases.append(phase)
+            projects[projectIndex] = project
+            saveProjects(projects)
+        }
+    }
+    
+    /// Update a phase in a project
+    func updatePhase(in projectID: String, phase: Phase) {
+        var projects = loadProjects()
+        if let projectIndex = projects.firstIndex(where: { $0.id == projectID }),
+           let phaseIndex = projects[projectIndex].phases.firstIndex(where: { $0.id == phase.id }) {
+            var project = projects[projectIndex]
+            project.phases[phaseIndex] = phase
+            projects[projectIndex] = project
+            saveProjects(projects)
+        }
+    }
+    
+    /// Archive or unarchive a phase in a project
+    func setPhaseArchived(_ archived: Bool, in projectID: String, phaseID: String) {
+        var projects = loadProjects()
+        if let projectIndex = projects.firstIndex(where: { $0.id == projectID }),
+           let phaseIndex = projects[projectIndex].phases.firstIndex(where: { $0.id == phaseID }) {
+            var project = projects[projectIndex]
+            project.phases[phaseIndex].archived = archived
+            projects[projectIndex] = project
+            saveProjects(projects)
+        }
+    }
+    
+    /// Delete a phase from a project (permanent removal)
+    func deletePhase(from projectID: String, phaseID: String) {
+        var projects = loadProjects()
+        if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
+            var project = projects[projectIndex]
+            project.phases.removeAll { $0.id == phaseID }
+            projects[projectIndex] = project
+            saveProjects(projects)
+        }
+    }
+    
+    /// Get active phases for a project (non-archived)
+    func getActivePhases(for projectID: String) -> [Phase] {
+        let projects = loadProjects()
+        guard let project = projects.first(where: { $0.id == projectID }) else {
+            return []
+        }
+        return project.phases.filter { !$0.archived }
+    }
+    
+    /// Get all phases for a project (including archived)
+    func getAllPhases(for projectID: String) -> [Phase] {
+        let projects = loadProjects()
+        guard let project = projects.first(where: { $0.id == projectID }) else {
+            return []
+        }
+        return project.phases
     }
     
     private func migrateProjects(_ loadedProjects: [Project]) -> [Project] {

@@ -5,11 +5,15 @@ struct ActivityType: Codable, Identifiable, Hashable {
     let id: String
     let name: String
     let emoji: String
+    let description: String
+    let archived: Bool
     
-    init(id: String, name: String, emoji: String) {
+    init(id: String, name: String, emoji: String, description: String = "", archived: Bool = false) {
         self.id = id
         self.name = name
         self.emoji = emoji
+        self.description = description
+        self.archived = archived
     }
 }
 
@@ -40,6 +44,18 @@ class ActivityTypeManager {
                 let data = try Data(contentsOf: activityTypesFile)
                 let loadedTypes = try JSONDecoder().decode([ActivityType].self, from: data)
                 print("Loaded \(loadedTypes.count) activity types from \(activityTypesFile.path)")
+                
+                // Check if migration is needed (old format without description/archived)
+                let needsMigration = loadedTypes.contains { type in
+                    type.description.isEmpty || type.archived != type.archived
+                }
+                
+                if needsMigration {
+                    print("🔄 Migrating activity types to new schema...")
+                    let migratedTypes = migrateActivityTypes(loadedTypes)
+                    return migratedTypes
+                }
+                
                 return loadedTypes
             } catch {
                 print("Error loading activity types: \(error)")
@@ -93,19 +109,52 @@ class ActivityTypeManager {
         return loadActivityTypes().first { $0.id == id }
     }
     
+    // MARK: - Migration Logic
+    
+    /// Migrate existing activity types to include new fields
+    private func migrateActivityTypes(_ loadedTypes: [ActivityType]) -> [ActivityType] {
+        var needsRewrite = false
+        var migratedTypes: [ActivityType] = []
+        
+        for type in loadedTypes {
+            // Check if type needs migration (missing description or archived fields)
+            if type.description.isEmpty || type.archived != type.archived {
+                // Create migrated version with default values
+                let migratedType = ActivityType(
+                    id: type.id,
+                    name: type.name,
+                    emoji: type.emoji,
+                    description: type.description.isEmpty ? "" : type.description,
+                    archived: type.archived
+                )
+                migratedTypes.append(migratedType)
+                needsRewrite = true
+            } else {
+                migratedTypes.append(type)
+            }
+        }
+        
+        if needsRewrite {
+            print("Activity types migrated, rewriting file with new schema")
+            saveActivityTypes(migratedTypes)
+        }
+        
+        return migratedTypes
+    }
+    
     // MARK: - Default Activity Types
     
     private func createDefaultActivityTypes() -> [ActivityType] {
         let defaults = [
-            ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝"), // Fallback for legacy data
-            ActivityType(id: "writing", name: "Writing", emoji: "✍️"),
-            ActivityType(id: "outlining", name: "Outlining / Brainstorming", emoji: "🧠"),
-            ActivityType(id: "editing", name: "Editing / Rewriting", emoji: "✂️"),
-            ActivityType(id: "collaborating", name: "Collaborating", emoji: "🤝"),
-            ActivityType(id: "production", name: "Production Prep / Organising", emoji: "🎬"),
-            ActivityType(id: "coding", name: "Coding", emoji: "💻"),
-            ActivityType(id: "admin", name: "Admin", emoji: "🗂️"),
-            ActivityType(id: "maintenance", name: "Maintenance", emoji: "🧽")
+            ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: false), // Fallback for legacy data
+            ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
+            ActivityType(id: "outlining", name: "Outlining / Brainstorming", emoji: "🧠", description: "Planning and organizing ideas", archived: false),
+            ActivityType(id: "editing", name: "Editing / Rewriting", emoji: "✂️", description: "Refining and improving existing content", archived: false),
+            ActivityType(id: "collaborating", name: "Collaborating", emoji: "🤝", description: "Working with others", archived: false),
+            ActivityType(id: "production", name: "Production Prep / Organising", emoji: "🎬", description: "Preparing for production and organization", archived: false),
+            ActivityType(id: "coding", name: "Coding", emoji: "💻", description: "Writing and debugging code", archived: false),
+            ActivityType(id: "admin", name: "Admin", emoji: "🗂️", description: "Administrative tasks and organization", archived: false),
+            ActivityType(id: "maintenance", name: "Maintenance", emoji: "🧽", description: "Maintenance and cleanup tasks", archived: false)
         ]
         print("Created default activity types")
         saveActivityTypes(defaults)
@@ -117,7 +166,7 @@ class ActivityTypeManager {
     /// Get the "Uncategorized" activity type (fallback for legacy sessions)
     func getUncategorizedActivityType() -> ActivityType {
         let types = loadActivityTypes()
-        return types.first { $0.id == "uncategorized" } ?? ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝")
+        return types.first { $0.id == "uncategorized" } ?? ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: false)
     }
     
     /// Get activity type display info, with fallback to "Uncategorized" for nil or missing IDs
@@ -129,4 +178,3 @@ class ActivityTypeManager {
         return (activityType.name, activityType.emoji)
     }
 }
-
