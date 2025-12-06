@@ -1,35 +1,6 @@
 import SwiftUI
 import Foundation
 
-// MARK: - Ordinal Helper
-private extension Int {
-    var ordinalSuffix: String {
-        switch (self % 100) {
-        case 11, 12, 13: return "th"
-        default:
-            switch (self % 10) {
-            case 1: return "st"
-            case 2: return "nd"
-            case 3: return "rd"
-            default: return "th"
-            }
-        }
-    }
-}
-
-// MARK: - Pretty‑date helper
-private extension Date {
-    /// "Monday, 23rd October"
-    var prettyHeader: String {
-        let cal = Calendar.current
-        let weekday = cal.weekdaySymbols[cal.component(.weekday, from: self) - 1]
-        let day     = cal.component(.day, from: self)
-        let month   = cal.monthSymbols[cal.component(.month, from: self) - 1]
-        return "\(weekday), \(day)\(day.ordinalSuffix) \(month)"
-    }
-}
-
-
 // MARK: - Date Filter Enum
 public enum DateFilter: String, CaseIterable, Identifiable {
     case today = "Today"
@@ -54,33 +25,68 @@ struct GroupedSessionView: View {
     let projects: [Project]
     let onSave: () -> Void
     let onDelete: (SessionRecord) -> Void
-
+    let isExpanded: Bool
+    let onToggleExpand: () -> Void
+    
+    // Track which session is being edited
+    @Binding var editingSessionID: String?
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            // 1. Date Header – centred
-            Text(group.date.prettyHeader)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(Theme.Colors.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.horizontal, Theme.spacingMedium)
-
-            // 2. 4‑Column Grid for the Sessions …
-            LazyVGrid(
-                columns: Array(repeating: .init(.flexible(), spacing: Theme.spacingMedium), count: 4),
-                spacing: Theme.spacingMedium
-            ) {
-                        ForEach(group.sessions) { session in
-                    SessionCardView(
-                        session: session,
-                        projects: projects,
-                        onSave: onSave,
-                        onDelete: { onDelete(session) }
-                    )
-                    .frame(minHeight: 180)
+        VStack(alignment: .leading, spacing: 0) {
+            // Date Header with expand/collapse
+            let isExpandedBinding = Binding(
+                get: { isExpanded },
+                set: { _ in onToggleExpand() }
+            )
+            
+            DayHeaderView(
+                date: group.date,
+                sessionCount: group.sessions.count,
+                isExpanded: isExpandedBinding
+            )
+            
+            // Session rows (only show if expanded)
+            if isExpanded {
+                VStack(spacing: Theme.spacingSmall) {
+                    ForEach(group.sessions) { session in
+                        SessionsRowView(
+                            session: .constant(session),
+                            projects: projects,
+                            isEditing: editingSessionID == session.id,
+                            onEdit: { 
+                                // Enter edit mode for this session
+                                editingSessionID = session.id
+                            },
+                            onSave: { updatedSession in
+                                // Save the updated session using the correct method signature
+                                // We need to update each field individually
+                                let success = SessionManager.shared.updateSessionFull(
+                                    id: updatedSession.id,
+                                    date: updatedSession.date,
+                                    startTime: updatedSession.startTime,
+                                    endTime: updatedSession.endTime,
+                                    projectName: updatedSession.projectName,
+                                    notes: updatedSession.notes,
+                                    mood: updatedSession.mood
+                                )
+                                
+                                if success {
+                                    // Exit edit mode
+                                    editingSessionID = nil
+                                    // Reload sessions by calling the parent's onSave callback
+                                    onSave()
+                                }
+                            },
+                            onDelete: { 
+                                // Delete the session
+                                onDelete(session)
+                            }
+                        )
+                    }
                 }
+                .padding(.horizontal, Theme.spacingMedium)
+                .padding(.vertical, Theme.spacingSmall)
             }
-            .padding(.horizontal, Theme.spacingLarge)
         }
     }
 }
@@ -89,6 +95,7 @@ struct GroupedSessionView: View {
 public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
+    @StateObject private var chartDataPreparer = ChartDataPreparer()
 
     // MARK: - State Properties
     
@@ -106,38 +113,94 @@ public struct SessionsView: View {
     
     // Current week sessions only - no pagination needed
     @State private var currentWeekSessions: [GroupedSession] = []
+    
+    // Track expansion state for each group - expanded by default
+    @State private var expandedGroups: Set<UUID> = []
+    
+    // Track which session is being edited
+    @State private var editingSessionID: String? = nil
 
     // MARK: - Computed Properties
     
     /// The source of truth for all filtering and sorting.
     private var fullyFilteredSessions: [SessionRecord] {
-        var sessions: [SessionRecord]
+        // Start with current week sessions
+        var sessions = getCurrentWeekSessions()
         
-        // Always use current week sessions for display
-        // Filter panel expansion should NOT change the underlying data
-        sessions = getCurrentWeekSessions()
-
-        // Apply project filtering only (simplified for now)
-        if filterExportState.projectFilter != "All" {
-            sessions = sessions.filter { $0.projectName == filterExportState.projectFilter }
-        }
-
-        sessions.sort(by: { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) })
+        // Apply project filter if not "All"
+        sessions = applyProjectFilter(to: sessions)
+        
+        // Sort by start date time (most recent first)
+        sessions = sortSessionsByDate(sessions)
+        
         return sessions
     }
     
-    /// Groups the filtered sessions by day for the grid view.
-    private var groupedSessions: [GroupedSession] {
-        // Always use current week sessions - filter panel is just UI
-        return currentWeekSessions
+    /// Apply project filter to sessions
+    private func applyProjectFilter(to sessions: [SessionRecord]) -> [SessionRecord] {
+        guard filterExportState.projectFilter != "All" else {
+            return sessions
+        }
+        
+        return sessions.filter { $0.projectName == filterExportState.projectFilter }
     }
+    
+    /// Sort sessions by start date time (most recent first)
+    private func sortSessionsByDate(_ sessions: [SessionRecord]) -> [SessionRecord] {
+        return sessions.sorted { session1, session2 in
+            let date1 = session1.startDateTime ?? Date.distantPast
+            let date2 = session2.startDateTime ?? Date.distantPast
+            return date1 > date2
+        }
+    }
+    
+    /// Count of sessions in currentWeekSessions
+    private var currentSessionCount: Int {
+        var count = 0
+        for group in currentWeekSessions {
+            count += group.sessions.count
+        }
+        return count
+    }
+    
+    /// Create grouped session views for display
+    private var groupedSessionViews: some View {
+        ForEach(Array(currentWeekSessions.enumerated()), id: \.element.id) { index, group in
+            GroupedSessionView(
+                group: group,
+                projects: projectsViewModel.projects,
+                onSave: { 
+                    Task {
+                        // Reload current week sessions after save
+                        await loadCurrentWeekSessions()
+                    }
+                },
+                onDelete: { session in
+                    toDelete = session
+                    showingDeleteAlert = true
+                },
+                isExpanded: expandedGroups.contains(group.id),
+                onToggleExpand: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if expandedGroups.contains(group.id) {
+                            expandedGroups.remove(group.id)
+                        } else {
+                            expandedGroups.insert(group.id)
+                        }
+                    }
+                },
+                editingSessionID: $editingSessionID
+            )
+        }
+    }
+    
 
     
     // MARK: - Body
     public var body: some View {
         ZStack {
             // --- Main Content Area ---
-            if groupedSessions.isEmpty {
+            if currentWeekSessions.isEmpty {
                 if isLoading {
                     // Loading indicator
                     VStack {
@@ -161,22 +224,7 @@ public struct SessionsView: View {
                 // Grid View
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
-                        ForEach(groupedSessions, id: \.id) { group in
-                            GroupedSessionView(
-                                group: group,
-                                projects: projectsViewModel.projects,
-                                onSave: { 
-                                    Task {
-                                        // Reload current week sessions after save
-                                        await loadCurrentWeekSessions()
-                                    }
-                                },
-                                onDelete: { session in
-                                    toDelete = session
-                                    showingDeleteAlert = true
-                                }
-                            )
-                        }
+                        groupedSessionViews
                     }
                     .padding(.vertical, Theme.spacingMedium)
                 }
@@ -191,7 +239,7 @@ public struct SessionsView: View {
                     FilterExportControls(
                         state: filterExportState,
                         projects: projectsViewModel.projects,
-                        filteredSessionsCount: fullyFilteredSessions.count,
+                        filteredSessionsCount: currentSessionCount,
                         onDateFilterChange: handleDateFilterSelection,
                         onCustomDateRangeChange: handleCustomDateRangeChange,
                         onProjectFilterChange: { _ in },
@@ -233,6 +281,11 @@ public struct SessionsView: View {
                 if !filterExportState.isExpanded {
                     await loadCurrentWeekSessions()
                 }
+                // Update chart data when sessions change
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
             }
         }
         .onChange(of: filterExportState.isExpanded) { _, isExpanded in
@@ -268,6 +321,10 @@ public struct SessionsView: View {
         isLoading = true
         let sessions = getCurrentWeekSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
+        
+        // Expand all groups by default
+        expandedGroups = Set(currentWeekSessions.map { $0.id })
+        
         isLoading = false
     }
     
@@ -298,9 +355,16 @@ public struct SessionsView: View {
             return Calendar.current.startOfDay(for: start)
         }
         
-        return grouped
-            .sorted { $0.key > $1.key }                    // newer first
-            .map { GroupedSession(date: $0.key, sessions: $0.value.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }) }
+        // Sort groups by date in descending order (most recent first)
+        // This will show Monday at the top if it's the most recent day
+        let sortedGroups = grouped.sorted(by: { group1, group2 in
+            return group1.key > group2.key
+        })
+        
+        return sortedGroups.map { group in
+            let sortedSessions = sortSessionsByDate(group.value)
+            return GroupedSession(date: group.key, sessions: sortedSessions)
+        }
     }
     
     // MARK: - Data Functions

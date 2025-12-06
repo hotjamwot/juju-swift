@@ -50,6 +50,19 @@ public struct Theme {
         public static let animationDuration = 0.2
     }
 
+    // MARK: Row-specific styling for list layout
+    public struct Row {
+        public static let height: CGFloat = 70
+        public static let expandedHeight: CGFloat = 120
+        public static let cornerRadius: CGFloat = 12
+        public static let hoverOpacity: CGFloat = 0.2
+        public static let separatorHeight: CGFloat = 1
+        public static let projectDotSize: CGFloat = 8
+        public static let emojiSize: CGFloat = 18
+        public static let compactSpacing: CGFloat = 8
+        public static let contentPadding: CGFloat = 12
+    }
+
     // MARK: Tab‑Bar specific colours
     public struct Tab {
         // Use the helper so both `Color` (SwiftUI) and `NSColor` are available

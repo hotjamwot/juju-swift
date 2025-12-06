@@ -13,6 +13,9 @@
 		6659095D2EE44952007D1303 /* ActivityTypeAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909592EE44952007D1303 /* ActivityTypeAddEditView.swift */; };
 		6659095E2EE44952007D1303 /* ActivityTypesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095A2EE44952007D1303 /* ActivityTypesView.swift */; };
 		6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */; };
+		665909632EE45EFF007D1303 /* SessionsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909602EE45EFF007D1303 /* SessionsRowView.swift */; };
+		665909642EE45EFF007D1303 /* DayHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909612EE45EFF007D1303 /* DayHeaderView.swift */; };
+		665909652EE45EFF007D1303 /* ExpandableNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909622EE45EFF007D1303 /* ExpandableNotesView.swift */; };
 		666C39472EAFA91700B408B8 /* ProjectAddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
@@ -68,6 +71,9 @@
 		665909592EE44952007D1303 /* ActivityTypeAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypeAddEditView.swift; sourceTree = "<group>"; };
 		6659095A2EE44952007D1303 /* ActivityTypesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesView.swift; sourceTree = "<group>"; };
 		6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesViewModel.swift; sourceTree = "<group>"; };
+		665909602EE45EFF007D1303 /* SessionsRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsRowView.swift; sourceTree = "<group>"; };
+		665909612EE45EFF007D1303 /* DayHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DayHeaderView.swift; sourceTree = "<group>"; };
+		665909622EE45EFF007D1303 /* ExpandableNotesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExpandableNotesView.swift; sourceTree = "<group>"; };
 		666C39462EAFA91700B408B8 /* ProjectAddEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectAddEditView.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
@@ -265,6 +271,9 @@
 		66B148402EA8EA4B00E9BB4A /* Sessions */ = {
 			isa = PBXGroup;
 			children = (
+				665909612EE45EFF007D1303 /* DayHeaderView.swift */,
+				665909622EE45EFF007D1303 /* ExpandableNotesView.swift */,
+				665909602EE45EFF007D1303 /* SessionsRowView.swift */,
 				66EF3E7E2EC5F88A00A6952E /* SessionEditModalView.swift */,
 				666C394B2EAFB53800B408B8 /* Components */,
 				66B1483E2EA8EA4B00E9BB4A /* SessionCardView.swift */,
@@ -443,11 +452,14 @@
 				66E7467B2EE3254F00A353C1 /* SessionMigrationManager.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
+				665909642EE45EFF007D1303 /* DayHeaderView.swift in Sources */,
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
 				6659095E2EE44952007D1303 /* ActivityTypesView.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66B148782EA8EA4B00E9BB4A /* NotesViewModel.swift in Sources */,
+				665909632EE45EFF007D1303 /* SessionsRowView.swift in Sources */,
+				665909652EE45EFF007D1303 /* ExpandableNotesView.swift in Sources */,
 				66EF3E7A2EC5F2B200A6952E /* SessionDataManager.swift in Sources */,
 				66B1484C2EA8EA4B00E9BB4A /* main.swift in Sources */,
 				66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */,

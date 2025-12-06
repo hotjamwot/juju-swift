@@ -144,25 +144,25 @@ Add immutable UUIDs to Activity Types and Phases, create Activity Types Manager 
 ### 5. Add Activity Type Archiving Logic
 
 #### 5.1 Model Changes
-- [ ] **ActivityType model** includes `archived: Bool` field ✅
-- [ ] **Update ActivityTypeManager** to handle archived status ✅
-- [ ] **Update JSON encoding/decoding** to include archived field ✅
-- [ ] **Create migration logic** for existing Activity Types:
-  - [ ] Set `archived: false` for all existing types ✅
+- [x] **ActivityType model** includes `archived: Bool` field ✅
+- [x] **Update ActivityTypeManager** to handle archived status ✅
+- [x] **Update JSON encoding/decoding** to include archived field ✅
+- [x] **Create migration logic** for existing Activity Types:
+  - [x] Set `archived: false` for all existing types ✅
 
 #### 5.2 Behavior Implementation
-- [ ] **Hide archived Activity Types** from dropdowns ✅
-- [ ] **Show archived Activity Types** in Activity Types Manager ✅
-- [ ] **Add "Archived" section** in Activity Types Manager ✅
-- [ ] **Add "Archive" action** in Activity Types Manager ✅
-- [ ] **Maintain archived Activity Types** in historical views ✅
+- [x] **Hide archived Activity Types** from dropdowns ✅
+- [x] **Show archived Activity Types** in Activity Types Manager ✅
+- [x] **Add "Archived" section** in Activity Types Manager ✅
+- [x] **Add "Archive" action** in Activity Types Manager ✅
+- [x] **Maintain archived Activity Types** in historical views ✅
 
 #### 5.3 Developer Brief Implementation
-- [ ] **Add `archived` boolean** to ActivityType model ✅
-- [ ] **Hide archived Activity Types** in dropdowns ✅
-- [ ] **Optionally grey them out** or separate in Activity Types Manager ✅
-- [ ] **Add "Archive" action** in Activity Types Manager ✅
-- [ ] **Ensure archived Activity Types** still appear in historical views ✅
+- [x] **Add `archived` boolean** to ActivityType model ✅
+- [x] **Hide archived Activity Types** in dropdowns ✅
+- [x] **Optionally grey them out** or separate in Activity Types Manager ✅
+- [x] **Add "Archive" action** in Activity Types Manager ✅
+- [x] **Ensure archived Activity Types** still appear in historical views ✅
 
 ---
 
