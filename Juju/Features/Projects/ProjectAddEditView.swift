@@ -120,6 +120,7 @@ struct ProjectAddEditView: View {
     @State private var about: String = ""
     @State private var showingColorPicker = false
     @State private var showingEmojiPicker = false
+    @State private var isArchived: Bool = false
     
     let colorOptions = [
         // Row 1 - Reds & Pinks
@@ -178,6 +179,25 @@ struct ProjectAddEditView: View {
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Spacer()
+                
+                // Archive/Unarchive Button (only for editing existing projects)
+                if isEditing, let project = project {
+                    Button(project.archived ? "Unarchive Project" : "Archive Project") {
+                        Task {
+                            if project.archived {
+                                await ProjectsViewModel.shared.unarchiveProject(project)
+                            } else {
+                                await ProjectsViewModel.shared.archiveProject(project)
+                            }
+                            dismiss()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(project.archived ? Theme.Colors.accentColor : Theme.Colors.error)
+                    .font(Theme.Fonts.caption)
+                    .padding(.trailing, Theme.spacingSmall)
+                    .pointingHandOnHover()
+                }
                 
                 Button(action: {
                     dismiss()
@@ -312,6 +332,44 @@ struct ProjectAddEditView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
+            }
+            
+            // Archive Checkbox (only for editing existing projects)
+            if isEditing, let project = project {
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    HStack {
+                        Toggle("Archive Project", isOn: $isArchived)
+                            .toggleStyle(SwitchToggleStyle())
+                            .onChange(of: isArchived) { newValue in
+                                Task {
+                                    if newValue {
+                                        await ProjectsViewModel.shared.archiveProject(project)
+                                        // Update state to reflect the archived status
+                                        isArchived = true
+                                    } else {
+                                        await ProjectsViewModel.shared.unarchiveProject(project)
+                                        // Update state to reflect the unarchived status
+                                        isArchived = false
+                                    }
+                                    // Don't dismiss here - let user continue editing
+                                }
+                            }
+                        Spacer()
+                    }
+                    Text("Archived projects are hidden from the menu bar but remain in your data and historical views.")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .padding(Theme.spacingMedium)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
+                .onAppear {
+                    isArchived = project.archived
+                }
             }
             
             Spacer()

@@ -23,8 +23,18 @@ class ActivityTypesViewModel: ObservableObject {
         }
     }
     
+    /// Active activity types (non-archived) sorted by name
+    var activeActivityTypes: [ActivityType] {
+        activityTypes.filter { !$0.archived }.sorted { $0.name < $1.name }
+    }
+    
+    /// Archived activity types sorted by name
+    var archivedActivityTypes: [ActivityType] {
+        activityTypes.filter { $0.archived }.sorted { $0.name < $1.name }
+    }
+    
     func loadActivityTypes() {
-        activityTypes = ActivityTypeManager.shared.loadActivityTypes()
+        activityTypes = ActivityTypeManager.shared.getAllActivityTypes()
     }
     
     func addActivityType(name: String, emoji: String, description: String = "") {
@@ -60,5 +70,17 @@ class ActivityTypesViewModel: ObservableObject {
             archived: !activityType.archived
         )
         updateActivityType(updated)
+    }
+    
+    /// Archive an activity type
+    func archiveActivityType(_ activityType: ActivityType) {
+        ActivityTypeManager.shared.setActivityTypeArchived(true, for: activityType.id)
+        loadActivityTypes()
+    }
+    
+    /// Unarchive an activity type
+    func unarchiveActivityType(_ activityType: ActivityType) {
+        ActivityTypeManager.shared.setActivityTypeArchived(false, for: activityType.id)
+        loadActivityTypes()
     }
 }

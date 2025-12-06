@@ -58,7 +58,7 @@ class NotesViewModel: ObservableObject {
     // MARK: - Data Loading
     
     private func loadActivityTypes() {
-        activityTypes = ActivityTypeManager.shared.loadActivityTypes()
+        activityTypes = ActivityTypeManager.shared.getActiveActivityTypes()
     }
     
     private func loadPhasesForProject() {

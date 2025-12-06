@@ -31,19 +31,48 @@ struct ProjectsNativeView: View {
 
             // Projects List
             ScrollView {
-                if viewModel.filteredProjects.isEmpty {
+                if viewModel.activeProjects.isEmpty && viewModel.archivedProjects.isEmpty {
                     Text("No Projects Yet")
                         .foregroundColor(Theme.Colors.surface)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingMedium) {
-                        ForEach(viewModel.filteredProjects) { project in
-                            Button(action: {
-                                selectedProjectForEdit = project
-                            }) {
-                                ProjectRowView(project: project)
+                        // Active Projects Section
+                        if !viewModel.activeProjects.isEmpty {
+                            Section {
+                                ForEach(viewModel.activeProjects) { project in
+                                    Button(action: {
+                                        selectedProjectForEdit = project
+                                    }) {
+                                        ProjectRowView(project: project)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } header: {
+                                Text("Active Projects")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading)
                             }
-                            .buttonStyle(.plain)
+                        }
+                        
+                        // Archived Projects Section
+                        if !viewModel.archivedProjects.isEmpty {
+                            Section {
+                                ForEach(viewModel.archivedProjects) { project in
+                                    Button(action: {
+                                        selectedProjectForEdit = project
+                                    }) {
+                                        ProjectRowView(project: project, isArchived: true)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } header: {
+                                Text("Archived Projects")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading)
+                            }
                         }
                     }
                     .padding()
@@ -73,6 +102,7 @@ struct ProjectsNativeView: View {
 
 struct ProjectRowView: View {
     let project: Project
+    var isArchived: Bool = false
     
     var body: some View {
         HStack(spacing: Theme.spacingMedium) {
@@ -89,6 +119,11 @@ struct ProjectRowView: View {
                         .font(Theme.Fonts.header)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
+                    if isArchived {
+                        Image(systemName: "archivebox.fill")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
                 }
                 
                 if let about = project.about, !about.isEmpty {
@@ -108,6 +143,7 @@ struct ProjectRowView: View {
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .stroke(Theme.Colors.divider, lineWidth: 1))
+        .opacity(isArchived ? 0.7 : 1.0)
     }
 }
 

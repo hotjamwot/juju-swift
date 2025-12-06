@@ -6,6 +6,7 @@ struct ActivityTypeAddEditView: View {
     @State private var emoji: String = "📝"
     @State private var description: String = ""
     @State private var showingEmojiPicker = false
+    @State private var isArchived: Bool = false
     
     var activityType: ActivityType?
     var onSave: (ActivityType) -> Void
@@ -123,6 +124,38 @@ struct ActivityTypeAddEditView: View {
                     )
             }
             
+            // Archive Checkbox (only for editing existing activity types)
+            if isEditing, let activityType = activityType {
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    HStack {
+                        Toggle("Archive Activity Type", isOn: $isArchived)
+                            .toggleStyle(SwitchToggleStyle())
+                            .onChange(of: isArchived) { newValue in
+                                if newValue {
+                                    ActivityTypesViewModel.shared.archiveActivityType(activityType)
+                                } else {
+                                    ActivityTypesViewModel.shared.unarchiveActivityType(activityType)
+                                }
+                                // Don't dismiss here - let user continue editing
+                            }
+                        Spacer()
+                    }
+                    Text("Archived activity types are hidden from dropdowns but remain in your data and historical views.")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .padding(Theme.spacingMedium)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
+                .onAppear {
+                    isArchived = activityType.archived
+                }
+            }
+            
             Spacer()
             
             HStack {
@@ -168,13 +201,13 @@ struct ActivityTypeAddEditView: View {
                         let finalDescription = description.isEmpty ? "" : description
                         
                         if isEditing, let activityType = activityType {
-                            // Update existing activity type
+                            // Update existing activity type with current form state
                             let updatedActivityType = ActivityType(
                                 id: activityType.id,
                                 name: finalName,
                                 emoji: emoji,
                                 description: finalDescription,
-                                archived: activityType.archived
+                                archived: isArchived  // Use current toggle state, not original
                             )
                             onSave(updatedActivityType)
                         } else {

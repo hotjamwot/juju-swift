@@ -137,7 +137,6 @@ Context of Juju app:
 │   │   │   ├── StackedAreaChartCardView.swift # Yearly overview area chart
 │   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
 │   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
-│   │   │   ├── WeeklyProjectBubbleChartView.swift # Weekly project breakdown
 │   │   │   ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars
 │   │   │   └── YearlyTotalBarChartView.swift # Yearly total overview chart
 │   │   ├── Notes/

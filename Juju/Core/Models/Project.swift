@@ -29,10 +29,11 @@ struct Project: Codable, Identifiable, Hashable {
     var about: String?
     var order: Int
     var emoji: String
+    var archived: Bool  // New: Project archiving capability
     var phases: [Phase]  // New: Project lifecycle phases
     
     enum CodingKeys: String, CodingKey {
-        case id, name, color, about, order, emoji, phases
+        case id, name, color, about, order, emoji, archived, phases
     }
     
     // Computed SwiftUI Color from hex string (avoids storing Color)
@@ -47,6 +48,7 @@ struct Project: Codable, Identifiable, Hashable {
         self.about = about
         self.order = order
         self.emoji = emoji
+        self.archived = false
         self.phases = phases
     }
     
@@ -57,6 +59,7 @@ struct Project: Codable, Identifiable, Hashable {
         self.about = about
         self.order = order
         self.emoji = emoji
+        self.archived = false
         self.phases = phases
     }
     
@@ -68,6 +71,7 @@ struct Project: Codable, Identifiable, Hashable {
         about = try container.decodeIfPresent(String.self, forKey: .about)
         order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
         emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? "📁"
+        archived = try container.decodeIfPresent(Bool.self, forKey: .archived) ?? false  // Default to false for legacy projects
         phases = try container.decodeIfPresent([Phase].self, forKey: .phases) ?? []  // Default to empty array for legacy projects
     }
     
@@ -79,6 +83,7 @@ struct Project: Codable, Identifiable, Hashable {
         try container.encodeIfPresent(about, forKey: .about)
         try container.encode(order, forKey: .order)
         try container.encode(emoji, forKey: .emoji)
+        try container.encode(archived, forKey: .archived)
         try container.encode(phases, forKey: .phases)
     }
     
@@ -154,6 +159,36 @@ class ProjectManager {
                 print("❌ Error saving projects to \(projectsFile.path): \(error)")
             }
         }
+    }
+    
+    // MARK: - Project Archiving Management
+    
+    /// Archive or unarchive a project
+    func setProjectArchived(_ archived: Bool, for projectID: String) {
+        var projects = loadProjects()
+        if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
+            var project = projects[projectIndex]
+            project.archived = archived
+            projects[projectIndex] = project
+            saveProjects(projects)
+        }
+    }
+    
+    /// Get active projects (non-archived)
+    func getActiveProjects() -> [Project] {
+        let projects = loadProjects()
+        return projects.filter { !$0.archived }
+    }
+    
+    /// Get archived projects
+    func getArchivedProjects() -> [Project] {
+        let projects = loadProjects()
+        return projects.filter { $0.archived }
+    }
+    
+    /// Get all projects (including archived)
+    func getAllProjects() -> [Project] {
+        return loadProjects()
     }
     
     // MARK: - Legacy Data Handling Helpers
@@ -272,9 +307,16 @@ class ProjectManager {
                 print("Adding missing 'emoji' field to project \(project.name)")
             }
             
+            // Ensure project has an archived field (default to false for legacy projects)
+            // This is handled by the decoder default, but we ensure it's properly set
+            if !needsRewrite {
+                // Only mark for rewrite if there are other issues
+            }
+            
             // Ensure project has a phases array (default to empty for legacy projects)
-            if project.phases.isEmpty && !needsRewrite {
-                // Only mark for rewrite if phases is truly missing (will be handled by decoder default)
+            // This is handled by the decoder default
+            if !needsRewrite {
+                // Only mark for rewrite if there are other issues
             }
             
             migratedProjects.append(project)

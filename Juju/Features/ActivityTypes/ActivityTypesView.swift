@@ -30,19 +30,48 @@ struct ActivityTypesView: View {
 
             // Activity Types List
             ScrollView {
-                if viewModel.filteredActivityTypes.isEmpty {
+                if viewModel.activeActivityTypes.isEmpty && viewModel.archivedActivityTypes.isEmpty {
                     Text("No Activity Types Yet")
                         .foregroundColor(Theme.Colors.surface)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingMedium) {
-                        ForEach(viewModel.filteredActivityTypes) { activityType in
-                            Button(action: {
-                                selectedActivityTypeForEdit = activityType
-                            }) {
-                                ActivityTypeRowView(activityType: activityType)
+                        // Active Activity Types Section
+                        if !viewModel.activeActivityTypes.isEmpty {
+                            Section {
+                                ForEach(viewModel.activeActivityTypes) { activityType in
+                                    Button(action: {
+                                        selectedActivityTypeForEdit = activityType
+                                    }) {
+                                        ActivityTypeRowView(activityType: activityType, isArchived: false)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } header: {
+                                Text("Active Activity Types")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading)
                             }
-                            .buttonStyle(.plain)
+                        }
+                        
+                        // Archived Activity Types Section
+                        if !viewModel.archivedActivityTypes.isEmpty {
+                            Section {
+                                ForEach(viewModel.archivedActivityTypes) { activityType in
+                                    Button(action: {
+                                        selectedActivityTypeForEdit = activityType
+                                    }) {
+                                        ActivityTypeRowView(activityType: activityType, isArchived: true)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } header: {
+                                Text("Archived Activity Types")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading)
+                            }
                         }
                     }
                     .padding()
@@ -72,6 +101,7 @@ struct ActivityTypesView: View {
 
 struct ActivityTypeRowView: View {
     let activityType: ActivityType
+    var isArchived: Bool = false
     
     var body: some View {
         HStack(spacing: Theme.spacingMedium) {
@@ -104,7 +134,7 @@ struct ActivityTypeRowView: View {
             Spacer()
             
             // Archived status indicator
-            if activityType.archived {
+            if isArchived {
                 Text("Archived")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -124,6 +154,7 @@ struct ActivityTypeRowView: View {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
+        .opacity(isArchived ? 0.7 : 1.0)
     }
 }
 

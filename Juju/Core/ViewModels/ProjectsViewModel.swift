@@ -13,6 +13,20 @@ class ProjectsViewModel: ObservableObject {
         }
     }
     
+    /// Active projects (non-archived) sorted by order
+    var activeProjects: [Project] {
+        projects.filter { !$0.archived }.sorted { p1, p2 in
+            p1.order < p2.order
+        }
+    }
+    
+    /// Archived projects sorted by order
+    var archivedProjects: [Project] {
+        projects.filter { $0.archived }.sorted { p1, p2 in
+            p1.order < p2.order
+        }
+    }
+    
     private let projectManager = ProjectManager.shared
     
 init() {
@@ -70,5 +84,17 @@ init() {
             selectedProject = nil
         }
         projectManager.saveProjects(projects)
+    }
+    
+    /// Archive a project
+    func archiveProject(_ project: Project) async {
+        projectManager.setProjectArchived(true, for: project.id)
+        await loadProjects()
+    }
+    
+    /// Unarchive a project
+    func unarchiveProject(_ project: Project) async {
+        projectManager.setProjectArchived(false, for: project.id)
+        await loadProjects()
     }
 }

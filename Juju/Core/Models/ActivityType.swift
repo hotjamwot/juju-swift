@@ -3,10 +3,10 @@ import Foundation
 // MARK: - Activity Type Model
 struct ActivityType: Codable, Identifiable, Hashable {
     let id: String
-    let name: String
-    let emoji: String
-    let description: String
-    let archived: Bool
+    var name: String
+    var emoji: String
+    var description: String
+    var archived: Bool
     
     init(id: String, name: String, emoji: String, description: String = "", archived: Bool = false) {
         self.id = id
@@ -107,6 +107,36 @@ class ActivityTypeManager {
     
     func getActivityType(id: String) -> ActivityType? {
         return loadActivityTypes().first { $0.id == id }
+    }
+    
+    // MARK: - Activity Type Archiving Management
+    
+    /// Archive or unarchive an activity type
+    func setActivityTypeArchived(_ archived: Bool, for activityTypeID: String) {
+        var types = loadActivityTypes()
+        if let activityTypeIndex = types.firstIndex(where: { $0.id == activityTypeID }) {
+            var activityType = types[activityTypeIndex]
+            activityType.archived = archived
+            types[activityTypeIndex] = activityType
+            saveActivityTypes(types)
+        }
+    }
+    
+    /// Get active activity types (non-archived)
+    func getActiveActivityTypes() -> [ActivityType] {
+        let types = loadActivityTypes()
+        return types.filter { !$0.archived }
+    }
+    
+    /// Get archived activity types
+    func getArchivedActivityTypes() -> [ActivityType] {
+        let types = loadActivityTypes()
+        return types.filter { $0.archived }
+    }
+    
+    /// Get all activity types (including archived)
+    func getAllActivityTypes() -> [ActivityType] {
+        return loadActivityTypes()
     }
     
     // MARK: - Migration Logic

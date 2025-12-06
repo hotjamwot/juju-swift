@@ -37,6 +37,9 @@ class MenuManager {
         self.projects = projects
         menu = NSMenu()
         
+        // Filter out archived projects for menu display
+        let activeProjects = projects.filter { !$0.archived }
+        
         // Session management based on state
         if sessionManager.isSessionActive {
             // Session is active - show End Session
@@ -53,8 +56,8 @@ class MenuManager {
             let startSessionItem = NSMenuItem(title: "Start Session", action: nil, keyEquivalent: "s")
             let projectSubmenu = NSMenu()
             
-            // Add projects to submenu
-            for project in projects {
+            // Add only active (non-archived) projects to submenu
+            for project in activeProjects {
                 let projectItem = NSMenuItem(title: project.name, action: #selector(startSessionForProject(_:)), keyEquivalent: "")
                 projectItem.target = self
                 projectItem.representedObject = project
