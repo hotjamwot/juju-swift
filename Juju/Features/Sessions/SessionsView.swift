@@ -27,6 +27,8 @@ struct GroupedSessionView: View {
     let onDelete: (SessionRecord) -> Void
     let isExpanded: Bool
     let onToggleExpand: () -> Void
+    let onEdit: (SessionRecord) -> Void
+    let sidebarState: SidebarStateManager
     
     // Track which session is being edited
     @Binding var editingSessionID: String?
@@ -53,33 +55,15 @@ struct GroupedSessionView: View {
                             session: .constant(session),
                             projects: projects,
                             isEditing: editingSessionID == session.id,
-                            onEdit: { 
-                                // Enter edit mode for this session
-                                editingSessionID = session.id
+                            onEdit: { editedSession in
+                                editingSessionID = editedSession.id
+                                onEdit(editedSession)
                             },
-                            onSave: { updatedSession in
-                                // Save the updated session using the correct method signature
-                                // We need to update each field individually
-                                let success = SessionManager.shared.updateSessionFull(
-                                    id: updatedSession.id,
-                                    date: updatedSession.date,
-                                    startTime: updatedSession.startTime,
-                                    endTime: updatedSession.endTime,
-                                    projectName: updatedSession.projectName,
-                                    notes: updatedSession.notes,
-                                    mood: updatedSession.mood
-                                )
-                                
-                                if success {
-                                    // Exit edit mode
-                                    editingSessionID = nil
-                                    // Reload sessions by calling the parent's onSave callback
-                                    onSave()
-                                }
+                            onSave: { () in
+                                onSave()
                             },
-                            onDelete: { 
-                                // Delete the session
-                                onDelete(session)
+                            onDelete: { sessionToDelete in
+                                onDelete(sessionToDelete)
                             }
                         )
                     }
@@ -96,6 +80,7 @@ public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
     @StateObject private var chartDataPreparer = ChartDataPreparer()
+    @StateObject private var sidebarState = SidebarStateManager()
 
     // MARK: - State Properties
     
@@ -165,7 +150,7 @@ public struct SessionsView: View {
     
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
-        ForEach(Array(currentWeekSessions.enumerated()), id: \.element.id) { index, group in
+        ForEach(currentWeekSessions, id: \.id) { group in
             GroupedSessionView(
                 group: group,
                 projects: projectsViewModel.projects,
@@ -189,6 +174,11 @@ public struct SessionsView: View {
                         }
                     }
                 },
+                onEdit: { session in
+                    editingSessionID = session.id
+                    sidebarState.show(.session(session))
+                },
+                sidebarState: sidebarState,
                 editingSessionID: $editingSessionID
             )
         }
@@ -240,12 +230,12 @@ public struct SessionsView: View {
                         state: filterExportState,
                         projects: projectsViewModel.projects,
                         filteredSessionsCount: currentSessionCount,
-                        onDateFilterChange: handleDateFilterSelection,
-                        onCustomDateRangeChange: handleCustomDateRangeChange,
-                        onProjectFilterChange: { _ in },
-                        onExport: { format in
-                            exportSessions(format: format.fileExtension)
-                        },
+        onDateFilterChange: handleDateFilterSelection,
+        onCustomDateRangeChange: handleCustomDateRangeChange,
+        onProjectFilterChange: { _ in },
+        onExport: { format in
+            exportSessions(format: format.fileExtension)
+        },
                         onInvoicePreviewToggle: {
                             // Future invoice preview functionality
                             print("Invoice preview requested")
@@ -306,10 +296,12 @@ public struct SessionsView: View {
             Button("OK") { }
         } message: { Text(exportMessage) }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
-            Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
-                deleteSession(session)
+            Button("Delete session for \"\(session?.projectName ?? "Unknown")\"", role: .destructive) {
+                if let sessionToDelete = session {
+                    deleteSession(sessionToDelete)
+                }
             }
-        } message: { session in
+        } message: { _ in
              Text("Are you sure? This action cannot be undone.")
         }
     }

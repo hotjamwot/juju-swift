@@ -34,8 +34,6 @@ The Annual Project Story View transforms raw session data into a visual narrativ
 - **What mattered most** (key tags and focus areas)
 - **Milestone moments** (⭐ highlights that marked significant progress)
 
-### Clickable Memories
-Every cell invites exploration. Clicking reveals the sessions behind the summary, turning abstract patterns into concrete memories of specific work sessions.
 
 ### The Sidebar Integration
 Positioned as a dedicated "Story" tab, this feature signals that Juju isn't just tracking time—it's helping users understand their creative narrative.
@@ -97,7 +95,3 @@ Each cell should breathe, allowing users to easily scan and absorb the informati
 ## 🎯 The "Killer Feature" Promise
 
 This isn't just another view—it's the feature that transforms Juju from a time tracker into a creative companion. The Annual Project Story View becomes the reason users recommend Juju to fellow creators, the feature they return to for inspiration and reflection.
-
----
-
-**Next:** [Phase 4: Polish & Legacy Support](./Phase4.md) - Refinement and Robustness

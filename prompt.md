@@ -105,36 +105,41 @@ Context of Juju app:
 │   ├── Core/
 │   │   ├── Managers/
 │   │   │   ├── ChartDataPreparer.swift # Processes data for dashboard charts
+│   │   │   ├── EditorialEngine.swift # Narrative headline generation engine
 │   │   │   ├── IconManager.swift # Manages dynamic menu bar icons
 │   │   │   ├── MenuManager.swift # Handles menu bar dropdown functionality
-│   │   │   ├── SessionManager.swift # Main session coordinator (refactored)
+│   │   │   ├── SessionManager.swift # Main session coordinator
 │   │   │   ├── ShortcutManager.swift # Keyboard shortcuts for quick actions
+│   │   │   ├── SidebarStateManager.swift # Manages sidebar state and navigation
+│   │   │   ├── Data/ # Data processing and management
+│   │   │   │   ├── SessionDataManager.swift # Session CRUD operations
+│   │   │   │   ├── SessionDataParser.swift # CSV parsing and data conversion
+│   │   │   │   └── SessionMigrationManager.swift # Handles data migrations
 │   │   │   ├── File/ # File system operations
 │   │   │   │   └── SessionFileManager.swift # Thread-safe file operations
-│   │   │   ├── Data/ # Data processing and management
-│   │   │   │   ├── SessionDataParser.swift # CSV parsing and data conversion
-│   │   │   │   └── SessionDataManager.swift # Session CRUD operations
 │   │   │   └── Session/ # Session lifecycle management
 │   │   │       └── SessionOperationsManager.swift # Session state management
 │   │   ├── Models/
+│   │   │   ├── ActivityType.swift # Activity type entity model
 │   │   │   ├── ChartModels.swift # Data models for chart components
 │   │   │   ├── Project.swift # Project entity model
 │   │   │   └── SessionModels.swift # Session data structures
 │   │   └── ViewModels/
 │   │       └── ProjectsViewModel.swift # Projects data binding and business logic
 │   ├── Features/
+│   │   ├── ActivityTypes/
+│   │   │   ├── ActivityTypeSidebarEditView.swift # Activity type editing interface
+│   │   │   ├── ActivityTypesView.swift # Activity type management interface
+│   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
 │   │   ├── Dashboard/
 │   │   │   ├── ActiveSessionStatusView.swift # Real-time active session display
-│   │   │   ├── BubbleChartCardView.swift # Circular bubble chart for time visualization
 │   │   │   ├── DashboardNativeSwiftChartsView.swift # Main dashboard container
 │   │   │   ├── DashboardWindowController.swift # Dashboard window management
-│   │   │   ├── EditorialEngine.swift # Narrative headline generation engine
-│   │   │   ├── GroupedBarChartCardView.swift # Monthly trends bar chart
-│   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section (TRANSFORMED)
-│   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view (ENHANCED with activity emojis)
+│   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section
+│   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view with activity emojis
 │   │   │   ├── SidebarView.swift # Dashboard navigation sidebar
-│   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── StackedAreaChartCardView.swift # Yearly overview area chart
+│   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
 │   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
 │   │   │   ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars
@@ -144,38 +149,43 @@ Context of Juju app:
 │   │   │   ├── NotesModalView.swift # Notes input/editing interface
 │   │   │   └── NotesViewModel.swift # Notes data binding and validation
 │   │   ├── Projects/
-│   │   │   ├── ProjectAddEditView.swift # Create/edit project modal
+│   │   │   ├── ProjectSidebarEditView.swift # Project editing interface
 │   │   │   └── ProjectsNativeView.swift # Project management interface
-│   │   ├── ActivityTypes/
-│   │   │   ├── ActivityTypeAddEditView.swift # Create/edit activity type modal
-│   │   │   ├── ActivityTypesView.swift # Activity type management interface
-│   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
-│   │   └── Sessions/
-│   │       ├── Components/
-│   │       │   ├── FilterExportControls.swift # NEW: Modular filter and export controls
-│   │       │   └── SessionViewOptions.swift # Session display options
-│   │       ├── SessionCardView.swift # Individual session display component
-│   │       ├── SessionEditModalView.swift # Modal session editing interface
-│   │       └── SessionsView.swift # Sessions list with enhanced filter integration
+│   │   ├── Sessions/
+│   │   │   ├── Components/
+│   │   │   │   ├── FilterExportControls.swift # Modular filter and export controls
+│   │   │   │   └── SessionViewOptions.swift # Session display options
+│   │   │   ├── DayHeaderView.swift # Day grouping header for sessions
+│   │   │   ├── ExpandableNotesView.swift # Expandable notes display component
+│   │   │   ├── SessionSidebarEditView.swift # Session editing interface
+│   │   │   ├── SessionsRowView.swift # Individual session row display
+│   │   │   └── SessionsView.swift # Sessions list with filter integration
+│   │   └── Sidebar/
+│   │       └── SidebarEditView.swift # Sidebar editing interface
 │   ├── Resources/
-│   │   └── Assets.xcassets/ etc
+│   │   └── Assets etc
 │   └── Shared/
 │       ├── Extensions/
 │       │   ├── ButtonTheme.swift # Button styling and theme configuration
 │       │   └── NSColor+SwiftUI.swift # Color extensions for SwiftUI
+│       ├── Preview/
+│       │   └── SimplePreviewHelpers.swift # Preview helpers for SwiftUI
 │       ├── Theme.swift # Global app theme and styling
 │       └── TooltipView.swift # Custom tooltip component
 ├── Juju.xcodeproj/
-│   ├── project.pbxproj etc
+│   ├── project.pbxproj # Xcode project configuration
+│   ├── project.xcworkspace/ # Workspace configuration
+│   ├── xcshareddata/
+│   │   └── xcschemes/ # Build schemes
+│   └── xcuserdata/ # User-specific settings
 ├── README.md
-├── design.md
-├── icons/
-│   ├── icon.png
-│   ├── juju-icon.pdf
-│   ├── status-active.png
-│   └── status-idle.png
-├── index.json
-└── prompt.md
+├── prompt.md
+├── tooltip_implementation_plan.md
+└── icons/ # App icon assets
+    ├── AppIcon1024.png
+    ├── juju_logo.png
+    ├── status_active.pdf
+    └── status_idle.pdf
 ```
 
 

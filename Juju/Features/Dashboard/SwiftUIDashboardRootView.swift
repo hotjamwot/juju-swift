@@ -2,41 +2,51 @@ import SwiftUI
 
 struct SwiftUIDashboardRootView: View {
     @State private var selected: DashboardView = .charts
+    @StateObject private var sidebarState = SidebarStateManager()
     @Environment(\.presentationMode) private var presentationMode
     
     var body: some View {
-        HStack(spacing: 0) {
-            // Always show sidebar - it's now permanently small with icons only
-            SidebarView(selectedView: $selected)
+        ZStack {
+            HStack(spacing: 0) {
+                // Always show sidebar - it's now permanently small with icons only
+                SidebarView(selectedView: $selected)
 
-            // Main content
-            VStack(spacing: 0) {
                 // Main content
-                ZStack {
-                    switch selected {
-                    case .charts:
-                        DashboardNativeSwiftChartsView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .transition(.opacity)
-                    case .sessions:
-                        SessionsView()
-                            .transition(.opacity)
-                    case .projects:
-                        ProjectsNativeView()
-                            .transition(.opacity)
-                    case .activityTypes:
-                        ActivityTypesView()
-                            .transition(.opacity)
+                VStack(spacing: 0) {
+                    // Main content
+                    ZStack {
+                        switch selected {
+                        case .charts:
+                            DashboardNativeSwiftChartsView()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .transition(.opacity)
+                        case .sessions:
+                            SessionsView()
+                                .environmentObject(sidebarState)
+                                .transition(.opacity)
+                        case .projects:
+                            ProjectsNativeView()
+                                .environmentObject(sidebarState)
+                                .transition(.opacity)
+                        case .activityTypes:
+                            ActivityTypesView()
+                                .environmentObject(sidebarState)
+                                .transition(.opacity)
+                        }
                     }
+                    .animation(.easeInOut(duration: 0.2), value: selected)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, Theme.spacingLarge)
                 }
-                .animation(.easeInOut(duration: 0.2), value: selected)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, Theme.spacingLarge)
+                .background(Theme.Colors.background)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Theme.Colors.background)
+            .ignoresSafeArea(edges: .top)
+            
+            // Sidebar overlay
+            SidebarEditView()
+                .environmentObject(sidebarState)
         }
-        .ignoresSafeArea(edges: .top)
     }
     
     // MARK: - Helpers

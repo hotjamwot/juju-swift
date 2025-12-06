@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct ProjectsNativeView: View {
-
     @StateObject private var viewModel = ProjectsViewModel.shared
+    @EnvironmentObject var sidebarState: SidebarStateManager
     
     @State private var showingAddProjectSheet = false
     @State private var selectedProjectForEdit: Project?
@@ -16,7 +16,7 @@ struct ProjectsNativeView: View {
                     .frame(maxWidth: .infinity)
                 
                 Button {
-                    showingAddProjectSheet = true
+                    sidebarState.show(.newProject)
                 } label: {
                     HStack {
                         Image(systemName: "plus")
@@ -42,7 +42,7 @@ struct ProjectsNativeView: View {
                             Section {
                                 ForEach(viewModel.activeProjects) { project in
                                     Button(action: {
-                                        selectedProjectForEdit = project
+                                        sidebarState.show(.project(project))
                                     }) {
                                         ProjectRowView(project: project)
                                     }
@@ -54,24 +54,24 @@ struct ProjectsNativeView: View {
                                     .foregroundColor(.secondary)
                                     .padding(.leading)
                             }
-                        }
-                        
-                        // Archived Projects Section
-                        if !viewModel.archivedProjects.isEmpty {
-                            Section {
-                                ForEach(viewModel.archivedProjects) { project in
-                                    Button(action: {
-                                        selectedProjectForEdit = project
-                                    }) {
-                                        ProjectRowView(project: project, isArchived: true)
+                            
+                            // Archived Projects Section
+                            if !viewModel.archivedProjects.isEmpty {
+                                Section {
+                                    ForEach(viewModel.archivedProjects) { project in
+                                        Button(action: {
+                                            sidebarState.show(.project(project))
+                                        }) {
+                                            ProjectRowView(project: project, isArchived: true)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
+                                } header: {
+                                    Text("Archived Projects")
+                                        .font(.headline)
+                                        .foregroundColor(.secondary)
+                                        .padding(.leading)
                                 }
-                            } header: {
-                                Text("Archived Projects")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading)
                             }
                         }
                     }
@@ -80,23 +80,6 @@ struct ProjectsNativeView: View {
             }
         }
         .background(Theme.Colors.background)
-        .sheet(isPresented: $showingAddProjectSheet) {
-            ProjectAddEditView(onSave: { newProject in
-                viewModel.addProject(name: newProject.name, color: newProject.color, about: newProject.about)
-                showingAddProjectSheet = false
-            })
-        }
-        .sheet(item: $selectedProjectForEdit) { project in
-            ProjectAddEditView(
-                project: project,
-                onSave: { updatedProject in
-                    viewModel.updateProject(updatedProject)
-                },
-                onDelete: { projectToDelete in
-                    viewModel.deleteProject(projectToDelete)
-                }
-            )
-        }
     }
 }
 

@@ -2,9 +2,7 @@ import SwiftUI
 
 struct ActivityTypesView: View {
     @StateObject private var viewModel = ActivityTypesViewModel()
-    
-    @State private var showingAddActivityTypeSheet = false
-    @State private var selectedActivityTypeForEdit: ActivityType?
+    @EnvironmentObject var sidebarState: SidebarStateManager
     
     var body: some View {
         VStack(spacing: 0) {
@@ -15,7 +13,7 @@ struct ActivityTypesView: View {
                     .frame(maxWidth: .infinity)
                 
                 Button {
-                    showingAddActivityTypeSheet = true
+                    sidebarState.show(.newActivityType)
                 } label: {
                     HStack {
                         Image(systemName: "plus")
@@ -41,7 +39,7 @@ struct ActivityTypesView: View {
                             Section {
                                 ForEach(viewModel.activeActivityTypes) { activityType in
                                     Button(action: {
-                                        selectedActivityTypeForEdit = activityType
+                                        sidebarState.show(.activityType(activityType))
                                     }) {
                                         ActivityTypeRowView(activityType: activityType, isArchived: false)
                                     }
@@ -60,7 +58,7 @@ struct ActivityTypesView: View {
                             Section {
                                 ForEach(viewModel.archivedActivityTypes) { activityType in
                                     Button(action: {
-                                        selectedActivityTypeForEdit = activityType
+                                        sidebarState.show(.activityType(activityType))
                                     }) {
                                         ActivityTypeRowView(activityType: activityType, isArchived: true)
                                     }
@@ -79,23 +77,6 @@ struct ActivityTypesView: View {
             }
         }
         .background(Theme.Colors.background)
-        .sheet(isPresented: $showingAddActivityTypeSheet) {
-            ActivityTypeAddEditView(onSave: { newActivityType in
-                viewModel.addActivityType(name: newActivityType.name, emoji: newActivityType.emoji, description: newActivityType.description)
-                showingAddActivityTypeSheet = false
-            })
-        }
-        .sheet(item: $selectedActivityTypeForEdit) { activityType in
-            ActivityTypeAddEditView(
-                activityType: activityType,
-                onSave: { updatedActivityType in
-                    viewModel.updateActivityType(updatedActivityType)
-                },
-                onDelete: { activityTypeToDelete in
-                    viewModel.deleteActivityType(activityTypeToDelete)
-                }
-            )
-        }
     }
 }
 
