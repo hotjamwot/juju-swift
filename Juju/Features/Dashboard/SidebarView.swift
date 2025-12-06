@@ -3,15 +3,17 @@ import Combine
 
 // MARK: ──  Dashboard navigation items
 enum DashboardView: String, CaseIterable, Identifiable {
-    case charts   = "Charts"
-    case sessions = "Sessions"
-    case projects = "Projects"
+    case charts        = "Charts"
+    case sessions      = "Sessions"
+    case projects      = "Projects"
+    case activityTypes = "Activity Types"
 
     var icon: String {
         switch self {
-        case .charts:   return "chart.xyaxis.line"
-        case .sessions: return "clock"
-        case .projects: return "folder"
+        case .charts:        return "chart.xyaxis.line"
+        case .sessions:      return "clock"
+        case .projects:      return "folder"
+        case .activityTypes: return "tag"
         }
     }
 

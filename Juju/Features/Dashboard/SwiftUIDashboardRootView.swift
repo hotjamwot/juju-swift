@@ -24,6 +24,9 @@ struct SwiftUIDashboardRootView: View {
                     case .projects:
                         ProjectsNativeView()
                             .transition(.opacity)
+                    case .activityTypes:
+                        ActivityTypesView()
+                            .transition(.opacity)
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: selected)
