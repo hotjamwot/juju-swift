@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ActivityTypesView: View {
-    @StateObject private var viewModel = ActivityTypesViewModel()
+    @StateObject private var viewModel = ActivityTypesViewModel.shared
     @EnvironmentObject var sidebarState: SidebarStateManager
     
     var body: some View {

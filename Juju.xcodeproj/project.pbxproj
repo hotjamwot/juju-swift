@@ -20,6 +20,7 @@
 		6659096B2EE4796C007D1303 /* ProjectSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */; };
 		6659096D2EE47983007D1303 /* SessionSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096C2EE47983007D1303 /* SessionSidebarEditView.swift */; };
 		665909702EE4798F007D1303 /* SidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096E2EE4798F007D1303 /* SidebarEditView.swift */; };
+		665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909712EE48F89007D1303 /* EmojiColorPickerView.swift */; };
 		666C394E2EAFB53800B408B8 /* SessionViewOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
 		66881FCA2EC653E300AB32F1 /* FilterExportControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66881FC92EC653E300AB32F1 /* FilterExportControls.swift */; };
@@ -79,6 +80,7 @@
 		6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectSidebarEditView.swift; sourceTree = "<group>"; };
 		6659096C2EE47983007D1303 /* SessionSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionSidebarEditView.swift; sourceTree = "<group>"; };
 		6659096E2EE4798F007D1303 /* SidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarEditView.swift; sourceTree = "<group>"; };
+		665909712EE48F89007D1303 /* EmojiColorPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiColorPickerView.swift; sourceTree = "<group>"; };
 		666C394A2EAFB53800B408B8 /* SessionViewOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionViewOptions.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
 		66881FC92EC653E300AB32F1 /* FilterExportControls.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilterExportControls.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 		66B148442EA8EA4B00E9BB4A /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				665909712EE48F89007D1303 /* EmojiColorPickerView.swift */,
 				666C394F2EAFB54700B408B8 /* ButtonTheme.swift */,
 				66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */,
 			);
@@ -489,6 +492,7 @@
 				66BDAC472EAD0AF30042A906 /* SessionCalendarChartView.swift in Sources */,
 				66B1487D2EA8EA4B00E9BB4A /* ProjectsNativeView.swift in Sources */,
 				663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */,
+				665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */,
 				6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */,
 				66B148732EA8EA4B00E9BB4A /* SwiftUIDashboardRootView.swift in Sources */,
 				66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */,

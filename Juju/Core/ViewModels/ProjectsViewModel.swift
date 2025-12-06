@@ -73,8 +73,14 @@ init() {
     
     func updateProject(_ project: Project) {
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            let oldProject = projects[index]
             projects[index] = project
             projectManager.saveProjects(projects)
+            
+            // If project name changed, update all sessions with the old name
+            if oldProject.name != project.name {
+                updateSessionProjectNames(oldName: oldProject.name, newName: project.name)
+            }
         }
     }
     
@@ -96,5 +102,32 @@ init() {
     func unarchiveProject(_ project: Project) async {
         projectManager.setProjectArchived(false, for: project.id)
         await loadProjects()
+    }
+    
+    /// Update all sessions that reference the old project name to use the new name
+    private func updateSessionProjectNames(oldName: String, newName: String) {
+        let sessionManager = SessionManager.shared
+        
+        // Get all sessions that have the old project name
+        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectName == oldName }
+        
+        if sessionsToUpdate.isEmpty {
+            return
+        }
+        
+        // Update each session
+        for session in sessionsToUpdate {
+            sessionManager.updateSessionFull(
+                id: session.id,
+                date: session.date,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                projectName: newName,
+                notes: session.notes,
+                mood: session.mood
+            )
+        }
+        
+        print("✅ Updated \(sessionsToUpdate.count) sessions from project '\(oldName)' to '\(newName)'")
     }
 }

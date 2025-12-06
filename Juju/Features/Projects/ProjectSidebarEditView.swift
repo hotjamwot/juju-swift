@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Sidebar view for editing project details with live preview and enhanced layout
 struct ProjectSidebarEditView: View {
-    @StateObject private var sidebarState = SidebarStateManager()
-    @StateObject private var projectsViewModel = ProjectsViewModel()
+    @EnvironmentObject var sidebarState: SidebarStateManager
+    @EnvironmentObject var projectsViewModel: ProjectsViewModel
     
     @State private var project: Project
     @State private var tempName: String
@@ -138,7 +138,7 @@ struct ProjectSidebarEditView: View {
                             .foregroundColor(Theme.Colors.textSecondary)
                         Spacer()
                         Button(action: {
-                            showingEmojiPicker.toggle()
+                            showingEmojiPicker = true
                         }) {
                             HStack {
                                 Text(tempEmoji)
@@ -148,7 +148,10 @@ struct ProjectSidebarEditView: View {
                                     .foregroundColor(Theme.Colors.textSecondary)
                             }
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(.plain)
+                        .sheet(isPresented: $showingEmojiPicker) {
+                            EmojiPickerView(selectedEmoji: $tempEmoji)
+                        }
                     }
                 }
             }
@@ -177,7 +180,7 @@ struct ProjectSidebarEditView: View {
     private var aboutSection: some View {
         Section {
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("About")
+                Text("Description")
                     .font(.headline)
                     .foregroundColor(Theme.Colors.textPrimary)
                 
@@ -313,7 +316,7 @@ struct ProjectSidebarEditView: View {
                 return Phase(id: existingPhase.id, name: phaseName, archived: existingPhase.archived)
             } else {
                 // Create new phase
-                return Phase(name: phaseName, archived: false)
+                return Phase(name: phaseName)
             }
         }
         

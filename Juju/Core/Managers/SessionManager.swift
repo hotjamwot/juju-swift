@@ -198,8 +198,8 @@ class SessionManager: ObservableObject {
         dataManager.updateSession(id: id, field: field, value: value)
     }
     
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?) -> Bool {
-        dataManager.updateSessionFull(id: id, date: date, startTime: startTime, endTime: endTime, projectName: projectName, notes: notes, mood: mood)
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil) -> Bool {
+        dataManager.updateSessionFull(id: id, date: date, startTime: startTime, endTime: endTime, projectName: projectName, notes: notes, mood: mood, activityTypeID: activityTypeID, projectPhaseID: projectPhaseID, milestoneText: milestoneText)
     }
     
     func deleteSession(id: String) -> Bool {

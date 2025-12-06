@@ -2,12 +2,13 @@ import SwiftUI
 
 /// Sidebar view for editing activity type details with enhanced layout
 struct ActivityTypeSidebarEditView: View {
-    @StateObject private var sidebarState = SidebarStateManager()
-    @StateObject private var activityTypesViewModel = ActivityTypesViewModel()
+    @EnvironmentObject var sidebarState: SidebarStateManager
+    @EnvironmentObject var activityTypesViewModel: ActivityTypesViewModel
     
     @State private var activityType: ActivityType
     @State private var tempName: String
     @State private var tempEmoji: String
+    @State private var tempDescription: String
     @State private var tempArchived: Bool
     
     // Form validation
@@ -19,6 +20,7 @@ struct ActivityTypeSidebarEditView: View {
         self._activityType = State(initialValue: activityType)
         self._tempName = State(initialValue: activityType.name)
         self._tempEmoji = State(initialValue: activityType.emoji)
+        self._tempDescription = State(initialValue: activityType.description)
         self._tempArchived = State(initialValue: activityType.archived)
     }
     
@@ -30,6 +32,9 @@ struct ActivityTypeSidebarEditView: View {
             // Basic info section
             basicInfoSection
             
+            // Description section
+            descriptionSection
+            
             // Archive toggle
             archiveSection
             
@@ -39,6 +44,7 @@ struct ActivityTypeSidebarEditView: View {
         .formStyle(.grouped)
         .onChange(of: tempName) { _ in validateChanges() }
         .onChange(of: tempEmoji) { _ in validateChanges() }
+        .onChange(of: tempDescription) { _ in validateChanges() }
         .onChange(of: tempArchived) { _ in validateChanges() }
     }
     
@@ -103,7 +109,7 @@ struct ActivityTypeSidebarEditView: View {
                             .foregroundColor(Theme.Colors.textSecondary)
                         Spacer()
                         Button(action: {
-                            showingEmojiPicker.toggle()
+                            showingEmojiPicker = true
                         }) {
                             HStack {
                                 Text(tempEmoji)
@@ -113,9 +119,35 @@ struct ActivityTypeSidebarEditView: View {
                                     .foregroundColor(Theme.Colors.textSecondary)
                             }
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(.plain)
+                        .sheet(isPresented: $showingEmojiPicker) {
+                            EmojiPickerView(selectedEmoji: $tempEmoji)
+                        }
                     }
                 }
+            }
+            .padding()
+        }
+        .background(Theme.Colors.surface)
+        .cornerRadius(8)
+    }
+    
+    private var descriptionSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Text("Description")
+                    .font(.headline)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                TextEditor(text: $tempDescription)
+                    .frame(minHeight: 80)
+                    .padding(8)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
             }
             .padding()
         }
@@ -167,6 +199,7 @@ struct ActivityTypeSidebarEditView: View {
         hasChanges = (
             tempName != activityType.name ||
             tempEmoji != activityType.emoji ||
+            tempDescription != activityType.description ||
             tempArchived != activityType.archived
         )
     }
@@ -179,7 +212,7 @@ struct ActivityTypeSidebarEditView: View {
             id: activityType.id,
             name: tempName,
             emoji: tempEmoji,
-            description: activityType.description,
+            description: tempDescription,
             archived: tempArchived
         )
         
@@ -189,7 +222,7 @@ struct ActivityTypeSidebarEditView: View {
             activityTypesViewModel.addActivityType(
                 name: tempName,
                 emoji: tempEmoji,
-                description: ""
+                description: tempDescription
             )
         } else {
             // Updating existing activity type

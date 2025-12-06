@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Sidebar view for editing session details with a clean, spacious layout
 struct SessionSidebarEditView: View {
-    @StateObject private var sidebarState = SidebarStateManager()
-    @StateObject private var sessionManager = SessionManager.shared
+    @EnvironmentObject var sidebarState: SidebarStateManager
+    @EnvironmentObject var sessionManager: SessionManager
     
     @State private var session: SessionRecord
     @State private var tempStartTime: Date
@@ -11,9 +11,13 @@ struct SessionSidebarEditView: View {
     @State private var tempNotes: String
     @State private var tempMood: Int
     @State private var tempProjectName: String
+    @State private var tempActivityTypeID: String
+    @State private var tempProjectPhaseID: String?
+    @State private var tempMilestoneText: String
     
     // Projects for the picker
-    @StateObject private var projectsViewModel = ProjectsViewModel()
+    @EnvironmentObject var projectsViewModel: ProjectsViewModel
+    @EnvironmentObject var activityTypesViewModel: ActivityTypesViewModel
     
     // Form validation
     @State private var hasChanges = false
@@ -55,6 +59,9 @@ struct SessionSidebarEditView: View {
         self._tempNotes = State(initialValue: session.notes)
         self._tempMood = State(initialValue: session.mood ?? 0)
         self._tempProjectName = State(initialValue: session.projectName)
+        self._tempActivityTypeID = State(initialValue: session.activityTypeID ?? "")
+        self._tempProjectPhaseID = State(initialValue: session.projectPhaseID)
+        self._tempMilestoneText = State(initialValue: session.milestoneText ?? "")
     }
     
     var body: some View {
@@ -156,6 +163,51 @@ struct SessionSidebarEditView: View {
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
+                
+                // Activity Type selection
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Activity Type")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    Picker("Activity Type", selection: $tempActivityTypeID) {
+                        Text("Select Activity Type").tag("")
+                        ForEach(activityTypesViewModel.activeActivityTypes, id: \.id) { activityType in
+                            HStack {
+                                Text(activityType.emoji)
+                                Text(activityType.name)
+                            }
+                            .tag(activityType.id)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                }
+                
+                // Phase selection (based on selected project)
+                if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
+                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                        Text("Phase")
+                            .font(.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        
+                        Picker("Phase", selection: $tempProjectPhaseID) {
+                            Text("No Phase").tag("")
+                            ForEach(selectedProject.phases.filter { !$0.archived }, id: \.id) { phase in
+                                Text(phase.name).tag(phase.id)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                    }
+                }
+                
+                // Milestone field
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Milestone")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    TextField("Enter milestone", text: $tempMilestoneText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
             }
             .padding()
         }
@@ -294,7 +346,10 @@ struct SessionSidebarEditView: View {
             tempEndTime != sessionEndTime ||
             tempNotes != session.notes ||
             tempMood != (session.mood ?? 0) ||
-            tempProjectName != session.projectName
+            tempProjectName != session.projectName ||
+            tempActivityTypeID != (session.activityTypeID ?? "") ||
+            tempProjectPhaseID != session.projectPhaseID ||
+            tempMilestoneText != (session.milestoneText ?? "")
         )
     }
     
@@ -322,7 +377,10 @@ struct SessionSidebarEditView: View {
             endTime: endTime,
             projectName: tempProjectName,
             notes: tempNotes,
-            mood: tempMood
+            mood: tempMood,
+            activityTypeID: tempActivityTypeID.isEmpty ? nil : tempActivityTypeID,
+            projectPhaseID: tempProjectPhaseID,
+            milestoneText: tempMilestoneText.isEmpty ? nil : tempMilestoneText
         )
         
         if success {
@@ -335,9 +393,9 @@ struct SessionSidebarEditView: View {
                 durationMinutes: durationMinutes,
                 projectName: tempProjectName,
                 projectID: session.projectID,
-                activityTypeID: session.activityTypeID,
-                projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText,
+                activityTypeID: tempActivityTypeID.isEmpty ? nil : tempActivityTypeID,
+                projectPhaseID: tempProjectPhaseID,
+                milestoneText: tempMilestoneText.isEmpty ? nil : tempMilestoneText,
                 notes: tempNotes,
                 mood: tempMood
             )

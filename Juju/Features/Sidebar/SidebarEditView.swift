@@ -43,10 +43,16 @@ struct SidebarEditView: View {
                     switch content {
                     case .session(let session):
                         SessionSidebarEditView(session: session)
+                            .environmentObject(sidebarState)
+                            .environmentObject(SessionManager.shared)
+                            .environmentObject(ProjectsViewModel.shared)
+                            .environmentObject(ActivityTypesViewModel.shared)
                     case .project(let project):
                         ProjectSidebarEditView(project: project)
+                            .environmentObject(ProjectsViewModel.shared)
                     case .activityType(let activityType):
                         ActivityTypeSidebarEditView(activityType: activityType)
+                            .environmentObject(ActivityTypesViewModel.shared)
                     case .newProject:
                         let newProject = Project(
                             id: UUID().uuidString,
@@ -58,6 +64,7 @@ struct SidebarEditView: View {
                             phases: []
                         )
                         ProjectSidebarEditView(project: newProject)
+                            .environmentObject(ProjectsViewModel.shared)
                     case .newActivityType:
                         let newActivityType = ActivityType(
                             id: UUID().uuidString,
@@ -67,22 +74,13 @@ struct SidebarEditView: View {
                             archived: false
                         )
                         ActivityTypeSidebarEditView(activityType: newActivityType)
+                            .environmentObject(ActivityTypesViewModel.shared)
                     }
                 }
                 .padding()
             }
         }
-        .background(
-            Theme.Colors.surface
-                .blur(radius: 8)
-                .opacity(0.9)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 0)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-                .frame(width: 1)
-                .offset(x: 0)
-        )
+        .background(Theme.Colors.surface)
         .offset(x: sidebarState.isVisible ? 0 : 420)
     }
     

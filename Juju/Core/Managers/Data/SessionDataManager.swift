@@ -269,23 +269,41 @@ class SessionDataManager: ObservableObject {
         return false
     }
     
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?) -> Bool {
-        let moodValue = mood.map { String($0) } ?? ""
-        let successes = [
-            updateSession(id: id, field: "date", value: date),
-            updateSession(id: id, field: "start_time", value: startTime),
-            updateSession(id: id, field: "end_time", value: endTime),
-            updateSession(id: id, field: "project", value: projectName),
-            updateSession(id: id, field: "notes", value: notes),
-            updateSession(id: id, field: "mood", value: moodValue)
-        ]
-        let allSuccess = successes.allSatisfy { $0 }
-        if allSuccess {
-            print("✅ Updated full session \(id)")
-        } else {
-            print("❌ Partial failure updating session \(id)")
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil) -> Bool {
+        guard let session = allSessions.first(where: { $0.id == id }) else {
+            print("❌ Session \(id) not found for update")
+            return false
         }
-        return allSuccess
+
+        // Create updated session with all fields
+        var updated = SessionRecord(
+            id: session.id,
+            date: date,
+            startTime: startTime,
+            endTime: endTime,
+            durationMinutes: minutesBetween(start: startTime, end: endTime),
+            projectName: projectName,
+            projectID: session.projectID,
+            activityTypeID: activityTypeID ?? session.activityTypeID,
+            projectPhaseID: projectPhaseID ?? session.projectPhaseID,
+            milestoneText: milestoneText ?? session.milestoneText,
+            notes: notes,
+            mood: mood
+        )
+
+        // Persist the change
+        if let index = allSessions.firstIndex(where: { $0.id == id }) {
+            allSessions[index] = updated
+            saveAllSessions(allSessions)
+            
+            // Update timestamp to trigger UI refresh
+            lastUpdated = Date()
+            
+            print("✅ Updated full session \(id)")
+            return true
+        }
+
+        return false
     }
     
     // Delete a session

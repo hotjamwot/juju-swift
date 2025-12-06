@@ -12,7 +12,7 @@ struct SessionsRowView: View {
     let onSave: (() -> Void)?
     let onDelete: ((SessionRecord) -> Void)?
     
-    @StateObject private var sidebarState = SidebarStateManager()
+    @EnvironmentObject var sidebarState: SidebarStateManager
     
     // Hover state for interactive feedback
     @State private var isHovering = false
@@ -91,26 +91,6 @@ struct SessionsRowView: View {
                         .lineLimit(1)
                         .frame(maxWidth: 200, alignment: .leading)
                 }
-                
-                // Edit button
-                Button(action: {
-                    sidebarState.show(.session(session))
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 12))
-                        Text("Edit")
-                            .font(Theme.Fonts.caption)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Theme.Colors.divider.opacity(0.3))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                    .cornerRadius(8)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .pointingHandOnHover()
-                .padding(.trailing, Theme.Row.contentPadding)
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -144,6 +124,29 @@ struct SessionsRowView: View {
                             .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .multilineTextAlignment(.leading)
+                    }
+                    .padding(.horizontal, Theme.Row.contentPadding)
+                    
+                    // Edit button in expanded view
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            sidebarState.show(.session(session))
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 12))
+                                Text("Edit Session")
+                                    .font(Theme.Fonts.caption)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
                     }
                     .padding(.horizontal, Theme.Row.contentPadding)
                     .padding(.bottom, Theme.Row.contentPadding)

@@ -46,6 +46,8 @@ struct SwiftUIDashboardRootView: View {
             // Sidebar overlay
             SidebarEditView()
                 .environmentObject(sidebarState)
+                .environmentObject(ProjectsViewModel.shared)
+                .environmentObject(ActivityTypesViewModel.shared)
         }
     }
     
