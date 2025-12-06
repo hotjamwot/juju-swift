@@ -113,20 +113,19 @@ Context of Juju app:
 │   │       └── ProjectsViewModel.swift # Projects data binding and business logic
 │   ├── Features/
 │   │   ├── Dashboard/
-│   │   │   ├── ActiveSessionStatusView.swift # NEW: Real-time active session display
+│   │   │   ├── ActiveSessionStatusView.swift # Real-time active session display
 │   │   │   ├── BubbleChartCardView.swift # Circular bubble chart for time visualization
 │   │   │   ├── DashboardNativeSwiftChartsView.swift # Main dashboard container
 │   │   │   ├── DashboardWindowController.swift # Dashboard window management
-│   │   │   ├── EditorialEngine.swift # NEW: Narrative headline generation engine
+│   │   │   ├── EditorialEngine.swift # Narrative headline generation engine
 │   │   │   ├── GroupedBarChartCardView.swift # Monthly trends bar chart
 │   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section (TRANSFORMED)
-│   │   │   ├── Phase2TestView.swift # NEW: Comprehensive Phase 2 testing interface
 │   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view (ENHANCED with activity emojis)
 │   │   │   ├── SidebarView.swift # Dashboard navigation sidebar
 │   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── StackedAreaChartCardView.swift # Yearly overview area chart
 │   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
-│   │   │   ├── WeeklyActivityBubbleChartView.swift # NEW: Activity-focused bubble chart
+│   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
 │   │   │   ├── WeeklyProjectBubbleChartView.swift # Weekly project breakdown
 │   │   │   ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars
 │   │   │   └── YearlyTotalBarChartView.swift # Yearly total overview chart
