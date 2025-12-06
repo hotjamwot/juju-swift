@@ -294,6 +294,8 @@ class SessionDataManager: ObservableObject {
         // Persist the change
         if let index = allSessions.firstIndex(where: { $0.id == id }) {
             allSessions[index] = updated
+            
+            // Save to file first
             saveAllSessions(allSessions)
             
             // Update timestamp to trigger UI refresh
@@ -363,6 +365,7 @@ class SessionDataManager: ObservableObject {
                     let csvContent = SessionDataParser().convertSessionsToCSV(yearSessions)
                     try await csvManager.writeToYearFile(csvContent, for: year)
                     print("✅ Saved \(yearSessions.count) sessions to \(year)-data.csv")
+                    print("🔍 CSV Header: \(csvContent.components(separatedBy: "\n").first ?? "No header")")
                 } catch {
                     print("❌ Error saving sessions to \(year)-data.csv: \(error)")
                 }

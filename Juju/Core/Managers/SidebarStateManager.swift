@@ -41,8 +41,8 @@ final class SidebarStateManager: ObservableObject {
         withAnimation(.easeInOut(duration: 0.25)) {
             self.isVisible = false
         }
-        // Clear content after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Clear content after animation completes - use 0.35s to ensure animation finishes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             self.content = nil
         }
     }

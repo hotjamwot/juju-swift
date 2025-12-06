@@ -20,7 +20,8 @@ struct SidebarEditView: View {
             if let content = sidebarState.content {
                 sidebarContent(content)
                     .frame(width: 420)
-                    .transition(.move(edge: .trailing))
+                    .opacity(sidebarState.isVisible ? 1.0 : 0.0)
+                    .animation(.easeInOut(duration: 0.25), value: sidebarState.isVisible)
                     .zIndex(1000)
             }
         }
@@ -80,7 +81,7 @@ struct SidebarEditView: View {
                 .padding()
             }
         }
-        .background(Theme.Colors.surface)
+        .background(Theme.Colors.background)
         .offset(x: sidebarState.isVisible ? 0 : 420)
     }
     

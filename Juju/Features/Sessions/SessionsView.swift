@@ -151,36 +151,36 @@ public struct SessionsView: View {
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
         ForEach(currentWeekSessions, id: \.id) { group in
-            GroupedSessionView(
-                group: group,
-                projects: projectsViewModel.projects,
-                onSave: { 
-                    Task {
+                GroupedSessionView(
+                    group: group,
+                    projects: projectsViewModel.projects,
+                    onSave: { 
                         // Reload current week sessions after save
-                        await loadCurrentWeekSessions()
-                    }
-                },
-                onDelete: { session in
-                    toDelete = session
-                    showingDeleteAlert = true
-                },
-                isExpanded: expandedGroups.contains(group.id),
-                onToggleExpand: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        if expandedGroups.contains(group.id) {
-                            expandedGroups.remove(group.id)
-                        } else {
-                            expandedGroups.insert(group.id)
+                        Task {
+                            await loadCurrentWeekSessions()
                         }
-                    }
-                },
-                onEdit: { session in
-                    editingSessionID = session.id
-                    sidebarState.show(.session(session))
-                },
-                sidebarState: sidebarState,
-                editingSessionID: $editingSessionID
-            )
+                    },
+                    onDelete: { session in
+                        toDelete = session
+                        showingDeleteAlert = true
+                    },
+                    isExpanded: expandedGroups.contains(group.id),
+                    onToggleExpand: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            if expandedGroups.contains(group.id) {
+                                expandedGroups.remove(group.id)
+                            } else {
+                                expandedGroups.insert(group.id)
+                            }
+                        }
+                    },
+                    onEdit: { session in
+                        editingSessionID = session.id
+                        sidebarState.show(.session(session))
+                    },
+                    sidebarState: sidebarState,
+                    editingSessionID: $editingSessionID
+                )
         }
     }
     
@@ -188,62 +188,75 @@ public struct SessionsView: View {
     
     // MARK: - Body
     public var body: some View {
-        ZStack {
-            // --- Main Content Area ---
-            if currentWeekSessions.isEmpty {
-                if isLoading {
-                    // Loading indicator
-                    VStack {
-                        Spacer()
-                        ProgressView("Loading sessions...")
-                            .scaleEffect(1.5)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    // Empty state view
-                    VStack {
-                        Spacer()
-                        Text("No sessions found for the selected filters.")
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            } else {
-                // Grid View
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
-                        groupedSessionViews
-                    }
-                    .padding(.vertical, Theme.spacingMedium)
-                }
-                .scrollContentBackground(.hidden)
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Sessions")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity)
             }
-            
-            // --- Floating Filter Toggle Button ---
-            VStack {
-                Spacer()
-                HStack {
+            .padding(.vertical, Theme.spacingLarge)
+            .padding(.horizontal, Theme.spacingLarge)
+            .background(Theme.Colors.background)
+
+            // Content Area
+            ZStack {
+                // --- Main Content Area ---
+                if currentWeekSessions.isEmpty {
+                    if isLoading {
+                        // Loading indicator
+                        VStack {
+                            Spacer()
+                            ProgressView("Loading sessions...")
+                                .scaleEffect(1.5)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        // Empty state view
+                        VStack {
+                            Spacer()
+                            Text("No sessions found for the selected filters.")
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                } else {
+                    // Grid View
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
+                            groupedSessionViews
+                        }
+                        .padding(.vertical, Theme.spacingMedium)
+                    }
+                    .scrollContentBackground(.hidden)
+                }
+                
+                // --- Floating Filter Toggle Button ---
+                VStack {
                     Spacer()
-                    FilterExportControls(
-                        state: filterExportState,
-                        projects: projectsViewModel.projects,
-                        filteredSessionsCount: currentSessionCount,
-        onDateFilterChange: handleDateFilterSelection,
-        onCustomDateRangeChange: handleCustomDateRangeChange,
-        onProjectFilterChange: { _ in },
-        onExport: { format in
-            exportSessions(format: format.fileExtension)
-        },
-                        onInvoicePreviewToggle: {
-                            // Future invoice preview functionality
-                            print("Invoice preview requested")
-                        },
-                        onApplyFilters: applyFilters
-                    )
-                    .padding(.trailing, Theme.spacingLarge)
-                    .padding(.bottom, Theme.spacingLarge)
+                    HStack {
+                        Spacer()
+                        FilterExportControls(
+                            state: filterExportState,
+                            projects: projectsViewModel.projects,
+                            filteredSessionsCount: currentSessionCount,
+            onDateFilterChange: handleDateFilterSelection,
+            onCustomDateRangeChange: handleCustomDateRangeChange,
+            onProjectFilterChange: { _ in },
+            onExport: { format in
+                exportSessions(format: format.fileExtension)
+            },
+                            onInvoicePreviewToggle: {
+                                // Future invoice preview functionality
+                                print("Invoice preview requested")
+                            },
+                            onApplyFilters: applyFilters
+                        )
+                        .padding(.trailing, Theme.spacingLarge)
+                        .padding(.bottom, Theme.spacingLarge)
+                    }
                 }
             }
         }
@@ -268,9 +281,7 @@ public struct SessionsView: View {
         .onChange(of: sessionManager.lastUpdated) { _ in
             // Auto-refresh when session data changes (after edit, delete, etc.)
             Task {
-                if !filterExportState.isExpanded {
-                    await loadCurrentWeekSessions()
-                }
+                await loadCurrentWeekSessions()
                 // Update chart data when sessions change
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,

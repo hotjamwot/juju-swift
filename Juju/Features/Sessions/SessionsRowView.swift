@@ -43,6 +43,39 @@ struct SessionsRowView: View {
                         
                         Spacer()
                         
+                        // Activity Type (with fallback to "Uncategorized")
+                        if let activityType = getActivityTypeDisplay() {
+                            HStack(spacing: 4) {
+                                Text(activityType.emoji)
+                                    .font(.system(size: 10))
+                                Text(activityType.name)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                        }
+                        
+                        // Project Phase (if available)
+                        if let phaseName = getProjectPhaseDisplay() {
+                            HStack(spacing: 4) {
+                                Image(systemName: "number.circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(projectColor.opacity(0.8))
+                                Text(phaseName)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(projectColor.opacity(0.1))
+                            .clipShape(Capsule())
+                        }
+                        
+                        Spacer()
+                        
                         // Mood indicator (if set)
                         if let mood = session.mood {
                             HStack(spacing: 4) {
@@ -94,7 +127,7 @@ struct SessionsRowView: View {
             }
             .frame(height: Theme.Row.height)
             .background(
-                (isHovering ? Theme.Colors.surface.opacity(Theme.Row.hoverOpacity) : Theme.Colors.surface.opacity(0.0))
+                Theme.Colors.surface.opacity(0.7)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
@@ -167,6 +200,33 @@ struct SessionsRowView: View {
         projects.first { $0.name == session.projectName }?.emoji ?? "📁"
     }
     
+    /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
+    private func getActivityTypeDisplay() -> (name: String, emoji: String)? {
+        guard let activityTypeID = session.activityTypeID else {
+            // Fallback to "Uncategorized" for legacy sessions
+            let uncategorized = ActivityTypeManager.shared.getUncategorizedActivityType()
+            return (uncategorized.name, uncategorized.emoji)
+        }
+        
+        return ActivityTypeManager.shared.getActivityTypeDisplay(id: activityTypeID)
+    }
+    
+    /// Get project phase display name with fallback for legacy sessions
+    private func getProjectPhaseDisplay() -> String? {
+        guard let projectPhaseID = session.projectPhaseID,
+              let projectID = session.projectID else {
+            return nil
+        }
+        
+        let projects = ProjectManager.shared.loadProjects()
+        guard let project = projects.first(where: { $0.id == projectID }),
+              let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
+            return nil
+        }
+        
+        return phase.name
+    }
+    
     private var formattedStartTime: String {
         formatTime(session.startTime)
     }
@@ -232,6 +292,10 @@ struct SessionsRowView_Previews: PreviewProvider {
         endTime: "10:30:00",
         durationMinutes: 90,
         projectName: "Project Alpha",
+        projectID: "1",
+        activityTypeID: "writing",
+        projectPhaseID: "phase-1",
+        milestoneText: nil,
         notes: "Quick meeting about the new features.",
         mood: 7
     )
@@ -240,7 +304,10 @@ struct SessionsRowView_Previews: PreviewProvider {
         SessionsRowView(
             session: $session,
             projects: [
-                Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼"),
+                Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼", phases: [
+                    Phase(id: "phase-1", name: "Planning", order: 0, archived: false),
+                    Phase(id: "phase-2", name: "Development", order: 1, archived: false)
+                ]),
                 Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
             ],
             isEditing: false,

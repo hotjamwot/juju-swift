@@ -69,7 +69,8 @@ class NotesViewModel: ObservableObject {
         }
         
         if let project = projects.first(where: { $0.id == projectID }) {
-            availablePhases = project.phases
+            // Filter out archived phases
+            availablePhases = project.phases.filter { !$0.archived }
         } else {
             availablePhases = []
         }
@@ -99,6 +100,26 @@ class NotesViewModel: ObservableObject {
         selectedProjectPhaseID = availablePhases.first?.id
     }
     
+    // MARK: - Phase Selection Validation
+    
+    /// Validate that the selected phase is still valid for the current project
+    func validatePhaseSelection() {
+        guard let projectID = currentProjectID,
+              let phaseID = selectedProjectPhaseID else {
+            return
+        }
+        
+        // Check if the selected phase exists in the current project
+        if let project = projects.first(where: { $0.id == projectID }),
+           let phase = project.phases.first(where: { $0.id == phaseID && !$0.archived }) {
+            // Phase is valid, keep selection
+            return
+        }
+        
+        // Phase is invalid, clear selection
+        selectedProjectPhaseID = nil
+    }
+    
     // MARK: - Actions
     
     func saveNotes() {
@@ -116,17 +137,23 @@ class NotesViewModel: ObservableObject {
     func addPhase(name: String) {
         guard let projectID = currentProjectID else { return }
         
-        // Create new phase
-        let newPhase = Phase(name: name)
+        // Create new phase with proper order
+        let newPhase = Phase(name: name, order: availablePhases.count, archived: false)
         
         // Add to project via ProjectManager
         ProjectManager.shared.addPhase(to: projectID, phase: newPhase)
+        
+        // Refresh the projects array to include the new phase
+        projects = ProjectManager.shared.loadProjects()
         
         // Refresh phases list
         loadPhasesForProject()
         
         // Set the new phase as selected
         selectedProjectPhaseID = newPhase.id
+        
+        // Validate the selection to ensure it's still valid
+        validatePhaseSelection()
     }
     
     // MARK: - Validation

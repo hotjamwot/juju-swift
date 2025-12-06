@@ -76,10 +76,6 @@ struct DayHeaderView: View {
                     Text(date.prettyHeader)
                         .font(Theme.Fonts.header)
                         .foregroundColor(Theme.Colors.textPrimary)
-                    
-                    Text(date.relativeHeader)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
                 }
                 
                 // Session count badge

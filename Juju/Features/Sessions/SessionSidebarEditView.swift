@@ -60,6 +60,15 @@ struct SessionSidebarEditView: View {
         endComponents.second = endComponentsTime.second ?? 0
         let finalEndTime = Calendar.current.date(from: endComponents) ?? Date()
         
+        // Set initial hour and minute values for time pickers
+        let tempStartComponents = Calendar.current.dateComponents([.hour, .minute], from: finalStartTime)
+        let tempEndComponents = Calendar.current.dateComponents([.hour, .minute], from: finalEndTime)
+        
+        self._startHour = State(initialValue: tempStartComponents.hour ?? 0)
+        self._startMinute = State(initialValue: tempStartComponents.minute ?? 0)
+        self._endHour = State(initialValue: tempEndComponents.hour ?? 0)
+        self._endMinute = State(initialValue: tempEndComponents.minute ?? 0)
+        
         self._tempStartTime = State(initialValue: finalStartTime)
         self._tempEndTime = State(initialValue: finalEndTime)
         self._tempNotes = State(initialValue: session.notes)
@@ -72,16 +81,16 @@ struct SessionSidebarEditView: View {
     
     var body: some View {
         VStack(spacing: Theme.spacingExtraLarge) {
-            // Top section - time controls, project selection, and notes
+            // Top section - project selection, notes, and time controls
             VStack(spacing: Theme.spacingExtraLarge) {
-                // Time controls section
-                timeControlsSection
-                
                 // Project selection section
                 projectSelectionSection
                 
                 // Notes section
                 notesSection
+                
+                // Time controls section
+                timeControlsSection
             }
             
             Spacer()
@@ -103,7 +112,14 @@ struct SessionSidebarEditView: View {
         .onChange(of: tempEndTime) { _ in validateChanges() }
         .onChange(of: tempNotes) { _ in validateChanges() }
         .onChange(of: tempMood) { _ in validateChanges() }
-        .onChange(of: tempProjectName) { _ in validateChanges() }
+        .onChange(of: tempProjectName) { _ in 
+            // When project changes, validate phase selection and reset if invalid
+            validateAndResetPhaseIfInvalid()
+            validateChanges() 
+        }
+        .onChange(of: tempActivityTypeID) { _ in validateChanges() }
+        .onChange(of: tempProjectPhaseID) { _ in validateChanges() }
+        .onChange(of: tempMilestoneText) { _ in validateChanges() }
     }
     
     private var timeControlsSection: some View {
@@ -122,93 +138,77 @@ struct SessionSidebarEditView: View {
                 .labelsHidden()
             }
             
-            // Start and End time dropdowns
-            HStack(spacing: Theme.spacingLarge) {
+            // Start and End time dropdowns - reorganized for better space usage
+            VStack(spacing: Theme.spacingMedium) {
                 // Start Time dropdown
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                HStack {
                     Text("Start Time")
                         .font(.body)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    HStack {
-                        // Hour picker
-                        Picker("Hour", selection: Binding(
-                            get: { startHour },
-                            set: { startHour = $0; updateStartTime() }
-                        )) {
-                            ForEach(0..<24, id: \.self) { hour in
-                                Text(String(format: "%02d", hour)).tag(hour)
-                            }
+                    Spacer()
+                    // Hour picker
+                    Picker("Hour", selection: Binding(
+                        get: { startHour },
+                        set: { startHour = $0; updateStartTime() }
+                    )) {
+                        ForEach(0..<24, id: \.self) { hour in
+                            Text(String(format: "%02d", hour)).tag(hour)
                         }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(width: 80)
-                        
-                        Text(":")
-                            .font(.headline)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        
-                        // Minute picker
-                        Picker("Minute", selection: Binding(
-                            get: { startMinute },
-                            set: { startMinute = $0; updateStartTime() }
-                        )) {
-                            ForEach(0..<60, id: \.self) { minute in
-                                Text(String(format: "%02d", minute)).tag(minute)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(width: 80)
                     }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(width: 100)
+                    
+                    Text(":")
+                        .font(.headline)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    // Minute picker
+                    Picker("Minute", selection: Binding(
+                        get: { startMinute },
+                        set: { startMinute = $0; updateStartTime() }
+                    )) {
+                        ForEach(0..<60, id: \.self) { minute in
+                            Text(String(format: "%02d", minute)).tag(minute)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(width: 100)
                 }
                 
-                Spacer()
-                
                 // End Time dropdown
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                HStack {
                     Text("End Time")
                         .font(.body)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    HStack {
-                        // Hour picker
-                        Picker("Hour", selection: Binding(
-                            get: { endHour },
-                            set: { endHour = $0; updateEndTime() }
-                        )) {
-                            ForEach(0..<24, id: \.self) { hour in
-                                Text(String(format: "%02d", hour)).tag(hour)
-                            }
+                    Spacer()
+                    // Hour picker
+                    Picker("Hour", selection: Binding(
+                        get: { endHour },
+                        set: { endHour = $0; updateEndTime() }
+                    )) {
+                        ForEach(0..<24, id: \.self) { hour in
+                            Text(String(format: "%02d", hour)).tag(hour)
                         }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(width: 80)
-                        
-                        Text(":")
-                            .font(.headline)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        
-                        // Minute picker
-                        Picker("Minute", selection: Binding(
-                            get: { endMinute },
-                            set: { endMinute = $0; updateEndTime() }
-                        )) {
-                            ForEach(0..<60, id: \.self) { minute in
-                                Text(String(format: "%02d", minute)).tag(minute)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(width: 80)
                     }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(width: 100)
+                    
+                    Text(":")
+                        .font(.headline)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    // Minute picker
+                    Picker("Minute", selection: Binding(
+                        get: { endMinute },
+                        set: { endMinute = $0; updateEndTime() }
+                    )) {
+                        ForEach(0..<60, id: \.self) { minute in
+                            Text(String(format: "%02d", minute)).tag(minute)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(width: 100)
                 }
-            }
-            
-            // Duration display
-            HStack {
-                Text("Duration:")
-                    .font(.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                Spacer()
-                Text(durationString)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(Theme.Colors.textPrimary)
             }
         }
         .padding(Theme.spacingMedium)
@@ -241,29 +241,40 @@ struct SessionSidebarEditView: View {
             }
             
             // Phase selection (based on selected project)
-            if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Phase")
-                        .font(.body)
-                        .foregroundColor(Theme.Colors.textSecondary)
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
                     Picker("Phase", selection: $tempProjectPhaseID) {
-                        Text("No Phase").tag("")
+                        Text("No Phase").tag(nil as String?)
                         ForEach(selectedProject.phases.filter { !$0.archived }, id: \.id) { phase in
-                            Text(phase.name).tag(phase.id)
+                            Text(phase.name).tag(phase.id as String?)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
+                    .frame(height: 40)
+                } else if !tempProjectName.isEmpty {
+                    // Show placeholder when project has no phases
+                    Text("No phases available")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Design.cornerRadius)
+                } else {
+                    // Show placeholder when no project selected
+                    Text("Select a project first")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Design.cornerRadius)
                 }
             }
             
             // Milestone field with star emoji
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                HStack(spacing: 8) {
-                    Text("Milestone")
-                        .font(.body)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    Text("⭐")
-                }
+            HStack(spacing: 8) {
+                Text("⭐")
                 TextField("Enter milestone", text: $tempMilestoneText)
                     .textFieldStyle(.plain)
                     .padding(Theme.spacingSmall)
@@ -282,6 +293,7 @@ struct SessionSidebarEditView: View {
                 .font(.body)
                 .foregroundColor(Theme.Colors.textSecondary)
             TextEditor(text: $tempNotes)
+                .font(.body)
                 .frame(minHeight: 120, maxHeight: 160)
                 .textFieldStyle(.plain)
                 .padding(Theme.spacingSmall)
@@ -319,11 +331,31 @@ struct SessionSidebarEditView: View {
     }
     
     private var actionButtons: some View {
-        HStack {
+        HStack(spacing: Theme.spacingSmall) {
             Button("Cancel") {
                 sidebarState.hide()
             }
             .buttonStyle(SecondaryButtonStyle())
+            
+            Button(action: {
+                deleteSession()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Delete Session")
+                        .font(Theme.Fonts.body)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Theme.Colors.error.opacity(0.15))
+                .foregroundColor(Theme.Colors.error)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .pointingHandOnHover()
+            .disabled(isSaving)
             
             Spacer()
             
@@ -424,15 +456,38 @@ struct SessionSidebarEditView: View {
         endComponents.second = endComponentsTime.second ?? 0
         let sessionEndTime = Calendar.current.date(from: endComponents) ?? Date()
         
+        // Check if any field has changed from the original session
+        let startTimeChanged = tempStartTime != sessionStartTime
+        let endTimeChanged = tempEndTime != sessionEndTime
+        let notesChanged = tempNotes != session.notes
+        let moodChanged = tempMood != (session.mood ?? 0)
+        let projectChanged = tempProjectName != session.projectName
+        let activityTypeChanged = tempActivityTypeID != (session.activityTypeID ?? "")
+        
+        // Improved phase change detection - handle nil values properly
+        let phaseChanged: Bool
+        if let tempPhase = tempProjectPhaseID, let originalPhase = session.projectPhaseID {
+            // Both have values, compare them
+            phaseChanged = tempPhase != originalPhase
+        } else if tempProjectPhaseID == nil && session.projectPhaseID == nil {
+            // Both are nil (no phase selected), no change
+            phaseChanged = false
+        } else {
+            // One is nil and the other isn't, definitely changed
+            phaseChanged = true
+        }
+        
+        let milestoneChanged = tempMilestoneText != (session.milestoneText ?? "")
+        
         hasChanges = (
-            tempStartTime != sessionStartTime ||
-            tempEndTime != sessionEndTime ||
-            tempNotes != session.notes ||
-            tempMood != (session.mood ?? 0) ||
-            tempProjectName != session.projectName ||
-            tempActivityTypeID != (session.activityTypeID ?? "") ||
-            tempProjectPhaseID != session.projectPhaseID ||
-            tempMilestoneText != (session.milestoneText ?? "")
+            startTimeChanged ||
+            endTimeChanged ||
+            notesChanged ||
+            moodChanged ||
+            projectChanged ||
+            activityTypeChanged ||
+            phaseChanged ||
+            milestoneChanged
         )
     }
     
@@ -452,7 +507,39 @@ struct SessionSidebarEditView: View {
         // Calculate duration
         let durationMinutes = Int(tempEndTime.timeIntervalSince(tempStartTime) / 60)
         
+        // Debug logging
+        print("🔍 Saving session with phase ID: \(tempProjectPhaseID ?? "nil")")
+        print("🔍 Project name: \(tempProjectName)")
+        print("🔍 All projects count: \(projectsViewModel.projects.count)")
+        
+        // Validate phase selection against current project
+        var validatedPhaseID: String? = tempProjectPhaseID
+        
+        if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
+            print("🔍 Found project: \(selectedProject.name)")
+            print("🔍 Project phases count: \(selectedProject.phases.count)")
+            
+            if let phaseID = tempProjectPhaseID {
+                let phaseExists = selectedProject.phases.contains { $0.id == phaseID && !$0.archived }
+                print("🔍 Phase \(phaseID) exists: \(phaseExists)")
+                
+                if !phaseExists {
+                    // Phase doesn't exist in current project, clear it
+                    validatedPhaseID = nil
+                    print("⚠️ Selected phase \(phaseID) not found in project \(tempProjectName), clearing phase selection")
+                }
+            }
+        } else if !tempProjectName.isEmpty {
+            print("⚠️ Project \(tempProjectName) not found in projects list")
+        }
+        
         // Save using SessionManager
+        print("🔍 Attempting to save session with:")
+        print("  - ID: \(session.id)")
+        print("  - Phase ID: \(validatedPhaseID ?? "nil")")
+        print("  - Project: \(tempProjectName)")
+        print("  - Activity Type: \(tempActivityTypeID.isEmpty ? "nil" : tempActivityTypeID)")
+        
         let success = sessionManager.updateSessionFull(
             id: session.id,
             date: date,
@@ -462,9 +549,11 @@ struct SessionSidebarEditView: View {
             notes: tempNotes,
             mood: tempMood,
             activityTypeID: tempActivityTypeID.isEmpty ? nil : tempActivityTypeID,
-            projectPhaseID: tempProjectPhaseID,
+            projectPhaseID: validatedPhaseID,
             milestoneText: tempMilestoneText.isEmpty ? nil : tempMilestoneText
         )
+        
+        print("🔍 Save result: \(success ? "SUCCESS" : "FAILED")")
         
         if success {
             // Update local session copy
@@ -477,7 +566,7 @@ struct SessionSidebarEditView: View {
                 projectName: tempProjectName,
                 projectID: session.projectID,
                 activityTypeID: tempActivityTypeID.isEmpty ? nil : tempActivityTypeID,
-                projectPhaseID: tempProjectPhaseID,
+                projectPhaseID: validatedPhaseID,
                 milestoneText: tempMilestoneText.isEmpty ? nil : tempMilestoneText,
                 notes: tempNotes,
                 mood: tempMood
@@ -485,15 +574,50 @@ struct SessionSidebarEditView: View {
             hasChanges = false
             
             // Close sidebar after successful save
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                sidebarState.hide()
-            }
+            sidebarState.hide()
         } else {
             // Handle error (could show alert)
             print("Failed to save session")
         }
         
         isSaving = false
+    }
+    
+    private func validateAndResetPhaseIfInvalid() {
+        // When project changes, check if the current phase selection is still valid
+        if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }),
+           let phaseID = tempProjectPhaseID {
+            // Check if the selected phase exists in the current project
+            let phaseExists = selectedProject.phases.contains { $0.id == phaseID && !$0.archived }
+            if !phaseExists {
+                // Phase doesn't exist in current project, clear it
+                tempProjectPhaseID = nil
+                print("⚠️ Selected phase \(phaseID) not found in project \(tempProjectName), clearing phase selection")
+            }
+        }
+    }
+    
+    private func deleteSession() {
+        // Show confirmation dialog
+        let alert = NSAlert()
+        alert.messageText = "Delete Session"
+        alert.informativeText = "Are you sure you want to delete this session? This action cannot be undone."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
+        
+        if alert.runModal() == .alertFirstButtonReturn {
+            // User confirmed deletion
+            let success = sessionManager.deleteSession(id: session.id)
+            
+            if success {
+                // Close sidebar after successful deletion
+                sidebarState.hide()
+            } else {
+                // Handle error (could show alert)
+                print("Failed to delete session")
+            }
+        }
     }
 }
 
@@ -536,9 +660,9 @@ struct SessionSidebarEditView: View {
                 order: 1,
                 emoji: "🎨",
                 phases: [
-                    Phase(name: "Planning", order: 0),
-                    Phase(name: "Development", order: 1),
-                    Phase(name: "Testing", order: 2)
+                    Phase(name: "Planning", order: 0, archived: false),
+                    Phase(name: "Development", order: 1, archived: false),
+                    Phase(name: "Testing", order: 2, archived: false)
                 ]
             )
             previewProjectsViewModel.projects = [sampleProject]
