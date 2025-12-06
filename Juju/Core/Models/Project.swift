@@ -11,12 +11,14 @@ extension Notification.Name {
 // MARK: - Phase Structure
 struct Phase: Codable, Identifiable, Hashable {
     let id: String
-    let name: String
+    var name: String
+    var order: Int
     var archived: Bool
     
-    init(id: String = UUID().uuidString, name: String, archived: Bool = false) {
+    init(id: String = UUID().uuidString, name: String, order: Int = 0, archived: Bool = false) {
         self.id = id
         self.name = name
+        self.order = order
         self.archived = archived
     }
 }
@@ -313,11 +315,25 @@ class ProjectManager {
                 // Only mark for rewrite if there are other issues
             }
             
-            // Ensure project has a phases array (default to empty for legacy projects)
-            // This is handled by the decoder default
-            if !needsRewrite {
-                // Only mark for rewrite if there are other issues
-            }
+                // Ensure phases have order values (for legacy projects without order field)
+                if !project.phases.isEmpty {
+                    let phasesNeedOrder = project.phases.contains { phase in
+                        // If any phase doesn't have a proper order, we need to migrate
+                        phase.order == 0 && project.phases.firstIndex(where: { $0.id == phase.id }) != 0
+                    }
+                    
+                    if phasesNeedOrder {
+                        var updatedProject = project
+                        for (index, phase) in updatedProject.phases.enumerated() {
+                            var mutablePhase = phase
+                            mutablePhase.order = index
+                            updatedProject.phases[index] = mutablePhase
+                        }
+                        project = updatedProject
+                        needsRewrite = true
+                        print("Adding order values to phases for project \(project.name)")
+                    }
+                }
             
             migratedProjects.append(project)
         }

@@ -25,155 +25,105 @@ struct ActivityTypeSidebarEditView: View {
     }
     
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
-            // Live preview section
-            livePreviewSection
+        VStack(spacing: Theme.spacingExtraLarge) {
+            // Top section - name, emoji, and description
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Combined basic info section (name and emoji)
+                basicInfoSection
+                
+                // Description section
+                descriptionSection
+            }
             
-            // Basic info section
-            basicInfoSection
+            Spacer()
             
-            // Description section
-            descriptionSection
-            
-            // Archive toggle
-            archiveSection
-            
-            // Action buttons
-            actionButtons
+            // Bottom section - archive toggle and action buttons
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Archive toggle (standalone)
+                archiveSection
+                
+                // Action buttons
+                actionButtons
+            }
         }
-        .formStyle(.grouped)
+        .padding(Theme.spacingLarge)
         .onChange(of: tempName) { _ in validateChanges() }
         .onChange(of: tempEmoji) { _ in validateChanges() }
         .onChange(of: tempDescription) { _ in validateChanges() }
         .onChange(of: tempArchived) { _ in validateChanges() }
     }
     
-    private var livePreviewSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Live Preview")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    // Activity type preview
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        HStack {
-                            Text(tempEmoji)
-                                .font(.title2)
-                            Text(tempName.isEmpty ? "Activity Type Name" : tempName)
-                                .font(.headline)
-                                .foregroundColor(Theme.Colors.textPrimary)
-                        }
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Theme.Colors.surface)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.divider, lineWidth: 1)
-                            )
-                    )
-                    
-                    Spacer()
-                }
-            }
-            .padding()
-        }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
-    }
-    
     private var basicInfoSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Basic Info")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                VStack(spacing: Theme.spacingMedium) {
-                    // Name field
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Activity Type Name")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        TextField("Enter activity type name", text: $tempName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    // Emoji selection
+        VStack(spacing: Theme.spacingLarge) {
+            // Name field - label on left, field on right
+            HStack {
+                Text("Name")
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .frame(width: 80, alignment: .leading)
+                TextField("", text: $tempName)
+                    .textFieldStyle(.plain)
+                    .padding(Theme.spacingSmall)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .frame(maxWidth: .infinity)
+            }
+            
+            // Emoji selection
+            HStack {
+                Text("Emoji")
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                Spacer()
+                Button(action: {
+                    showingEmojiPicker = true
+                }) {
                     HStack {
-                        Text("Emoji")
+                        Text(tempEmoji)
+                            .font(.title2)
+                        Text("Change")
                             .font(.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
-                        Spacer()
-                        Button(action: {
-                            showingEmojiPicker = true
-                        }) {
-                            HStack {
-                                Text(tempEmoji)
-                                    .font(.title2)
-                                Text("Change Emoji")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .sheet(isPresented: $showingEmojiPicker) {
-                            EmojiPickerView(selectedEmoji: $tempEmoji)
-                        }
                     }
                 }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showingEmojiPicker) {
+                    EmojiPickerView(selectedEmoji: $tempEmoji)
+                }
             }
-            .padding()
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var descriptionSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Description")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                TextEditor(text: $tempDescription)
-                    .frame(minHeight: 80)
-                    .padding(8)
-                    .background(Theme.Colors.background)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                    )
-            }
-            .padding()
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+            Text("Description")
+                .font(.body)
+                .foregroundColor(Theme.Colors.textSecondary)
+            TextEditor(text: $tempDescription)
+                .frame(minHeight: 120, maxHeight: 160)
+                .textFieldStyle(.plain)
+                .padding(Theme.spacingSmall)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .frame(maxWidth: .infinity)
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var archiveSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Archive Activity Type")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    Toggle("Archive this activity type", isOn: $tempArchived)
-                    Spacer()
-                    Text(tempArchived ? "Archived" : "Active")
-                        .font(.caption)
-                        .foregroundColor(tempArchived ? .red : .green)
-                }
-            }
-            .padding()
+        HStack {
+            Toggle("", isOn: $tempArchived)
+            Spacer()
+            Text(tempArchived ? "Archived" : "Active")
+                .font(.caption)
+                .foregroundColor(tempArchived ? .red : .green)
         }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .padding(Theme.spacingMedium)
     }
     
     private var actionButtons: some View {
@@ -192,7 +142,8 @@ struct ActivityTypeSidebarEditView: View {
             .disabled(!hasChanges || isSaving || tempName.isEmpty)
             .opacity((hasChanges && !tempName.isEmpty) ? 1.0 : 0.5)
         }
-        .padding(.horizontal)
+        .padding(Theme.spacingMedium)
+        .padding(.bottom, Theme.spacingLarge)
     }
     
     private func validateChanges() {
@@ -258,7 +209,7 @@ struct ActivityTypeSidebarEditView_Previews: PreviewProvider {
         return ActivityTypeSidebarEditView(activityType: sampleActivityType)
             .environmentObject(SidebarStateManager())
             .environmentObject(ActivityTypesViewModel())
-            .frame(width: 420)
+            .frame(width: 420, height: 900)
             .padding()
     }
 }

@@ -9,6 +9,12 @@ public enum SimplePreviewHelpers {
         view().frame(width: 750, height: 450)
     }
     
+    /// Creates a notes modal preview with notes modal frame size (900x700)
+    /// - Parameter view: The view to preview
+    public static func notesModal(_ view: @escaping () -> some View) -> some View {
+        view().frame(width: 900, height: 700)
+    }
+    
     /// Creates a project preview with project frame size (650x600)
     /// - Parameter view: The view to preview
     public static func project(_ view: @escaping () -> some View) -> some View {

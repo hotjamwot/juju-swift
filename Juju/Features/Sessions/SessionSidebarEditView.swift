@@ -15,6 +15,12 @@ struct SessionSidebarEditView: View {
     @State private var tempProjectPhaseID: String?
     @State private var tempMilestoneText: String
     
+    // Time picker state properties
+    @State private var startHour: Int = 0
+    @State private var startMinute: Int = 0
+    @State private var endHour: Int = 0
+    @State private var endMinute: Int = 0
+    
     // Projects for the picker
     @EnvironmentObject var projectsViewModel: ProjectsViewModel
     @EnvironmentObject var activityTypesViewModel: ActivityTypesViewModel
@@ -65,23 +71,31 @@ struct SessionSidebarEditView: View {
     }
     
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
-            // Time controls section
-            timeControlsSection
+        VStack(spacing: Theme.spacingExtraLarge) {
+            // Top section - time controls, project selection, and notes
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Time controls section
+                timeControlsSection
+                
+                // Project selection section
+                projectSelectionSection
+                
+                // Notes section
+                notesSection
+            }
             
-            // Project selection section
-            projectSelectionSection
+            Spacer()
             
-            // Notes section
-            notesSection
-            
-            // Mood section
-            moodSection
-            
-            // Action buttons
-            actionButtons
+            // Bottom section - mood and action buttons
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Mood section
+                moodSection
+                
+                // Action buttons
+                actionButtons
+            }
         }
-        .formStyle(.grouped)
+        .padding(Theme.spacingLarge)
         .task {
             await projectsViewModel.loadProjects()
         }
@@ -93,190 +107,215 @@ struct SessionSidebarEditView: View {
     }
     
     private var timeControlsSection: some View {
-        Section {
+        VStack(spacing: Theme.spacingLarge) {
+            // Date picker
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Time")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Start Time")
-                            .font(.caption)
+                Text("Date")
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                DatePicker(
+                    "",
+                    selection: $tempStartTime,
+                    displayedComponents: [.date]
+                )
+                .datePickerStyle(GraphicalDatePickerStyle())
+                .labelsHidden()
+            }
+            
+            // Start and End time dropdowns
+            HStack(spacing: Theme.spacingLarge) {
+                // Start Time dropdown
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("Start Time")
+                        .font(.body)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    HStack {
+                        // Hour picker
+                        Picker("Hour", selection: Binding(
+                            get: { startHour },
+                            set: { startHour = $0; updateStartTime() }
+                        )) {
+                            ForEach(0..<24, id: \.self) { hour in
+                                Text(String(format: "%02d", hour)).tag(hour)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .frame(width: 80)
+                        
+                        Text(":")
+                            .font(.headline)
                             .foregroundColor(Theme.Colors.textSecondary)
-                        DatePicker(
-                            "Start Time",
-                            selection: $tempStartTime,
-                            displayedComponents: [.date, .hourAndMinute]
-                        )
-                        .datePickerStyle(GraphicalDatePickerStyle())
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("End Time")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        DatePicker(
-                            "End Time",
-                            selection: $tempEndTime,
-                            displayedComponents: [.date, .hourAndMinute]
-                        )
-                        .datePickerStyle(GraphicalDatePickerStyle())
+                        
+                        // Minute picker
+                        Picker("Minute", selection: Binding(
+                            get: { startMinute },
+                            set: { startMinute = $0; updateStartTime() }
+                        )) {
+                            ForEach(0..<60, id: \.self) { minute in
+                                Text(String(format: "%02d", minute)).tag(minute)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .frame(width: 80)
                     }
                 }
                 
-                // Duration display
-                HStack {
-                    Text("Duration:")
-                        .font(.caption)
+                Spacer()
+                
+                // End Time dropdown
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    Text("End Time")
+                        .font(.body)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    Spacer()
-                    Text(durationString)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(Theme.Colors.textPrimary)
+                    HStack {
+                        // Hour picker
+                        Picker("Hour", selection: Binding(
+                            get: { endHour },
+                            set: { endHour = $0; updateEndTime() }
+                        )) {
+                            ForEach(0..<24, id: \.self) { hour in
+                                Text(String(format: "%02d", hour)).tag(hour)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .frame(width: 80)
+                        
+                        Text(":")
+                            .font(.headline)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        
+                        // Minute picker
+                        Picker("Minute", selection: Binding(
+                            get: { endMinute },
+                            set: { endMinute = $0; updateEndTime() }
+                        )) {
+                            ForEach(0..<60, id: \.self) { minute in
+                                Text(String(format: "%02d", minute)).tag(minute)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .frame(width: 80)
+                    }
                 }
             }
-            .padding()
+            
+            // Duration display
+            HStack {
+                Text("Duration:")
+                    .font(.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                Spacer()
+                Text(durationString)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(Theme.Colors.textPrimary)
+            }
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var projectSelectionSection: some View {
-        Section {
+        VStack(spacing: Theme.spacingLarge) {
+            // Project selection
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Project")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
                 Picker("Project", selection: $tempProjectName) {
                     Text("No Project").tag("")
                     ForEach(projectsViewModel.projects.filter { !$0.archived }) { project in
-                        HStack {
-                            Text(project.emoji)
-                            Text(project.name)
-                        }
-                        .tag(project.name)
+                        Text("\(project.emoji) \(project.name)").tag(project.name)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                
-                // Activity Type selection
+            }
+            
+            // Activity Type selection
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                Picker("Activity Type", selection: $tempActivityTypeID) {
+                    Text("Select Activity Type").tag("")
+                    ForEach(activityTypesViewModel.activeActivityTypes, id: \.id) { activityType in
+                        Text("\(activityType.emoji) \(activityType.name)").tag(activityType.id)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+            }
+            
+            // Phase selection (based on selected project)
+            if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
                 VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Activity Type")
-                        .font(.caption)
+                    Text("Phase")
+                        .font(.body)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Picker("Activity Type", selection: $tempActivityTypeID) {
-                        Text("Select Activity Type").tag("")
-                        ForEach(activityTypesViewModel.activeActivityTypes, id: \.id) { activityType in
-                            HStack {
-                                Text(activityType.emoji)
-                                Text(activityType.name)
-                            }
-                            .tag(activityType.id)
+                    Picker("Phase", selection: $tempProjectPhaseID) {
+                        Text("No Phase").tag("")
+                        ForEach(selectedProject.phases.filter { !$0.archived }, id: \.id) { phase in
+                            Text(phase.name).tag(phase.id)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
                 }
-                
-                // Phase selection (based on selected project)
-                if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Phase")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        
-                        Picker("Phase", selection: $tempProjectPhaseID) {
-                            Text("No Phase").tag("")
-                            ForEach(selectedProject.phases.filter { !$0.archived }, id: \.id) { phase in
-                                Text(phase.name).tag(phase.id)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                    }
-                }
-                
-                // Milestone field
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    Text("Milestone")
-                        .font(.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    TextField("Enter milestone", text: $tempMilestoneText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
             }
-            .padding()
+            
+            // Milestone field with star emoji
+            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                HStack(spacing: 8) {
+                    Text("Milestone")
+                        .font(.body)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Text("⭐")
+                }
+                TextField("Enter milestone", text: $tempMilestoneText)
+                    .textFieldStyle(.plain)
+                    .padding(Theme.spacingSmall)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(Theme.Design.cornerRadius)
+            }
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var notesSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Notes")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                TextEditor(text: $tempNotes)
-                    .frame(minHeight: 120)
-                    .padding(8)
-                    .background(Theme.Colors.background)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                    )
-            }
-            .padding()
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+            Text("Notes")
+                .font(.body)
+                .foregroundColor(Theme.Colors.textSecondary)
+            TextEditor(text: $tempNotes)
+                .frame(minHeight: 120, maxHeight: 160)
+                .textFieldStyle(.plain)
+                .padding(Theme.spacingSmall)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .frame(maxWidth: .infinity)
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var moodSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+        VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+            HStack {
                 Text("Mood")
-                    .font(.headline)
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                Spacer()
+                Text("\(tempMood)")
+                    .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    ForEach(0..<11, id: \.self) { moodValue in
-                        Button(action: {
-                            tempMood = moodValue
-                        }) {
-                            VStack {
-                                Circle()
-                                    .fill(moodColor(for: moodValue))
-                                    .frame(width: 28, height: 28)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                                    )
-                                Text("\(moodValue)")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                            .scaleEffect(tempMood == moodValue ? 1.1 : 1.0)
-                            .animation(.easeInOut(duration: 0.2), value: tempMood)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        if moodValue < 10 {
-                            Spacer()
-                        }
-                    }
-                }
             }
-            .padding()
+            
+            Slider(value: Binding(
+                get: { Double(tempMood) },
+                set: { tempMood = Int($0) }
+            ), in: 0...10, step: 1)
+            .accentColor(moodColor(for: tempMood))
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var actionButtons: some View {
@@ -295,7 +334,51 @@ struct SessionSidebarEditView: View {
             .disabled(!hasChanges || isSaving)
             .opacity(hasChanges ? 1.0 : 0.5)
         }
-        .padding(.horizontal)
+        .padding(Theme.spacingMedium)
+        .padding(.bottom, Theme.spacingLarge)
+    }
+    
+    // Update computed properties to use @State values
+    private var startHourBinding: Int {
+        get { startHour }
+        set { 
+            startHour = newValue
+            updateStartTime()
+        }
+    }
+    
+    private var startMinuteBinding: Int {
+        get { startMinute }
+        set { 
+            startMinute = newValue
+            updateStartTime()
+        }
+    }
+    
+    private var endHourBinding: Int {
+        get { endHour }
+        set { 
+            endHour = newValue
+            updateEndTime()
+        }
+    }
+    
+    private var endMinuteBinding: Int {
+        get { endMinute }
+        set { 
+            endMinute = newValue
+            updateEndTime()
+        }
+    }
+    
+    private func updateStartTime() {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: tempStartTime)
+        tempStartTime = Calendar.current.date(from: DateComponents(year: components.year, month: components.month, day: components.day, hour: startHour, minute: startMinute)) ?? tempStartTime
+    }
+    
+    private func updateEndTime() {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: tempEndTime)
+        tempEndTime = Calendar.current.date(from: DateComponents(year: components.year, month: components.month, day: components.day, hour: endHour, minute: endMinute)) ?? tempEndTime
     }
     
     private var durationString: String {
@@ -443,9 +526,38 @@ struct SessionSidebarEditView: View {
                 mood: 7
             )
             
+            // Create preview-specific view models with sample data
+            let previewProjectsViewModel = ProjectsViewModel()
+            let sampleProject = Project(
+                id: UUID().uuidString,
+                name: "Sample Project",
+                color: "#8E44AD",
+                about: "Sample project for preview",
+                order: 1,
+                emoji: "🎨",
+                phases: [
+                    Phase(name: "Planning", order: 0),
+                    Phase(name: "Development", order: 1),
+                    Phase(name: "Testing", order: 2)
+                ]
+            )
+            previewProjectsViewModel.projects = [sampleProject]
+            
+            let previewActivityTypesViewModel = ActivityTypesViewModel()
+            let sampleActivityType = ActivityType(
+                id: UUID().uuidString,
+                name: "Sample Activity",
+                emoji: "⚡",
+                description: "Sample activity type for preview",
+                archived: false
+            )
+            previewActivityTypesViewModel.activityTypes = [sampleActivityType]
+            
             return SessionSidebarEditView(session: sampleSession)
                 .environmentObject(SidebarStateManager())
                 .environmentObject(SessionManager.shared)
+                .environmentObject(previewProjectsViewModel)
+                .environmentObject(previewActivityTypesViewModel)
                 .frame(width: 420)
                 .padding()
         }

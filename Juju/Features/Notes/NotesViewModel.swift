@@ -22,6 +22,7 @@ class NotesViewModel: ObservableObject {
     @Published var projects: [Project] = []
     
     private var completion: ((String, Int?, String?, String?, String?) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText
+    private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
     // MARK: - Presentation Management
     
@@ -108,6 +109,24 @@ class NotesViewModel: ObservableObject {
     func cancelNotes() {
         completion?("", nil, nil, nil, nil)
         dismiss()
+    }
+    
+    // MARK: - Phase Creation
+    
+    func addPhase(name: String) {
+        guard let projectID = currentProjectID else { return }
+        
+        // Create new phase
+        let newPhase = Phase(name: name)
+        
+        // Add to project via ProjectManager
+        ProjectManager.shared.addPhase(to: projectID, phase: newPhase)
+        
+        // Refresh phases list
+        loadPhasesForProject()
+        
+        // Set the new phase as selected
+        selectedProjectPhaseID = newPhase.id
     }
     
     // MARK: - Validation

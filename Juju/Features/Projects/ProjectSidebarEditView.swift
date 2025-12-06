@@ -10,7 +10,7 @@ struct ProjectSidebarEditView: View {
     @State private var tempEmoji: String
     @State private var tempColor: Color
     @State private var tempAbout: String
-    @State private var tempPhases: [String]
+    @State private var tempPhases: [Phase]
     @State private var tempIsArchived: Bool
     
     // Form validation
@@ -24,34 +24,33 @@ struct ProjectSidebarEditView: View {
         self._tempEmoji = State(initialValue: project.emoji)
         self._tempColor = State(initialValue: Color(hex: project.color))
         self._tempAbout = State(initialValue: project.about ?? "")
-        self._tempPhases = State(initialValue: project.phases.map { $0.name })
+        self._tempPhases = State(initialValue: project.phases.sorted { $0.order < $1.order })
         self._tempIsArchived = State(initialValue: project.archived)
     }
     
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
-            // Live preview section
-            livePreviewSection
+        VStack(spacing: Theme.spacingExtraLarge) {
+            // Top section - name, emoji, color, description, and phases
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Combined basic info section (name, emoji, color, description)
+                basicInfoSection
+                
+                // Phases section
+                phasesSection
+            }
             
-            // Basic info section
-            basicInfoSection
+            Spacer()
             
-            // Color selection section
-            colorSelectionSection
-            
-            // About section
-            aboutSection
-            
-            // Phases section
-            phasesSection
-            
-            // Archive toggle
-            archiveSection
-            
-            // Action buttons
-            actionButtons
+            // Bottom section - archive toggle and action buttons
+            VStack(spacing: Theme.spacingExtraLarge) {
+                // Archive toggle (standalone)
+                archiveSection
+                
+                // Sticky action buttons at bottom
+                actionButtons
+            }
         }
-        .formStyle(.grouped)
+        .padding(Theme.spacingLarge)
         .onChange(of: tempName) { _ in validateChanges() }
         .onChange(of: tempEmoji) { _ in validateChanges() }
         .onChange(of: tempColor) { _ in validateChanges() }
@@ -60,212 +59,154 @@ struct ProjectSidebarEditView: View {
         .onChange(of: tempIsArchived) { _ in validateChanges() }
     }
     
-    private var livePreviewSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Live Preview")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    // Project card preview
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        HStack {
-                            Text(tempEmoji)
-                                .font(.title2)
-                            Text(tempName.isEmpty ? "Project Name" : tempName)
-                                .font(.headline)
-                                .foregroundColor(Theme.Colors.textPrimary)
-                        }
-                        
-                        if !tempAbout.isEmpty {
-                            Text(tempAbout)
-                                .font(.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .lineLimit(3)
-                        }
-                        
-                        // Color indicator
-                        HStack {
-                            Circle()
-                                .fill(tempColor)
-                                .frame(width: 12, height: 12)
-                            Text("Project Color")
-                                .font(.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                        }
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Theme.Colors.surface)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.divider, lineWidth: 1)
-                            )
-                    )
-                    
-                    Spacer()
-                }
-            }
-            .padding()
-        }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
-    }
-    
     private var basicInfoSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Basic Info")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                VStack(spacing: Theme.spacingMedium) {
-                    // Name field
-                    VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                        Text("Project Name")
+        VStack(spacing: Theme.spacingLarge) {
+            // Project Name - label on left, field on right
+            HStack {
+                Text("Name")
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .frame(width: 80, alignment: .leading)
+                TextField("", text: $tempName)
+                    .textFieldStyle(.plain)
+                    .padding(Theme.spacingSmall)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .frame(maxWidth: .infinity)
+            }
+            
+            // Emoji and Color on same row
+            HStack(spacing: Theme.spacingLarge) {
+                // Emoji selection
+                HStack(spacing: Theme.spacingSmall) {
+                    Text(tempEmoji)
+                        .font(.title2)
+                    Button(action: {
+                        showingEmojiPicker = true
+                    }) {
+                        Text("Change")
                             .font(.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
-                        TextField("Enter project name", text: $tempName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
-                    
-                    // Emoji selection
-                    HStack {
-                        Text("Emoji")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        Spacer()
-                        Button(action: {
-                            showingEmojiPicker = true
-                        }) {
-                            HStack {
-                                Text(tempEmoji)
-                                    .font(.title2)
-                                Text("Change Emoji")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .sheet(isPresented: $showingEmojiPicker) {
-                            EmojiPickerView(selectedEmoji: $tempEmoji)
-                        }
+                    .buttonStyle(.plain)
+                    .sheet(isPresented: $showingEmojiPicker) {
+                        EmojiPickerView(selectedEmoji: $tempEmoji)
                     }
                 }
-            }
-            .padding()
-        }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
-    }
-    
-    private var colorSelectionSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Color")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
                 
-                ColorPicker("Select project color", selection: $tempColor)
-                    .labelsHidden()
+                Spacer()
+                
+                // Color selection
+                HStack(spacing: Theme.spacingSmall) {
+                    Circle()
+                        .fill(tempColor)
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Circle()
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                    Button(action: {
+                        // Color picker action
+                    }) {
+                        Text("Change")
+                            .font(.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .padding()
-        }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
-    }
-    
-    private var aboutSection: some View {
-        Section {
+            
+            // Description
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("Description")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
+                    .font(.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 TextEditor(text: $tempAbout)
-                    .frame(minHeight: 80)
-                    .padding(8)
+                    .frame(minHeight: 100)
+                    .textFieldStyle(.plain)
+                    .padding(Theme.spacingSmall)
                     .background(Theme.Colors.background)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                    )
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .frame(maxWidth: .infinity)
             }
-            .padding()
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var phasesSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Phases")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                VStack(spacing: Theme.spacingSmall) {
-                    ForEach(Array(tempPhases.enumerated()), id: \.offset) { index, phase in
-                        HStack {
-                            TextField("Phase \(index + 1)", text: Binding(
-                                get: { phase },
-                                set: { newValue in
-                                    tempPhases[index] = newValue
-                                }
-                            ))
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            
-                            Button(action: {
-                                tempPhases.remove(at: index)
-                            }) {
-                                Image(systemName: "minus.circle.fill")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+        VStack(spacing: Theme.spacingLarge) {
+            ForEach(tempPhases.indices, id: \.self) { index in
+                HStack(spacing: Theme.spacingSmall) {
+                    // Drag handle
+                    Image(systemName: "line.3.horizontal")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                        .frame(width: 24)
+                    
+                    TextField("", text: Binding(
+                        get: { tempPhases[index].name },
+                        set: { newValue in
+                            tempPhases[index].name = newValue
                         }
-                    }
+                    ))
+                    .textFieldStyle(.plain)
+                    .padding(Theme.spacingSmall)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .frame(maxWidth: .infinity)
                     
                     Button(action: {
-                        tempPhases.append("New Phase")
+                        tempPhases.remove(at: index)
                     }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(Theme.Colors.accentColor)
-                            Text("Add Phase")
-                                .foregroundColor(Theme.Colors.accentColor)
-                        }
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundColor(.red)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
+                .onDrag {
+                    let itemProvider = NSItemProvider()
+                    itemProvider.registerDataRepresentation(forTypeIdentifier: "public.text", visibility: .all) { completion in
+                        let data = String(index).data(using: .utf8) ?? Data()
+                        completion(data, nil)
+                        return nil
+                    }
+                    return itemProvider
+                }
+                .onDrop(of: ["public.text"], delegate: PhaseDropDelegate(
+                    index: index,
+                    phases: $tempPhases
+                ))
             }
-            .padding()
+            
+            Button(action: {
+                let newPhase = Phase(name: "New Phase", order: tempPhases.count)
+                tempPhases.append(newPhase)
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(Theme.Colors.accentColor)
+                    Text("Add Phase")
+                        .foregroundColor(Theme.Colors.accentColor)
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
         }
+        .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .cornerRadius(Theme.Design.cornerRadius)
     }
     
     private var archiveSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Archive Project")
-                    .font(.headline)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                HStack {
-                    Toggle("Archive this project", isOn: $tempIsArchived)
-                    Spacer()
-                    Text(tempIsArchived ? "Archived" : "Active")
-                        .font(.caption)
-                        .foregroundColor(tempIsArchived ? .red : .green)
-                }
-            }
-            .padding()
+        HStack {
+            Toggle("", isOn: $tempIsArchived)
+            Spacer()
+            Text(tempIsArchived ? "Archived" : "Active")
+                .font(.caption)
+                .foregroundColor(tempIsArchived ? .red : .green)
         }
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
+        .padding(Theme.spacingMedium)
     }
     
     private var actionButtons: some View {
@@ -284,20 +225,29 @@ struct ProjectSidebarEditView: View {
             .disabled(!hasChanges || isSaving || tempName.isEmpty)
             .opacity((hasChanges && !tempName.isEmpty) ? 1.0 : 0.5)
         }
-        .padding(.horizontal)
+        .padding(Theme.spacingMedium)
+        .padding(.bottom, Theme.spacingLarge)
     }
     
     private func validateChanges() {
         let projectColor = Color(hex: project.color)
         let projectAbout = project.about ?? ""
-        let projectPhases = project.phases.map { $0.name }
+        
+        // Compare phases by checking if any phase has changed (name, order, or archived status)
+        let phasesChanged = tempPhases.count != project.phases.count ||
+            !zip(tempPhases, project.phases.sorted { $0.order < $1.order }).allSatisfy { tempPhase, projectPhase in
+                tempPhase.id == projectPhase.id &&
+                tempPhase.name == projectPhase.name &&
+                tempPhase.order == projectPhase.order &&
+                tempPhase.archived == projectPhase.archived
+            }
         
         hasChanges = (
             tempName != project.name ||
             tempEmoji != project.emoji ||
             tempColor != projectColor ||
             tempAbout != projectAbout ||
-            tempPhases != projectPhases ||
+            phasesChanged ||
             tempIsArchived != project.archived
         )
     }
@@ -308,15 +258,15 @@ struct ProjectSidebarEditView: View {
         // Convert Color to hex string
         let colorHex = tempColor.toHex ?? project.color
         
-        // Convert phases strings to Phase objects
-        let phases = tempPhases.map { phaseName in
+        // Use the tempPhases directly (they already have proper order values)
+        let phases = tempPhases.map { phase in
             // Check if this phase already exists in the project
-            if let existingPhase = project.phases.first(where: { $0.name == phaseName }) {
-                // Update existing phase
-                return Phase(id: existingPhase.id, name: phaseName, archived: existingPhase.archived)
+            if let existingPhase = project.phases.first(where: { $0.id == phase.id }) {
+                // Update existing phase (keep the ID and archived status)
+                return Phase(id: existingPhase.id, name: phase.name, order: phase.order, archived: existingPhase.archived)
             } else {
-                // Create new phase
-                return Phase(name: phaseName)
+                // Create new phase (it already has the correct order)
+                return Phase(id: phase.id, name: phase.name, order: phase.order, archived: phase.archived)
             }
         }
         
@@ -368,6 +318,44 @@ struct ProjectSidebarEditView: View {
     }
 }
 
+// MARK: - Drag and Drop Delegate
+struct PhaseDropDelegate: DropDelegate {
+    let index: Int
+    @Binding var phases: [Phase]
+    
+    func performDrop(info: DropInfo) -> Bool {
+        guard let itemProvider = info.itemProviders(for: ["public.text"]).first else {
+            return false
+        }
+        
+        itemProvider.loadDataRepresentation(forTypeIdentifier: "public.text") { data, error in
+            DispatchQueue.main.async {
+                if let data = data, let sourceIndexString = String(data: data, encoding: .utf8), let sourceIndex = Int(sourceIndexString) {
+                    movePhase(from: sourceIndex, to: index)
+                }
+            }
+        }
+        
+        return true
+    }
+    
+    private func movePhase(from sourceIndex: Int, to destinationIndex: Int) {
+        guard sourceIndex != destinationIndex,
+              sourceIndex < phases.count,
+              destinationIndex < phases.count else { return }
+        
+        let phase = phases.remove(at: sourceIndex)
+        phases.insert(phase, at: destinationIndex)
+        
+        // Update order values
+        for (index, phase) in phases.enumerated() {
+            var updatedPhase = phase
+            updatedPhase.order = index
+            phases[index] = updatedPhase
+        }
+    }
+}
+
     // MARK: - Preview
     #if DEBUG
     @available(macOS 12.0, *)
@@ -386,7 +374,7 @@ struct ProjectSidebarEditView: View {
             return ProjectSidebarEditView(project: sampleProject)
                 .environmentObject(SidebarStateManager())
                 .environmentObject(ProjectsViewModel())
-                .frame(width: 420)
+                .frame(width: 420, height: 900)
                 .padding()
         }
     }
