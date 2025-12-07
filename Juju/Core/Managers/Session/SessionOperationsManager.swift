@@ -45,6 +45,9 @@ class SessionOperationsManager: ObservableObject {
         currentActivityTypeID = nil  // Will be set at session end
         currentProjectPhaseID = nil  // Will be set at session end
         sessionStartTime = Date()
+        
+        // Notify that session started
+        NotificationCenter.default.post(name: .sessionDidStart, object: nil)
     }
     
     func endSession(

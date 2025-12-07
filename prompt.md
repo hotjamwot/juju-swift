@@ -1,5 +1,57 @@
-You are Coding expert helping me with my Juju app, a menu bar time-tracking app built in Swift.
-Context of Juju app:
+You are a coding expert helping me with my Juju app, a menu bar time-tracking app built in Swift.
+This document describes the architecture, structure, and coding conventions used in Juju. 
+Use it as the source of truth when generating or modifying code.
+
+---
+
+## 📋 Quick Reference
+
+**Architecture**: MVVM + Managers (logic) + SwiftUI views  
+**Data Storage**: CSV/JSON files only (no Core Data or cloud)  
+**Session Management**: SessionDataManager is source of truth  
+**Threading**: Use @MainActor for SwiftUI-bound ViewModels  
+**Async**: All asynchronous work uses async/await (no completion handlers)  
+**Views**: Contain no business logic; ViewModels handle state and data flow  
+**Singletons**: Avoid except where already used (SessionManager, MenuManager)
+
+---
+
+## 📁 Project Structure
+
+- **App/**: App lifecycle and glue code
+- **Core/**: Models, Managers, ViewModels (business logic)
+- **Features/**: Feature-specific SwiftUI views + feature-specific viewmodels
+- **Shared/**: Cross-cutting UI components, previews, extensions
+
+---
+
+## 🍏 Menubar Architecture
+
+The macOS menu bar interface is controlled by MenuManager and IconManager. The menu dropdown uses NSMenu and triggers actions into SessionManager.
+
+---
+
+## 🔑 Key Models
+
+- **Session**: start, end, duration, projectId, activityTypeId, notes, mood
+- **Project**: id, name, emoji, color, about, archived?
+- **ActivityType**: id, name, emoji, description, archived?
+
+---
+
+## 🗂 Data Storage Locations
+
+All data is user-owned and lives at: ~/Library/Application Support/juju/
+
+- **Sessions**: ~/Library/Application Support/juju/YYYY-data.csv
+- **Projects**: projects.json in the same folder
+- **Activity Types**: activityTypes.json in the same folder
+
+No data is stored elsewhere.
+
+---
+
+## 🎯 Context of Juju app:
 
 ### ✅ System Tray Interface
 - Lives in your menu bar (macOS).
@@ -31,6 +83,7 @@ Context of Juju app:
 - **Sessions Tab**: Session management with filtering and export
 - **Projects Tab**: Project management interface
 - **Activity Types Tab**: Activity type management with emoji picker and archiving
+- **Live 'Active Session' Timer**: Shows pill of active project during session with timer
 
 **Charts Tab (Default):**
 1. **Hero Section** – "This Week in Juju"
@@ -180,37 +233,9 @@ Context of Juju app:
 │   └── xcuserdata/ # User-specific settings
 ├── README.md
 ├── prompt.md
-├── tooltip_implementation_plan.md
 └── icons/ # App icon assets
     ├── AppIcon1024.png
     ├── juju_logo.png
     ├── status_active.pdf
     └── status_idle.pdf
 ```
-
-
-# TODO LIST RECOMMENDED
-
-When starting a new task, it is recommended to create a todo list.
-
-1. Include the task_progress parameter in your next tool call
-2. Create a comprehensive checklist of all steps needed
-3. Use markdown format: - [ ] for incomplete, - [x] for complete
-
-**Benefits of creating a todo list now:**
-	- Clear roadmap for implementation
-	- Progress tracking throughout the task
-	- Nothing gets forgotten or missed
-	- Users can see, monitor, and edit the plan
-
-**Example structure:**
-```
-- [ ] Analyze requirements
-- [ ] Set up necessary files
-- [ ] Implement main functionality
-- [ ] Handle edge cases
-- [ ] Test the implementation
-- [ ] Verify results
-```
-
-Keeping the todo list updated helps track progress and ensures nothing is missed.

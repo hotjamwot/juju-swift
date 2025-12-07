@@ -122,15 +122,9 @@ NSApp.mainMenu = mainMenu
     
     func updateMenuBarIcon(isActive: Bool) {
         if let button = statusItem.button {
-            let sessionManager = SessionManager.shared
-            let activityTypeID: String? = sessionManager.isSessionActive ? nil : nil // Activity is nil during active session, set at end
-            let projectID: String? = sessionManager.currentProjectID
-            
             IconManager.updateIcon(
                 for: button,
-                isActive: isActive,
-                activityTypeID: activityTypeID,
-                projectID: projectID
+                isActive: isActive
             )
         }
     }

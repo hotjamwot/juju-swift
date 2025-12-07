@@ -1,0 +1,87 @@
+# Build artifacts and derived data
+DerivedData/
+build/
+*.xcuserstate
+*.xcuserdata
+*.xccheckout
+*.xcscmblueprint
+
+# Xcode project files that change frequently
+project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+project.xcworkspace/xcshareddata/swiftpm/
+
+# Swift Package Manager
+Package.resolved
+Package.swift
+Package.pins
+.xcode.env
+
+# macOS system files
+.DS_Store
+.fseventsd
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# Cache files
+*.cache
+.cache/
+tmp/
+temp/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-*
+atom/
+*.atom
+
+# Documentation and assets that don't need analysis
+icons/
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+
+# Configuration files that rarely change
+Info.plist
+*.entitlements
+*.plist
+*.xcconfig
+
+# Test files and coverage
+*.test
+*.xctest
+*.xcresult
+*.profdata
+Coverage/
+
+# Archive and distribution
+*.xcarchive
+*.ipa
+*.app
+*.dSYM
+
+# Dependency management
+Carthage/
+CocoaPods/
+Pods/
+
+# Documentation files
+CHANGELOG.md
+LICENSE
+CONTRIBUTING.md
+INSTALL.md

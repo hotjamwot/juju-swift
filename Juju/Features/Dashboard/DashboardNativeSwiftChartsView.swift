@@ -23,18 +23,18 @@ struct DashboardNativeSwiftChartsView: View {
     // MARK: - Component Views
     private var heroSection: some View {
         VStack(spacing: 32) {
-            // Top Row: Active Session Status and Hero Section
-            HStack(spacing: 32) {
-                // Left: Active Session Status
+            // Top Row: Active Session Status (only show if active session)
+            if sessionManager.activeSession != nil {
                 ActiveSessionStatusView(sessionManager: sessionManager)
-                    .frame(width: 400)
-                
-                // Right: Hero Section
-                HeroSectionView(
-                    chartDataPreparer: chartDataPreparer,
-                    editorialEngine: editorialEngine
-                )
+                    .frame(maxWidth: .infinity)
             }
+            
+            // Hero Section (full width when no active session, or below active session)
+            HeroSectionView(
+                chartDataPreparer: chartDataPreparer,
+                editorialEngine: editorialEngine
+            )
+            .frame(maxWidth: .infinity)
             
             // Continue with existing sections...
         }
@@ -141,25 +141,42 @@ struct DashboardNativeSwiftChartsView: View {
 
     // MARK - Body
     var body: some View {
-        ScrollView {
-            VStack(spacing: 32) {
-                // Hero Section
-                heroSection
-                
-                // This Year Section
-                thisYearSection
-                
-                // Weekly Stacked Bar Chart
-                weeklyStackedBarChart
-                
-                // Stacked Area Chart
-                stackedAreaChart
+        VStack(spacing: 0) {
+            // Sticky Active Session Bar (always visible at top)
+            if sessionManager.activeSession != nil {
+                ActiveSessionStatusView(sessionManager: sessionManager)
+                    .padding(.horizontal, Theme.spacingLarge)
+                    .padding(.top, Theme.spacingLarge)
+                    .padding(.bottom, Theme.spacingSmall)
+                    .background(Theme.Colors.background)
+                    .zIndex(1) // Ensure it stays above content
             }
-            .padding(.vertical, Theme.spacingLarge)
-            .padding(.horizontal, 0)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.Colors.background)
-            .cornerRadius(Theme.Design.cornerRadius)
+            
+            // Scrollable content below
+            ScrollView {
+                VStack(spacing: 32) {
+                    // Hero Section (no longer includes active session)
+                    HeroSectionView(
+                        chartDataPreparer: chartDataPreparer,
+                        editorialEngine: editorialEngine
+                    )
+                    .frame(maxWidth: .infinity)
+                    
+                    // This Year Section
+                    thisYearSection
+                    
+                    // Weekly Stacked Bar Chart
+                    weeklyStackedBarChart
+                    
+                    // Stacked Area Chart
+                    stackedAreaChart
+                }
+                .padding(.vertical, Theme.spacingLarge)
+                .padding(.horizontal, Theme.spacingLarge)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.Colors.background)
+                .cornerRadius(Theme.Design.cornerRadius)
+            }
         }
         .padding(.top, 20)
         .padding(.trailing, 20)
@@ -205,6 +222,17 @@ struct DashboardNativeSwiftChartsView: View {
                 )
                 
                 isLoading = false
+            }
+        }
+        // Event-driven reload when session starts
+        .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
+            Task {
+                await MainActor.run {
+                    chartDataPreparer.prepareAllTimeData(
+                        sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                }
             }
         }
         // Event-driven reload when session ends (FIX: Remove artificial delay)
