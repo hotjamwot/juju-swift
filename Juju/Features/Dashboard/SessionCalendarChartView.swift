@@ -57,7 +57,7 @@ struct SessionCalendarChartView: View {
             yEnd:   .value("End Hour",   session.endHour)
         )
         .foregroundStyle(Color(hex: session.projectColor))
-        .cornerRadius(Theme.Design.cornerRadius * 0.625) // Adjusted corner radius (between /4 and full)
+        .cornerRadius(Theme.Design.cornerRadius * 0.5) // Adjusted corner radius (between /4 and full)
         .annotation(position: .overlay, alignment: .center) {
             VStack(spacing: 6) {
                 // Activity emoji on top (larger and prominent)
@@ -82,60 +82,59 @@ struct SessionCalendarChartView: View {
 // Mark: Body
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            
-            Chart {
-                // Working hours shaded area (9 AM to 5 PM)
-                workingHoursShade()
-                
-                // Add subtle grid lines only for key hours: 6 AM, 9 AM, 5 PM, 11 PM
-                gridLine(for: 6.0)
-                gridLine(for: 23.0)
-                
-                ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
-                    sessionRectangle(for: session)
-                }
-            }
-            .chartYScale(domain: 6.0 ... 23.0)
-            .chartYAxis {
-                AxisMarks(values: .automatic) { value in
-                    if let hour = value.as(Double.self) {
-                        AxisValueLabel(String(format: "%.0f", hour))
-                    }
-                }
-            }
-
-            .chartXAxis {
-                AxisMarks(values: weekDays) { value in
-                    let day = value.as(String.self) ?? ""
-                    let label = dayToLetter[day] ?? day
-                    
-                    AxisValueLabel {
-                        VStack(spacing: 2) {
-                            Text(label)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
-                                Text("\(dailyTotal, specifier: "%.1f")h")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                            }
-                        }
-                    }
-                }
-            }
-            .chartPlotStyle { plotArea in
-                plotArea
-                    .background(.clear)
-                }
-            .chartXScale(domain: weekDays)
-
-            .frame(height: 380)
-            
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: 380)
+            } else {
+                Chart {
+                    // Working hours shaded area (9 AM to 5 PM)
+                    workingHoursShade()
+                    
+                    // Add subtle grid lines only for key hours: 6 AM, 9 AM, 5 PM, 11 PM
+                    gridLine(for: 6.0)
+                    gridLine(for: 23.0)
+                    
+                    ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
+                        sessionRectangle(for: session)
+                    }
+                }
+                .chartYScale(domain: 6.0 ... 23.0)
+                .chartYAxis {
+                    AxisMarks(values: .automatic) { value in
+                        if let hour = value.as(Double.self) {
+                            AxisValueLabel(String(format: "%.0f", hour))
+                        }
+                    }
+                }
+
+                .chartXAxis {
+                    AxisMarks(values: weekDays) { value in
+                        let day = value.as(String.self) ?? ""
+                        let label = dayToLetter[day] ?? day
+                        
+                        AxisValueLabel {
+                            VStack(spacing: 2) {
+                                Text(label)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
+                                    Text("\(dailyTotal, specifier: "%.1f")h")
+                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartPlotStyle { plotArea in
+                    plotArea
+                        .background(.clear)
+                    }
+                .chartXScale(domain: weekDays)
+
+                .frame(height: 380)
             }
         }
     }

@@ -17,6 +17,7 @@ struct ProjectSidebarEditView: View {
     @State private var hasChanges = false
     @State private var isSaving = false
     @State private var showingEmojiPicker = false
+    @State private var showingColorPicker = false
     
     init(project: Project) {
         self._project = State(initialValue: project)
@@ -78,26 +79,23 @@ struct ProjectSidebarEditView: View {
             // Emoji and Color on same row
             HStack(spacing: Theme.spacingLarge) {
                 // Emoji selection
-                HStack(spacing: Theme.spacingSmall) {
+                Button(action: {
+                    showingEmojiPicker = true
+                }) {
                     Text(tempEmoji)
                         .font(.title2)
-                    Button(action: {
-                        showingEmojiPicker = true
-                    }) {
-                        Text("Change")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                    }
-                    .buttonStyle(.plain)
-                    .sheet(isPresented: $showingEmojiPicker) {
-                        EmojiPickerView(selectedEmoji: $tempEmoji)
-                    }
+                }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showingEmojiPicker) {
+                    EmojiPickerView(selectedEmoji: $tempEmoji)
                 }
                 
                 Spacer()
                 
                 // Color selection
-                HStack(spacing: Theme.spacingSmall) {
+                Button(action: {
+                    showingColorPicker = true
+                }) {
                     Circle()
                         .fill(tempColor)
                         .frame(width: 24, height: 24)
@@ -105,14 +103,11 @@ struct ProjectSidebarEditView: View {
                             Circle()
                                 .stroke(Theme.Colors.divider, lineWidth: 1)
                         )
-                    Button(action: {
-                        // Color picker action
-                    }) {
-                        Text("Change")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                    }
-                    .buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showingColorPicker) {
+                    ColorPicker("Choose Color", selection: $tempColor)
+                        .padding()
                 }
             }
             

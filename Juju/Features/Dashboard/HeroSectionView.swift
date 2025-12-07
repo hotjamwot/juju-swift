@@ -26,7 +26,13 @@ struct HeroSectionView: View {
                                 .foregroundColor(Theme.Colors.textPrimary)
                             Text(editorialEngine.currentHeadline?.formattedHours ?? "0h 0m")
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundColor(Theme.Colors.accentColor)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                             
                             // Space between sections
                             Spacer().frame(height: Theme.spacingMedium)
@@ -42,7 +48,13 @@ struct HeroSectionView: View {
                                         .foregroundColor(Theme.Colors.textPrimary)
                                     Text(topActivity.name)
                                         .font(.system(size: 22, weight: .bold, design: .rounded))
-                                        .foregroundColor(Theme.Colors.accentColor)
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
                                 }
                             } else {
                                 Text("Uncategorized")
@@ -60,7 +72,13 @@ struct HeroSectionView: View {
                                     .foregroundColor(Theme.Colors.textPrimary)
                                 Text(milestone.text)
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
-                                    .foregroundColor(Theme.Colors.accentColor)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
                             }
                         }
                         .padding(.horizontal, Theme.spacingLarge)
