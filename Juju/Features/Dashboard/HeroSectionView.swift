@@ -16,34 +16,55 @@ struct HeroSectionView: View {
                 let rightColumnWidth = totalWidth * 0.60
 
                 HStack(spacing: Theme.spacingLarge) {
-                    // Left Column: Logo and Dynamic Narrative
-                    VStack(alignment: .center, spacing: Theme.spacingSmall) {
-                        // Juju Logo
-                        Image("juju_logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 48, height: 48)
-                            .shadow(radius: 1)
-
-                        // Dynamic Narrative Headline
-                        VStack(alignment: .center, spacing: Theme.spacingExtraSmall) {
-                            Text(headlineText)
-                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    // Left Column: Editorial Information
+                    VStack(alignment: .center, spacing: Theme.spacingMedium) {
+                        // Three-line editorial information with accent colors
+                        VStack(alignment: .center, spacing: Theme.spacingSmall) {
+                            // Line 1: Total logged time
+                            Text("This week you logged")
+                                .font(.system(size: 18, weight: .medium, design: .rounded))
                                 .foregroundColor(Theme.Colors.textPrimary)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(nil)
-                                .padding(.horizontal, Theme.spacingLarge)
-                                .fixedSize(horizontal: false, vertical: true)
+                            Text(editorialEngine.currentHeadline?.formattedHours ?? "0h 0m")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.accentColor)
+                            
+                            // Space between sections
+                            Spacer().frame(height: Theme.spacingMedium)
+                            
+                            // Line 2: Focus activity
+                            Text("Your focus was on")
+                                .font(.system(size: 18, weight: .medium, design: .rounded))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                            if let topActivity = editorialEngine.currentHeadline?.topActivity {
+                                HStack(spacing: Theme.spacingExtraSmall) {
+                                    Text(topActivity.emoji)
+                                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                    Text(topActivity.name)
+                                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                                        .foregroundColor(Theme.Colors.accentColor)
+                                }
+                            } else {
+                                Text("Uncategorized")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(Theme.Colors.accentColor)
+                            }
+                            
+                            // Space between sections
+                            Spacer().frame(height: Theme.spacingMedium)
+                            
+                            // Line 3: Milestone (conditional)
+                            if let milestone = editorialEngine.currentHeadline?.milestone {
+                                Text("And congrats! You")
+                                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                Text(milestone.text)
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(Theme.Colors.accentColor)
+                            }
                         }
+                        .padding(.horizontal, Theme.spacingLarge)
                         .padding(.vertical, Theme.spacingMedium)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .fill(Theme.Colors.background)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                                )
-                        )
                     }
                     .frame(width: leftColumnWidth, alignment: .center)
 
@@ -90,7 +111,7 @@ struct HeroSectionView: View {
 #Preview {
     return HeroSectionView_PreviewsContent()
         .frame(width: 1000, height: 800)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Theme.Colors.background)
         .padding()
 }
 
