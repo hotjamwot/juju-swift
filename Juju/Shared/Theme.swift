@@ -12,7 +12,7 @@ public struct Theme {
         public static let textSecondary = Color("textSecondary")  // #9A9AA0
         public static let divider     = Color("Divider")  // rgba(255,255,255,0.1)
         public static let foreground  = Color("foreground") // #E5E5E7
-        public static let error       = Color("error")  // #B02A21
+        public static let error       = Color("Error")  // #B02A21
         public static let accentColor       = Color("AppAccentColor")  // #E100FF or #C800C8 in dark mode
 
         /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)

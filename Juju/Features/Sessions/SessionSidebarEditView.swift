@@ -29,7 +29,11 @@ struct SessionSidebarEditView: View {
     @State private var hasChanges = false
     @State private var isSaving = false
     
-    init(session: SessionRecord) {
+    // Add a binding to trigger refresh in parent
+    let onSessionUpdated: (() -> Void)?
+    
+    init(session: SessionRecord, onSessionUpdated: (() -> Void)? = nil) {
+        self.onSessionUpdated = onSessionUpdated
         self._session = State(initialValue: session)
         
         // Convert string times to Date objects
@@ -337,25 +341,6 @@ struct SessionSidebarEditView: View {
             }
             .buttonStyle(SecondaryButtonStyle())
             
-            Button(action: {
-                deleteSession()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text("Delete Session")
-                        .font(Theme.Fonts.body)
-                        .fontWeight(.medium)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Theme.Colors.error.opacity(0.15))
-                .foregroundColor(Theme.Colors.error)
-                .cornerRadius(10)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .pointingHandOnHover()
-            .disabled(isSaving)
             
             Spacer()
             
@@ -573,6 +558,10 @@ struct SessionSidebarEditView: View {
             )
             hasChanges = false
             
+            // Trigger refresh callback if provided (either direct or shared)
+            onSessionUpdated?()
+            SessionSidebarEditView.sharedSessionUpdatedCallback?()
+            
             // Close sidebar after successful save
             sidebarState.hide()
         } else {
@@ -621,7 +610,12 @@ struct SessionSidebarEditView: View {
     }
 }
 
-    // MARK: - Preview
+// MARK: - Shared callback for session updates
+extension SessionSidebarEditView {
+    static var sharedSessionUpdatedCallback: (() -> Void)?
+}
+
+// MARK: - Preview
     #if DEBUG
     @available(macOS 12.0, *)
     struct SessionSidebarEditView_Previews: PreviewProvider {

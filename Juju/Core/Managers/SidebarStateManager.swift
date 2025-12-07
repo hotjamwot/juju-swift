@@ -37,6 +37,20 @@ final class SidebarStateManager: ObservableObject {
         }
     }
     
+    func show(_ content: SidebarContent, onSessionUpdated: (() -> Void)? = nil) {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            self.content = content
+            self.isVisible = true
+        }
+        
+        // Store the callback for session editing
+        if case .session = content {
+            // Store callback in a way that can be accessed by SessionSidebarEditView
+            // We'll use a singleton approach for now
+            SessionSidebarEditView.sharedSessionUpdatedCallback = onSessionUpdated
+        }
+    }
+    
     func hide() {
         withAnimation(.easeInOut(duration: 0.25)) {
             self.isVisible = false

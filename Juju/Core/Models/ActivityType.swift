@@ -25,6 +25,10 @@ class ActivityTypeManager {
     private let jujuPath: URL?
     private let activityTypesFile: URL?
     
+    // Cache for loaded activity types to avoid repeated disk access
+    private var cachedActivityTypes: [ActivityType]?
+    private var lastCacheTime: Date?
+    
     private init() {
         self.jujuPath = appSupportPath?.appendingPathComponent("Juju")
         self.activityTypesFile = jujuPath?.appendingPathComponent("activityTypes.json")
@@ -33,6 +37,13 @@ class ActivityTypeManager {
     // MARK: - Load Activity Types
     
     func loadActivityTypes() -> [ActivityType] {
+        // Check cache first (cache for 5 minutes to avoid excessive disk access)
+        if let cached = cachedActivityTypes, 
+           let lastTime = lastCacheTime, 
+           Date().timeIntervalSince(lastTime) < 300 { // 5 minutes
+            return cached
+        }
+        
         // Create directory if it doesn't exist
         if let jujuPath = jujuPath {
             try? FileManager.default.createDirectory(at: jujuPath, withIntermediateDirectories: true)
@@ -43,27 +54,38 @@ class ActivityTypeManager {
             do {
                 let data = try Data(contentsOf: activityTypesFile)
                 let loadedTypes = try JSONDecoder().decode([ActivityType].self, from: data)
-                print("Loaded \(loadedTypes.count) activity types from \(activityTypesFile.path)")
                 
                 // Check if migration is needed (old format without description/archived)
                 let needsMigration = loadedTypes.contains { type in
                     type.description.isEmpty || type.archived != type.archived
                 }
                 
+                var resultTypes: [ActivityType]
                 if needsMigration {
                     print("🔄 Migrating activity types to new schema...")
-                    let migratedTypes = migrateActivityTypes(loadedTypes)
-                    return migratedTypes
+                    resultTypes = migrateActivityTypes(loadedTypes)
+                } else {
+                    resultTypes = loadedTypes
                 }
                 
-                return loadedTypes
+                // Cache the result
+                cachedActivityTypes = resultTypes
+                lastCacheTime = Date()
+                
+                return resultTypes
             } catch {
                 print("Error loading activity types: \(error)")
                 print("Creating default activity types")
-                return createDefaultActivityTypes()
+                let defaults = createDefaultActivityTypes()
+                cachedActivityTypes = defaults
+                lastCacheTime = Date()
+                return defaults
             }
         } else {
-            return createDefaultActivityTypes()
+            let defaults = createDefaultActivityTypes()
+            cachedActivityTypes = defaults
+            lastCacheTime = Date()
+            return defaults
         }
     }
     
@@ -89,6 +111,8 @@ class ActivityTypeManager {
         var types = loadActivityTypes()
         types.append(activityType)
         saveActivityTypes(types)
+        // Clear cache after modification
+        clearCache()
     }
     
     func updateActivityType(_ activityType: ActivityType) {
@@ -96,6 +120,8 @@ class ActivityTypeManager {
         if let index = types.firstIndex(where: { $0.id == activityType.id }) {
             types[index] = activityType
             saveActivityTypes(types)
+            // Clear cache after modification
+            clearCache()
         }
     }
     
@@ -103,6 +129,8 @@ class ActivityTypeManager {
         var types = loadActivityTypes()
         types.removeAll { $0.id == id }
         saveActivityTypes(types)
+        // Clear cache after modification
+        clearCache()
     }
     
     func getActivityType(id: String) -> ActivityType? {
@@ -119,24 +147,30 @@ class ActivityTypeManager {
             activityType.archived = archived
             types[activityTypeIndex] = activityType
             saveActivityTypes(types)
+            // Clear cache after modification
+            clearCache()
         }
     }
     
     /// Get active activity types (non-archived)
     func getActiveActivityTypes() -> [ActivityType] {
-        let types = loadActivityTypes()
-        return types.filter { !$0.archived }
+        return loadActivityTypes().filter { !$0.archived }
     }
     
     /// Get archived activity types
     func getArchivedActivityTypes() -> [ActivityType] {
-        let types = loadActivityTypes()
-        return types.filter { $0.archived }
+        return loadActivityTypes().filter { $0.archived }
     }
     
     /// Get all activity types (including archived)
     func getAllActivityTypes() -> [ActivityType] {
         return loadActivityTypes()
+    }
+    
+    /// Clear the activity types cache
+    func clearCache() {
+        cachedActivityTypes = nil
+        lastCacheTime = nil
     }
     
     // MARK: - Migration Logic

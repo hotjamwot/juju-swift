@@ -23,15 +23,11 @@ struct GroupedSession: Identifiable {
 struct GroupedSessionView: View {
     let group: GroupedSession
     let projects: [Project]
-    let onSave: () -> Void
+    let activityTypes: [ActivityType]
     let onDelete: (SessionRecord) -> Void
     let isExpanded: Bool
     let onToggleExpand: () -> Void
-    let onEdit: (SessionRecord) -> Void
     let sidebarState: SidebarStateManager
-    
-    // Track which session is being edited
-    @Binding var editingSessionID: String?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -54,17 +50,9 @@ struct GroupedSessionView: View {
                         SessionsRowView(
                             session: .constant(session),
                             projects: projects,
-                            isEditing: editingSessionID == session.id,
-                            onEdit: { editedSession in
-                                editingSessionID = editedSession.id
-                                onEdit(editedSession)
-                            },
-                            onSave: { () in
-                                onSave()
-                            },
-                            onDelete: { sessionToDelete in
-                                onDelete(sessionToDelete)
-                            }
+                            activityTypes: activityTypes,
+                            sidebarState: sidebarState,
+                            onDelete: onDelete
                         )
                     }
                 }
@@ -80,7 +68,8 @@ public struct SessionsView: View {
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel()
     @StateObject private var chartDataPreparer = ChartDataPreparer()
-    @StateObject private var sidebarState = SidebarStateManager()
+    @StateObject private var activityTypesViewModel = ActivityTypesViewModel()
+    @EnvironmentObject private var sidebarState: SidebarStateManager
 
     // MARK: - State Properties
     
@@ -100,10 +89,13 @@ public struct SessionsView: View {
     @State private var currentWeekSessions: [GroupedSession] = []
     
     // Track expansion state for each group - expanded by default
-    @State private var expandedGroups: Set<UUID> = []
+    @State private var expandedGroups: Set<UUID> = Set()
     
     // Track which session is being edited
     @State private var editingSessionID: String? = nil
+    
+    // Track last update time to force UI refresh
+    @State private var lastRefreshTime = Date()
 
     // MARK: - Computed Properties
     
@@ -154,12 +146,7 @@ public struct SessionsView: View {
                 GroupedSessionView(
                     group: group,
                     projects: projectsViewModel.projects,
-                    onSave: { 
-                        // Reload current week sessions after save
-                        Task {
-                            await loadCurrentWeekSessions()
-                        }
-                    },
+                    activityTypes: activityTypesViewModel.activeActivityTypes,
                     onDelete: { session in
                         toDelete = session
                         showingDeleteAlert = true
@@ -174,14 +161,15 @@ public struct SessionsView: View {
                             }
                         }
                     },
-                    onEdit: { session in
-                        editingSessionID = session.id
-                        sidebarState.show(.session(session))
-                    },
-                    sidebarState: sidebarState,
-                    editingSessionID: $editingSessionID
+                    sidebarState: sidebarState
                 )
         }
+    }
+    
+    /// Computed property that automatically updates when sessionManager.allSessions changes
+    private var groupedCurrentWeekSessions: [GroupedSession] {
+        let sessions = getCurrentWeekSessions()
+        return groupSessionsByDate(sessions)
     }
     
 
@@ -263,6 +251,7 @@ public struct SessionsView: View {
         .background(Theme.Colors.background)
         .task { 
             await projectsViewModel.loadProjects()
+            activityTypesViewModel.loadActivityTypes()
             // Load current week sessions when view appears
             Task {
                 await loadCurrentWeekSessions()
@@ -287,6 +276,12 @@ public struct SessionsView: View {
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
+            }
+        }
+        .onChange(of: activityTypesViewModel.activityTypes) { _ in
+            // Refresh sessions when activity types change
+            Task {
+                await loadCurrentWeekSessions()
             }
         }
         .onChange(of: filterExportState.isExpanded) { _, isExpanded in

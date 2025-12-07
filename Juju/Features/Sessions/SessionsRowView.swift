@@ -1,26 +1,22 @@
 import SwiftUI
 
 /// Compact row view for displaying session information in list layout
-/// Now uses sidebar for editing instead of inline editing
+/// Consolidated view that handles both display and expanded states with actions
 struct SessionsRowView: View {
     @Binding var session: SessionRecord
     let projects: [Project]
-    
-    // Optional editing parameters (for backward compatibility)
-    let isEditing: Bool?
-    let onEdit: ((SessionRecord) -> Void)?
-    let onSave: (() -> Void)?
-    let onDelete: ((SessionRecord) -> Void)?
-    
-    @EnvironmentObject var sidebarState: SidebarStateManager
+    let activityTypes: [ActivityType]
+    let sidebarState: SidebarStateManager
+    let onDelete: (SessionRecord) -> Void
     
     // Hover state for interactive feedback
     @State private var isHovering = false
     @State private var isExpanded = false
+    @State private var isNotesExpanded = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // Main row content
+            // Main row content - consolidated display logic
             HStack(spacing: Theme.Row.compactSpacing) {
                 // Project color dot
                 Circle()
@@ -142,47 +138,88 @@ struct SessionsRowView: View {
                 toggleNotes()
             }
             
-            // Expandable notes section
+            // Expanded state - consolidated notes and actions (only show when expanded)
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
                     Divider()
                         .background(Theme.Colors.divider)
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notes")
-                            .font(Theme.Fonts.caption.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        
-                        Text(session.notes)
-                            .font(Theme.Fonts.body)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    .padding(.horizontal, Theme.Row.contentPadding)
-                    
-                    // Edit button in expanded view
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            sidebarState.show(.session(session))
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 12))
-                                Text("Edit Session")
-                                    .font(Theme.Fonts.caption)
+                    // Create a two-column layout: 90% notes, 10% buttons
+                    HStack(alignment: .top, spacing: 0) {
+                        // Notes Column (90%)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("Notes")
+                                    .font(Theme.Fonts.caption.weight(.semibold))
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                
+                                Spacer()
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Theme.Colors.divider.opacity(0.3))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
+                            
+                            Text(session.notes)
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .lineLimit(nil)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
+                        .padding(.horizontal, Theme.Row.contentPadding)
+                        .padding(.vertical, Theme.Row.contentPadding)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Buttons Column (10%)
+                        VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
+                            // Edit Button
+                            Button(action: {
+                                sidebarState.show(.session(session))
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: 12))
+                                    Text("Edit Session")
+                                        .font(Theme.Fonts.caption)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.Colors.divider.opacity(0.3))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Edit Session")
+                            .accessibilityHint("Opens the session editor to modify session details")
+                            
+                            // Delete Button
+                            Button(action: {
+                                onDelete(session)
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Theme.Colors.error)
+                                    Text("Delete Session")
+                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.error)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.Colors.error.opacity(0.15))
+                                .foregroundColor(Theme.Colors.error)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Theme.Colors.error.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Delete Session")
+                            .accessibilityHint("Deletes this session permanently")
+                        }
+                        .padding(.trailing, Theme.Row.contentPadding)
+                        .padding(.top, Theme.Row.contentPadding)
                     }
-                    .padding(.horizontal, Theme.Row.contentPadding)
-                    .padding(.bottom, Theme.Row.contentPadding)
                 }
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.2), value: isExpanded)
@@ -208,7 +245,14 @@ struct SessionsRowView: View {
             return (uncategorized.name, uncategorized.emoji)
         }
         
-        return ActivityTypeManager.shared.getActivityTypeDisplay(id: activityTypeID)
+        // Use the passed activity types array to avoid repeated disk access
+        let activityType = activityTypes.first { $0.id == activityTypeID }
+        if let activityType = activityType {
+            return (activityType.name, activityType.emoji)
+        } else {
+            // Fallback to manager if not found in passed array
+            return ActivityTypeManager.shared.getActivityTypeDisplay(id: activityTypeID)
+        }
     }
     
     /// Get project phase display name with fallback for legacy sessions
@@ -310,9 +354,11 @@ struct SessionsRowView_Previews: PreviewProvider {
                 ]),
                 Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
             ],
-            isEditing: false,
-            onEdit: { _ in },
-            onSave: { },
+            activityTypes: [
+                ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
+                ActivityType(id: "editing", name: "Editing", emoji: "✂️", description: "Refining and improving existing content", archived: false)
+            ],
+            sidebarState: SidebarStateManager(),
             onDelete: { _ in }
         )
         .frame(width: 800)

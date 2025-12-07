@@ -116,7 +116,10 @@ No data is stored elsewhere.
   - Session Count: Shows number of sessions matching current filters
 - **Session Cards**: Display project, duration, start/end times, mood
 - **Inline Actions**: Edit and delete session functionality
+  - **Edit Button**: Pencil icon that opens sidebar edit view
+  - **Delete Button**: X icon positioned below edit button, triggers confirmation dialog
 - **No Pagination**: Simplified view focused on current week with optional filtering
+- **Auto-Refresh**: UI automatically updates after session edits, deletes, or data changes
 
 **Projects Tab:**
 - **Project List**: Vertical list of all projects
@@ -207,11 +210,9 @@ No data is stored elsewhere.
 │   │   ├── Sessions/
 │   │   │   ├── Components/
 │   │   │   │   ├── FilterExportControls.swift # Modular filter and export controls
-│   │   │   │   └── SessionViewOptions.swift # Session display options
 │   │   │   ├── DayHeaderView.swift # Day grouping header for sessions
-│   │   │   ├── ExpandableNotesView.swift # Expandable notes display component
 │   │   │   ├── SessionSidebarEditView.swift # Session editing interface
-│   │   │   ├── SessionsRowView.swift # Individual session row display
+│   │   │   ├── SessionsRowView.swift # Individual session row display with expanded notes and actions
 │   │   │   └── SessionsView.swift # Sessions list with filter integration
 │   │   └── Sidebar/
 │   │       └── SidebarEditView.swift # Sidebar editing interface
