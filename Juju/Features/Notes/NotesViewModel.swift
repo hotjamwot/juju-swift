@@ -21,6 +21,35 @@ class NotesViewModel: ObservableObject {
     @Published var availablePhases: [Phase] = []
     @Published var projects: [Project] = []
     
+    // Most used activity types (computed property)
+    var mostUsedActivityTypes: [ActivityType] {
+        // Get recent sessions for activity type frequency calculation
+        let recentSessions = SessionManager.shared.allSessions.prefix(50)
+        
+        // Count activity type usage
+        var activityTypeCounts: [String: Int] = [:]
+        for session in recentSessions {
+            if let activityTypeID = session.activityTypeID {
+                activityTypeCounts[activityTypeID, default: 0] += 1
+            }
+        }
+        
+        // Get active activity types and sort by usage frequency (most used first), then by name
+        let activeActivityTypes = ActivityTypeManager.shared.getActiveActivityTypes()
+        let sortedActivityTypes = activeActivityTypes.sorted { activityType1, activityType2 in
+            let count1 = activityTypeCounts[activityType1.id] ?? 0
+            let count2 = activityTypeCounts[activityType2.id] ?? 0
+            
+            // Sort by count first (descending), then by name (ascending)
+            if count1 != count2 {
+                return count1 > count2
+            }
+            return activityType1.name < activityType2.name
+        }
+        
+        return sortedActivityTypes
+    }
+    
     private var completion: ((String, Int?, String?, String?, String?) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText
     private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
