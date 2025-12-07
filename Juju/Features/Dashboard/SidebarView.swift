@@ -28,15 +28,27 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(spacing: Theme.spacingMedium) {
+            // Juju logo at the top
+            Image("juju_logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 24, height: 24)
+                .padding(.top, 32)
+            
+            // Spacer to push navigation buttons to the center
+            Spacer()
+            
             ForEach(DashboardView.allCases) { view in
                 SidebarButton(
                     selected: $selectedView,
                     target:   view
                 )
             }
-            Spacer()   // keep a single spacer at the bottom
+            
+            // Another spacer to keep buttons centered
+            Spacer()
         }
-        .padding(.top, 32)
+        .padding(.top, 0)
         .frame(width: sidebarWidth)
         .background(Theme.Colors.background)
     }
@@ -74,7 +86,7 @@ struct SidebarView: View {
             .help(target.rawValue)       // native macOS tooltip
             .onHover { hovering in
                 isHovered = hovering
-                iconScale = hovering ? 1.4 : 1.0
+                iconScale = hovering ? 1.2 : 1.0
             }
         }
 

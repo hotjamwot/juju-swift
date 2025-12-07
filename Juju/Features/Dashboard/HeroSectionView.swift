@@ -8,7 +8,7 @@ struct HeroSectionView: View {
     @State private var headlineText: String = "Loading your creative story..."
 
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
+        VStack(spacing: Theme.spacingExtraLarge) {
             // First Row: Two Columns
             GeometryReader { geo in
                 let totalWidth = geo.size.width
@@ -32,7 +32,7 @@ struct HeroSectionView: View {
                             Spacer().frame(height: Theme.spacingMedium)
                             
                             // Line 2: Focus activity
-                            Text("Your focus was on")
+                            Text("You did a lot of")
                                 .font(.system(size: 18, weight: .medium, design: .rounded))
                                 .foregroundColor(Theme.Colors.textPrimary)
                             if let topActivity = editorialEngine.currentHeadline?.topActivity {
@@ -72,17 +72,18 @@ struct HeroSectionView: View {
                     WeeklyActivityBubbleChartView(
                         data: chartDataPreparer.weeklyActivityTotals()
                     )
-                    .frame(width: rightColumnWidth, height: 250)
+                    .padding(Theme.spacingExtraLarge)
+                    .frame(width: rightColumnWidth, height: 270)
                 }
                 .frame(width: totalWidth)
             }
-            .frame(height: 250)
+            .frame(height: 270)
 
             // Second Row: Full Width Session Calendar Chart
             SessionCalendarChartView(
                 sessions: chartDataPreparer.currentWeekSessionsForCalendar()
             )
-            .padding(Theme.spacingLarge)
+            .padding(Theme.spacingExtraLarge)
             .frame(height: 450)
             .border(.clear, width: 0)
 

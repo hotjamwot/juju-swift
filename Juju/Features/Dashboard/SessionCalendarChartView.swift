@@ -37,6 +37,18 @@ struct SessionCalendarChartView: View {
         .lineStyle(StrokeStyle(lineWidth: 1.0, dash: [3, 6]))
     }
     
+    // Working hours shaded area (9 AM to 5 PM)
+    private func workingHoursShade() -> some ChartContent {
+        RectangleMark(
+            xStart: .value("Start Day", weekDays.first!),
+            xEnd: .value("End Day", weekDays.last!),
+            yStart: .value("Start Hour", 9.0),
+            yEnd: .value("End Hour", 17.0)
+        )
+        .foregroundStyle(Theme.Colors.divider.opacity(0.15))
+        .cornerRadius(Theme.Design.cornerRadius / 2)
+    }
+    
     // Session rectangle for a specific session
     private func sessionRectangle(for session: WeeklySession) -> some ChartContent {
         RectangleMark(
@@ -45,32 +57,25 @@ struct SessionCalendarChartView: View {
             yEnd:   .value("End Hour",   session.endHour)
         )
         .foregroundStyle(Color(hex: session.projectColor))
-        .cornerRadius(Theme.Design.cornerRadius / 4)
+        .cornerRadius(Theme.Design.cornerRadius * 0.625) // Adjusted corner radius (between /4 and full)
         .annotation(position: .overlay, alignment: .center) {
-            VStack(spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(session.activityEmoji)
-                        .font(.caption2)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Theme.Colors.background)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                    
-                    Text(session.projectEmoji)
-                        .font(.caption2)
-                }
+            VStack(spacing: 6) {
+                // Activity emoji on top (larger and prominent)
+                Text(session.activityEmoji)
+                    .font(.title2)
+                    .fontWeight(.semibold)
                 
-                Text("\(session.duration, specifier: "%.1f")h")
+                // Project name (centered, single line)
+                Text(session.projectName)
                     .font(Theme.Fonts.caption)
-                    .bold()
+                    .fontWeight(.medium)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .lineLimit(1)
+                    .multilineTextAlignment(.center)
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
         }
     }
     
@@ -79,6 +84,9 @@ struct SessionCalendarChartView: View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             
             Chart {
+                // Working hours shaded area (9 AM to 5 PM)
+                workingHoursShade()
+                
                 // Add subtle grid lines only for key hours: 6 AM, 9 AM, 5 PM, 11 PM
                 gridLine(for: 6.0)
                 gridLine(for: 23.0)
