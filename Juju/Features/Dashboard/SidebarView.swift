@@ -32,11 +32,9 @@ struct SidebarView: View {
             Image("juju_logo")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 24, height: 24)
-                .padding(.top, 32)
-            
-            // Spacer to push navigation buttons to the center
-            Spacer()
+                .frame(width: 28, height: 32)
+                .padding(.top, 64)
+                .padding(.bottom, 32)
             
             ForEach(DashboardView.allCases) { view in
                 SidebarButton(
@@ -48,7 +46,7 @@ struct SidebarView: View {
             // Another spacer to keep buttons centered
             Spacer()
         }
-        .padding(.top, 0)
+        .padding(.top, 32)
         .frame(width: sidebarWidth)
         .background(Theme.Colors.background)
     }
@@ -116,6 +114,6 @@ struct SidebarView: View {
 struct SidebarView_Previews: PreviewProvider {
     static var previews: some View {
         SidebarView(selectedView: .constant(.charts))
-            .frame(minWidth: 800, minHeight: 500)
+            .frame(minWidth: 400, minHeight: 800)
     }
 }

@@ -59,7 +59,7 @@ public struct Theme {
         public static let separatorHeight: CGFloat = 1
         public static let projectDotSize: CGFloat = 8
         public static let emojiSize: CGFloat = 18
-        public static let compactSpacing: CGFloat = 8
+        public static let compactSpacing: CGFloat = 12
         public static let contentPadding: CGFloat = 12
     }
 

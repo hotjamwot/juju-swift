@@ -29,123 +29,116 @@ struct SessionsRowView: View {
                     .font(.system(size: Theme.Row.emojiSize))
                     .frame(width: 24, alignment: .leading)
                 
-                // Session details (compact)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text(session.projectName)
-                            .font(Theme.Fonts.body.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        // Activity Type (with fallback to "Uncategorized")
-                        if let activityType = getActivityTypeDisplay() {
-                            HStack(spacing: 4) {
-                                Text(activityType.emoji)
-                                    .font(.system(size: 10))
-                                Text(activityType.name)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
-                        }
-                        
-                        // Project Phase (if available)
-                        if let phaseName = getProjectPhaseDisplay() {
-                            HStack(spacing: 4) {
-                                Image(systemName: "number.circle")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(projectColor.opacity(0.8))
-                                Text(phaseName)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(projectColor.opacity(0.1))
-                            .clipShape(Capsule())
-                        }
-                        
-                        Spacer()
-                    }
+                // Session details (horizontal layout with flexible spacing)
+                HStack(spacing: Theme.Row.compactSpacing) {
+                    // Title (flexible width with minimum)
+                    Text(session.projectName)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .lineLimit(1)
+                        .frame(minWidth: 100, maxWidth: 160)
                     
-                    HStack {
-                        // Time info
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock")
+                    // Start and End Time (fixed width)
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        Text("\(formattedStartTime) - \(formattedEndTime)")
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    .frame(width: 140)
+                    
+                    // Activity Type (with fallback to "Uncategorized")
+                    if let activityType = getActivityTypeDisplay() {
+                        HStack(spacing: 4) {
+                            Text(activityType.emoji)
                                 .font(.system(size: 10))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            Text("\(formattedStartTime) - \(formattedEndTime)")
+                            Text(activityType.name)
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                         }
-                        
-                        Spacer()
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Theme.Colors.divider.opacity(0.2))
+                        .clipShape(Capsule())
+                        .frame(minWidth: 100, maxWidth: 140)
+                    } else {
+                        // Empty space when no activity type
+                        Spacer().frame(minWidth: 100, maxWidth: 140)
                     }
                     
-                    // Milestone display (centered below activity type and phase)
-                    if let milestone = session.milestoneText {
-                        HStack {
-                            Spacer()
-                            
-                            HStack(spacing: 6) {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(projectColor.opacity(0.9))
-                                Text(milestone)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
-                            
-                            Spacer()
+                    // Project Phase (fixed width)
+                    if let phaseName = getProjectPhaseDisplay() {
+                        HStack(spacing: 4) {
+                            Image(systemName: "number.circle")
+                                .font(.system(size: 10))
+                                .foregroundColor(projectColor.opacity(0.8))
+                            Text(phaseName)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
                         }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(projectColor.opacity(0.1))
+                        .clipShape(Capsule())
+                        .frame(width: 100)
+                    } else {
+                        // Empty space when no phase
+                        Spacer().frame(width: 100)
+                    }
+                    
+                    // Milestone (flexible width)
+                    if let milestone = session.milestoneText {
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(projectColor.opacity(0.9))
+                            Text(milestone)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .background(Theme.Colors.divider.opacity(0.2))
+                        .clipShape(Capsule())
+                        .frame(minWidth: 160, maxWidth: 180)
+                    } else {
+                        // Empty space when no milestone
+                        Spacer().frame(minWidth: 160, maxWidth: 180)
+                    }
+                    
+                    // Notes (flexible width)
+                    if !session.notes.isEmpty {
+                        Text(session.notes)
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .lineLimit(1)
+                            .frame(minWidth: 120, maxWidth: 200, alignment: .leading)
+                    } else {
+                        // Empty space when no notes
+                        Spacer().frame(minWidth: 120, maxWidth: 200)
+                    }
+                    
+                    // Mood (fixed width)
+                    if let mood = session.mood {
+                        Text("\(mood)/10")
+                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .frame(width: 60)
+                    } else {
+                        // Empty space when no mood
+                        Spacer().frame(width: 60)
                     }
                 }
-                .padding(.vertical, Theme.Row.contentPadding)
                 
                 Spacer()
                 
-                // Notes preview (moved one column to the left)
-                if !session.notes.isEmpty {
-                    Text(session.notes)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                        .lineLimit(1)
-                        .frame(maxWidth: 200, alignment: .leading)
-                }
-                
-                // Mood and Duration column (rightmost with padding)
-                VStack(alignment: .trailing, spacing: 4) {
-                    // Mood indicator (if set)
-                    if let mood = session.mood {
-                        HStack(spacing: 4) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(moodColor(for: mood))
-                            Text("\(mood)/10")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(moodColor(for: mood))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(moodColor(for: mood).opacity(0.1))
-                        .clipShape(Capsule())
-                    }
-                    
-                    // Duration
-                    Text(formatDuration(session.durationMinutes))
-                        .font(Theme.Fonts.caption.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-                .padding(.trailing, Theme.Row.contentPadding)
+                // Duration (moved to far right)
+                Text(formatDuration(session.durationMinutes))
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .frame(maxWidth: 80)
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -202,7 +195,7 @@ struct SessionsRowView: View {
                                 HStack(spacing: 6) {
                                     Image(systemName: "pencil")
                                         .font(.system(size: 12))
-                                    Text("Edit Session")
+                                    Text("Edit")
                                         .font(Theme.Fonts.caption)
                                 }
                                 .padding(.horizontal, 12)
@@ -223,20 +216,14 @@ struct SessionsRowView: View {
                                 HStack(spacing: 6) {
                                     Image(systemName: "trash")
                                         .font(.system(size: 12))
-                                        .foregroundColor(Theme.Colors.error)
-                                    Text("Delete Session")
+                                    Text("Delete")
                                         .font(Theme.Fonts.caption)
-                                        .foregroundColor(Theme.Colors.error)
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Theme.Colors.error.opacity(0.15))
-                                .foregroundColor(Theme.Colors.error)
+                                .background(Theme.Colors.divider.opacity(0.3))
+                                .foregroundColor(Theme.Colors.textPrimary)
                                 .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Theme.Colors.error.opacity(0.3), lineWidth: 1)
-                                )
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -387,7 +374,7 @@ struct SessionsRowView_Previews: PreviewProvider {
             sidebarState: SidebarStateManager(),
             onDelete: { _ in }
         )
-        .frame(width: 800)
+        .frame(width: 1300, height: 200)
         .background(Theme.Colors.background)
         .padding()
         .previewLayout(.sizeThatFits)
