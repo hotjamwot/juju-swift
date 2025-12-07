@@ -33,7 +33,7 @@ struct SessionsRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
                         Text(session.projectName)
-                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .font(Theme.Fonts.body.weight(.semibold))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                         
@@ -71,22 +71,6 @@ struct SessionsRowView: View {
                         }
                         
                         Spacer()
-                        
-                        // Mood indicator (if set)
-                        if let mood = session.mood {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(moodColor(for: mood))
-                                Text("\(mood)/10")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(moodColor(for: mood))
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(moodColor(for: mood).opacity(0.1))
-                            .clipShape(Capsule())
-                        }
                     }
                     
                     HStack {
@@ -101,18 +85,35 @@ struct SessionsRowView: View {
                         }
                         
                         Spacer()
-                        
-                        // Duration
-                        Text(formatDuration(session.durationMinutes))
-                            .font(Theme.Fonts.caption.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    
+                    // Milestone display (centered below activity type and phase)
+                    if let milestone = session.milestoneText {
+                        HStack {
+                            Spacer()
+                            
+                            HStack(spacing: 6) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(projectColor.opacity(0.9))
+                                Text(milestone)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                            
+                            Spacer()
+                        }
                     }
                 }
                 .padding(.vertical, Theme.Row.contentPadding)
                 
                 Spacer()
                 
-                // Notes preview (truncated)
+                // Notes preview (moved one column to the left)
                 if !session.notes.isEmpty {
                     Text(session.notes)
                         .font(Theme.Fonts.caption)
@@ -120,6 +121,31 @@ struct SessionsRowView: View {
                         .lineLimit(1)
                         .frame(maxWidth: 200, alignment: .leading)
                 }
+                
+                // Mood and Duration column (rightmost with padding)
+                VStack(alignment: .trailing, spacing: 4) {
+                    // Mood indicator (if set)
+                    if let mood = session.mood {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(moodColor(for: mood))
+                            Text("\(mood)/10")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(moodColor(for: mood))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(moodColor(for: mood).opacity(0.1))
+                        .clipShape(Capsule())
+                    }
+                    
+                    // Duration
+                    Text(formatDuration(session.durationMinutes))
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .padding(.trailing, Theme.Row.contentPadding)
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -339,7 +365,7 @@ struct SessionsRowView_Previews: PreviewProvider {
         projectID: "1",
         activityTypeID: "writing",
         projectPhaseID: "phase-1",
-        milestoneText: nil,
+        milestoneText: "First Draft Complete",
         notes: "Quick meeting about the new features.",
         mood: 7
     )

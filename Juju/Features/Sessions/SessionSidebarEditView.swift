@@ -29,6 +29,35 @@ struct SessionSidebarEditView: View {
     @State private var hasChanges = false
     @State private var isSaving = false
     
+    // Most used activity types (computed property)
+    private var mostUsedActivityTypes: [ActivityType] {
+        // Get recent sessions for activity type frequency calculation
+        let recentSessions = sessionManager.allSessions.prefix(50)
+        
+        // Count activity type usage
+        var activityTypeCounts: [String: Int] = [:]
+        for session in recentSessions {
+            if let activityTypeID = session.activityTypeID {
+                activityTypeCounts[activityTypeID, default: 0] += 1
+            }
+        }
+        
+        // Get active activity types and sort by usage frequency (most used first), then by name
+        let activeActivityTypes = activityTypesViewModel.activeActivityTypes
+        let sortedActivityTypes = activeActivityTypes.sorted { activityType1, activityType2 in
+            let count1 = activityTypeCounts[activityType1.id] ?? 0
+            let count2 = activityTypeCounts[activityType2.id] ?? 0
+            
+            // Sort by count first (descending), then by name (ascending)
+            if count1 != count2 {
+                return count1 > count2
+            }
+            return activityType1.name < activityType2.name
+        }
+        
+        return sortedActivityTypes
+    }
+    
     // Add a binding to trigger refresh in parent
     let onSessionUpdated: (() -> Void)?
     
@@ -85,7 +114,10 @@ struct SessionSidebarEditView: View {
     
     var body: some View {
         VStack(spacing: Theme.spacingExtraLarge) {
-            // Top section - project selection, notes, and time controls
+            // Action buttons at the top - more prominent
+            actionButtonsTop
+            
+            // Top section - project selection, notes, time controls, and mood
             VStack(spacing: Theme.spacingExtraLarge) {
                 // Project selection section
                 projectSelectionSection
@@ -95,17 +127,9 @@ struct SessionSidebarEditView: View {
                 
                 // Time controls section
                 timeControlsSection
-            }
-            
-            Spacer()
-            
-            // Bottom section - mood and action buttons
-            VStack(spacing: Theme.spacingExtraLarge) {
+                
                 // Mood section
                 moodSection
-                
-                // Action buttons
-                actionButtons
             }
         }
         .padding(Theme.spacingLarge)
@@ -128,7 +152,7 @@ struct SessionSidebarEditView: View {
     
     private var timeControlsSection: some View {
         VStack(spacing: Theme.spacingLarge) {
-            // Date picker
+            // Date picker (default compact style)
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Text("Date")
                     .font(.body)
@@ -138,7 +162,6 @@ struct SessionSidebarEditView: View {
                     selection: $tempStartTime,
                     displayedComponents: [.date]
                 )
-                .datePickerStyle(GraphicalDatePickerStyle())
                 .labelsHidden()
             }
             
@@ -237,7 +260,7 @@ struct SessionSidebarEditView: View {
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
                 Picker("Activity Type", selection: $tempActivityTypeID) {
                     Text("Select Activity Type").tag("")
-                    ForEach(activityTypesViewModel.activeActivityTypes, id: \.id) { activityType in
+                    ForEach(mostUsedActivityTypes, id: \.id) { activityType in
                         Text("\(activityType.emoji) \(activityType.name)").tag(activityType.id)
                     }
                 }
@@ -277,12 +300,13 @@ struct SessionSidebarEditView: View {
             }
             
             // Milestone field with star emoji
-            HStack(spacing: 8) {
+            HStack {
                 Text("⭐")
+                    .foregroundColor(Theme.Colors.textPrimary)
                 TextField("Enter milestone", text: $tempMilestoneText)
                     .textFieldStyle(.plain)
                     .padding(Theme.spacingSmall)
-                    .background(Theme.Colors.surface)
+                    .background(Theme.Colors.background)
                     .cornerRadius(Theme.Design.cornerRadius)
             }
         }
@@ -301,7 +325,7 @@ struct SessionSidebarEditView: View {
                 .frame(minHeight: 120, maxHeight: 160)
                 .textFieldStyle(.plain)
                 .padding(Theme.spacingSmall)
-                .background(Theme.Colors.surface)
+                .background(Theme.Colors.background)
                 .cornerRadius(Theme.Design.cornerRadius)
                 .frame(maxWidth: .infinity)
         }
@@ -332,6 +356,27 @@ struct SessionSidebarEditView: View {
         .padding(Theme.spacingMedium)
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
+    }
+    
+    private var actionButtonsTop: some View {
+        HStack(spacing: Theme.spacingSmall) {
+            Button("Cancel") {
+                sidebarState.hide()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .font(.headline)
+            
+            Spacer()
+            
+            Button("Save") {
+                saveSession()
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .font(.headline)
+            .disabled(!hasChanges || isSaving)
+            .opacity(hasChanges ? 1.0 : 0.5)
+        }
+        .padding(Theme.spacingSmall)
     }
     
     private var actionButtons: some View {

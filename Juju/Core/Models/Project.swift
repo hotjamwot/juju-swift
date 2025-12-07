@@ -32,8 +32,8 @@ struct Project: Codable, Identifiable, Hashable {
     var about: String?
     var order: Int
     var emoji: String
-    var archived: Bool  // New: Project archiving capability
-    var phases: [Phase]  // New: Project lifecycle phases
+    var archived: Bool 
+    var phases: [Phase] 
     
     enum CodingKeys: String, CodingKey {
         case id, name, color, about, order, emoji, archived, phases
@@ -106,12 +106,23 @@ class ProjectManager {
     private let jujuPath: URL?
     private let projectsFile: URL?
     
+    // Cache for loaded projects to avoid repeated disk access
+    private var cachedProjects: [Project]?
+    private var lastCacheTime: Date?
+    
     private init() {
         self.jujuPath = appSupportPath?.appendingPathComponent("Juju")
         self.projectsFile = jujuPath?.appendingPathComponent("projects.json")
     }
     
     func loadProjects() -> [Project] {
+        // Check cache first (cache for 5 minutes to avoid excessive disk access)
+        if let cached = cachedProjects, 
+           let lastTime = lastCacheTime, 
+           Date().timeIntervalSince(lastTime) < 300 { // 5 minutes
+            return cached
+        }
+        
         // Create directory if it doesn't exist
         if let jujuPath = jujuPath {
             try? FileManager.default.createDirectory(at: jujuPath, withIntermediateDirectories: true)
@@ -131,21 +142,33 @@ class ProjectManager {
                     }
                 }
                 
-                let migratedProjects = needsMigration ? migrateProjects(loadedProjects) : loadedProjects
-                
+                var resultProjects: [Project]
                 if needsMigration {
                     print("🔄 Migrating projects to new schema...")
+                    resultProjects = migrateProjects(loadedProjects)
+                } else {
+                    resultProjects = loadedProjects
                 }
                 
-                return migratedProjects
+                // Cache the result
+                cachedProjects = resultProjects
+                lastCacheTime = Date()
+                
+                return resultProjects
             } catch {
                 print("Error loading projects: \(error)")
                 print("Deleting invalid projects.json and creating defaults")
                 try? FileManager.default.removeItem(at: projectsFile)
-                return createDefaultProjects()
+                let defaults = createDefaultProjects()
+                cachedProjects = defaults
+                lastCacheTime = Date()
+                return defaults
             }
         } else {
-            return createDefaultProjects()
+            let defaults = createDefaultProjects()
+            cachedProjects = defaults
+            lastCacheTime = Date()
+            return defaults
         }
     }
     
@@ -157,6 +180,8 @@ class ProjectManager {
                 let data = try encoder.encode(projects)
                 try data.write(to: projectsFile)
                 print("✅ Saved \(projects.count) projects to \(projectsFile.path)")
+                // Clear cache after saving to ensure fresh data on next load
+                clearCache()
                 NotificationCenter.default.post(name: .projectsDidChange, object: nil)
             } catch {
                 print("❌ Error saving projects to \(projectsFile.path): \(error)")
@@ -357,5 +382,11 @@ class ProjectManager {
         print("Created default projects")
         saveProjects(defaults)
         return defaults
+    }
+    
+    /// Clear the projects cache
+    func clearCache() {
+        cachedProjects = nil
+        lastCacheTime = nil
     }
 }
