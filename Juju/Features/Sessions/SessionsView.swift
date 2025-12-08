@@ -1,6 +1,58 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Ordinal Helper
+private extension Int {
+    var ordinalSuffix: String {
+        switch (self % 100) {
+        case 11, 12, 13: return "th"
+        default:
+            switch (self % 10) {
+            case 1: return "st"
+            case 2: return "nd"
+            case 3: return "rd"
+            default: return "th"
+            }
+        }
+    }
+}
+
+// MARK: - Pretty date helper
+private extension Date {
+    /// "Monday, 23rd October"
+    var prettyHeader: String {
+        let cal = Calendar.current
+        let weekday = cal.weekdaySymbols[cal.component(.weekday, from: self) - 1]
+        let day     = cal.component(.day, from: self)
+        let month   = cal.monthSymbols[cal.component(.month, from: self) - 1]
+        return "\(weekday), \(day)\(day.ordinalSuffix) \(month)"
+    }
+    
+    /// "Jan 15, 2024"
+    var shortHeader: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: self)
+    }
+    
+    /// "Today", "Yesterday", or "Jan 15"
+    var relativeHeader: String {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let thisDate = calendar.startOfDay(for: self)
+        
+        if calendar.isDate(today, inSameDayAs: thisDate) {
+            return "Today"
+        } else if calendar.isDate(calendar.date(byAdding: .day, value: -1, to: today)!, inSameDayAs: thisDate) {
+            return "Yesterday"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: self)
+        }
+    }
+}
+
 // MARK: - Date Filter Enum
 public enum DateFilter: String, CaseIterable, Identifiable {
     case today = "Today"
@@ -18,6 +70,25 @@ struct GroupedSession: Identifiable {
     let id      = UUID()
     let date    : Date
     let sessions: [SessionRecord]
+    
+    /// Calculate total duration for all sessions in this group
+    var totalDurationMinutes: Int {
+        return sessions.reduce(0) { $0 + $1.durationMinutes }
+    }
+    
+    /// Format duration as "1h 30m" or similar
+    var formattedDuration: String {
+        let hours = totalDurationMinutes / 60
+        let minutes = totalDurationMinutes % 60
+        
+        if hours > 0 && minutes > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(minutes)m"
+        }
+    }
 }
 
 struct GroupedSessionView: View {
@@ -25,40 +96,65 @@ struct GroupedSessionView: View {
     let projects: [Project]
     let activityTypes: [ActivityType]
     let onDelete: (SessionRecord) -> Void
-    let isExpanded: Bool
-    let onToggleExpand: () -> Void
     let sidebarState: SidebarStateManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Date Header with expand/collapse
-            let isExpandedBinding = Binding(
-                get: { isExpanded },
-                set: { _ in onToggleExpand() }
-            )
-            
-            DayHeaderView(
-                date: group.date,
-                sessionCount: group.sessions.count,
-                isExpanded: isExpandedBinding
-            )
-            
-            // Session rows (only show if expanded)
-            if isExpanded {
-                VStack(spacing: Theme.spacingSmall) {
-                    ForEach(group.sessions) { session in
-                        SessionsRowView(
-                            session: .constant(session),
-                            projects: projects,
-                            activityTypes: activityTypes,
-                            sidebarState: sidebarState,
-                            onDelete: onDelete
-                        )
+            // Day Header - now integrated directly into SessionsView
+            HStack {
+                // Left section: Date and session count
+                HStack(spacing: 12) {
+                    // Date text
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(group.date.prettyHeader)
+                            .font(Theme.Fonts.header)
+                            .foregroundColor(Theme.Colors.textPrimary)
                     }
+                    
+                    // Session count badge
+                    Text("\(group.sessions.count) session\(group.sessions.count != 1 ? "s" : "")")
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Theme.Colors.divider.opacity(0.2))
+                        .clipShape(Capsule())
                 }
-                .padding(.horizontal, Theme.spacingMedium)
-                .padding(.vertical, Theme.spacingSmall)
+                
+                Spacer()
+                
+                // Total duration badge (right aligned)
+                Text(group.formattedDuration)
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Theme.Colors.divider.opacity(0.2))
+                    .clipShape(Capsule())
             }
+            .padding(.vertical, Theme.spacingSmall)
+            .padding(.horizontal, Theme.spacingMedium)
+            .overlay(
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(Theme.Colors.divider),
+                alignment: .bottom
+            )
+            
+            // Session rows (always visible now - no expansion needed)
+            VStack(spacing: Theme.spacingSmall) {
+                ForEach(group.sessions) { session in
+                    SessionsRowView(
+                        session: .constant(session),
+                        projects: projects,
+                        activityTypes: activityTypes,
+                        sidebarState: sidebarState,
+                        onDelete: onDelete
+                    )
+                }
+            }
+            .padding(.horizontal, Theme.spacingMedium)
+            .padding(.vertical, Theme.spacingSmall)
         }
     }
 }
@@ -87,9 +183,6 @@ public struct SessionsView: View {
     
     // Current week sessions only - no pagination needed
     @State private var currentWeekSessions: [GroupedSession] = []
-    
-    // Track expansion state for each group - expanded by default
-    @State private var expandedGroups: Set<UUID> = Set()
     
     // Track which session is being edited
     @State private var editingSessionID: String? = nil
@@ -143,26 +236,16 @@ public struct SessionsView: View {
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
         ForEach(currentWeekSessions, id: \.id) { group in
-                GroupedSessionView(
-                    group: group,
-                    projects: projectsViewModel.projects,
-                    activityTypes: activityTypesViewModel.activeActivityTypes,
-                    onDelete: { session in
-                        toDelete = session
-                        showingDeleteAlert = true
-                    },
-                    isExpanded: expandedGroups.contains(group.id),
-                    onToggleExpand: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            if expandedGroups.contains(group.id) {
-                                expandedGroups.remove(group.id)
-                            } else {
-                                expandedGroups.insert(group.id)
-                            }
-                        }
-                    },
-                    sidebarState: sidebarState
-                )
+            GroupedSessionView(
+                group: group,
+                projects: projectsViewModel.projects,
+                activityTypes: activityTypesViewModel.activeActivityTypes,
+                onDelete: { session in
+                    toDelete = session
+                    showingDeleteAlert = true
+                },
+                sidebarState: sidebarState
+            )
         }
     }
     
@@ -336,10 +419,6 @@ public struct SessionsView: View {
         isLoading = true
         let sessions = getCurrentWeekSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
-        
-        // Expand all groups by default
-        expandedGroups = Set(currentWeekSessions.map { $0.id })
-        
         isLoading = false
     }
     

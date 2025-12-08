@@ -210,10 +210,9 @@ No data is stored elsewhere.
 │   │   ├── Sessions/
 │   │   │   ├── Components/
 │   │   │   │   ├── FilterExportControls.swift # Modular filter and export controls
-│   │   │   ├── DayHeaderView.swift # Day grouping header for sessions
 │   │   │   ├── SessionSidebarEditView.swift # Session editing interface
 │   │   │   ├── SessionsRowView.swift # Individual session row display with expanded notes and actions
-│   │   │   └── SessionsView.swift # Sessions list with filter integration
+│   │   │   └── SessionsView.swift # Sessions list with integrated day headers and total duration display
 │   │   └── Sidebar/
 │   │       └── SidebarEditView.swift # Sidebar editing interface
 │   ├── Resources/

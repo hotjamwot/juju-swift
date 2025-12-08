@@ -13,7 +13,6 @@
 		6659095E2EE44952007D1303 /* ActivityTypesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095A2EE44952007D1303 /* ActivityTypesView.swift */; };
 		6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */; };
 		665909632EE45EFF007D1303 /* SessionsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909602EE45EFF007D1303 /* SessionsRowView.swift */; };
-		665909642EE45EFF007D1303 /* DayHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909612EE45EFF007D1303 /* DayHeaderView.swift */; };
 		665909672EE47949007D1303 /* SidebarStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909662EE47949007D1303 /* SidebarStateManager.swift */; };
 		665909692EE47957007D1303 /* ActivityTypeSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909682EE47957007D1303 /* ActivityTypeSidebarEditView.swift */; };
 		6659096B2EE4796C007D1303 /* ProjectSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */; };
@@ -71,7 +70,6 @@
 		6659095A2EE44952007D1303 /* ActivityTypesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesView.swift; sourceTree = "<group>"; };
 		6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesViewModel.swift; sourceTree = "<group>"; };
 		665909602EE45EFF007D1303 /* SessionsRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsRowView.swift; sourceTree = "<group>"; };
-		665909612EE45EFF007D1303 /* DayHeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DayHeaderView.swift; sourceTree = "<group>"; };
 		665909662EE47949007D1303 /* SidebarStateManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarStateManager.swift; sourceTree = "<group>"; };
 		665909682EE47957007D1303 /* ActivityTypeSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypeSidebarEditView.swift; sourceTree = "<group>"; };
 		6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectSidebarEditView.swift; sourceTree = "<group>"; };
@@ -280,7 +278,6 @@
 			isa = PBXGroup;
 			children = (
 				6659096C2EE47983007D1303 /* SessionSidebarEditView.swift */,
-				665909612EE45EFF007D1303 /* DayHeaderView.swift */,
 				665909602EE45EFF007D1303 /* SessionsRowView.swift */,
 				666C394B2EAFB53800B408B8 /* Components */,
 				66B1483F2EA8EA4B00E9BB4A /* SessionsView.swift */,
@@ -459,7 +456,6 @@
 				66E7467B2EE3254F00A353C1 /* SessionMigrationManager.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
-				665909642EE45EFF007D1303 /* DayHeaderView.swift in Sources */,
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
 				6659095E2EE44952007D1303 /* ActivityTypesView.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
