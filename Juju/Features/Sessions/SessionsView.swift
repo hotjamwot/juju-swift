@@ -577,27 +577,18 @@ public struct SessionsView: View {
 @available(macOS 12.0, *)
 struct SessionsView_Previews: PreviewProvider {
     static var previews: some View {
-        return SessionsView_PreviewsContent()
-            .frame(width: 1200, height: 800)
-            .background(Color(.windowBackgroundColor))
-            .padding()
-            .previewLayout(.sizeThatFits)
-    }
-}
-
-struct SessionsView_PreviewsContent: View {
-    @StateObject var sessionManager = SessionManager.shared
-    @StateObject var projectsViewModel = ProjectsViewModel.shared
-    
-    var body: some View {
         SessionsView()
             .onAppear {
                 // Load data just like the main app does
                 Task {
-                    await projectsViewModel.loadProjects()
-                    await sessionManager.loadAllSessions()
+                    await ProjectsViewModel.shared.loadProjects()
+                    await SessionManager.shared.loadAllSessions()
                 }
             }
+            .frame(width: 1200, height: 800)
+            .background(Theme.Colors.background)
+            .padding()
+            .previewLayout(.sizeThatFits)
     }
 }
 #endif

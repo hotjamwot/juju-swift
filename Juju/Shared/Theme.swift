@@ -52,15 +52,15 @@ public struct Theme {
 
     // MARK: Row-specific styling for list layout
     public struct Row {
-        public static let height: CGFloat = 70
-        public static let expandedHeight: CGFloat = 120
-        public static let cornerRadius: CGFloat = 12
+        public static let height: CGFloat = 44
+        public static let expandedHeight: CGFloat = 90
+        public static let cornerRadius: CGFloat = 10
         public static let hoverOpacity: CGFloat = 0.2
         public static let separatorHeight: CGFloat = 1
-        public static let projectDotSize: CGFloat = 8
-        public static let emojiSize: CGFloat = 18
-        public static let compactSpacing: CGFloat = 12
-        public static let contentPadding: CGFloat = 12
+        public static let projectDotSize: CGFloat = 6
+        public static let emojiSize: CGFloat = 14
+        public static let compactSpacing: CGFloat = 8
+        public static let contentPadding: CGFloat = 8
     }
 
     // MARK: Tab‑Bar specific colours

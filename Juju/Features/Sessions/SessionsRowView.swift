@@ -26,8 +26,8 @@ struct SessionsRowView: View {
                 
                 // Project emoji
                 Text(projectEmoji)
-                    .font(.system(size: Theme.Row.emojiSize))
-                    .frame(width: 24, alignment: .leading)
+                    .font(.system(size: 12))
+                    .frame(width: 20, alignment: .leading)
                 
                 // Session details (horizontal layout with flexible spacing)
                 HStack(spacing: Theme.Row.compactSpacing) {
@@ -358,38 +358,35 @@ struct SessionsRowView: View {
 #if DEBUG
 @available(macOS 12.0, *)
 struct SessionsRowView_Previews: PreviewProvider {
-    @State static var session = SessionRecord(
-        id: "1",
-        date: "2024-01-15",
-        startTime: "09:00:00",
-        endTime: "10:30:00",
-        durationMinutes: 90,
-        projectName: "Project Alpha",
-        projectID: "1",
-        activityTypeID: "writing",
-        projectPhaseID: "phase-1",
-        milestoneText: "First Draft Complete",
-        notes: "Quick meeting about the new features.",
-        mood: 7
-    )
-    
     static var previews: some View {
+        // Use live data from shared instances for preview
         SessionsRowView(
-            session: $session,
-            projects: [
-                Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0, emoji: "💼", phases: [
-                    Phase(id: "phase-1", name: "Planning", order: 0, archived: false),
-                    Phase(id: "phase-2", name: "Development", order: 1, archived: false)
-                ]),
-                Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0, emoji: "🏠")
-            ],
-            activityTypes: [
-                ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
-                ActivityType(id: "editing", name: "Editing", emoji: "✂️", description: "Refining and improving existing content", archived: false)
-            ],
+            session: .constant(SessionRecord(
+                id: "1",
+                date: "2024-01-15",
+                startTime: "09:00:00",
+                endTime: "10:30:00",
+                durationMinutes: 90,
+                projectName: "Project Alpha",
+                projectID: "1",
+                activityTypeID: "writing",
+                projectPhaseID: "phase-1",
+                milestoneText: "First Draft Complete",
+                notes: "Quick meeting about the new features.",
+                mood: 7
+            )),
+            projects: ProjectsViewModel.shared.projects,
+            activityTypes: ActivityTypesViewModel.shared.activeActivityTypes,
             sidebarState: SidebarStateManager(),
             onDelete: { _ in }
         )
+        .onAppear {
+            // Load live data for preview
+            Task {
+                await ProjectsViewModel.shared.loadProjects()
+                ActivityTypesViewModel.shared.loadActivityTypes()
+            }
+        }
         .frame(width: 1300, height: 200)
         .background(Theme.Colors.background)
         .padding()

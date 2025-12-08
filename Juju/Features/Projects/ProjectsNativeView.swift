@@ -54,7 +54,7 @@ struct ProjectsNativeView: View {
                         .foregroundColor(Theme.Colors.surface)
                         .padding(40)
                 } else {
-                    LazyVStack(spacing: Theme.spacingMedium) {
+                    LazyVStack(spacing: Theme.spacingSmall) {
                         // Active Projects
                         if !viewModel.activeProjects.isEmpty {
                             ForEach(viewModel.activeProjects) { project in
@@ -149,8 +149,8 @@ struct ProjectRowView: View {
                 
                 // Project emoji
                 Text(project.emoji)
-                    .font(.system(size: Theme.Row.emojiSize))
-                    .frame(width: 24, alignment: .leading)
+                    .font(.system(size: 12))
+                    .frame(width: 20, alignment: .leading)
                 
                 // Project details (horizontal layout with flexible spacing)
                 HStack(spacing: Theme.Row.compactSpacing) {
@@ -167,10 +167,10 @@ struct ProjectRowView: View {
                             .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
                             .lineLimit(1)
-                            .frame(minWidth: 200, maxWidth: 320, alignment: .leading)
+                            .frame(minWidth: 240, maxWidth: 400, alignment: .leading)
                     } else {
                         // Empty space when no description
-                        Spacer().frame(minWidth: 200, maxWidth: 320)
+                        Spacer().frame(minWidth: 240, maxWidth: 400)
                     }
                 }
                 
@@ -245,49 +245,39 @@ struct ProjectRowView: View {
                     }
                     .frame(maxWidth: 160)
                 } else {
-                    HStack(spacing: 8) {
-                        Button(action: {
-                            sidebarState.show(.project(project))
-                        }) {
-                            HStack(spacing: 6) {
+                        HStack(spacing: 8) {
+                            Button(action: {
+                                sidebarState.show(.project(project))
+                            }) {
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 10))
-                                Text("Edit")
-                                    .font(Theme.Fonts.caption)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(8)
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Theme.Colors.divider.opacity(0.3))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
-                        .accessibilityLabel("Edit Project")
-                        .accessibilityHint("Opens the project editor")
-                        
-                        Button(action: {
-                            Task {
-                                await ProjectsViewModel.shared.archiveProject(project)
-                            }
-                        }) {
-                            HStack(spacing: 6) {
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Edit Project")
+                            .accessibilityHint("Opens the project editor")
+                            
+                            Button(action: {
+                                Task {
+                                    await ProjectsViewModel.shared.archiveProject(project)
+                                }
+                            }) {
                                 Image(systemName: "archivebox")
-                                    .font(.system(size: 10))
-                                Text("Archive")
-                                    .font(Theme.Fonts.caption)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(8)
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Theme.Colors.divider.opacity(0.3))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Archive Project")
+                            .accessibilityHint("Archives this project")
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
-                        .accessibilityLabel("Archive Project")
-                        .accessibilityHint("Archives this project")
-                    }
                     .frame(maxWidth: 160)
                 }
             }
@@ -387,17 +377,12 @@ struct ProjectRowView: View {
                             Button(action: {
                                 sidebarState.show(.project(project))
                             }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 12))
-                                    Text("Edit")
-                                        .font(Theme.Fonts.caption)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Theme.Colors.divider.opacity(0.3))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .cornerRadius(8)
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(8)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -410,17 +395,12 @@ struct ProjectRowView: View {
                                     await ProjectsViewModel.shared.archiveProject(project)
                                 }
                             }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "archivebox")
-                                        .font(.system(size: 12))
-                                    Text("Archive")
-                                        .font(Theme.Fonts.caption)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Theme.Colors.divider.opacity(0.3))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .cornerRadius(8)
+                                Image(systemName: "archivebox")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(8)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
