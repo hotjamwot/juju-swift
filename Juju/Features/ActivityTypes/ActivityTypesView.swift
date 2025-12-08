@@ -91,59 +91,265 @@ struct ActivityTypesView: View {
 struct ActivityTypeRowView: View {
     let activityType: ActivityType
     var isArchived: Bool = false
+    @EnvironmentObject var sidebarState: SidebarStateManager
+    
+    // Hover state for interactive feedback
+    @State private var isHovering = false
+    @State private var isExpanded = false
     
     var body: some View {
-        HStack(spacing: Theme.spacingMedium) {
-            // Emoji display
-            Text(activityType.emoji)
-                .font(Theme.Fonts.header)
-                .frame(width: 32, height: 32)
-                .background(Theme.Colors.surface)
-                .cornerRadius(Theme.Design.cornerRadius)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                )
-            
-            VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-                // Activity type name
-                Text(activityType.name)
-                    .font(Theme.Fonts.header)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
+        VStack(spacing: 0) {
+            // Main row content - compact design
+            HStack(spacing: Theme.Row.compactSpacing) {
+                // Activity type emoji
+                Text(activityType.emoji)
+                    .font(.system(size: Theme.Row.emojiSize))
+                    .frame(width: 24, alignment: .leading)
+                    .padding(.leading, Theme.Row.contentPadding)
                 
-                if !activityType.description.isEmpty {
-                    Text(activityType.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                // Activity type details (horizontal layout with flexible spacing)
+                HStack(spacing: Theme.Row.compactSpacing) {
+                    // Activity type name (flexible width with minimum)
+                    Text(activityType.name)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(1)
+                        .frame(minWidth: 140, maxWidth: 220)
+                    
+                    // Activity type description (flexible width)
+                    if !activityType.description.isEmpty {
+                        Text(activityType.description)
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .lineLimit(1)
+                            .frame(minWidth: 180, maxWidth: 260, alignment: .leading)
+                    } else {
+                        // Empty space when no description
+                        Spacer().frame(minWidth: 180, maxWidth: 260)
+                    }
+                    
+                    // Activity type ID (fixed width)
+                    HStack(spacing: 4) {
+                        Image(systemName: "tag")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                        Text(activityType.id.prefix(8))
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Theme.Colors.divider.opacity(0.2))
+                    .clipShape(Capsule())
+                    .frame(width: 120)
+                }
+                
+                Spacer()
+                
+                // Archived status or actions (moved to far right)
+                if isArchived {
+                    HStack(spacing: 8) {
+                        Text("Archived")
+                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .clipShape(Capsule())
+                        
+                        Button(action: {
+                            // Restore activity type
+                            Task {
+                                await ActivityTypesViewModel.shared.unarchiveActivityType(activityType)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.uturn.backward")
+                                    .font(.system(size: 10))
+                                Text("Restore")
+                                    .font(Theme.Fonts.caption)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                    }
+                    .frame(maxWidth: 160)
+                } else {
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            sidebarState.show(.activityType(activityType))
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 10))
+                                Text("Edit")
+                                    .font(Theme.Fonts.caption)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        .accessibilityLabel("Edit Activity Type")
+                        .accessibilityHint("Opens the activity type editor")
+                        
+                        Button(action: {
+                            Task {
+                                await ActivityTypesViewModel.shared.archiveActivityType(activityType)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "archivebox")
+                                    .font(.system(size: 10))
+                                Text("Archive")
+                                    .font(Theme.Fonts.caption)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        .accessibilityLabel("Archive Activity Type")
+                        .accessibilityHint("Archives this activity type")
+                    }
+                    .frame(maxWidth: 160)
+                }
+            }
+            .frame(height: Theme.Row.height)
+            .background(
+                isHovering ? Theme.Colors.surface.opacity(0.9) : Theme.Colors.surface.opacity(0.7)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
+                    .stroke(Theme.Colors.divider, lineWidth: 1)
+            )
+            .cornerRadius(Theme.Row.cornerRadius)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                isHovering = hovering
+            }
+            .onTapGesture {
+                if !isArchived {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
                 }
             }
             
-            Spacer()
-            
-            // Archived status indicator
-            if isArchived {
-                Text("Archived")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, Theme.spacingSmall)
-                    .padding(.vertical, Theme.spacingExtraSmall)
-                    .background(Theme.Colors.divider)
-                    .cornerRadius(Theme.Design.cornerRadius)
+            // Expanded state - activity type details (only show when expanded for active activity types)
+            if isExpanded && !isArchived {
+                VStack(alignment: .leading, spacing: 0) {
+                    Divider()
+                        .background(Theme.Colors.divider)
+                    
+                    // Create a two-column layout: 80% details, 20% actions
+                    HStack(alignment: .top, spacing: 0) {
+                        // Details Column (80%)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Activity Type Details")
+                                    .font(Theme.Fonts.caption.weight(.semibold))
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                
+                                Spacer()
+                            }
+                            
+                            // Activity type description
+                            if !activityType.description.isEmpty {
+                                Text(activityType.description)
+                                    .font(Theme.Fonts.body)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            } else {
+                                Text("No description provided")
+                                    .font(Theme.Fonts.body)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            
+                            // Activity type ID
+                            HStack {
+                                Text("ID:")
+                                    .font(Theme.Fonts.caption.weight(.semibold))
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                Text(activityType.id)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.horizontal, Theme.Row.contentPadding)
+                        .padding(.vertical, Theme.Row.contentPadding)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Actions Column (20%)
+                        VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
+                            // Edit Button
+                            Button(action: {
+                                sidebarState.show(.activityType(activityType))
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: 12))
+                                    Text("Edit")
+                                        .font(Theme.Fonts.caption)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.Colors.divider.opacity(0.3))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Edit Activity Type")
+                            .accessibilityHint("Opens the activity type editor")
+                            
+                            // Archive Button
+                            Button(action: {
+                                Task {
+                                    await ActivityTypesViewModel.shared.archiveActivityType(activityType)
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "archivebox")
+                                        .font(.system(size: 12))
+                                    Text("Archive")
+                                        .font(Theme.Fonts.caption)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.Colors.divider.opacity(0.3))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Archive Activity Type")
+                            .accessibilityHint("Archives this activity type")
+                        }
+                        .padding(.trailing, Theme.Row.contentPadding)
+                        .padding(.top, Theme.Row.contentPadding)
+                    }
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: isExpanded)
             }
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(.secondary.opacity(0.5))
         }
-        .padding(Theme.spacingMedium)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-        .opacity(isArchived ? 0.7 : 1.0)
     }
 }
 
@@ -154,7 +360,7 @@ struct ActivityTypeRowView: View {
 struct ActivityTypesView_Previews: PreviewProvider {
     static var previews: some View {
         ActivityTypesView()
-            .frame(width: 650, height: 600)
+            .frame(width: 800, height: 800)
             .previewDisplayName("Live Data (from file)")
 
         // Preview with mock data
