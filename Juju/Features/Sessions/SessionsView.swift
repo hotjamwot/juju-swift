@@ -190,7 +190,16 @@ public struct SessionsView: View {
             // Content Area
             ZStack {
                 // --- Main Content Area ---
-                if currentWeekSessions.isEmpty {
+                if projectsViewModel.isLoading {
+                    // Projects are loading
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading projects...")
+                            .scaleEffect(1.5)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if currentWeekSessions.isEmpty {
                     if isLoading {
                         // Loading indicator
                         VStack {
@@ -276,6 +285,8 @@ public struct SessionsView: View {
                     sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
+                // Refresh projects data to ensure phases are up to date
+                await projectsViewModel.loadProjects()
             }
         }
         .onChange(of: activityTypesViewModel.activityTypes) { _ in
@@ -297,6 +308,12 @@ public struct SessionsView: View {
         }
         .onChange(of: filterExportState.projectFilter) { _, _ in
             // No pagination needed anymore
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
+            // Refresh projects data when projects change (e.g., phases added)
+            Task {
+                await projectsViewModel.loadProjects()
+            }
         }
         .alert("Export Complete", isPresented: $showingExportAlert) {
             Button("OK") { }

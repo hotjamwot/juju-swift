@@ -275,6 +275,44 @@ class SessionDataManager: ObservableObject {
             return false
         }
 
+        // Validate that the projectPhaseID belongs to the correct project
+        var validatedProjectPhaseID = projectPhaseID
+        var validatedProjectID = session.projectID
+        
+        if let phaseID = projectPhaseID {
+            // Get the project that this phase should belong to
+            let projects = ProjectManager.shared.loadProjects()
+            var phaseBelongsToCorrectProject = false
+            var correctProjectID: String?
+            
+            // Check if the phase exists in any project
+            for project in projects {
+                if project.phases.contains(where: { $0.id == phaseID && !$0.archived }) {
+                    // Phase exists in this project
+                    correctProjectID = project.id
+                    
+                    if session.projectID == nil || session.projectID == project.id {
+                        // Phase belongs to the correct project (or we don't have projectID to check)
+                        phaseBelongsToCorrectProject = true
+                        print("✅ Phase \(phaseID) belongs to project \(project.name)")
+                    } else {
+                        // Phase exists but belongs to a different project
+                        print("⚠️ Phase \(phaseID) belongs to project \(project.name) but session projectID is \(session.projectID ?? "nil")")
+                        // Update the projectID to match the phase's project
+                        validatedProjectID = project.id
+                        print("🔧 Updating session projectID from \(session.projectID ?? "nil") to \(project.id)")
+                    }
+                    break
+                }
+            }
+            
+            if !phaseBelongsToCorrectProject {
+                // Phase doesn't exist or belongs to wrong project
+                print("⚠️ Phase \(phaseID) not found, clearing phase selection")
+                validatedProjectPhaseID = nil
+            }
+        }
+
         // Create updated session with all fields
         var updated = SessionRecord(
             id: session.id,
@@ -283,9 +321,9 @@ class SessionDataManager: ObservableObject {
             endTime: endTime,
             durationMinutes: minutesBetween(start: startTime, end: endTime),
             projectName: projectName,
-            projectID: session.projectID,
+            projectID: validatedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,
-            projectPhaseID: projectPhaseID ?? session.projectPhaseID,
+            projectPhaseID: validatedProjectPhaseID ?? session.projectPhaseID,
             milestoneText: milestoneText ?? session.milestoneText,
             notes: notes,
             mood: mood

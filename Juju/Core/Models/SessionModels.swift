@@ -131,6 +131,8 @@ extension SessionRecord {
     }
     
     /// Get project phase display name with fallback for legacy sessions
+    /// Note: This method should be used with caution as it loads projects directly.
+    /// For better performance, use the version in SessionsRowView that accepts projects as parameter.
     func getProjectPhaseDisplay() -> String? {
         guard let projectPhaseID = projectPhaseID,
               let projectID = projectID else {
@@ -139,7 +141,7 @@ extension SessionRecord {
         
         let projects = ProjectManager.shared.loadProjects()
         guard let project = projects.first(where: { $0.id == projectID }),
-              let phase = project.phases.first(where: { $0.id == projectPhaseID }) else {
+              let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
             return nil
         }
         

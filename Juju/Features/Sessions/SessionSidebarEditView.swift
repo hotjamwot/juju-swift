@@ -14,6 +14,7 @@ struct SessionSidebarEditView: View {
     @State private var tempActivityTypeID: String
     @State private var tempProjectPhaseID: String?
     @State private var tempMilestoneText: String
+    @State private var projectChangeTrigger: Bool = false
     
     // Time picker state properties
     @State private var startHour: Int = 0
@@ -143,6 +144,8 @@ struct SessionSidebarEditView: View {
         .onChange(of: tempProjectName) { _ in 
             // When project changes, validate phase selection and reset if invalid
             validateAndResetPhaseIfInvalid()
+            // Also validate that the current phase selection is valid for the new project
+            validatePhaseSelectionForCurrentProject()
             validateChanges() 
         }
         .onChange(of: tempActivityTypeID) { _ in validateChanges() }
@@ -296,6 +299,15 @@ struct SessionSidebarEditView: View {
                         .padding(.horizontal, 12)
                         .background(Theme.Colors.surface)
                         .cornerRadius(Theme.Design.cornerRadius)
+                }
+            }
+            .onChange(of: tempProjectName) { _ in
+                // Force picker refresh when project changes
+                DispatchQueue.main.async {
+                    // Clear the phase selection to avoid invalid selection warnings
+                    tempProjectPhaseID = nil
+                    // Toggle the trigger to force the Picker to rebuild
+                    projectChangeTrigger.toggle()
                 }
             }
             
@@ -607,6 +619,11 @@ struct SessionSidebarEditView: View {
             onSessionUpdated?()
             SessionSidebarEditView.sharedSessionUpdatedCallback?()
             
+            // Refresh projects data to ensure phases are up to date
+            Task {
+                await projectsViewModel.loadProjects()
+            }
+            
             // Close sidebar after successful save
             sidebarState.hide()
         } else {
@@ -619,15 +636,47 @@ struct SessionSidebarEditView: View {
     
     private func validateAndResetPhaseIfInvalid() {
         // When project changes, check if the current phase selection is still valid
-        if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }),
-           let phaseID = tempProjectPhaseID {
-            // Check if the selected phase exists in the current project
-            let phaseExists = selectedProject.phases.contains { $0.id == phaseID && !$0.archived }
-            if !phaseExists {
-                // Phase doesn't exist in current project, clear it
-                tempProjectPhaseID = nil
-                print("⚠️ Selected phase \(phaseID) not found in project \(tempProjectName), clearing phase selection")
+        print("🔍 validateAndResetPhaseIfInvalid called with project: \(tempProjectName), phaseID: \(tempProjectPhaseID ?? "nil")")
+        
+        if let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }) {
+            print("🔍 Found project: \(selectedProject.name) with \(selectedProject.phases.count) phases")
+            print("🔍 Available phases: \(selectedProject.phases.map { "\($0.name) (ID: \($0.id), archived: \($0.archived))" })")
+            
+            if let phaseID = tempProjectPhaseID {
+                let phaseExists = selectedProject.phases.contains { $0.id == phaseID && !$0.archived }
+                print("🔍 Checking if phaseID \(phaseID) exists in project: \(phaseExists)")
+                
+                if !phaseExists {
+                    // Phase doesn't exist in current project, clear it
+                    tempProjectPhaseID = nil
+                    print("⚠️ Selected phase \(phaseID) not found in project \(tempProjectName), clearing phase selection")
+                } else {
+                    print("✅ Phase \(phaseID) found in project \(tempProjectName)")
+                }
+            } else {
+                print("🔍 No phase selected, nothing to validate")
             }
+        } else if !tempProjectName.isEmpty {
+            print("⚠️ Project \(tempProjectName) not found in projects list")
+        } else {
+            print("🔍 No project selected")
+        }
+    }
+    
+    private func validatePhaseSelectionForCurrentProject() {
+        // Additional validation to ensure phase selection is valid for current project
+        // This handles the case where a phase was selected from a different project
+        guard let selectedProject = projectsViewModel.projects.first(where: { $0.name == tempProjectName }),
+              let phaseID = tempProjectPhaseID else {
+            return
+        }
+        
+        let phaseExists = selectedProject.phases.contains { $0.id == phaseID && !$0.archived }
+        
+        if !phaseExists {
+            // Phase doesn't belong to current project, clear it
+            tempProjectPhaseID = nil
+            print("⚠️ Phase \(phaseID) doesn't belong to current project \(selectedProject.name), clearing phase selection")
         }
     }
     

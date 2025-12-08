@@ -270,14 +270,30 @@ struct SessionsRowView: View {
     
     /// Get project phase display name with fallback for legacy sessions
     private func getProjectPhaseDisplay() -> String? {
-        guard let projectPhaseID = session.projectPhaseID,
-              let projectID = session.projectID else {
+        // If projects array is empty, we can't display phases yet
+        guard !projects.isEmpty else {
+            print("🔍 Session \(session.id) projects array is empty, cannot display phase")
             return nil
         }
         
-        let projects = ProjectManager.shared.loadProjects()
-        guard let project = projects.first(where: { $0.id == projectID }),
-              let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
+        guard let projectPhaseID = session.projectPhaseID,
+              let projectID = session.projectID else {
+            // Debug: Log sessions without projectID or projectPhaseID
+            print("🔍 Session \(session.id) missing projectID (\(session.projectID ?? "nil")) or projectPhaseID (\(session.projectPhaseID ?? "nil"))")
+            return nil
+        }
+        
+        // Use the projects array passed from SessionsView instead of loading directly
+        // This ensures we're using the same data source that's being managed by ProjectsViewModel
+        guard let project = projects.first(where: { $0.id == projectID }) else {
+            // Debug: Log when projectID doesn't match any loaded project
+            print("🔍 Session \(session.id) projectID \(projectID) not found in projects list (count: \(projects.count)). Available project IDs: \(projects.map { $0.id })")
+            return nil
+        }
+        
+        guard let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
+            // Debug: Log when phaseID doesn't match any phase in the project
+            print("🔍 Session \(session.id) projectPhaseID \(projectPhaseID) not found in project \(project.name). Available phase IDs: \(project.phases.map { $0.id })")
             return nil
         }
         

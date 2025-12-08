@@ -183,6 +183,9 @@ class NotesViewModel: ObservableObject {
         
         // Validate the selection to ensure it's still valid
         validatePhaseSelection()
+        
+        // Post notification to refresh projects data in other views
+        NotificationCenter.default.post(name: .projectsDidChange, object: nil)
     }
     
     // MARK: - Validation

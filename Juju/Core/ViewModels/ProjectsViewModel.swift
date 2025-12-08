@@ -6,6 +6,7 @@ class ProjectsViewModel: ObservableObject {
 
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
+    @Published var isLoading = false
     
     var filteredProjects: [Project] {
         projects.sorted { p1, p2 in
