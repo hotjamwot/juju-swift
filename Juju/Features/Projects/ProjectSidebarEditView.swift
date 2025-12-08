@@ -265,43 +265,37 @@ struct ProjectSidebarEditView: View {
             }
         }
         
-        // Create updated project
-        var updatedProject = Project(
-            id: project.id,
-            name: tempName,
-            color: colorHex,
-            about: tempAbout.isEmpty ? nil : tempAbout,
-            order: project.order,
-            emoji: tempEmoji,
-            phases: phases
-        )
-        updatedProject.archived = tempIsArchived
-        
-        // Save using ProjectsViewModel
         if project.id.isEmpty {
-            // Creating new project
-            projectsViewModel.addProject(
+            // Creating new project with all details
+            let newProject = projectsViewModel.addProject(
                 name: tempName,
                 color: colorHex,
-                about: tempAbout.isEmpty ? nil : tempAbout
+                about: tempAbout.isEmpty ? nil : tempAbout,
+                phases: phases,
+                archived: tempIsArchived
             )
             
-            // If the new project is archived, we need to archive it after creation
-            if tempIsArchived {
-                // Find the newly created project by name and archive it
-                if let newProject = projectsViewModel.projects.first(where: { $0.name == tempName && $0.color == colorHex }) {
-                    Task {
-                        await projectsViewModel.archiveProject(newProject)
-                    }
-                }
-            }
+            // Update local project copy
+            project = newProject
         } else {
             // Updating existing project
+            var updatedProject = Project(
+                id: project.id,
+                name: tempName,
+                color: colorHex,
+                about: tempAbout.isEmpty ? nil : tempAbout,
+                order: project.order,
+                emoji: tempEmoji,
+                phases: phases
+            )
+            updatedProject.archived = tempIsArchived
+            
             projectsViewModel.updateProject(updatedProject)
+            
+            // Update local project copy
+            project = updatedProject
         }
         
-        // Update local project copy
-        project = updatedProject
         hasChanges = false
         
         // Close sidebar after successful save

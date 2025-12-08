@@ -13,7 +13,15 @@ struct ActivityTypesView: View {
                     .frame(maxWidth: .infinity)
                 
                 Button {
-                    sidebarState.show(.newActivityType)
+                    // Create a new activity type instance with proper ID
+                    let newActivityType = ActivityType(
+                        id: UUID().uuidString,
+                        name: "",
+                        emoji: "⚡",
+                        description: "",
+                        archived: false
+                    )
+                    sidebarState.show(.newActivityType(newActivityType))
                 } label: {
                     HStack {
                         Image(systemName: "plus")

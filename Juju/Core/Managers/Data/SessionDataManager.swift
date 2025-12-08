@@ -31,6 +31,17 @@ class SessionDataManager: ObservableObject {
         Task {
             await loadAllSessions()
         }
+        
+        // Observe project changes to refresh projects data when projects change (e.g., phases added)
+        NotificationCenter.default.addObserver(
+            forName: .projectsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Projects have changed, but we don't need to do anything here
+            // The ProjectManager cache will be cleared automatically
+            print("✅ Projects changed notification received in SessionDataManager")
+        }
     }
     
     // MARK: - Session Loading

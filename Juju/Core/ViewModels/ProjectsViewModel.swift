@@ -52,17 +52,37 @@ init() {
     
     
     
-    func addProject(name: String, color: String, about: String?) {
-        let maxOrder = projects.map(\.order).max() ?? 0
-        let newProject = Project(name: name, color: color, about: about, order: maxOrder + 1)
-        projects.append(newProject)
-        projectManager.saveProjects(projects)
+    func addProject(name: String, color: String, about: String?, phases: [Phase] = [], archived: Bool = false) -> Project {
+        let newProject = Project(
+            name: name,
+            color: color,
+            about: about,
+            order: 0, // Will be set by ProjectManager
+            emoji: "📝",
+            phases: phases
+        )
+        
+        // Use ProjectManager to handle proper ID and order assignment
+        projectManager.addProject(newProject)
+        
+        // Refresh the UI after saving
+        Task {
+            await loadProjects()
+        }
+        
+        // Return the project with proper ID and order
+        return newProject
     }
     
     func moveProject(fromOffsets source: IndexSet, toOffset destination: Int) {
         projects.move(fromOffsets: source, toOffset: destination)
         reorderAllProjects()
         projectManager.saveProjects(projects)
+        
+        // Refresh the UI after saving
+        Task {
+            await loadProjects()
+        }
     }
     
     private func reorderAllProjects() {
@@ -78,6 +98,11 @@ init() {
             projects[index] = project
             projectManager.saveProjects(projects)
             
+            // Refresh the UI after saving
+            Task {
+                await loadProjects()
+            }
+            
             // If project name changed, update all sessions with the old name
             if oldProject.name != project.name {
                 updateSessionProjectNames(oldName: oldProject.name, newName: project.name)
@@ -91,6 +116,11 @@ init() {
             selectedProject = nil
         }
         projectManager.saveProjects(projects)
+        
+        // Refresh the UI after saving
+        Task {
+            await loadProjects()
+        }
     }
     
     /// Archive a project

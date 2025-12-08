@@ -6,8 +6,8 @@ enum SidebarContent: Identifiable {
     case session(SessionRecord)
     case project(Project)
     case activityType(ActivityType)
-    case newProject
-    case newActivityType
+    case newProject(Project)  // Store the actual project instance
+    case newActivityType(ActivityType)  // Store the actual activity type instance
     
     var id: String {
         switch self {
@@ -17,10 +17,10 @@ enum SidebarContent: Identifiable {
             return "project-\(project.id)"
         case .activityType(let activityType):
             return "activityType-\(activityType.id)"
-        case .newProject:
-            return "new-project"
-        case .newActivityType:
-            return "new-activity-type"
+        case .newProject(let project):
+            return "new-project-\(project.id)"
+        case .newActivityType(let activityType):
+            return "new-activity-type-\(activityType.id)"
         }
     }
 }

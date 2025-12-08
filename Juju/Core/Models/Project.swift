@@ -26,14 +26,14 @@ struct Phase: Codable, Identifiable, Hashable {
 
 // Project structure to match the original app
 struct Project: Codable, Identifiable, Hashable {
-    let id: String
+    var id: String
     var name: String
     var color: String
     var about: String?
     var order: Int
     var emoji: String
     var archived: Bool 
-    var phases: [Phase] 
+    var phases: [Phase]
     
     enum CodingKeys: String, CodingKey {
         case id, name, color, about, order, emoji, archived, phases
@@ -45,7 +45,7 @@ struct Project: Codable, Identifiable, Hashable {
     }
     
     init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁", phases: [Phase] = []) {
-        self.id = Date().timeIntervalSince1970.description + String(format: "%03d", Int.random(in: 0...999))
+        self.id = UUID().uuidString
         self.name = name
         self.color = color
         self.about = about
@@ -388,5 +388,23 @@ class ProjectManager {
     func clearCache() {
         cachedProjects = nil
         lastCacheTime = nil
+    }
+    
+    /// Add a new project with proper handling of phases and order
+    func addProject(_ project: Project) {
+        var projects = loadProjects()
+        var newProject = project
+        
+        // Ensure the project has a proper ID
+        if newProject.id.isEmpty {
+            newProject.id = UUID().uuidString
+        }
+        
+        // Set proper order (max order + 1)
+        let maxOrder = projects.map(\.order).max() ?? 0
+        newProject.order = maxOrder + 1
+        
+        projects.append(newProject)
+        saveProjects(projects)
     }
 }

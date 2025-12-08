@@ -54,17 +54,8 @@ struct SidebarEditView: View {
                     case .activityType(let activityType):
                         ActivityTypeSidebarEditView(activityType: activityType)
                             .environmentObject(ActivityTypesViewModel.shared)
-                    case .newProject:
-                        let newProject = Project(
-                            id: UUID().uuidString,
-                            name: "",
-                            color: "#007AFF",
-                            about: nil,
-                            order: 0,
-                            emoji: "📝",
-                            phases: []
-                        )
-                        ProjectSidebarEditView(project: newProject)
+                    case .newProject(let project):
+                        ProjectSidebarEditView(project: project)
                             .environmentObject(ProjectsViewModel.shared)
                     case .newActivityType:
                         let newActivityType = ActivityType(

@@ -16,7 +16,17 @@ struct ProjectsNativeView: View {
                     .frame(maxWidth: .infinity)
                 
                 Button {
-                    sidebarState.show(.newProject)
+                    // Create a new project instance with empty ID to indicate it's new
+                    let newProject = Project(
+                        id: "",
+                        name: "",
+                        color: "#007AFF",
+                        about: nil,
+                        order: 0,
+                        emoji: "📝",
+                        phases: []
+                    )
+                    sidebarState.show(.newProject(newProject))
                 } label: {
                     HStack {
                         Image(systemName: "plus")
@@ -80,6 +90,12 @@ struct ProjectsNativeView: View {
             }
         }
         .background(Theme.Colors.background)
+        .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
+            // Refresh projects when they change
+            Task {
+                await viewModel.loadProjects()
+            }
+        }
     }
 }
 
