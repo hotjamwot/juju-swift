@@ -7,28 +7,33 @@ struct ActivityTypesView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Text("Activity Types")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .frame(maxWidth: .infinity)
-                
-                Button {
-                    // Create a new activity type instance with proper ID
-                    let newActivityType = ActivityType(
-                        id: UUID().uuidString,
-                        name: "",
-                        emoji: "⚡",
-                        description: "",
-                        archived: false
-                    )
-                    sidebarState.show(.newActivityType(newActivityType))
-                } label: {
-                    HStack {
-                        Image(systemName: "plus")
-                        Text("Add Activity Type")
+            VStack(spacing: Theme.spacingMedium) {
+                HStack {
+                    Text("Activity Types")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    Spacer()
+                    
+                    Button {
+                        // Create a new activity type instance with proper ID
+                        let newActivityType = ActivityType(
+                            id: UUID().uuidString,
+                            name: "",
+                            emoji: "⚡",
+                            description: "",
+                            archived: false
+                        )
+                        sidebarState.show(.newActivityType(newActivityType))
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("Add Activity Type")
+                        }
                     }
+                    .buttonStyle(.primary)
                 }
-                .buttonStyle(.primary)
             }
             .padding(.vertical, Theme.spacingLarge)
             .padding(.horizontal, Theme.spacingLarge)
@@ -36,47 +41,56 @@ struct ActivityTypesView: View {
 
             // Activity Types List
             ScrollView {
-                if viewModel.activeActivityTypes.isEmpty && viewModel.archivedActivityTypes.isEmpty {
+                let shouldShowArchived = viewModel.showArchivedActivityTypes && !viewModel.archivedActivityTypes.isEmpty
+                let hasAnyActivityTypes = !viewModel.activeActivityTypes.isEmpty || shouldShowArchived
+                
+                if !hasAnyActivityTypes {
                     Text("No Activity Types Yet")
                         .foregroundColor(Theme.Colors.surface)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingMedium) {
-                        // Active Activity Types Section
+                        // Active Activity Types
                         if !viewModel.activeActivityTypes.isEmpty {
-                            Section {
-                                ForEach(viewModel.activeActivityTypes) { activityType in
-                                    Button(action: {
-                                        sidebarState.show(.activityType(activityType))
-                                    }) {
-                                        ActivityTypeRowView(activityType: activityType, isArchived: false)
-                                    }
-                                    .buttonStyle(.plain)
+                            ForEach(viewModel.activeActivityTypes) { activityType in
+                                Button(action: {
+                                    sidebarState.show(.activityType(activityType))
+                                }) {
+                                    ActivityTypeRowView(activityType: activityType, isArchived: false)
                                 }
-                            } header: {
-                                Text("Active Activity Types")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading)
+                                .buttonStyle(.plain)
                             }
                         }
                         
-                        // Archived Activity Types Section
-                        if !viewModel.archivedActivityTypes.isEmpty {
-                            Section {
-                                ForEach(viewModel.archivedActivityTypes) { activityType in
-                                    Button(action: {
-                                        sidebarState.show(.activityType(activityType))
-                                    }) {
-                                        ActivityTypeRowView(activityType: activityType, isArchived: true)
-                                    }
-                                    .buttonStyle(.plain)
+                        // Archive toggle button (centered, part of scrollable content)
+                        Button(action: {
+                            viewModel.showArchivedActivityTypes.toggle()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
+                                Text(viewModel.showArchivedActivityTypes ? "Hide Archived" : "Show Archived")
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        .accessibilityLabel("Toggle Archived Activity Types")
+                        .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        // Archived Activity Types (only show if toggle is enabled)
+                        if shouldShowArchived {
+                            ForEach(viewModel.archivedActivityTypes) { activityType in
+                                Button(action: {
+                                    sidebarState.show(.activityType(activityType))
+                                }) {
+                                    ActivityTypeRowView(activityType: activityType, isArchived: true)
                                 }
-                            } header: {
-                                Text("Archived Activity Types")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading)
+                                .buttonStyle(.plain)
                             }
                         }
                     }

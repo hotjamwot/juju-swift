@@ -6,6 +6,7 @@ class ActivityTypesViewModel: ObservableObject {
     
     @Published var activityTypes: [ActivityType] = []
     @Published var searchText: String = ""
+    @Published var showArchivedActivityTypes: Bool = false
     
     init() {
         loadActivityTypes()

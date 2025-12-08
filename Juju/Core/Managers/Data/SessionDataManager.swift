@@ -195,6 +195,13 @@ class SessionDataManager: ObservableObject {
             self?.lastUpdated = Date()
         }
         
+        // Trigger background session counting for all projects
+        // This will cache the results so the Projects tab loads instantly
+        ProjectManager.shared.updateAllProjectStatistics()
+        
+        // Also warm the cache directly for immediate availability
+        ProjectStatisticsCache.shared.warmCache(for: ProjectManager.shared.loadProjects())
+        
         return sortedSessions
     }
     

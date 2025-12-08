@@ -35,6 +35,7 @@ The macOS menu bar interface is controlled by MenuManager and IconManager. The m
 
 - **Session**: start, end, duration, projectId, activityTypeId, notes, mood
 - **Project**: id, name, emoji, color, about, archived?
+- **Phase**: id, name, order, archived? (project phases/subdivisions)
 - **ActivityType**: id, name, emoji, description, archived?
 
 ---
@@ -123,11 +124,17 @@ No data is stored elsewhere.
 
 **Projects Tab:**
 - **Project List**: Vertical list of all projects
-- **Project Cards**: Each showing color swatch, name with emoji, and optional description
+- **Project Cards**: Each showing color swatch, name with emoji, optional description, session count, and last session date
 - **Add Project**: Button to create new projects
 - **Edit/Delete**: Full CRUD operations with modal interface
 - **Color Management**: Color picker for project color-coding
 - **About Field**: Optional project description
+- **Archived Projects Toggle**: Button to show/hide archived projects
+- **Session Counting**: Each project displays total number of associated sessions
+- **Last Session Date**: Projects show when they were last worked on
+- **Project Phases**: Support for project subdivisions with archiving
+- **Project Name Changes**: Automatic CSV updates when project names change
+- **Data Migration**: Tool to assign project IDs to legacy sessions
 
 **Activity Types Tab:**
 - **Activity Types List**: Vertical list of all activity types

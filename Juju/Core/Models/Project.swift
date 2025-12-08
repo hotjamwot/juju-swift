@@ -9,6 +9,98 @@ extension Notification.Name {
 
     // No Color extensions here - use JujuUtils
 
+// MARK: - Project Statistics Cache Manager
+class ProjectStatisticsCache {
+    static let shared = ProjectStatisticsCache()
+    
+    private var sessionCountCache: [String: Int] = [:]
+    private var lastSessionDateCache: [String: Date?] = [:]
+    private var lastCacheTime: Date?
+    private let cacheExpiryTime: TimeInterval = 30 // Cache expires after 30 seconds
+    
+    private init() {
+        // Listen for session changes to invalidate cache
+        NotificationCenter.default.addObserver(
+            forName: .sessionDidEnd,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.invalidateCache()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .projectsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.invalidateCache()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    func getSessionCount(for projectID: String) -> Int {
+        // Check if cache is still valid
+        guard let lastTime = lastCacheTime,
+              Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
+            // Cache expired, invalidate and return 0 (will trigger recomputation)
+            invalidateCache()
+            return 0
+        }
+        
+        return sessionCountCache[projectID] ?? 0
+    }
+    
+    func getLastSessionDate(for projectID: String) -> Date? {
+        // Check if cache is still valid
+        guard let lastTime = lastCacheTime,
+              Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
+            // Cache expired, invalidate and return nil (will trigger recomputation)
+            invalidateCache()
+            return nil
+        }
+        
+        return lastSessionDateCache[projectID] ?? nil
+    }
+    
+    func setSessionCount(_ count: Int, for projectID: String) {
+        sessionCountCache[projectID] = count
+        lastCacheTime = Date()
+    }
+    
+    func setLastSessionDate(_ date: Date?, for projectID: String) {
+        lastSessionDateCache[projectID] = date
+        lastCacheTime = Date()
+    }
+    
+    func invalidateCache() {
+        sessionCountCache.removeAll()
+        lastSessionDateCache.removeAll()
+        lastCacheTime = nil
+    }
+    
+    func warmCache(for projects: [Project]) {
+        // Pre-compute statistics for all projects in the background
+        Task {
+            let sessions = SessionManager.shared.allSessions
+            
+            for project in projects {
+                let filteredSessions = sessions.filter { $0.projectID == project.id }
+                let count = filteredSessions.count
+                let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+                
+                // Update cache on main thread
+                await MainActor.run {
+                    ProjectStatisticsCache.shared.setSessionCount(count, for: project.id)
+                    ProjectStatisticsCache.shared.setLastSessionDate(lastDate, for: project.id)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Phase Structure
 struct Phase: Codable, Identifiable, Hashable {
     let id: String
@@ -34,6 +126,61 @@ struct Project: Codable, Identifiable, Hashable {
     var emoji: String
     var archived: Bool 
     var phases: [Phase]
+    
+    // Computed properties for session statistics (using cache)
+    var sessionCount: Int {
+        // Try to get from cache first
+        let cachedCount = ProjectStatisticsCache.shared.getSessionCount(for: id)
+        if cachedCount > 0 {
+            return cachedCount
+        }
+        
+        // If not in cache or cache expired, compute and cache it
+        let count = SessionManager.shared.allSessions
+            .filter { $0.projectID == id }
+            .count
+        ProjectStatisticsCache.shared.setSessionCount(count, for: id)
+        return count
+    }
+    
+    var lastSessionDate: Date? {
+        // Try to get from cache first
+        if let cachedDate = ProjectStatisticsCache.shared.getLastSessionDate(for: id) {
+            return cachedDate
+        }
+        
+        // If not in cache or cache expired, compute and cache it
+        let sessions = SessionManager.shared.allSessions
+            .filter { $0.projectID == id }
+            .compactMap { $0.startDateTime }
+        let date = sessions.max()
+        ProjectStatisticsCache.shared.setLastSessionDate(date, for: id)
+        return date
+    }
+    
+    // MARK: - Background Session Counting
+    
+    /// Update session statistics asynchronously in the background
+    /// This is a static method to avoid mutating self on a let constant
+    static func updateSessionStatistics(for project: Project) -> Project {
+        Task {
+            // Compute session count and last session date in background
+            let sessions = SessionManager.shared.allSessions
+            let filteredSessions = sessions.filter { $0.projectID == project.id }
+            let count = filteredSessions.count
+            let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+            
+            // Update cached values on main thread
+            await MainActor.run {
+                // Since we can't mutate the struct directly, we'll rely on the computed properties
+                // The caching will happen naturally when the properties are accessed
+                NotificationCenter.default.post(name: .projectsDidChange, object: nil)
+            }
+        }
+        
+        // Return the project as-is since we can't mutate it directly
+        return project
+    }
     
     enum CodingKeys: String, CodingKey {
         case id, name, color, about, order, emoji, archived, phases
@@ -407,4 +554,105 @@ class ProjectManager {
         projects.append(newProject)
         saveProjects(projects)
     }
+    
+    // MARK: - Project Name Migration Helper
+    
+    /// Migrate sessions from old project name to new project name when project is renamed
+    /// This ensures that sessions continue to be associated with the correct project
+    func migrateSessionProjectNames(oldName: String, newName: String, projectID: String) {
+        let sessionManager = SessionManager.shared
+        
+        // Get all sessions that have the old project name
+        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectName == oldName }
+        
+        if sessionsToUpdate.isEmpty {
+            return
+        }
+        
+        print("🔄 Updating \(sessionsToUpdate.count) sessions from project '\(oldName)' to '\(newName)'...")
+        
+        var updatedCount = 0
+        
+        // Update each session to use the new project name
+        for session in sessionsToUpdate {
+            let success = sessionManager.updateSessionFull(
+                id: session.id,
+                date: session.date,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                projectName: newName,
+                notes: session.notes,
+                mood: session.mood,
+                activityTypeID: session.activityTypeID,
+                projectPhaseID: session.projectPhaseID,
+                milestoneText: session.milestoneText
+            )
+            
+            if success {
+                updatedCount += 1
+            }
+        }
+        
+        print("✅ Migrated \(updatedCount) sessions from project '\(oldName)' to '\(newName)' with ID \(projectID)")
+        
+        // Notify that projects have changed to refresh any cached data (on main thread)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .projectsDidChange, object: nil)
+        }
+    }
+    
+    /// Update a project and automatically migrate all associated sessions
+    /// This ensures CSV files remain clean and human-readable
+    func updateProject(_ project: Project, oldName: String? = nil) {
+        var projects = loadProjects()
+        guard let projectIndex = projects.firstIndex(where: { $0.id == project.id }) else {
+            print("❌ Project \(project.id) not found for update")
+            return
+        }
+        
+        let oldProject = projects[projectIndex]
+        let oldName = oldName ?? oldProject.name
+        
+        // Update the project
+        projects[projectIndex] = project
+        saveProjects(projects)
+        
+        // If the project name changed, migrate all associated sessions
+        if oldName != project.name {
+            print("📝 Project name changed from '\(oldName)' to '\(project.name)' - updating sessions...")
+            migrateSessionProjectNames(oldName: oldName, newName: project.name, projectID: project.id)
+        }
+    }
+    
+    // MARK: - Background Session Counting
+    
+    /// Update session statistics for all projects in the background
+    func updateAllProjectStatistics() {
+        Task {
+            let projects = loadProjects()
+            
+            // Process projects in batches to avoid overwhelming the system
+            let batchSize = 10
+            for batchStart in stride(from: 0, to: projects.count, by: batchSize) {
+                let batchEnd = min(batchStart + batchSize, projects.count)
+                let batch = Array(projects[batchStart..<batchEnd])
+                
+                // Process each project in the batch concurrently
+                await withTaskGroup(of: Void.self) { group in
+                    for project in batch {
+                        group.addTask {
+                            // Just trigger the background computation by accessing the properties
+                            // This will populate the cache automatically
+                            _ = project.sessionCount
+                            _ = project.lastSessionDate
+                        }
+                    }
+                }
+                
+                // Small delay between batches to be nice to the system
+                try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
+            }
+        }
+    }
+    
 }

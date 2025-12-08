@@ -10,30 +10,35 @@ struct ProjectsNativeView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Text("Projects")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .frame(maxWidth: .infinity)
-                
-                Button {
-                    // Create a new project instance with empty ID to indicate it's new
-                    let newProject = Project(
-                        id: "",
-                        name: "",
-                        color: "#007AFF",
-                        about: nil,
-                        order: 0,
-                        emoji: "📝",
-                        phases: []
-                    )
-                    sidebarState.show(.newProject(newProject))
-                } label: {
-                    HStack {
-                        Image(systemName: "plus")
-                        Text("Add Project")
+            VStack(spacing: Theme.spacingMedium) {
+                HStack {
+                    Text("Projects")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    Spacer()
+                    
+                    Button {
+                        // Create a new project instance with empty ID to indicate it's new
+                        let newProject = Project(
+                            id: "",
+                            name: "",
+                            color: "#007AFF",
+                            about: nil,
+                            order: 0,
+                            emoji: "📝",
+                            phases: []
+                        )
+                        sidebarState.show(.newProject(newProject))
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("Add Project")
+                        }
                     }
+                    .buttonStyle(.primary)
                 }
-                .buttonStyle(.primary)
             }
             .padding(.vertical, Theme.spacingLarge)
             .padding(.horizontal, Theme.spacingLarge)
@@ -41,47 +46,56 @@ struct ProjectsNativeView: View {
 
             // Projects List
             ScrollView {
-                if viewModel.activeProjects.isEmpty && viewModel.archivedProjects.isEmpty {
+                let shouldShowArchived = viewModel.showArchivedProjects && !viewModel.archivedProjects.isEmpty
+                let hasAnyProjects = !viewModel.activeProjects.isEmpty || shouldShowArchived
+                
+                if !hasAnyProjects {
                     Text("No Projects Yet")
                         .foregroundColor(Theme.Colors.surface)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingMedium) {
-                        // Active Projects Section
+                        // Active Projects
                         if !viewModel.activeProjects.isEmpty {
-                            Section {
-                                ForEach(viewModel.activeProjects) { project in
-                                    Button(action: {
-                                        sidebarState.show(.project(project))
-                                    }) {
-                                        ProjectRowView(project: project)
-                                    }
-                                    .buttonStyle(.plain)
+                            ForEach(viewModel.activeProjects) { project in
+                                Button(action: {
+                                    sidebarState.show(.project(project))
+                                }) {
+                                    ProjectRowView(project: project)
                                 }
-                            } header: {
-                                Text("Active Projects")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading)
+                                .buttonStyle(.plain)
                             }
-                            
-                            // Archived Projects Section
-                            if !viewModel.archivedProjects.isEmpty {
-                                Section {
-                                    ForEach(viewModel.archivedProjects) { project in
-                                        Button(action: {
-                                            sidebarState.show(.project(project))
-                                        }) {
-                                            ProjectRowView(project: project, isArchived: true)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                } header: {
-                                    Text("Archived Projects")
-                                        .font(.headline)
-                                        .foregroundColor(.secondary)
-                                        .padding(.leading)
+                        }
+                        
+                        // Archive toggle button (centered, part of scrollable content)
+                        Button(action: {
+                            viewModel.showArchivedProjects.toggle()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
+                                Text(viewModel.showArchivedProjects ? "Hide Archived" : "Show Archived")
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Theme.Colors.divider.opacity(0.3))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        .accessibilityLabel("Toggle Archived Projects")
+                        .accessibilityHint(viewModel.showArchivedProjects ? "Hides archived projects" : "Shows archived projects")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        // Archived Projects (only show if toggle is enabled)
+                        if shouldShowArchived {
+                            ForEach(viewModel.archivedProjects) { project in
+                                Button(action: {
+                                    sidebarState.show(.project(project))
+                                }) {
+                                    ProjectRowView(project: project, isArchived: true)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -162,6 +176,21 @@ struct ProjectRowView: View {
                 
                 Spacer()
                 
+                // Session count capsule
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Text("\(project.sessionCount) sessions")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Theme.Colors.divider.opacity(0.3))
+                .clipShape(Capsule())
+                .frame(width: 120)
+                
                 // Current phase from most recent session (moved to right side)
                 if let currentPhase = currentPhase {
                     HStack(spacing: 4) {
@@ -176,10 +205,10 @@ struct ProjectRowView: View {
                     .padding(.vertical, 2)
                     .background(project.swiftUIColor.opacity(0.1))
                     .clipShape(Capsule())
-                    .frame(width: 160)
+                    .frame(width: 140)
                 } else {
                     // Empty space when no current phase
-                    Spacer().frame(width: 160)
+                    Spacer().frame(width: 140)
                 }
                 
                 // Archived status or actions (moved to far right)

@@ -7,25 +7,38 @@ class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
     @Published var isLoading = false
+    @Published var showArchivedProjects = true
+    
+    /// Sort projects by last session date descending, with fallback to order
+    private func sortProjectsByLastSession(_ projects: [Project]) -> [Project] {
+        return projects.sorted { p1, p2 in
+            let date1 = p1.lastSessionDate ?? Date.distantPast
+            let date2 = p2.lastSessionDate ?? Date.distantPast
+            
+            // If last session dates are equal, fall back to order
+            if date1 == date2 {
+                return p1.order < p2.order
+            }
+            
+            // Sort by last session date descending (most recent first)
+            return date1 > date2
+        }
+    }
     
     var filteredProjects: [Project] {
-        projects.sorted { p1, p2 in
-            p1.order < p2.order
-        }
+        sortProjectsByLastSession(projects)
     }
     
-    /// Active projects (non-archived) sorted by order
+    /// Active projects (non-archived) sorted by last session date
     var activeProjects: [Project] {
-        projects.filter { !$0.archived }.sorted { p1, p2 in
-            p1.order < p2.order
-        }
+        let active = projects.filter { !$0.archived }
+        return sortProjectsByLastSession(active)
     }
     
-    /// Archived projects sorted by order
+    /// Archived projects sorted by last session date
     var archivedProjects: [Project] {
-        projects.filter { $0.archived }.sorted { p1, p2 in
-            p1.order < p2.order
-        }
+        let archived = projects.filter { $0.archived }
+        return sortProjectsByLastSession(archived)
     }
     
     private let projectManager = ProjectManager.shared
@@ -105,7 +118,7 @@ init() {
             
             // If project name changed, update all sessions with the old name
             if oldProject.name != project.name {
-                updateSessionProjectNames(oldName: oldProject.name, newName: project.name)
+                updateSessionProjectNames(oldName: oldProject.name, newName: project.name, projectID: project.id)
             }
         }
     }
@@ -136,29 +149,8 @@ init() {
     }
     
     /// Update all sessions that reference the old project name to use the new name
-    private func updateSessionProjectNames(oldName: String, newName: String) {
-        let sessionManager = SessionManager.shared
-        
-        // Get all sessions that have the old project name
-        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectName == oldName }
-        
-        if sessionsToUpdate.isEmpty {
-            return
-        }
-        
-        // Update each session
-        for session in sessionsToUpdate {
-            sessionManager.updateSessionFull(
-                id: session.id,
-                date: session.date,
-                startTime: session.startTime,
-                endTime: session.endTime,
-                projectName: newName,
-                notes: session.notes,
-                mood: session.mood
-            )
-        }
-        
-        print("✅ Updated \(sessionsToUpdate.count) sessions from project '\(oldName)' to '\(newName)'")
+    private func updateSessionProjectNames(oldName: String, newName: String, projectID: String) {
+        // Use the ProjectManager's migration helper for better future-proofing
+        projectManager.migrateSessionProjectNames(oldName: oldName, newName: newName, projectID: projectID)
     }
 }

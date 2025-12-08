@@ -46,6 +46,120 @@ class SessionMigrationManager {
         return success
     }
     
+    // MARK: - Project ID Migration
+    
+    /// Migrate old sessions to assign project IDs based on project names
+    /// This ensures that all sessions are properly associated with projects for accurate session counting
+    func migrateSessionProjectIDs() async {
+        let sessionManager = SessionManager.shared
+        let projects = ProjectManager.shared.loadProjects()
+        
+        // Create a mapping of project names to project IDs for quick lookup
+        var projectNameToID: [String: String] = [:]
+        for project in projects {
+            projectNameToID[project.name] = project.id
+        }
+        
+        // Get all sessions that don't have a projectID
+        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectID == nil }
+        
+        if sessionsToUpdate.isEmpty {
+            print("✅ No sessions need project ID migration")
+            return
+        }
+        
+        print("🔄 Starting migration of \(sessionsToUpdate.count) sessions to assign project IDs...")
+        
+        // Find unique project names in sessions that don't have projectID
+        let uniqueProjectNames = Set(sessionsToUpdate.map { $0.projectName })
+        print("📊 Found \(uniqueProjectNames.count) unique project names in sessions without projectID")
+        
+        var migratedCount = 0
+        var skippedCount = 0
+        var createdProjects: [String] = []
+        
+        // Process each session
+        for session in sessionsToUpdate {
+            if let projectID = projectNameToID[session.projectName] {
+                // Project exists, update session with projectID
+                // First update the projectID field directly
+                let projectIDSuccess = sessionManager.updateSession(id: session.id, field: "project_id", value: projectID)
+                
+                // Then update other fields if needed (this will preserve the projectID)
+                let otherFieldsSuccess = sessionManager.updateSessionFull(
+                    id: session.id,
+                    date: session.date,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    projectName: session.projectName,
+                    notes: session.notes,
+                    mood: session.mood,
+                    activityTypeID: session.activityTypeID,
+                    projectPhaseID: session.projectPhaseID,
+                    milestoneText: session.milestoneText
+                )
+                
+                if projectIDSuccess || otherFieldsSuccess {
+                    migratedCount += 1
+                }
+            } else {
+                // Project doesn't exist in projects.json - create it
+                print("⚠️ Creating new project for session: \(session.projectName)")
+                
+                let newProject = Project(
+                    name: session.projectName,
+                    color: "#808080", // Grey color
+                    about: "Auto-created from session data",
+                    order: 0,
+                    emoji: "📁",
+                    phases: []
+                )
+                
+                ProjectManager.shared.addProject(newProject)
+                createdProjects.append(session.projectName)
+                
+                // Update the mapping
+                projectNameToID[session.projectName] = newProject.id
+                
+                // Update session with the new project
+                // First update the projectID field directly
+                let projectIDSuccess = sessionManager.updateSession(id: session.id, field: "project_id", value: newProject.id)
+                
+                // Then update other fields if needed (this will preserve the projectID)
+                let otherFieldsSuccess = sessionManager.updateSessionFull(
+                    id: session.id,
+                    date: session.date,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    projectName: session.projectName,
+                    notes: session.notes,
+                    mood: session.mood,
+                    activityTypeID: session.activityTypeID,
+                    projectPhaseID: session.projectPhaseID,
+                    milestoneText: session.milestoneText
+                )
+                
+                if projectIDSuccess || otherFieldsSuccess {
+                    migratedCount += 1
+                }
+            }
+        }
+        
+        // Force save all sessions to ensure CSV files are updated
+        print("💾 Saving all sessions to CSV files...")
+        sessionManager.saveAllSessions(sessionManager.allSessions)
+        
+        print("✅ Migration complete: \(migratedCount) sessions updated, \(skippedCount) sessions skipped")
+        if !createdProjects.isEmpty {
+            print("🆕 Created \(createdProjects.count) new projects: \(createdProjects.joined(separator: ", "))")
+        }
+        
+        // Notify that projects have changed to refresh any cached data (on main thread)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .projectsDidChange, object: nil)
+        }
+    }
+    
     // MARK: - Migration Logic
     
     private func performMigration() async -> Bool {
