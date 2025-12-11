@@ -1,144 +1,598 @@
 import SwiftUI
+import Combine
 
-/// Compact row view for displaying session information in list layout
-/// Consolidated view that handles both display and expanded states with actions
+// MARK: - Session Observer Helper
+class SessionObserver: ObservableObject {
+    @Published var refreshTrigger = UUID()
+    private var observer: NSObjectProtocol?
+    
+    init(sessionID: String) {
+        observer = NotificationCenter.default.addObserver(
+            forName: .sessionDidEnd,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let observedSessionID = notification.userInfo?["sessionID"] as? String,
+               observedSessionID == sessionID {
+                DispatchQueue.main.async {
+                    self.refreshTrigger = UUID()
+                }
+            }
+        }
+    }
+    
+    deinit {
+        if let observer = observer {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+}
+
+/// Fixed-height row view for displaying session information in list layout
+/// Simplified view with all UI elements visible at once, no interactive behavior
 struct SessionsRowView: View {
-    @Binding var session: SessionRecord
+    let session: SessionRecord
     let projects: [Project]
     let activityTypes: [ActivityType]
-    let sidebarState: SidebarStateManager
-    let onDelete: (SessionRecord) -> Void
+    let onDelete: ((SessionRecord) -> Void)
+    let onNotesChanged: ((String) -> Void)? // New callback for notes changes
+    let onShowNoteOverlay: ((SessionRecord) -> Void)? // Callback to show overlay in SessionsView
+    let onProjectChanged: (() -> Void)? // New callback to notify parent when project changes
     
-    // Hover state for interactive feedback
+    // Interactive state for hover effects
     @State private var isHovering = false
-    @State private var isExpanded = false
-    @State private var isNotesExpanded = false
+    @State private var isProjectHovering = false
+    @State private var isEditing = false
+    @State private var editedNotes: String
+    
+    // Project selection state
+    @State private var showingProjectPopover = false
+    @State private var selectedProjectID: String?
+    
+    // Phase selection state
+    @State private var showingPhasePopover = false
+    @State private var selectedPhaseID: String?
+    @State private var phasePopoverKey: UUID = UUID() // Force popover refresh when project changes
+    
+    // Activity type selection state
+    @State private var showingActivityTypePopover = false
+    @State private var selectedActivityTypeID: String?
+    @State private var isActivityTypeHovering = false
+    
+    // Mood selection state
+    @State private var showingMoodPopover = false
+    @State private var selectedMood: Int?
+    @State private var isMoodHovering = false
+    
+    // Milestone selection state
+    @State private var showingMilestonePopover = false
+    @State private var milestoneText: String = ""
+    @State private var isMilestoneHovering = false
+    
+    // Time picker state for start time
+    @State private var showingStartTimePicker = false
+    @State private var isStartTimeHovering = false
+    
+    // Time picker state for end time
+    @State private var showingEndTimePicker = false
+    @State private var isEndTimeHovering = false
+    
+    // Date picker state
+    @State private var showingDatePicker = false
+    @State private var isDateHovering = false
+    
+    // Phase selection hover state
+    @State private var isPhaseHovering = false
+    
+    // State to trigger refresh when session data changes
+    @StateObject private var sessionObserver: SessionObserver
+    
+    // Track the current session state for reactive updates
+    @State private var currentSession: SessionRecord
+    
+    // Track project data version to ensure popover shows correct phases
+    @State private var projectDataVersion: UUID = UUID()
+    
+    // Initialize with session observer
+    init(session: SessionRecord, projects: [Project], activityTypes: [ActivityType], onDelete: ((SessionRecord) -> Void)? = nil, onNotesChanged: ((String) -> Void)? = nil, onShowNoteOverlay: ((SessionRecord) -> Void)? = nil, onProjectChanged: (() -> Void)? = nil) {
+        self.session = session
+        self.projects = projects
+        self.activityTypes = activityTypes
+        self.onDelete = onDelete ?? { _ in }
+        self.onNotesChanged = onNotesChanged
+        self.onShowNoteOverlay = onShowNoteOverlay
+        self.onProjectChanged = onProjectChanged
+        self._editedNotes = State(initialValue: session.notes)
+        self._sessionObserver = StateObject(wrappedValue: SessionObserver(sessionID: session.id))
+        self._currentSession = State(initialValue: session)
+    }
     
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .topLeading) {
             // Main row content - consolidated display logic
             HStack(spacing: Theme.Row.compactSpacing) {
-                // Project color dot
-                Circle()
-                    .fill(projectColor)
-                    .frame(width: Theme.Row.projectDotSize, height: Theme.Row.projectDotSize)
-                    .padding(.leading, Theme.Row.contentPadding)
-                
-                // Project emoji
-                Text(projectEmoji)
-                    .font(.system(size: 12))
-                    .frame(width: 20, alignment: .leading)
-                
-                // Session details (horizontal layout with flexible spacing)
-                HStack(spacing: Theme.Row.compactSpacing) {
-                    // Title (flexible width with minimum)
-                    Text(session.projectName)
-                        .font(Theme.Fonts.body.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .lineLimit(1)
-                        .frame(minWidth: 100, maxWidth: 160)
-                    
-                    // Start and End Time (fixed width)
+                // Project capsule with popover (fixed width, left aligned)
+                Button(action: {
+                    showingProjectPopover = true
+                    selectedProjectID = currentSession.projectID
+                }) {
                     HStack(spacing: 6) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 10))
-                            .foregroundColor(Theme.Colors.textSecondary)
-                        Text("\(formattedStartTime) - \(formattedEndTime)")
+                        // Project color dot
+                        Circle()
+                            .fill(projectColor)
+                            .frame(width: Theme.Row.projectDotSize, height: Theme.Row.projectDotSize)
+                        
+                        // Project emoji
+                        Text(projectEmoji)
+                            .font(.system(size: 12))
+                        
+                        // Project name
+                        Text(currentSession.projectName)
+                            .font(Theme.Fonts.body.weight(.semibold))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(projectColor.opacity(0.1))
+                            .opacity(isProjectHovering ? 1.0 : 0.0)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                            .opacity(isProjectHovering ? 1.0 : 0.0)
+                    )
+                    .contentShape(Rectangle()) // Make entire capsule tappable
+                }
+                .buttonStyle(PlainButtonStyle())
+                .onHover { hovering in
+                    isProjectHovering = hovering
+                }
+                .popover(isPresented: $showingProjectPopover) {
+                    InlineSelectionPopover(
+                        items: projects.filter { !$0.archived }, // Only show active (non-archived) projects
+                        currentID: currentSession.projectID, // Use current session's projectID directly
+                        onItemSelected: { project in
+                            // Update session with new project and reset phase
+                            updateSessionProject(project)
+                        },
+                        onDismiss: {
+                            showingProjectPopover = false
+                        }
+                    )
+                    .padding()
+                }
+                .frame(width: 200, alignment: .leading) // Fixed width for project capsule, left aligned
+                .padding(.leading, Theme.Row.contentPadding)
+                
+                // Session details (horizontal layout with optimized spacing)
+                HStack(spacing: Theme.Row.compactSpacing) {
+                    // Start and End Time (fixed width) - now clickable with hover effects
+                    HStack(spacing: 2) {
+                        // Date picker (compact clock icon button)
+                        Button(action: {
+                            showingDatePicker = true
+                        }) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isDateHovering = hovering
+                        }
+                        .popover(isPresented: $showingDatePicker) {
+                            DatePickerPopover(
+                                title: "Edit Date",
+                                dateString: currentSession.date,
+                                onDateChanged: { newDate in
+                                    updateSessionDate(newDate)
+                                },
+                                onDismiss: {
+                                    showingDatePicker = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .background(
+                            Theme.Colors.divider.opacity(0.2)
+                                .opacity(isDateHovering ? 0.4 : 0.2)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 999)
+                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                .opacity(isDateHovering ? 1.0 : 0.0)
+                        )
+                        .clipShape(Circle())
+                        .contentShape(Rectangle()) // Make entire area tappable
+                        .frame(width: 28, height: 28)
+                        // Start Time
+                        Button(action: {
+                            showingStartTimePicker = true
+                        }) {
+                            Text(formattedStartTime)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isStartTimeHovering = hovering
+                        }
+                        .popover(isPresented: $showingStartTimePicker) {
+                            TimePickerPopover(
+                                title: "Edit Start Time",
+                                timeString: currentSession.startTime,
+                                onTimeChanged: { newStartTime in
+                                    updateSessionStartTime(newStartTime)
+                                },
+                                onDismiss: {
+                                    showingStartTimePicker = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .background(
+                            Theme.Colors.divider.opacity(0.2)
+                                .opacity(isStartTimeHovering ? 0.4 : 0.2)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 999)
+                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                .opacity(isStartTimeHovering ? 1.0 : 0.0)
+                        )
+                        .clipShape(Capsule())
+                        .contentShape(Rectangle()) // Make entire area tappable
+                        
+                        Text("-")
                             .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
+                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                        
+                        // End Time
+                        Button(action: {
+                            showingEndTimePicker = true
+                        }) {
+                            Text(formattedEndTime)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isEndTimeHovering = hovering
+                        }
+                        .popover(isPresented: $showingEndTimePicker) {
+                            TimePickerPopover(
+                                title: "Edit End Time",
+                                timeString: currentSession.endTime,
+                                onTimeChanged: { newEndTime in
+                                    updateSessionEndTime(newEndTime)
+                                },
+                                onDismiss: {
+                                    showingEndTimePicker = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .background(
+                            Theme.Colors.divider.opacity(0.2)
+                                .opacity(isEndTimeHovering ? 0.4 : 0.2)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 999)
+                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                .opacity(isEndTimeHovering ? 1.0 : 0.0)
+                        )
+                        .clipShape(Capsule())
+                        .contentShape(Rectangle()) // Make entire area tappable
                     }
                     .frame(width: 140)
                     
                     // Activity Type (with fallback to "Uncategorized")
                     if let activityType = getActivityTypeDisplay() {
-                        HStack(spacing: 4) {
-                            Text(activityType.emoji)
-                                .font(.system(size: 10))
-                            Text(activityType.name)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
+                        Button(action: {
+                            showingActivityTypePopover = true
+                            selectedActivityTypeID = currentSession.activityTypeID
+                        }) {
+                            HStack(spacing: 4) {
+                                Text(activityType.emoji)
+                                    .font(.system(size: 10))
+                                Text(activityType.name)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Theme.Colors.divider.opacity(0.2)
+                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                            )
+                            .clipShape(Capsule())
+                            .contentShape(Rectangle()) // Make entire area tappable
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Theme.Colors.divider.opacity(0.2))
-                        .clipShape(Capsule())
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isActivityTypeHovering = hovering
+                        }
+                        .popover(isPresented: $showingActivityTypePopover) {
+                            ActivityTypeSelectionPopover(
+                                activityTypes: activityTypes,
+                                currentActivityTypeID: currentSession.activityTypeID,
+                                onActivityTypeSelected: { activityType in
+                                    updateSessionActivityType(activityType)
+                                },
+                                onDismiss: {
+                                    showingActivityTypePopover = false
+                                }
+                            )
+                            .padding()
+                        }
                         .frame(minWidth: 100, maxWidth: 140)
                     } else {
-                        // Empty space when no activity type
-                        Spacer().frame(minWidth: 100, maxWidth: 140)
+                        // Empty space when no activity type - make it clickable to add one
+                        Button(action: {
+                            showingActivityTypePopover = true
+                            selectedActivityTypeID = currentSession.activityTypeID
+                        }) {
+                            HStack(spacing: 4) {
+                                Text("📝")
+                                    .font(.system(size: 10))
+                                Text("Activity Type")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Theme.Colors.divider.opacity(0.2)
+                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                            )
+                            .clipShape(Capsule())
+                            .contentShape(Rectangle()) // Make entire area tappable
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isActivityTypeHovering = hovering
+                        }
+                        .popover(isPresented: $showingActivityTypePopover) {
+                            ActivityTypeSelectionPopover(
+                                activityTypes: activityTypes,
+                                currentActivityTypeID: currentSession.activityTypeID,
+                                onActivityTypeSelected: { activityType in
+                                    updateSessionActivityType(activityType)
+                                },
+                                onDismiss: {
+                                    showingActivityTypePopover = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .frame(minWidth: 100, maxWidth: 140)
                     }
                     
                     // Project Phase (fixed width)
-                    if let phaseName = getProjectPhaseDisplay() {
-                        HStack(spacing: 4) {
-                            Image(systemName: "number.circle")
-                                .font(.system(size: 10))
-                                .foregroundColor(projectColor.opacity(0.8))
-                            Text(phaseName)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
+                    Button(action: {
+                        showingPhasePopover = true
+                        selectedPhaseID = currentSession.projectPhaseID
+                    }) {
+                        if let phaseName = getProjectPhaseDisplay() {
+                            HStack(spacing: 4) {
+                                Image(systemName: "play.circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                                Text(phaseName)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                        } else {
+                            // Empty space when no phase - make it clickable to add a phase
+                            HStack(spacing: 4) {
+                                Image(systemName: "play.circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                                Text("Phase")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                            }
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(projectColor.opacity(0.1))
-                        .clipShape(Capsule())
-                        .frame(width: 100)
-                    } else {
-                        // Empty space when no phase
-                        Spacer().frame(width: 100)
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isPhaseHovering = hovering
+                    }
+                    .popover(isPresented: $showingPhasePopover) {
+                        // Always get the current project to ensure we show the correct phases
+                        // Include projectDataVersion as a dependency to force refresh when project data changes
+                        if let projectID = currentSession.projectID,
+                           let project = projects.first(where: { $0.id == projectID }) {
+                            PhaseSelectionPopover(
+                                project: project,
+                                currentPhaseID: currentSession.projectPhaseID,
+                                onPhaseSelected: { phase in
+                                    updateSessionPhase(phase)
+                                },
+                                onDismiss: {
+                                    showingPhasePopover = false
+                                }
+                            )
+                            .padding()
+                            .id(projectDataVersion) // Force refresh when project data version changes
+                        }
+                    }
+                    .background(
+                        Theme.Colors.divider.opacity(0.2)
+                            .opacity(isPhaseHovering ? 0.4 : 0.2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 999)
+                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                            .opacity(isPhaseHovering ? 1.0 : 0.0)
+                    )
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(width: 100)
                     
                     // Milestone (flexible width)
-                    if let milestone = session.milestoneText {
-                        HStack(spacing: 6) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(projectColor.opacity(0.9))
-                            Text(milestone)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
+                    Button(action: {
+                        showingMilestonePopover = true
+                        milestoneText = currentSession.milestoneText ?? ""
+                    }) {
+                        if let milestone = currentSession.milestoneText, !milestone.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(projectColor.opacity(0.9))
+                                Text(milestone)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                        } else {
+                            // Grayed out star icon when no milestone (nil or empty string)
+                            Image(systemName: "star")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1)
-                        .background(Theme.Colors.divider.opacity(0.2))
-                        .clipShape(Capsule())
-                        .frame(minWidth: 160, maxWidth: 180)
-                    } else {
-                        // Empty space when no milestone
-                        Spacer().frame(minWidth: 160, maxWidth: 180)
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isMilestoneHovering = hovering
+                    }
+                    .popover(isPresented: $showingMilestonePopover) {
+                        MilestoneSelectionPopover(
+                            currentMilestone: currentSession.milestoneText,
+                            onMilestoneChanged: { milestone in
+                                updateSessionMilestone(milestone)
+                            },
+                            onDismiss: {
+                                showingMilestonePopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .background(
+                        Theme.Colors.divider.opacity(0.2)
+                            .opacity(isMilestoneHovering ? 0.4 : 0.2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 999)
+                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                            .opacity(isMilestoneHovering ? 1.0 : 0.0)
+                    )
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(minWidth: 160, maxWidth: 180)
                     
-                    // Notes (flexible width)
-                    if !session.notes.isEmpty {
-                        Text(session.notes)
+                    // Notes (expanded flexible width - takes more space)
+                    if !currentSession.notes.isEmpty {
+                        Text(currentSession.notes)
                             .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
                             .lineLimit(1)
-                            .frame(minWidth: 120, maxWidth: 200, alignment: .leading)
+                            .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle()) // Make entire area tappable
+                            .onTapGesture {
+                                onShowNoteOverlay?(currentSession)
+                            }
                     } else {
-                        // Empty space when no notes
-                        Spacer().frame(minWidth: 120, maxWidth: 200)
+                        // Empty space when no notes - expanded to fill more space
+                        // Make this tappable too for adding notes
+                        Text("No notes")
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                            .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle()) // Make entire area tappable
+                            .onTapGesture {
+                                onShowNoteOverlay?(currentSession)
+                            }
                     }
                     
                     // Mood (fixed width)
-                    if let mood = session.mood {
-                        Text("\(mood)/10")
-                            .font(Theme.Fonts.caption.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textSecondary)
-                            .frame(width: 60)
-                    } else {
-                        // Empty space when no mood
-                        Spacer().frame(width: 60)
+                    Button(action: {
+                        showingMoodPopover = true
+                        selectedMood = currentSession.mood
+                    }) {
+                        if let mood = currentSession.mood {
+                            Text("\(mood)/10")
+                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        } else {
+                            // Empty space when no mood - make it clickable to add a mood
+                            Text("Mood")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isMoodHovering = hovering
+                    }
+                    .popover(isPresented: $showingMoodPopover) {
+                        MoodSelectionPopover(
+                            currentMood: currentSession.mood,
+                            onMoodSelected: { mood in
+                                updateSessionMood(mood)
+                            },
+                            onDismiss: {
+                                showingMoodPopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .background(
+                        Theme.Colors.divider.opacity(0.2)
+                            .opacity(isMoodHovering ? 0.4 : 0.2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 999)
+                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                            .opacity(isMoodHovering ? 1.0 : 0.0)
+                    )
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(width: 60)
                 }
                 
-                Spacer()
-                
-                // Duration (moved to far right)
-                Text(formatDuration(session.durationMinutes))
+                // Duration (moved to far right with flexible width)
+                Text(formatDuration(currentSession.durationMinutes))
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: 80)
+                    .frame(width: 80)
+                
+                // Delete button - appears on hover
+                Button(action: {
+                    onDelete(currentSession)
+                }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.Colors.error)
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Theme.Colors.error.opacity(0.1))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Theme.Colors.error.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .opacity(isHovering ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.15), value: isHovering)
+                .padding(.trailing, Theme.Row.contentPadding)
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -149,110 +603,36 @@ struct SessionsRowView: View {
                     .stroke(Theme.Colors.divider, lineWidth: 1)
             )
             .cornerRadius(Theme.Row.cornerRadius)
-            .contentShape(Rectangle())
             .onHover { hovering in
                 isHovering = hovering
             }
-            .onTapGesture {
-                toggleNotes()
-            }
-            
-            // Expanded state - consolidated notes and actions (only show when expanded)
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 0) {
-                    Divider()
-                        .background(Theme.Colors.divider)
-                    
-                    // Create a two-column layout: 90% notes, 10% buttons
-                    HStack(alignment: .top, spacing: 0) {
-                        // Notes Column (90%)
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("Notes")
-                                    .font(Theme.Fonts.caption.weight(.semibold))
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                
-                                Spacer()
-                            }
-                            
-                            Text(session.notes)
-                                .font(Theme.Fonts.body)
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .lineLimit(nil)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(.horizontal, Theme.Row.contentPadding)
-                        .padding(.vertical, Theme.Row.contentPadding)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Buttons Column (10%)
-                        VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
-                            // Edit Button
-                            Button(action: {
-                                sidebarState.show(.session(session))
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 12))
-                                    Text("Edit")
-                                        .font(Theme.Fonts.caption)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Theme.Colors.divider.opacity(0.3))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .pointingHandOnHover()
-                            .accessibilityLabel("Edit Session")
-                            .accessibilityHint("Opens the session editor to modify session details")
-                            
-                            // Delete Button
-                            Button(action: {
-                                onDelete(session)
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 12))
-                                    Text("Delete")
-                                        .font(Theme.Fonts.caption)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Theme.Colors.divider.opacity(0.3))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .pointingHandOnHover()
-                            .accessibilityLabel("Delete Session")
-                            .accessibilityHint("Deletes this session permanently")
-                        }
-                        .padding(.trailing, Theme.Row.contentPadding)
-                        .padding(.top, Theme.Row.contentPadding)
+            // React to session observer changes to refresh the session data
+            .onReceive(sessionObserver.$refreshTrigger) { _ in
+                // Reload the session from the data store to get the updated phaseID
+                if let updatedSession = SessionManager.shared.allSessions.first(where: { $0.id == session.id }) {
+                    DispatchQueue.main.async {
+                        self.currentSession = updatedSession
                     }
                 }
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: isExpanded)
             }
+            // Note: Removed .sessionDidEnd notification handler to avoid conflicts with the delayed refresh trigger
+            // The delayed sessionObserver.refreshTrigger handles the refresh properly after session data is updated
         }
     }
     
     // MARK: - Computed Properties
     
     private var projectColor: Color {
-        projects.first { $0.name == session.projectName }?.swiftUIColor ?? Theme.Colors.accentColor
+        projects.first { $0.name == currentSession.projectName }?.swiftUIColor ?? Theme.Colors.accentColor
     }
     
     private var projectEmoji: String {
-        projects.first { $0.name == session.projectName }?.emoji ?? "📁"
+        projects.first { $0.name == currentSession.projectName }?.emoji ?? "📁"
     }
     
     /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
     private func getActivityTypeDisplay() -> (name: String, emoji: String)? {
-        guard let activityTypeID = session.activityTypeID else {
+        guard let activityTypeID = currentSession.activityTypeID else {
             // Fallback to "Uncategorized" for legacy sessions
             let uncategorized = ActivityTypeManager.shared.getUncategorizedActivityType()
             return (uncategorized.name, uncategorized.emoji)
@@ -272,28 +652,23 @@ struct SessionsRowView: View {
     private func getProjectPhaseDisplay() -> String? {
         // If projects array is empty, we can't display phases yet
         guard !projects.isEmpty else {
-            print("🔍 Session \(session.id) projects array is empty, cannot display phase")
             return nil
         }
         
-        guard let projectPhaseID = session.projectPhaseID,
-              let projectID = session.projectID else {
-            // Debug: Log sessions without projectID or projectPhaseID
-            print("🔍 Session \(session.id) missing projectID (\(session.projectID ?? "nil")) or projectPhaseID (\(session.projectPhaseID ?? "nil"))")
+        // If no phaseID is set, return nil to show the placeholder state
+        guard let projectPhaseID = currentSession.projectPhaseID,
+              let projectID = currentSession.projectID else {
             return nil
         }
         
         // Use the projects array passed from SessionsView instead of loading directly
         // This ensures we're using the same data source that's being managed by ProjectsViewModel
         guard let project = projects.first(where: { $0.id == projectID }) else {
-            // Debug: Log when projectID doesn't match any loaded project
-            print("🔍 Session \(session.id) projectID \(projectID) not found in projects list (count: \(projects.count)). Available project IDs: \(projects.map { $0.id })")
             return nil
         }
         
+        // Check if the phase exists and is not archived
         guard let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
-            // Debug: Log when phaseID doesn't match any phase in the project
-            print("🔍 Session \(session.id) projectPhaseID \(projectPhaseID) not found in project \(project.name). Available phase IDs: \(project.phases.map { $0.id })")
             return nil
         }
         
@@ -301,11 +676,11 @@ struct SessionsRowView: View {
     }
     
     private var formattedStartTime: String {
-        formatTime(session.startTime)
+        formatTime(currentSession.startTime)
     }
     
     private var formattedEndTime: String {
-        formatTime(session.endTime)
+        formatTime(currentSession.endTime)
     }
     
     // MARK: - Helper Methods
@@ -347,10 +722,343 @@ struct SessionsRowView: View {
         }
     }
     
-    private func toggleNotes() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isExpanded.toggle()
+    private func moodEmoji(for mood: Int) -> String {
+        switch mood {
+        case 0...2: return "😞"
+        case 3...4: return "😟"
+        case 5: return "😐"
+        case 6: return "🙂"
+        case 7: return "😊"
+        case 8: return "😄"
+        case 9: return "😁"
+        case 10: return "🤩"
+        default: return "😊"
         }
+    }
+    
+    // MARK: - Project Selection Handler
+    
+    /// Update session with new project
+    /// This method handles the complete project change workflow:
+    /// 1. Updates the session with new projectID and projectName
+    /// 2. Checks if the current phase exists in the new project
+    /// 3. If the phase doesn't exist, clears the phaseID
+    /// 4. Immediately updates the session in the data store
+    /// 5. Triggers a UI refresh by calling the callback
+    /// 6. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionProject(_ project: Project) {
+        // Determine the new phaseID
+        var newPhaseID: String? = currentSession.projectPhaseID
+        
+        if let currentPhaseID = currentSession.projectPhaseID {
+            // Check if the current phase exists in the new project
+            let phaseExistsInNewProject = project.phases.contains { $0.id == currentPhaseID && !$0.archived }
+            
+            if !phaseExistsInNewProject {
+                // Clear the phaseID if it doesn't exist in the new project
+                newPhaseID = nil
+            }
+        }
+        
+        // Update the session with new project information and the appropriate phaseID
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: project.name,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: newPhaseID, // Use the determined phaseID
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use a more robust synchronization approach with multiple refresh attempts
+            refreshSessionData()
+            
+            // Force the phase popover to refresh by changing the key
+            self.phasePopoverKey = UUID()
+            self.projectDataVersion = UUID() // Force project data refresh
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    /// Refresh session data with robust synchronization
+    /// This method ensures that the session data is properly updated before refreshing the UI
+    private func refreshSessionData() {
+        // First attempt: immediate refresh
+        DispatchQueue.main.async {
+            self.sessionObserver.refreshTrigger = UUID()
+        }
+        
+        // Second attempt: after a short delay to ensure data store is updated
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.sessionObserver.refreshTrigger = UUID()
+        }
+        
+        // Third attempt: after a longer delay for full synchronization
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.sessionObserver.refreshTrigger = UUID()
+        }
+    }
+    
+    // MARK: - Phase Selection Handler
+    
+    /// Update session with new phase
+    /// This method handles the phase change workflow:
+    /// 1. Updates the session with the new phaseID
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionPhase(_ phase: Phase) {
+        // Update the session with the new phaseID
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: phase.id, // Use the selected phaseID
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as project updates
+            refreshSessionData()
+            
+            // Force the phase popover to refresh by changing the key
+            self.phasePopoverKey = UUID()
+            self.projectDataVersion = UUID() // Force project data refresh
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - Activity Type Selection Handler
+    
+    /// Update session with new activity type
+    /// This method handles the activity type change workflow:
+    /// 1. Updates the session with the new activityTypeID
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionActivityType(_ activityType: ActivityType) {
+        // Update the session with the new activityTypeID
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: activityType.id, // Use the selected activityTypeID
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as project and phase updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - Mood Selection Handler
+    
+    /// Update session with new mood
+    /// This method handles the mood change workflow:
+    /// 1. Updates the session with the new mood value
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionMood(_ mood: Int) {
+        // Update the session with the new mood value
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: mood, // Use the selected mood value
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as project, phase, and activity type updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - Start Time Selection Handler
+    
+    /// Update session with new start time
+    /// This method handles the start time change workflow:
+    /// 1. Updates the session with the new start time
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionStartTime(_ newStartTime: String) {
+        // Update the session with the new start time
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: newStartTime, // Use the selected start time
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as other updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - End Time Selection Handler
+    
+    /// Update session with new end time
+    /// This method handles the end time change workflow:
+    /// 1. Updates the session with the new end time
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionEndTime(_ newEndTime: String) {
+        // Update the session with the new end time
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: newEndTime, // Use the selected end time
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as other updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - Date Selection Handler
+    
+    /// Update session with new date
+    /// This method handles the date change workflow:
+    /// 1. Updates the session with the new date
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionDate(_ newDate: String) {
+        // Update the session with the new date
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: newDate, // Use the selected date
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: session.milestoneText
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as other updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+    
+    // MARK: - Milestone Selection Handler
+    
+    /// Update session with new milestone
+    /// This method handles the milestone change workflow:
+    /// 1. Updates the session with the new milestone text
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionMilestone(_ milestone: String?) {
+        // Update the session with the new milestone text
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: session.date,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            projectName: currentSession.projectName,
+            notes: session.notes,
+            mood: session.mood,
+            activityTypeID: session.activityTypeID,
+            projectPhaseID: session.projectPhaseID,
+            milestoneText: milestone // Use the selected milestone text
+        )
+        
+        if success {
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as other updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        }
+    }
+}
+
+// MARK: - Time Picker Popover (Moved from InlineSelectionPopover)
+/// Popover wrapper for the inline time picker
+/// Provides the same interface as other selection popovers
+struct TimePickerPopover: View {
+    let title: String
+    let timeString: String
+    let onTimeChanged: (String) -> Void
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        InlineTimePicker(
+            title: title,
+            timeString: timeString,
+            onTimeChanged: onTimeChanged,
+            onDismiss: onDismiss
+        )
     }
 }
 
@@ -361,7 +1069,7 @@ struct SessionsRowView_Previews: PreviewProvider {
     static var previews: some View {
         // Use live data from shared instances for preview
         SessionsRowView(
-            session: .constant(SessionRecord(
+            session: SessionRecord(
                 id: "1",
                 date: "2024-01-15",
                 startTime: "09:00:00",
@@ -374,11 +1082,11 @@ struct SessionsRowView_Previews: PreviewProvider {
                 milestoneText: "First Draft Complete",
                 notes: "Quick meeting about the new features.",
                 mood: 7
-            )),
+            ),
             projects: ProjectsViewModel.shared.projects,
             activityTypes: ActivityTypesViewModel.shared.activeActivityTypes,
-            sidebarState: SidebarStateManager(),
-            onDelete: { _ in }
+            onDelete: { _ in },
+            onNotesChanged: { _ in }
         )
         .onAppear {
             // Load live data for preview

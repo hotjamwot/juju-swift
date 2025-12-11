@@ -1,34 +1,6 @@
 # THE GOAL
 We're going to start a fun refactor of how our session editing works. The goal is to get rid of the edit sidebar for all of session editableness, and instead, we will be making an inline version of editing.
 
-
-# ⭐️ **PHASE 1 — The Immutable Row Shell**
-**Goal:** A stable fixed-height row with perfect layout, no behaviour.
-### Build:
-- Fixed row height
-- All UI elements in place (capsules, note preview, star, etc.)
-- No buttons
-- No hover effects
-- No popovers
-- No overlays
-- No gestures
-**Why this matters:**  
-If the layout is wrong later, everything breaks.  
-Lock the aesthetics before touching state.
-
----
-# ⭐️ **PHASE 2 — Add Hover Delete Button (Low-Risk Interaction)**
-Keep it stupidly simple.
-### Build:
-- On hover → a delete icon fades in at the far right
-- On click → `SessionStore.delete(session)`
-- Must NOT refresh the whole list
-- Must NOT reset filters
-- Must NOT collapse any overlays
-**Why this is early:**  
-It’s isolated.  
-It tests your “row refreshes but list stays stable” model in a safe way.
-
 ---
 
 ### 👉 PHASE 2.5 — Fix the Filter Refresh Model 

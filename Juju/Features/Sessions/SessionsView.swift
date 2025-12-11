@@ -17,6 +17,7 @@ private extension Int {
     }
 }
 
+
 // MARK: - Pretty date helper
 private extension Date {
     /// "Monday, 23rd October"
@@ -53,16 +54,6 @@ private extension Date {
     }
 }
 
-// MARK: - Date Filter Enum
-public enum DateFilter: String, CaseIterable, Identifiable {
-    case today = "Today"
-    case thisWeek = "This Week"
-    case thisMonth = "This Month"
-    case clear = "Clear"
-    
-    public var id: String { rawValue }
-    public var title: String { rawValue }
-}
 
 // MARK: - Sessions View
 
@@ -91,73 +82,6 @@ struct GroupedSession: Identifiable {
     }
 }
 
-struct GroupedSessionView: View {
-    let group: GroupedSession
-    let projects: [Project]
-    let activityTypes: [ActivityType]
-    let onDelete: (SessionRecord) -> Void
-    let sidebarState: SidebarStateManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Day Header - now integrated directly into SessionsView
-            HStack {
-                // Left section: Date and session count
-                HStack(spacing: 12) {
-                    // Date text
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(group.date.prettyHeader)
-                            .font(Theme.Fonts.header)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                    }
-                    
-                    // Session count badge
-                    Text("\(group.sessions.count) session\(group.sessions.count != 1 ? "s" : "")")
-                        .font(Theme.Fonts.caption.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Theme.Colors.divider.opacity(0.2))
-                        .clipShape(Capsule())
-                }
-                
-                Spacer()
-                
-                // Total duration badge (right aligned)
-                Text(group.formattedDuration)
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Theme.Colors.divider.opacity(0.2))
-                    .clipShape(Capsule())
-            }
-            .padding(.vertical, Theme.spacingSmall)
-            .padding(.horizontal, Theme.spacingMedium)
-            .overlay(
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(Theme.Colors.divider),
-                alignment: .bottom
-            )
-            
-            // Session rows (always visible now - no expansion needed)
-            VStack(spacing: Theme.spacingSmall) {
-                ForEach(group.sessions) { session in
-                    SessionsRowView(
-                        session: .constant(session),
-                        projects: projects,
-                        activityTypes: activityTypes,
-                        sidebarState: sidebarState,
-                        onDelete: onDelete
-                    )
-                }
-            }
-            .padding(.horizontal, Theme.spacingMedium)
-            .padding(.vertical, Theme.spacingSmall)
-        }
-    }
-}
 
 /// Main view for displaying and managing sessions in a grouped grid
 public struct SessionsView: View {
@@ -166,6 +90,82 @@ public struct SessionsView: View {
     @StateObject private var chartDataPreparer = ChartDataPreparer()
     @StateObject private var activityTypesViewModel = ActivityTypesViewModel()
     @EnvironmentObject private var sidebarState: SidebarStateManager
+
+    // MARK: - Nested GroupedSessionView
+    private struct GroupedSessionView: View {
+        let group: GroupedSession
+        let projects: [Project]
+        let activityTypes: [ActivityType]
+        let sidebarState: SidebarStateManager
+        let onDelete: ((SessionRecord) -> Void)
+        let onNotesChanged: ((SessionRecord, String) -> Void)
+        let onShowNoteOverlay: ((SessionRecord) -> Void)
+        let onProjectChanged: (() -> Void)
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 0) {
+                // Day Header - now integrated directly into SessionsView
+                HStack {
+                    // Left section: Date and session count
+                    HStack(spacing: 12) {
+                        // Date text
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(group.date.prettyHeader)
+                                .font(Theme.Fonts.header)
+                                .foregroundColor(Theme.Colors.textPrimary)
+                        }
+                        
+                        // Session count badge
+                        Text("\(group.sessions.count) session\(group.sessions.count != 1 ? "s" : "")")
+                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                    
+                    Spacer()
+                    
+                    // Total duration badge (right aligned)
+                    Text(group.formattedDuration)
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Theme.Colors.divider.opacity(0.2))
+                        .clipShape(Capsule())
+                }
+                .padding(.vertical, Theme.spacingSmall)
+                .padding(.horizontal, Theme.spacingMedium)
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(Theme.Colors.divider),
+                    alignment: .bottom
+                )
+                
+                // Session rows (always visible now - no expansion needed)
+                VStack(spacing: Theme.spacingSmall) {
+                            ForEach(group.sessions) { session in
+                        SessionsRowView(
+                            session: session,
+                            projects: projects,
+                            activityTypes: activityTypes,
+                            onDelete: onDelete,
+                            onNotesChanged: { newNotes in
+                                onNotesChanged(session, newNotes)
+                            },
+                            onShowNoteOverlay: onShowNoteOverlay,
+                            onProjectChanged: onProjectChanged
+                        )
+                    }
+                }
+                .padding(.horizontal, Theme.spacingMedium)
+                .padding(.vertical, Theme.spacingSmall)
+            }
+        }
+    }
 
     // MARK: - State Properties
     
@@ -189,6 +189,17 @@ public struct SessionsView: View {
     
     // Track last update time to force UI refresh
     @State private var lastRefreshTime = Date()
+    
+    // Note overlay state
+    @State private var showingNoteOverlay = false
+    @State private var overlaySession: SessionRecord?
+    @State private var isEditingNotes = false
+    @State private var editedNotes: String = ""
+    
+    // Filter persistence: store the last applied filter state
+    @State private var lastAppliedFilter: SessionsDateFilter = .thisWeek
+    @State private var lastAppliedProjectFilter: String = "All"
+    @State private var lastAppliedCustomRange: DateRange? = nil
 
     // MARK: - Computed Properties
     
@@ -240,11 +251,49 @@ public struct SessionsView: View {
                 group: group,
                 projects: projectsViewModel.projects,
                 activityTypes: activityTypesViewModel.activeActivityTypes,
-                onDelete: { session in
-                    toDelete = session
+                sidebarState: sidebarState,
+                onDelete: { sessionToDelete in
+                    toDelete = sessionToDelete
                     showingDeleteAlert = true
                 },
-                sidebarState: sidebarState
+                onNotesChanged: { session, newNotes in
+                    // Update the session notes
+                    let success = sessionManager.updateSessionFull(
+                        id: session.id,
+                        date: session.date,
+                        startTime: session.startTime,
+                        endTime: session.endTime,
+                        projectName: session.projectName,
+                        notes: newNotes,
+                        mood: session.mood ?? 0,
+                        activityTypeID: session.activityTypeID,
+                        projectPhaseID: session.projectPhaseID,
+                        milestoneText: session.milestoneText
+                    )
+                    
+                    if success {
+                        // Trigger refresh to update the UI
+                        Task {
+                            await loadCurrentWeekSessions()
+                        }
+                    }
+                },
+                onShowNoteOverlay: { sessionToOverlay in
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        overlaySession = sessionToOverlay
+                        editedNotes = sessionToOverlay.notes
+                        showingNoteOverlay = true
+                        isEditingNotes = false
+                    }
+                },
+                onProjectChanged: {
+                    // Trigger refresh when project is changed
+                    // Force reload of projects to ensure we have the latest phase data
+                    Task {
+                        await projectsViewModel.loadProjects()
+                        await loadCurrentWeekSessions()
+                    }
+                }
             )
         }
     }
@@ -253,6 +302,148 @@ public struct SessionsView: View {
     private var groupedCurrentWeekSessions: [GroupedSession] {
         let sessions = getCurrentWeekSessions()
         return groupSessionsByDate(sessions)
+    }
+    
+    // MARK: - Note Overlay
+    @ViewBuilder
+    private var noteOverlay: some View {
+        if showingNoteOverlay, let session = overlaySession {
+            GeometryReader { geometry in
+                ZStack {
+                    // Background dimming that covers entire screen
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showingNoteOverlay = false
+                                isEditingNotes = false
+                                overlaySession = nil
+                                editedNotes = ""
+                            }
+                        }
+                    
+                    // Note overlay content - centered on screen
+                    VStack(spacing: 0) {
+                        // Main content area
+                        VStack(spacing: Theme.spacingMedium) {
+                            if isEditingNotes {
+                                // Edit mode - multiline text editor with buttons
+                                VStack(spacing: Theme.spacingSmall) {
+                                    // Text editor
+                                    TextEditor(text: $editedNotes)
+                                        .font(Theme.Fonts.body)
+                                        .frame(minHeight: 120, maxHeight: 200)
+                                        .textFieldStyle(.plain)
+                                        .padding(Theme.spacingSmall)
+                                        .background(Theme.Colors.background)
+                                        .cornerRadius(Theme.Design.cornerRadius)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                                        )
+                                    
+                                    // Action buttons
+                                    HStack(spacing: Theme.spacingSmall) {
+                                        Spacer()
+                                        
+                                        Button("Cancel") {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                isEditingNotes = false
+                                                editedNotes = session.notes // Reset to original
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                                    showingNoteOverlay = false
+                                                    overlaySession = nil
+                                                    editedNotes = ""
+                                                }
+                                            }
+                                        }
+                                        .buttonStyle(SecondaryButtonStyle())
+                                        
+                                        Button("Save") {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                // Update the session notes
+                                                let success = sessionManager.updateSessionFull(
+                                                    id: session.id,
+                                                    date: session.date,
+                                                    startTime: session.startTime,
+                                                    endTime: session.endTime,
+                                                    projectName: session.projectName,
+                                                    notes: editedNotes,
+                                                    mood: session.mood ?? 0,
+                                                    activityTypeID: session.activityTypeID,
+                                                    projectPhaseID: session.projectPhaseID,
+                                                    milestoneText: session.milestoneText
+                                                )
+                                                
+                                                if success {
+                                                    // Trigger refresh to update the UI
+                                                    Task {
+                                                        await loadCurrentWeekSessions()
+                                                    }
+                                                }
+                                                
+                                                isEditingNotes = false
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                                    showingNoteOverlay = false
+                                                    overlaySession = nil
+                                                    editedNotes = ""
+                                                }
+                                            }
+                                        }
+                                        .buttonStyle(PrimaryButtonStyle())
+                                        .disabled(editedNotes == session.notes) // Disable if no changes
+                                        .opacity(editedNotes == session.notes ? 0.5 : 1.0)
+                                    }
+                                }
+                            } else {
+                                // Display mode - click to edit
+                                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                                    Text("Notes")
+                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.textSecondary)
+                                    
+                                    Text(session.notes.isEmpty ? "No notes yet. Click to add notes." : session.notes)
+                                        .font(Theme.Fonts.body)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                        .lineLimit(nil)
+                                        .multilineTextAlignment(.leading)
+                                        .padding(Theme.spacingSmall)
+                                        .background(Theme.Colors.background)
+                                        .cornerRadius(Theme.Design.cornerRadius)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                                        )
+                                        .contentShape(Rectangle()) // Make entire area tappable
+                                        .onTapGesture {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                isEditingNotes = true
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                        .padding(Theme.spacingMedium)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(Theme.Row.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
+                                .stroke(Theme.Colors.divider, lineWidth: 1)
+                        )
+                        .padding(.horizontal, Theme.Row.contentPadding)
+                        .padding(.vertical, Theme.Row.contentPadding)
+                        .transition(.asymmetric(
+                            insertion: AnyTransition.move(edge: .bottom).combined(with: .opacity),
+                            removal: AnyTransition.move(edge: .bottom).combined(with: .opacity)
+                        ))
+                        .animation(.easeInOut(duration: 0.25), value: isEditingNotes)
+                    }
+                    .frame(maxWidth: 700) // Limit width for better readability
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(100) // Ensure overlay appears above all other content
+        }
     }
     
 
@@ -311,6 +502,9 @@ public struct SessionsView: View {
                         .padding(.vertical, Theme.spacingMedium)
                     }
                     .scrollContentBackground(.hidden)
+                    
+                    // Note overlay - appears above all content
+                    noteOverlay
                 }
                 
                 // --- Floating Filter Toggle Button ---
@@ -322,15 +516,11 @@ public struct SessionsView: View {
                             state: filterExportState,
                             projects: projectsViewModel.projects,
                             filteredSessionsCount: currentSessionCount,
-            onDateFilterChange: handleDateFilterSelection,
-            onCustomDateRangeChange: handleCustomDateRangeChange,
-            onProjectFilterChange: { _ in },
-            onExport: { format in
-                exportSessions(format: format.fileExtension)
-            },
-                            onInvoicePreviewToggle: {
-                                // Future invoice preview functionality
-                                print("Invoice preview requested")
+                            onDateFilterChange: handleDateFilterSelection,
+                            onCustomDateRangeChange: handleCustomDateRangeChange,
+                            onProjectFilterChange: { _ in },
+                            onExport: { format in
+                                exportSessions(format: format.fileExtension)
                             },
                             onApplyFilters: applyFilters
                         )
@@ -361,8 +551,19 @@ public struct SessionsView: View {
         }
         .onChange(of: sessionManager.lastUpdated) { _ in
             // Auto-refresh when session data changes (after edit, delete, etc.)
+            // BUT preserve the current filter state instead of always loading current week
             Task {
-                await loadCurrentWeekSessions()
+                // Only refresh if we're on the default "This Week" filter
+                // This preserves custom filters when sessions are updated
+                if filterExportState.selectedDateFilter == .thisWeek && 
+                   filterExportState.projectFilter == "All" && 
+                   filterExportState.customDateRange == nil {
+                    await loadCurrentWeekSessions()
+                } else {
+                    // Apply the current filters to refresh with the same filter state
+                    await applyFiltersPreservingState()
+                }
+                
                 // Update chart data when sessions change
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
@@ -402,13 +603,11 @@ public struct SessionsView: View {
             Button("OK") { }
         } message: { Text(exportMessage) }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
-            Button("Delete session for \"\(session?.projectName ?? "Unknown")\"", role: .destructive) {
-                if let sessionToDelete = session {
-                    deleteSession(sessionToDelete)
-                }
+            Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
+                deleteSession(session)
             }
-        } message: { _ in
-             Text("Are you sure? This action cannot be undone.")
+        } message: { session in
+            Text("Are you sure you want to delete this session for \"\(session.projectName)\"? This action cannot be undone.")
         }
     }
     
@@ -557,6 +756,65 @@ public struct SessionsView: View {
             currentWeekSessions = groupSessionsByDate(filteredSessions)
         }
     }
+    
+    /// Apply current filters while preserving filter state (used for auto-refresh)
+    private func applyFiltersPreservingState() async {
+        // Apply filters and update the session list
+        // Start with all sessions instead of just current week
+        var filteredSessions = sessionManager.allSessions
+        
+        // Apply project filtering first
+        if filterExportState.projectFilter != "All" {
+            filteredSessions = filteredSessions.filter { $0.projectName == filterExportState.projectFilter }
+        }
+        
+        // Apply date filtering based on selected filter
+        switch filterExportState.selectedDateFilter {
+        case .today:
+            let today = Calendar.current.startOfDay(for: Date())
+            filteredSessions = filteredSessions.filter { session in
+                guard let start = session.startDateTime else { return false }
+                return Calendar.current.isDate(start, inSameDayAs: today)
+            }
+        case .thisWeek:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
+            filteredSessions = filteredSessions.filter { session in
+                guard let start = session.startDateTime else { return false }
+                return start >= weekRange.start && start <= weekRange.end
+            }
+        case .thisMonth:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
+            filteredSessions = filteredSessions.filter { session in
+                guard let start = session.startDateTime else { return false }
+                return start >= monthRange.start && start <= monthRange.end
+            }
+        case .thisYear:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
+            filteredSessions = filteredSessions.filter { session in
+                guard let start = session.startDateTime else { return false }
+                return start >= yearRange.start && start <= yearRange.end
+            }
+        case .custom:
+            if let customRange = filterExportState.customDateRange {
+                filteredSessions = filteredSessions.filter { session in
+                    guard let start = session.startDateTime else { return false }
+                    return start >= customRange.startDate && start <= customRange.endDate
+                }
+            }
+        case .clear:
+            // No additional filtering - use all sessions
+            break
+        }
+        
+        // Update the grouped sessions with filtered results
+        currentWeekSessions = groupSessionsByDate(filteredSessions)
+    }
 
     // MARK: - Nested Filter Button Component
     struct SessionFilterButton: View {
@@ -568,9 +826,8 @@ public struct SessionsView: View {
             Button(title, action: action)
                 .buttonStyle(FilterButtonStyle(isSelected: isSelected))
         }
+        }
     }
-}
-
 
 // MARK: - Preview
 #if DEBUG

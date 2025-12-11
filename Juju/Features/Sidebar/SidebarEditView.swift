@@ -42,12 +42,6 @@ struct SidebarEditView: View {
             ScrollView {
                 VStack(spacing: Theme.spacingMedium) {
                     switch content {
-                    case .session(let session):
-                        SessionSidebarEditView(session: session)
-                            .environmentObject(sidebarState)
-                            .environmentObject(SessionManager.shared)
-                            .environmentObject(ProjectsViewModel.shared)
-                            .environmentObject(ActivityTypesViewModel.shared)
                     case .project(let project):
                         ProjectSidebarEditView(project: project)
                             .environmentObject(ProjectsViewModel.shared)
@@ -98,8 +92,6 @@ struct SidebarEditView: View {
     
     private func sidebarTitle(for content: SidebarContent) -> String {
         switch content {
-        case .session:
-            return "Edit Session"
         case .project:
             return "Edit Project"
         case .activityType:

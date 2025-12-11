@@ -3,7 +3,6 @@ import SwiftUI
 
 // MARK: - Sidebar Content Types
 enum SidebarContent: Identifiable {
-    case session(SessionRecord)
     case project(Project)
     case activityType(ActivityType)
     case newProject(Project)  // Store the actual project instance
@@ -11,8 +10,6 @@ enum SidebarContent: Identifiable {
     
     var id: String {
         switch self {
-        case .session(let session):
-            return "session-\(session.id)"
         case .project(let project):
             return "project-\(project.id)"
         case .activityType(let activityType):
@@ -41,13 +38,6 @@ final class SidebarStateManager: ObservableObject {
         withAnimation(.easeInOut(duration: 0.25)) {
             self.content = content
             self.isVisible = true
-        }
-        
-        // Store the callback for session editing
-        if case .session = content {
-            // Store callback in a way that can be accessed by SessionSidebarEditView
-            // We'll use a singleton approach for now
-            SessionSidebarEditView.sharedSessionUpdatedCallback = onSessionUpdated
         }
     }
     

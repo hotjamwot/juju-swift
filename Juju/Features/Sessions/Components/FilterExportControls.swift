@@ -1,5 +1,35 @@
 import SwiftUI
 
+// MARK: - Date Filter Enum
+public enum SessionsDateFilter: String, CaseIterable, Identifiable {
+    case today = "Today"
+    case thisWeek = "This Week"
+    case thisMonth = "This Month"
+    case thisYear = "This Year"
+    case custom = "Custom Range"
+    case clear = "Clear"
+    
+    public var id: String { rawValue }
+    public var title: String { rawValue }
+}
+
+// MARK: - Export Format Enum
+public enum ExportFormat: String, CaseIterable, Identifiable {
+    case csv = "CSV"
+    case txt = "Text"
+    case md = "Markdown"
+    
+    public var id: String { rawValue }
+    public var title: String { rawValue }
+    public var fileExtension: String {
+        switch self {
+        case .csv: return "csv"
+        case .txt: return "txt"
+        case .md: return "md"
+        }
+    }
+}
+
 // MARK: - Filter State Management
 public class FilterExportState: ObservableObject {
     @Published var isExpanded: Bool = false
@@ -13,22 +43,13 @@ public class FilterExportState: ObservableObject {
     @Published var exportFormat: ExportFormat = .csv
     @Published var isExporting: Bool = false
     
-    // Invoice preview state (future functionality)
-    @Published var selectedProjects: Set<String> = []
-    @Published var showInvoicePreview: Bool = false
-}
-
-// MARK: - Date Filter Enum
-public enum SessionsDateFilter: String, CaseIterable, Identifiable {
-    case today = "Today"
-    case thisWeek = "This Week"
-    case thisMonth = "This Month"
-    case thisYear = "This Year"
-    case custom = "Custom Range"
-    case clear = "Clear"
+    // Manual refresh control
+    @Published var shouldRefresh: Bool = false
     
-    public var id: String { rawValue }
-    public var title: String { rawValue }
+    /// Call this when you want to manually refresh the filtered data
+    func requestManualRefresh() {
+        shouldRefresh.toggle()
+    }
 }
 
 // MARK: - Date Range Model
@@ -52,25 +73,6 @@ public struct DateRange: Identifiable {
     }
 }
 
-// MARK: - Export Format Enum
-public enum ExportFormat: String, CaseIterable, Identifiable {
-    case csv = "CSV"
-    case txt = "Text"
-    case md = "Markdown"
-    case pdf = "PDF" // Future invoice support
-    
-    public var id: String { rawValue }
-    public var title: String { rawValue }
-    public var fileExtension: String {
-        switch self {
-        case .csv: return "csv"
-        case .txt: return "txt"
-        case .md: return "md"
-        case .pdf: return "pdf"
-        }
-    }
-}
-
 // MARK: - Filter and Export Controls Component
 struct FilterExportControls: View {
     @ObservedObject var state: FilterExportState
@@ -84,7 +86,6 @@ struct FilterExportControls: View {
     let onCustomDateRangeChange: (DateRange?) -> Void
     let onProjectFilterChange: (String) -> Void
     let onExport: (ExportFormat) -> Void
-    var onInvoicePreviewToggle: (() -> Void)? = nil
     let onApplyFilters: () -> Void
     
     // Animation
@@ -98,7 +99,6 @@ struct FilterExportControls: View {
         onCustomDateRangeChange: @escaping (DateRange?) -> Void,
         onProjectFilterChange: @escaping (String) -> Void,
         onExport: @escaping (ExportFormat) -> Void,
-        onInvoicePreviewToggle: (() -> Void)? = nil,
         onApplyFilters: @escaping () -> Void
     ) {
         self.state = state
@@ -108,7 +108,6 @@ struct FilterExportControls: View {
         self.onCustomDateRangeChange = onCustomDateRangeChange
         self.onProjectFilterChange = onProjectFilterChange
         self.onExport = onExport
-        self.onInvoicePreviewToggle = onInvoicePreviewToggle
         self.onApplyFilters = onApplyFilters
     }
     
@@ -328,21 +327,6 @@ struct FilterExportControls: View {
         .padding(.vertical, Theme.spacingSmall)
         .background(Theme.Colors.background)
         .cornerRadius(Theme.Design.cornerRadius / 2)
-    }
-    
-    private var InvoicePreviewSection: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
-            Text("Invoice Tools:")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(Theme.Colors.textPrimary)
-            
-            Button("Preview Invoice") {
-                onInvoicePreviewToggle?()
-            }
-            .buttonStyle(.secondary)
-            .help("Preview invoice for selected project(s) and date range")
-        }
     }
     
     private func toggleExpansion() {

@@ -40,7 +40,6 @@ class SessionDataManager: ObservableObject {
         ) { [weak self] _ in
             // Projects have changed, but we don't need to do anything here
             // The ProjectManager cache will be cleared automatically
-            print("✅ Projects changed notification received in SessionDataManager")
         }
     }
     
@@ -56,14 +55,11 @@ class SessionDataManager: ObservableObject {
                     let content = try await csvManager.readFromYearFile(for: year)
                     let lines = content.components(separatedBy: .newlines)
                     guard let headerLine = lines.first, !headerLine.isEmpty else {
-                        print("⚠️ No header found in \(year)-data.csv")
                         continue
                     }
                     
                     let hasIdColumn = headerLine.lowercased().contains("id")
                     let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
-                    
-                    print("✅ Loaded \(sessions.count) sessions from \(year)-data.csv")
                     
                     allSessions.append(contentsOf: sessions)
                     
@@ -93,7 +89,6 @@ class SessionDataManager: ObservableObject {
             return sessions
         }
     
-        print("❌ No session data files found")
         self.allSessions = []
         self.lastUpdated = Date()
         return []
@@ -103,21 +98,17 @@ class SessionDataManager: ObservableObject {
     private func loadSessionsFromLegacyFile(_ url: URL) -> [SessionRecord] {
         do {
             let content = try String(contentsOf: url, encoding: .utf8)
-            print("🔍 Loading from legacy data.csv, content length: \(content.count)")
             
             let lines = content.components(separatedBy: .newlines)
             guard let headerLine = lines.first, !headerLine.isEmpty else {
-                print("❌ No header found in legacy file")
                 return []
             }
             
             let hasIdColumn = headerLine.lowercased().contains("id")
             let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
             
-            print("✅ Loaded \(sessions.count) sessions from legacy file")
-            
             if needsRewrite {
-                print("⚠️ Legacy file needs rewrite - consider migrating to year-based files")
+                // Legacy file needs rewrite - consider migrating to year-based files
             }
             
             DispatchQueue.main.async { [weak self] in
@@ -238,14 +229,12 @@ class SessionDataManager: ObservableObject {
             self?.allSessions = recentSessions
             self?.lastUpdated = Date()
         }
-        print("✅ Loaded only \(recentSessions.count) recent sessions (out of \(allSessions.count) total)")
     }
     
     // MARK: - Session Data Operations
     
     func updateSession(id: String, field: String, value: String) -> Bool {
         guard let session = allSessions.first(where: { $0.id == id }) else {
-            print("❌ Session \(id) not found for update")
             return false
         }
 
@@ -280,7 +269,6 @@ class SessionDataManager: ObservableObject {
             // Update timestamp to trigger UI refresh
             lastUpdated = Date()
             
-            print("✅ Updated session \(id) field \(field) to \(value)")
             return true
         }
 
@@ -289,44 +277,30 @@ class SessionDataManager: ObservableObject {
     
     func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil) -> Bool {
         guard let session = allSessions.first(where: { $0.id == id }) else {
-            print("❌ Session \(id) not found for update")
             return false
         }
 
+        // Get the projectID for the new project name
+        let projects = ProjectManager.shared.loadProjects()
+        let newProjectID = projects.first { $0.name == projectName }?.id
+        
         // Validate that the projectPhaseID belongs to the correct project
         var validatedProjectPhaseID = projectPhaseID
-        var validatedProjectID = session.projectID
+        var validatedProjectID = newProjectID ?? session.projectID  // Use new projectID if found, otherwise keep old
         
         if let phaseID = projectPhaseID {
-            // Get the project that this phase should belong to
-            let projects = ProjectManager.shared.loadProjects()
             var phaseBelongsToCorrectProject = false
-            var correctProjectID: String?
             
-            // Check if the phase exists in any project
-            for project in projects {
-                if project.phases.contains(where: { $0.id == phaseID && !$0.archived }) {
-                    // Phase exists in this project
-                    correctProjectID = project.id
-                    
-                    if session.projectID == nil || session.projectID == project.id {
-                        // Phase belongs to the correct project (or we don't have projectID to check)
-                        phaseBelongsToCorrectProject = true
-                        print("✅ Phase \(phaseID) belongs to project \(project.name)")
-                    } else {
-                        // Phase exists but belongs to a different project
-                        print("⚠️ Phase \(phaseID) belongs to project \(project.name) but session projectID is \(session.projectID ?? "nil")")
-                        // Update the projectID to match the phase's project
-                        validatedProjectID = project.id
-                        print("🔧 Updating session projectID from \(session.projectID ?? "nil") to \(project.id)")
-                    }
-                    break
+            // Check if the phase exists in the new project
+            if let newProject = projects.first(where: { $0.id == validatedProjectID }) {
+                if newProject.phases.contains(where: { $0.id == phaseID && !$0.archived }) {
+                    // Phase exists in the new project - validation passed
+                    phaseBelongsToCorrectProject = true
                 }
             }
             
             if !phaseBelongsToCorrectProject {
-                // Phase doesn't exist or belongs to wrong project
-                print("⚠️ Phase \(phaseID) not found, clearing phase selection")
+                // Phase doesn't exist in the new project
                 validatedProjectPhaseID = nil
             }
         }
@@ -341,7 +315,7 @@ class SessionDataManager: ObservableObject {
             projectName: projectName,
             projectID: validatedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,
-            projectPhaseID: validatedProjectPhaseID ?? session.projectPhaseID,
+            projectPhaseID: validatedProjectPhaseID,
             milestoneText: milestoneText ?? session.milestoneText,
             notes: notes,
             mood: mood
@@ -357,7 +331,21 @@ class SessionDataManager: ObservableObject {
             // Update timestamp to trigger UI refresh
             lastUpdated = Date()
             
-            print("✅ Updated full session \(id)")
+            // Post notification that session was updated
+            // Use a dedicated notification name for session updates to avoid conflicts
+            NotificationCenter.default.post(
+                name: .sessionDidEnd,
+                object: nil,
+                userInfo: ["sessionID": id]
+            )
+            
+            // Also post a general session update notification for broader listeners
+            NotificationCenter.default.post(
+                name: NSNotification.Name("sessionDidUpdate"),
+                object: nil,
+                userInfo: ["sessionID": id]
+            )
+            
             return true
         }
 
@@ -368,7 +356,6 @@ class SessionDataManager: ObservableObject {
     func deleteSession(id: String) -> Bool {
         let wasPresent = allSessions.contains { $0.id == id }
         if !wasPresent {
-            print("❌ Session \(id) not found for delete")
             return false
         }
         
@@ -378,7 +365,6 @@ class SessionDataManager: ObservableObject {
         // Update timestamp to trigger UI refresh
         lastUpdated = Date()
         
-        print("✅ Deleted session \(id)")
         return true
     }
     
@@ -387,10 +373,8 @@ class SessionDataManager: ObservableObject {
     func exportSessions(_ sessions: [SessionRecord], format: String, fileName: String? = nil) -> URL? {
         let exporter = SessionExporter(sessions: sessions, format: format)
         guard let exportPath = exporter.export(to: fileName) else {
-            print("❌ Export failed")
             return nil
         }
-        print("✅ Exported to \(exportPath)")
         return exportPath
     }
     
