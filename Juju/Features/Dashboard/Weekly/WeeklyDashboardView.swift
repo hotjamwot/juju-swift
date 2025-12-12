@@ -21,123 +21,8 @@ struct WeeklyDashboardView: View {
     @State private var isLoading = false
     
     // MARK: - Component Views
-    private var heroSection: some View {
-        VStack(spacing: 32) {
-            // Top Row: Active Session Status (only show if active session)
-            if sessionManager.activeSession != nil {
-                ActiveSessionStatusView(sessionManager: sessionManager)
-                    .frame(maxWidth: .infinity)
-            }
-            
-            // Hero Section (full width when no active session, or below active session)
-            HeroSectionView(
-                chartDataPreparer: chartDataPreparer,
-                editorialEngine: editorialEngine
-            )
-            .frame(maxWidth: .infinity)
-            
-            // Continue with existing sections...
-        }
-    }
-    
-    private var thisYearSection: some View {
-        VStack(spacing: Theme.spacingMedium) {
-            // Header for the container
-            Text("This Year")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(Theme.Colors.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            GeometryReader { geo in
-                HStack(spacing: Theme.spacingMedium) {
-                    YearlyTotalBarChartView(
-                        data: chartDataPreparer.yearlyProjectTotals()
-                    )
-                    .layoutPriority(3)
-                    .frame(maxHeight: .infinity, alignment: .center)
-
-                    VStack(alignment: .center, spacing: Theme.spacingMedium) {
-                        SummaryMetricView(
-                            title: "Total Hours",
-                            value: String(format: "%.1f h", chartDataPreparer.yearlyTotalHours())
-                        )
-                        SummaryMetricView(
-                            title: "Total Sessions",
-                            value: "\(chartDataPreparer.yearlyTotalSessions())"
-                        )
-                        SummaryMetricView(
-                            title: "Average Duration",
-                            value: chartDataPreparer.yearlyAvgDurationString()
-                        )
-                        
-                    }
-                    .frame(width: 400)
-                    .layoutPriority(1)
-                    .frame(maxHeight: .infinity, alignment: .center)
-                }
-            }
-            .frame(height: calculateThisYearSectionHeight())
-        }
-        .padding(Theme.spacingLarge)
-        .background(
-            Theme.Colors.surface.opacity(0.5)
-        )
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-    }
-    
-    /// Calculate dynamic height for the "This Year" section based on number of projects
-    private func calculateThisYearSectionHeight() -> CGFloat {
-        let data = chartDataPreparer.yearlyProjectTotals()
-        
-        if data.isEmpty {
-            // If no data, use minimum height
-            return 300
-        }
-        
-        // Calculate height needed for each project row
-        let projectCount = data.count
-        let barHeight: CGFloat = Theme.Design.cornerRadius + 2  // Height of each bar
-        let rowSpacing: CGFloat = Theme.spacingMedium  // Spacing between rows
-        let chartPadding: CGFloat = Theme.spacingMedium * 2  // Top and bottom padding in chart
-        
-        // Calculate total height needed for the chart
-        let chartHeight = CGFloat(projectCount) * (barHeight + rowSpacing) + chartPadding
-        
-        // Calculate height needed for summary metrics (3 metrics with spacing)
-        let summaryMetricHeight: CGFloat = 3 * 60 + (2 * Theme.spacingMedium)  // Approximate height per metric + spacing
-        
-        // Return the maximum of chart height and summary metrics height, with a minimum
-        let minHeight: CGFloat = 300
-        let maxHeight: CGFloat = 800  // Maximum reasonable height to prevent excessive stretching
-        
-        return max(minHeight, min(maxHeight, max(chartHeight, summaryMetricHeight)))
-    }
-    
-    private var weeklyStackedBarChart: some View {
-        GeometryReader { geo in
-            WeeklyStackedBarChartView(
-                data: chartDataPreparer.weeklyStackedBarChartData()
-            )
-        }
-        .frame(height: 300)
-        .padding(Theme.spacingMedium)
-        .background(Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-    }
-    
-    private var stackedAreaChart: some View {
-        StackedAreaChartCardView(
-            data: chartDataPreparer.monthlyProjectTotals()
-        )
-    }
+    // Note: Removed thisYearSection, weeklyStackedBarChart, and stackedAreaChart
+    // These are now moved to YearlyDashboardView for better separation of concerns
 
     // MARK - Body
     var body: some View {
@@ -160,7 +45,7 @@ struct WeeklyDashboardView: View {
                             .zIndex(1) // Ensure it stays above content
                     }
                     
-                    // Scrollable content below
+                    // Scrollable content below - NOW ONLY HERO SECTION
                     ScrollView {
                         VStack(spacing: 32) {
                             // Hero Section (no longer includes active session)
@@ -169,15 +54,6 @@ struct WeeklyDashboardView: View {
                                 editorialEngine: editorialEngine
                             )
                             .frame(maxWidth: .infinity)
-                            
-                            // This Year Section
-                            thisYearSection
-                            
-                            // Weekly Stacked Bar Chart
-                            weeklyStackedBarChart
-                            
-                            // Stacked Area Chart
-                            stackedAreaChart
                         }
                         .padding(.vertical, Theme.spacingLarge)
                         .padding(.horizontal, Theme.spacingLarge)
@@ -217,15 +93,15 @@ struct WeeklyDashboardView: View {
                     await projectsViewModel.loadProjects()
                     isLoading = true
                     
-                    // Load all sessions from current year for dashboard charts
+                    // Load all sessions for dashboard charts (will be filtered to weekly in prepareWeeklyData)
                     await MainActor.run {
                         Task {
                             await sessionManager.loadAllSessions()
                         }
                     }
                     
-                    // Prepare data for initial display
-                    chartDataPreparer.prepareAllTimeData(
+                    // Prepare WEEKLY data for initial display (optimized for performance)
+                    chartDataPreparer.prepareWeeklyData(
                         sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
@@ -237,21 +113,21 @@ struct WeeklyDashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
                 Task {
                     await MainActor.run {
-                        chartDataPreparer.prepareAllTimeData(
+                        chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
                     }
                 }
             }
-            // Event-driven reload when session ends (FIX: Remove artificial delay)
+            // Event-driven reload when session ends
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
                 Task {
                     await MainActor.run {
                         Task {
                             await sessionManager.loadRecentSessions(limit: 40)
                         }
-                        chartDataPreparer.prepareAllTimeData(
+                        chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
@@ -261,7 +137,7 @@ struct WeeklyDashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
                 Task {
                     await MainActor.run {
-                        chartDataPreparer.prepareAllTimeData(
+                        chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
@@ -273,7 +149,7 @@ struct WeeklyDashboardView: View {
                 guard !isLoading else { return }
                 Task {
                     await MainActor.run {
-                        chartDataPreparer.prepareAllTimeData(
+                        chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
@@ -285,7 +161,7 @@ struct WeeklyDashboardView: View {
                 guard !isLoading else { return }
                 Task {
                     await MainActor.run {
-                        chartDataPreparer.prepareAllTimeData(
+                        chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )

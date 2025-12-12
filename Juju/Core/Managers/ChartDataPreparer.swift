@@ -37,11 +37,40 @@ final class ChartDataPreparer: ObservableObject {
 
     // MARK: - Public Entry Point
     
+    /// Prepare all-time data for yearly dashboard and comprehensive analysis
     func prepareAllTimeData(sessions: [SessionRecord], projects: [Project]) {
         viewModel.sessions = sessions
         viewModel.projects = projects
         
         print("[ChartDataPreparer] Prepared all-time data")
+    }
+    
+    /// Prepare weekly-only data for optimized weekly dashboard performance
+    func prepareWeeklyData(sessions: [SessionRecord], projects: [Project]) {
+        // Filter sessions to current week only
+        let weeklySessions = sessions.filter { session in
+            guard let sessionDate = formatterYYYYMMDD.date(from: session.date) else { return false }
+            return currentWeekInterval.contains(sessionDate)
+        }
+        
+        viewModel.sessions = weeklySessions
+        viewModel.projects = projects
+        
+        print("[ChartDataPreparer] Prepared weekly data (\(weeklySessions.count) sessions)")
+    }
+    
+    /// Prepare yearly-only data for yearly dashboard
+    func prepareYearlyData(sessions: [SessionRecord], projects: [Project]) {
+        // Filter sessions to current year only
+        let yearlySessions = sessions.filter { session in
+            guard let sessionDate = formatterYYYYMMDD.date(from: session.date) else { return false }
+            return currentYearInterval.contains(sessionDate)
+        }
+        
+        viewModel.sessions = yearlySessions
+        viewModel.projects = projects
+        
+        print("[ChartDataPreparer] Prepared yearly data (\(yearlySessions.count) sessions)")
     }
     
     /// Background version for heavy data processing (FIX: Background chart prep)
