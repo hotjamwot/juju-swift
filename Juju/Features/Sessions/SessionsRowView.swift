@@ -1,6 +1,81 @@
 import SwiftUI
 import Combine
 
+// MARK: - PulseBarView (Integrated into SessionsRowView)
+/// Visual time-of-day pulse bar for sessions
+/// Shows when a session happened within the day and how long it lasted
+/// Always visible, purely decorative, does not affect row height or interactability
+struct PulseBarView: View {
+    let startTime: String
+    let endTime: String
+    let projectColor: Color
+    
+    // Day window: 07:00 to 23:00 (16 hours)
+    private let dayStartHour = 7.0
+    private let dayEndHour = 23.0
+    private let dayDurationHours: Double = 16.0
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let usableWidth = geometry.size.width
+            let baselineY = geometry.size.height - 2 // Position baseline at bottom
+            
+            // Baseline bar (faint) - spans entire usable width with subtle glow
+            Rectangle()
+                .fill(projectColor.opacity(0.16))
+                .frame(height: 2)
+                .position(x: usableWidth / 2, y: baselineY)            
+            // Pulse segment (active) - positioned and sized based on session time
+            if let startX = pulseXPosition(usableWidth: usableWidth, timeString: startTime),
+               let endX = pulseXPosition(usableWidth: usableWidth, timeString: endTime) {
+                let width = max(0, endX - startX)
+                
+                Rectangle()
+                    .fill(projectColor.opacity(0.45))
+                    .frame(width: width, height: 2)
+                    .cornerRadius(2)
+                    .position(x: startX + (width / 2), y: baselineY - 1) // Center the pulse between start and end
+                    .animation(.easeInOut(duration: 0.25), value: startTime)
+                    .animation(.easeInOut(duration: 0.25), value: endTime)
+            }
+        }
+        .frame(height: 6) // Total height: 3px baseline + 3px pulse
+    }
+    
+    /// Calculate X position for the pulse segment based on time string
+    private func pulseXPosition(usableWidth: CGFloat, timeString: String) -> CGFloat? {
+        guard let components = timeStringToComponents(timeString) else {
+            return nil
+        }
+        
+        let totalHours = Double(components.hour) + (Double(components.minute) / 60.0)
+        let clampedTime = max(min(totalHours, dayEndHour), dayStartHour)
+        let progress = (clampedTime - dayStartHour) / dayDurationHours
+        let position = CGFloat(progress) * usableWidth
+        
+        return position
+    }
+    
+    
+    /// Parse time string (HH:mm:ss) to hour and minute components
+    private func timeStringToComponents(_ timeString: String) -> (hour: Int, minute: Int)? {
+        let components = timeString.components(separatedBy: ":")
+        
+        guard components.count >= 2,
+              let hour = Int(components[0]),
+              let minute = Int(components[1]) else {
+            return nil
+        }
+        
+        // Validate hour and minute ranges
+        guard hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 else {
+            return nil
+        }
+        
+        return (hour: hour, minute: minute)
+    }
+}
+
 // MARK: - Session Observer Helper
 class SessionObserver: ObservableObject {
     @Published var refreshTrigger = UUID()
@@ -603,6 +678,17 @@ struct SessionsRowView: View {
                     .stroke(Theme.Colors.divider, lineWidth: 1)
             )
             .cornerRadius(Theme.Row.cornerRadius)
+            // Pulse bar overlay at the bottom of the row
+            .overlay(alignment: .bottom) {
+                PulseBarView(
+                    startTime: currentSession.startTime,
+                    endTime: currentSession.endTime,
+                    projectColor: projectColor
+                )
+                .padding(.horizontal, Theme.Row.contentPadding) // Match row's horizontal padding
+                .animation(.easeInOut(duration: 0.25), value: currentSession.startTime)
+                .animation(.easeInOut(duration: 0.25), value: currentSession.endTime)
+            }
             .onHover { hovering in
                 isHovering = hovering
             }
