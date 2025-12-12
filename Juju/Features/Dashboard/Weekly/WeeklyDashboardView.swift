@@ -20,6 +20,29 @@ struct WeeklyDashboardView: View {
     // MARK: - Loading state
     @State private var isLoading = false
     
+    // MARK: - Responsive layout helpers
+    private func editorialViewWidth(availableWidth: CGFloat) -> CGFloat {
+        // Editorial view takes 35-40% of width, minimum 300px, maximum 500px
+        let minWidth: CGFloat = 300
+        let maxWidth: CGFloat = 500
+        let preferredWidth = availableWidth * 0.38
+        return max(minWidth, min(maxWidth, preferredWidth))
+    }
+    
+    private func bubbleChartWidth(availableWidth: CGFloat) -> CGFloat {
+        // Bubble chart takes remaining space after editorial view
+        let editorialWidth = editorialViewWidth(availableWidth: availableWidth)
+        return max(300, availableWidth - editorialWidth - Theme.spacingLarge)
+    }
+    
+    private func calendarChartHeight(availableHeight: CGFloat) -> CGFloat {
+        // Calendar chart takes 45-55% of available height, minimum 350px, maximum 500px
+        let minHeight: CGFloat = 350
+        let maxHeight: CGFloat = 500
+        let preferredHeight = availableHeight * 0.5
+        return max(minHeight, min(maxHeight, preferredHeight))
+    }
+    
     // MARK: - Component Views
     // Note: Removed thisYearSection, weeklyStackedBarChart, and stackedAreaChart
     // These are now moved to YearlyDashboardView for better separation of concerns
@@ -33,8 +56,8 @@ struct WeeklyDashboardView: View {
                     .position(x: geometry.size.width - 16, y: geometry.size.height / 2)
                     .zIndex(2)
                 
-                // Main content
-                VStack(spacing: 0) {
+                // Main content with responsive layout
+                VStack(spacing: 32) {
                     // Sticky Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
@@ -45,22 +68,30 @@ struct WeeklyDashboardView: View {
                             .zIndex(1) // Ensure it stays above content
                     }
                     
-                    // Scrollable content below - NOW ONLY HERO SECTION
-                    ScrollView {
-                        VStack(spacing: 32) {
-                            // Hero Section (no longer includes active session)
-                            HeroSectionView(
-                                chartDataPreparer: chartDataPreparer,
-                                editorialEngine: editorialEngine
-                            )
-                            .frame(maxWidth: .infinity)
-                        }
-                        .padding(.vertical, Theme.spacingLarge)
-                        .padding(.horizontal, Theme.spacingLarge)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.background)
-                        .cornerRadius(Theme.Design.cornerRadius)
+                    // Top Row: Editorial View and Activity Bubble Chart
+                    HStack(spacing: Theme.spacingLarge) {
+                        // Left Column: Weekly Editorial View
+                        WeeklyEditorialView(
+                            editorialEngine: editorialEngine
+                        )
+                        .frame(width: editorialViewWidth(availableWidth: geometry.size.width))
+                        
+                        // Right Column: Weekly Activity Bubble Chart
+                        WeeklyActivityBubbleChartView(
+                            data: chartDataPreparer.weeklyActivityTotals()
+                        )
+                        .padding(Theme.spacingExtraLarge)
+                        .frame(width: bubbleChartWidth(availableWidth: geometry.size.width), height: 300)
                     }
+                    .padding(.horizontal, Theme.spacingLarge)
+                    
+                    // Second Row: Session Calendar Chart (full width)
+                    SessionCalendarChartView(
+                        sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                    )
+                    .padding(Theme.spacingExtraLarge)
+                    .frame(height: calendarChartHeight(availableHeight: geometry.size.height))
+                    .padding(.horizontal, Theme.spacingLarge)
                 }
                 .padding(.top, 20)
                 .padding(.trailing, 20)
@@ -106,6 +137,9 @@ struct WeeklyDashboardView: View {
                         projects: projectsViewModel.projects
                     )
                     
+                    // Generate initial editorial headline
+                    editorialEngine.generateWeeklyHeadline()
+                    
                     isLoading = false
                 }
             }
@@ -117,6 +151,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
+                        editorialEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -131,6 +166,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
+                        editorialEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -141,6 +177,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
+                        editorialEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -153,6 +190,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
+                        editorialEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -165,6 +203,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
+                        editorialEngine.generateWeeklyHeadline()
                     }
                 }
             }

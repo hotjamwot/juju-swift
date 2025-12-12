@@ -150,6 +150,7 @@ No data is stored elsewhere.
 ├── Juju/
 │   ├── App/
 │   │   ├── AppDelegate.swift # Main app lifecycle and setup
+│   │   ├── DashboardWindowController.swift # Dashboard window management
 │   │   ├── Info.plist
 │   │   ├── Juju-entitlements.plist
 │   │   ├── Juju.entitlements
@@ -175,6 +176,7 @@ No data is stored elsewhere.
 │   │   ├── Models/
 │   │   │   ├── ActivityType.swift # Activity type entity model
 │   │   │   ├── ChartModels.swift # Data models for chart components
+│   │   │   ├── DashboardViewType.swift # Dashboard navigation enum (weekly/yearly)
 │   │   │   ├── Project.swift # Project entity model
 │   │   │   └── SessionModels.swift # Session data structures
 │   │   └── ViewModels/
@@ -185,17 +187,17 @@ No data is stored elsewhere.
 │   │   │   ├── ActivityTypesView.swift # Activity type management interface
 │   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
 │   │   ├── Dashboard/
-│   │   │   ├── DashboardWindowController.swift # Dashboard window management (moved to App/)
-│   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── DashboardRootView.swift # Main dashboard SwiftUI view
+│   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── Shared/ # Shared components used by both weekly and yearly views
 │   │   │   │   └── ActiveSessionStatusView.swift # Real-time active session display (always visible)
 │   │   │   ├── Weekly/ # Weekly-focused dashboard components
-│   │   │   │   ├── WeeklyDashboardView.swift # Main weekly dashboard
-│   │   │   │   ├── WeeklyHeroSectionView.swift # "This Week in Juju" summary section
+│   │   │   │   ├── WeeklyDashboardView.swift # Main weekly dashboard with responsive layout
+│   │   │   │   ├── WeeklyEditorialView.swift # "This Week in Juju" editorial narrative section
 │   │   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
 │   │   │   │   └── SessionCalendarChartView.swift # Weekly calendar-style view with activity emojis
 │   │   │   └── Yearly/ # Yearly-focused dashboard components
+│   │   │       ├── YearlyDashboardView.swift # Complete yearly dashboard with all charts
 │   │   │       ├── YearlyTotalBarChartView.swift # Yearly total overview chart
 │   │   │       ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars (52-week distribution)
 │   │   │       └── StackedAreaChartCardView.swift # Yearly overview area chart
