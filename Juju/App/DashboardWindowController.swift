@@ -27,7 +27,7 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.isReleasedWhenClosed = false // Keep instance until fully cleaned up
         window.level = .normal
         window.contentMinSize = minWindowSize
-        let hostingController = NSHostingController(rootView: SwiftUIDashboardRootView())
+        let hostingController = NSHostingController(rootView: DashboardRootView())
         super.init(window: window)
         window.delegate = self
         window.center()

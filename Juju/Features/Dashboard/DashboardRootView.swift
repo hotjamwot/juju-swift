@@ -1,9 +1,13 @@
 import SwiftUI
+import Charts
 
-struct SwiftUIDashboardRootView: View {
+struct DashboardRootView: View {
     @State private var selected: DashboardView = .charts
     @StateObject private var sidebarState = SidebarStateManager()
     @Environment(\.presentationMode) private var presentationMode
+    
+    // Navigation state for weekly/yearly dashboard views
+    @State private var dashboardViewType: DashboardViewType = .weekly
     
     var body: some View {
         ZStack {
@@ -17,9 +21,24 @@ struct SwiftUIDashboardRootView: View {
                     ZStack {
                         switch selected {
                         case .charts:
-                            DashboardNativeSwiftChartsView()
+                            // Dashboard content with weekly/yearly navigation
+                            VStack(spacing: 0) {
+                                // Chart content with floating elements
+                                ZStack {
+                                    switch dashboardViewType {
+                                    case .weekly:
+                                        WeeklyDashboardView()
+                                            .transition(.opacity)
+                                    case .yearly:
+                                        YearlyDashboardView()
+                                            .transition(.opacity)
+                                    }
+                                }
+                                .animation(.easeInOut(duration: 0.2), value: dashboardViewType)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .transition(.opacity)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(.opacity)
                         case .sessions:
                             SessionsView()
                                 .environmentObject(sidebarState)
@@ -49,6 +68,12 @@ struct SwiftUIDashboardRootView: View {
                 .environmentObject(ProjectsViewModel.shared)
                 .environmentObject(ActivityTypesViewModel.shared)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .switchToYearlyView)) { _ in
+            dashboardViewType = .yearly
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .switchToWeeklyView)) { _ in
+            dashboardViewType = .weekly
+        }
     }
     
     // MARK: - Helpers
@@ -58,11 +83,18 @@ struct SwiftUIDashboardRootView: View {
     }
 }
 
+// MARK: - Notification Extensions
+
+extension Notification.Name {
+    static let switchToYearlyView = Notification.Name("switchToYearlyView")
+    static let switchToWeeklyView = Notification.Name("switchToWeeklyView")
+}
+
 // MARK: - Preview
 
-struct SwiftUIDashboardRootView_Previews: PreviewProvider {
+struct DashboardRootView_Previews: PreviewProvider {
     static var previews: some View {
-        SwiftUIDashboardRootView()
+        DashboardRootView()
             .frame(width: 1400, height: 1000)
             .preferredColorScheme(.dark)
     }

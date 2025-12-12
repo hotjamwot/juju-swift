@@ -1,25 +1,6 @@
 import SwiftUI
 import Combine
 
-// MARK: ──  Dashboard navigation items
-enum DashboardView: String, CaseIterable, Identifiable {
-    case charts        = "Charts"
-    case sessions      = "Sessions"
-    case projects      = "Projects"
-    case activityTypes = "Activity Types"
-
-    var icon: String {
-        switch self {
-        case .charts:        return "chart.xyaxis.line"
-        case .sessions:      return "clock"
-        case .projects:      return "folder"
-        case .activityTypes: return "tag"
-        }
-    }
-
-    var id: String { rawValue }
-}
-
 struct SidebarView: View {
     @Binding var selectedView: DashboardView
 

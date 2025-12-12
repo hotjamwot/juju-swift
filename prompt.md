@@ -33,7 +33,7 @@ The macOS menu bar interface is controlled by MenuManager and IconManager. The m
 
 ## 🔑 Key Models
 
-- **Session**: start, end, duration, projectId, activityTypeId, notes, mood
+- **Session**: date, start, end, duration, projectId, activityTypeId, phaseID, notes, mood
 - **Project**: id, name, emoji, color, about, archived?
 - **Phase**: id, name, order, archived? (project phases/subdivisions)
 - **ActivityType**: id, name, emoji, description, archived?
@@ -107,24 +107,21 @@ No data is stored elsewhere.
    - Full-width chart for historical analysis
 
 **Sessions Tab:**
-- **Grouped Grid View**: Sessions organized by date (Monday, 23rd October, etc.)
-- **4-Column Layout**: Each session displayed as a card
 - **Current Week Focus**: Default view shows only current week sessions
 - **Filter & Export Controls**: Floating panel with:
   - Date Filter: Today, This Week, This Month, This Year, Custom Range, Clear
   - Project Filter: Dropdown to filter by specific projects
   - Export: Dropdown to select format (CSV, TXT, Markdown, PDF)
   - Session Count: Shows number of sessions matching current filters
-- **Session Cards**: Display project, duration, start/end times, mood
+- **Session Rows**: Display project, duration, start/end times, activity type, phase, notes, mood
 - **Inline Actions**: Edit and delete session functionality
-  - **Edit Button**: Pencil icon that opens sidebar edit view
-  - **Delete Button**: X icon positioned below edit button, triggers confirmation dialog
+  - **Delete Button**: bin icon positioned on right side, triggers confirmation dialog
 - **No Pagination**: Simplified view focused on current week with optional filtering
 - **Auto-Refresh**: UI automatically updates after session edits, deletes, or data changes
 
 **Projects Tab:**
 - **Project List**: Vertical list of all projects
-- **Project Cards**: Each showing color swatch, name with emoji, optional description, session count, and last session date
+- **Project Cards**: Each showing color swatch, name with emoji, optional description, session count, and last session date, and phase list
 - **Add Project**: Button to create new projects
 - **Edit/Delete**: Full CRUD operations with modal interface
 - **Color Management**: Color picker for project color-coding
@@ -144,13 +141,6 @@ No data is stored elsewhere.
 - **Archive/Unarchive**: Toggle functionality to hide/show activity types
 - **Emoji Picker Integration**: Shared emoji picker with search functionality
 - **Protected Fallback**: Uncensored "Uncategorized" type cannot be deleted
-
-**Filtering & Export System:**
-- **Date Filtering**: Real-time filtering with options for Today, This Week, This Month, This Year, Custom Range, and Clear
-- **Project Filtering**: Dropdown to filter sessions by specific projects
-- **Export Functionality**: Export filtered sessions to CSV, Markdown, TXT, or PDF
-- **Session Count Display**: Shows number of sessions matching current filters
-- **Floating Controls**: Filter panel can be expanded/collapsed as needed
 
 ---
 
@@ -195,18 +185,20 @@ No data is stored elsewhere.
 │   │   │   ├── ActivityTypesView.swift # Activity type management interface
 │   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
 │   │   ├── Dashboard/
-│   │   │   ├── ActiveSessionStatusView.swift # Real-time active session display
-│   │   │   ├── DashboardNativeSwiftChartsView.swift # Main dashboard container
-│   │   │   ├── DashboardWindowController.swift # Dashboard window management
-│   │   │   ├── HeroSectionView.swift # "This Week in Juju" summary section
-│   │   │   ├── SessionCalendarChartView.swift # Weekly calendar-style view with activity emojis
-│   │   │   ├── SidebarView.swift # Dashboard navigation sidebar
-│   │   │   ├── StackedAreaChartCardView.swift # Yearly overview area chart
+│   │   │   ├── DashboardWindowController.swift # Dashboard window management (moved to App/)
 │   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
-│   │   │   ├── SwiftUIDashboardRootView.swift # Main dashboard SwiftUI view
-│   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
-│   │   │   ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars
-│   │   │   └── YearlyTotalBarChartView.swift # Yearly total overview chart
+│   │   │   ├── DashboardRootView.swift # Main dashboard SwiftUI view
+│   │   │   ├── Shared/ # Shared components used by both weekly and yearly views
+│   │   │   │   └── ActiveSessionStatusView.swift # Real-time active session display (always visible)
+│   │   │   ├── Weekly/ # Weekly-focused dashboard components
+│   │   │   │   ├── WeeklyDashboardView.swift # Main weekly dashboard
+│   │   │   │   ├── WeeklyHeroSectionView.swift # "This Week in Juju" summary section
+│   │   │   │   ├── WeeklyActivityBubbleChartView.swift # Activity-focused bubble chart
+│   │   │   │   └── SessionCalendarChartView.swift # Weekly calendar-style view with activity emojis
+│   │   │   └── Yearly/ # Yearly-focused dashboard components
+│   │   │       ├── YearlyTotalBarChartView.swift # Yearly total overview chart
+│   │   │       ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars (52-week distribution)
+│   │   │       └── StackedAreaChartCardView.swift # Yearly overview area chart
 │   │   ├── Notes/
 │   │   │   ├── NotesManager.swift # Session notes persistence
 │   │   │   ├── NotesModalView.swift # Notes input/editing interface
@@ -217,16 +209,18 @@ No data is stored elsewhere.
 │   │   ├── Sessions/
 │   │   │   ├── Components/
 │   │   │   │   ├── FilterExportControls.swift # Modular filter and export controls
-│   │   │   ├── SessionSidebarEditView.swift # Session editing interface
+│   │   │   │   ├── InlineSelectionPopover.swift # Inline Session Editability
 │   │   │   ├── SessionsRowView.swift # Individual session row display with expanded notes and actions
 │   │   │   └── SessionsView.swift # Sessions list with integrated day headers and total duration display
 │   │   └── Sidebar/
-│   │       └── SidebarEditView.swift # Sidebar editing interface
+│   │       ├── SidebarEditView.swift # Sidebar editing interface
+│   │       └── SidebarView.swift # Dashboard navigation sidebar
 │   ├── Resources/
 │   │   └── Assets etc
 │   └── Shared/
 │       ├── Extensions/
 │       │   ├── ButtonTheme.swift # Button styling and theme configuration
+│       │   ├── EmojiColorPickerView.swift # Emoji and Color Picker views
 │       │   └── NSColor+SwiftUI.swift # Color extensions for SwiftUI
 │       ├── Preview/
 │       │   └── SimplePreviewHelpers.swift # Preview helpers for SwiftUI

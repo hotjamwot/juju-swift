@@ -131,6 +131,41 @@ public struct CircularToggleIconStyle: ButtonStyle {
     }
 }
 
+/// Style for floating navigation buttons (e.g., weekly/yearly dashboard switcher).
+/// Creates a minimal circular button with hover effects and no selection outline.
+public struct NavigationButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var isHovered = false
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .opacity(0.6) // Reduce chevron opacity even more
+            .frame(width: 40, height: 40)
+            .background(
+                Circle()
+                    .fill(
+                        isEnabled ?
+                        (isHovered ? Theme.Colors.textSecondary.opacity(0.15) : Theme.Colors.textSecondary.opacity(0.06))
+                        : Theme.Colors.textSecondary.opacity(0.03)
+                    )
+            )
+            .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .cornerRadius(20) // Perfect circle
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isHovered)
+            .animation(.easeInOut(duration: Theme.Design.animationDuration), value: isEnabled)
+            .contentShape(Circle()) // Make the entire circle clickable
+            .onHover { hovering in
+                isHovered = hovering
+            }
+            .buttonBorderShape(.roundedRectangle)
+            .buttonStyle(PlainButtonStyle()) // Remove default focus behavior
+            .focusable(false) // Remove focus ring completely
+    }
+}
+
 
 
 // MARK: - Theme Extension for Easy Access
@@ -170,6 +205,11 @@ public extension ButtonStyle where Self == SimpleIconButtonStyle {
 public extension ButtonStyle where Self == CircularToggleIconStyle {
     /// A circular toggle button style with an icon, perfect for show/hide controls.
     static var circularToggleIcon: CircularToggleIconStyle { CircularToggleIconStyle() }
+}
+
+public extension ButtonStyle where Self == NavigationButtonStyle {
+    /// A minimal circular navigation button style with hover effects and no selection outline.
+    static var navigation: NavigationButtonStyle { NavigationButtonStyle() }
 }
 
 struct PointingHandOnHover: ViewModifier {
