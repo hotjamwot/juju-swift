@@ -143,11 +143,11 @@ class SessionManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            // Reload sessions after session ends
-            // This is in a notification handler, so we can't await
-            // We'll use Task to run it asynchronously
-            Task {
-                await self?.dataManager.loadRecentSessions(limit: 40)
+            // Only refresh the cache, don't reload all sessions
+            // The allSessions property already contains the complete dataset
+            // This avoids circular references and performance issues
+            DispatchQueue.main.async {
+                self?.lastUpdated = Date()
             }
         }
     }
@@ -193,8 +193,14 @@ class SessionManager: ObservableObject {
         await dataManager.loadSessions(in: dateInterval)
     }
     
-    func loadRecentSessions(limit: Int = 40) async {
-        await dataManager.loadRecentSessions(limit: limit)
+    /// Load only current week sessions for dashboard performance
+    func loadCurrentWeekSessions() async {
+        await dataManager.loadCurrentWeekSessions()
+    }
+    
+    /// Load all sessions from current year for yearly dashboard and projects
+    func loadCurrentYearSessions() async -> [SessionRecord] {
+        await dataManager.loadCurrentYearSessions()
     }
     
     func updateSession(id: String, field: String, value: String) -> Bool {

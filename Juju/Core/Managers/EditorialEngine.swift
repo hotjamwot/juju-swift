@@ -68,6 +68,7 @@ struct NarrativeHeadline: Equatable {
 @MainActor
 final class EditorialEngine: ObservableObject {
     @Published var currentHeadline: NarrativeHeadline?
+    @Published var currentWeekMilestones: [Milestone] = []
     
     private let sessionManager: SessionManager
     private let projectsViewModel: ProjectsViewModel
@@ -86,8 +87,10 @@ final class EditorialEngine: ObservableObject {
     /// Generate narrative headline for the current week
     func generateWeeklyHeadline() {
         let headline = _generateHeadline(for: .week)
+        let milestones = detectAllCurrentWeekMilestones()
         DispatchQueue.main.async {
             self.currentHeadline = headline
+            self.currentWeekMilestones = milestones
         }
     }
     
@@ -225,5 +228,40 @@ final class EditorialEngine: ObservableObject {
             projectName: milestoneSession.projectName,
             activityType: activityType.name
         )
+    }
+    
+    /// Detect all milestones from the current week
+    private func detectAllCurrentWeekMilestones() -> [Milestone] {
+        let calendar = Calendar.current
+        let weekInterval = calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
+        
+        let weekSessions = sessionManager.allSessions.filter { session in
+            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+            return weekInterval.contains(sessionDate) && (session.milestoneText?.isEmpty == false)
+        }
+        
+        // Sort by date (most recent first)
+        let sortedSessions = weekSessions.sorted { session1, session2 in
+            guard let date1 = DateFormatter.cachedYYYYMMDD.date(from: session1.date),
+                  let date2 = DateFormatter.cachedYYYYMMDD.date(from: session2.date) else { return false }
+            return date1 > date2
+        }
+        
+        return sortedSessions.compactMap { session in
+            guard let milestoneText = session.milestoneText,
+                  let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else {
+                return nil
+            }
+            
+            let activityType = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ??
+                              activityTypeManager.getUncategorizedActivityType()
+            
+            return Milestone(
+                text: milestoneText,
+                date: sessionDate,
+                projectName: session.projectName,
+                activityType: activityType.name
+            )
+        }
     }
 }

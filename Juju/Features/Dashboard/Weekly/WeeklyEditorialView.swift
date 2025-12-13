@@ -6,6 +6,88 @@ struct WeeklyEditorialView: View {
     @StateObject var editorialEngine: EditorialEngine
     @State private var headlineText: String = "Loading your creative story..."
 
+    // MARK: - Project Capsule Component
+    private func projectCapsule(for projectName: String, emoji: String) -> some View {
+        HStack(spacing: Theme.spacingExtraSmall) {
+            Text(emoji)
+                .font(.system(size: 12, weight: .medium))
+            Text(projectName)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Theme.Colors.textPrimary)
+        }
+        .padding(.horizontal, Theme.spacingSmall)
+        .padding(.vertical, Theme.spacingExtraSmall)
+        .background(Theme.Colors.divider.opacity(0.2))
+        .cornerRadius(Theme.Design.cornerRadius * 0.8)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius * 0.8)
+                .stroke(Theme.Colors.divider, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Milestone List Component
+    private var milestoneList: some View {
+        VStack(alignment: .center, spacing: Theme.spacingSmall) {
+            if editorialEngine.currentWeekMilestones.isEmpty {
+                Text("No milestones this week")
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .foregroundColor(Theme.Colors.textSecondary)
+            } else {
+                Text("Milestones reached:")
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                ForEach(editorialEngine.currentWeekMilestones) { milestone in
+                    HStack(alignment: .center, spacing: Theme.spacingSmall) {
+                        projectCapsule(
+                            for: milestone.projectName,
+                            emoji: projectEmoji(for: milestone.projectName)
+                        )
+                        .padding(.trailing, Theme.spacingExtraSmall)
+                        
+                        Text(milestone.text)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded)) // Smaller font
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .multilineTextAlignment(.leading)
+                    }
+                    .padding(.vertical, Theme.spacingExtraSmall)
+                }
+            }
+        }
+    }
+
+    // MARK: - Helper to get project emoji
+    private func projectEmoji(for projectName: String) -> String {
+        // Try to get emoji from projectsViewModel
+        let projectsViewModel = ProjectsViewModel.shared
+        if let project = projectsViewModel.projects.first(where: { $0.name == projectName }) {
+            return project.emoji
+        }
+        // Fallback for common project names
+        switch projectName.lowercased() {
+        case "film", "movie", "video":
+            return "🎬"
+        case "writing", "book", "novel":
+            return "✍️"
+        case "music", "song":
+            return "🎵"
+        case "art", "drawing", "painting":
+            return "🎨"
+        case "code", "programming", "dev":
+            return "💻"
+        case "admin", "planning", "organization":
+            return "📋"
+        default:
+            return "📁"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .center, spacing: Theme.spacingMedium) {
             // Three-line editorial information with accent colors
@@ -55,26 +137,13 @@ struct WeeklyEditorialView: View {
                 // Space between sections
                 Spacer().frame(height: Theme.spacingMedium)
                 
-                // Line 3: Milestone (conditional)
-                if let milestone = editorialEngine.currentHeadline?.milestone {
-                    Text("And congrats! You")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(Theme.Colors.textPrimary)
-                    Text(milestone.text)
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                }
+                // Milestone List
+                milestoneList
             }
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center) // Flexible height to adapt to available space
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(

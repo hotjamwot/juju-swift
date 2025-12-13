@@ -27,9 +27,9 @@ class SessionDataManager: ObservableObject {
         self.csvManager = SessionCSVManager(fileManager: sessionFileManager, jujuPath: jujuPath)
         self.parser = SessionDataParser()
         
-        // Load all sessions from current year by default for dashboard
+        // Load only current year sessions by default for dashboard performance
         Task {
-            await loadAllSessions()
+            await loadCurrentYearSessions()
         }
         
         // Observe project changes to refresh projects data when projects change (e.g., phases added)
@@ -230,13 +230,92 @@ class SessionDataManager: ObservableObject {
         }
     }
     
-    /// Load only the most recent sessions for better performance
-    func loadRecentSessions(limit: Int = 40) async {
-        let allSessions = await loadAllSessions()
-        let recentSessions = Array(allSessions.prefix(limit))
-        DispatchQueue.main.async { [weak self] in
-            self?.allSessions = recentSessions
-            self?.lastUpdated = Date()
+    /// Load only current year sessions for dashboard performance
+    func loadCurrentYearSessions() async -> [SessionRecord] {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        print("[SessionDataManager] Loading sessions for current year: \(currentYear)")
+        
+        var allSessions: [SessionRecord] = []
+        
+        // Only load current year sessions
+        do {
+            print("[SessionDataManager] Loading sessions from \(currentYear)")
+            let content = try await csvManager.readFromYearFile(for: currentYear)
+            let lines = content.components(separatedBy: .newlines)
+            guard let headerLine = lines.first, !headerLine.isEmpty else {
+                print("[SessionDataManager] No header line found for \(currentYear)")
+                return []
+            }
+            
+            let hasIdColumn = headerLine.lowercased().contains("id")
+            let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
+            
+            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(currentYear)")
+            allSessions.append(contentsOf: sessions)
+            
+            // If rewrite needed, save back to the year file
+            if needsRewrite {
+                let csvContent = parser.convertSessionsToCSV(sessions)
+                try await csvManager.writeToYearFile(csvContent, for: currentYear)
+            }
+            
+            // Sort by date descending
+            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            
+            print("[SessionDataManager] Current year sessions loaded: \(allSessions.count)")
+            self.allSessions = allSessions
+            self.lastUpdated = Date()
+            return allSessions
+        } catch {
+            print("❌ Error loading sessions from \(currentYear)-data.csv: \(error)")
+            return []
+        }
+    }
+    
+    /// Load only current week sessions for dashboard performance
+    func loadCurrentWeekSessions() async {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        print("[SessionDataManager] Loading sessions for current week from year: \(currentYear)")
+        
+        var allSessions: [SessionRecord] = []
+        
+        // Load current year sessions and filter to current week
+        do {
+            print("[SessionDataManager] Loading sessions from \(currentYear)")
+            let content = try await csvManager.readFromYearFile(for: currentYear)
+            let lines = content.components(separatedBy: .newlines)
+            guard let headerLine = lines.first, !headerLine.isEmpty else {
+                print("[SessionDataManager] No header line found for \(currentYear)")
+                return
+            }
+            
+            let hasIdColumn = headerLine.lowercased().contains("id")
+            let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
+            
+            // Filter to current week only
+            let currentWeekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
+            let weekSessions = sessions.filter { session in
+                guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+                return currentWeekInterval.contains(sessionDate)
+            }
+            
+            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(currentYear), filtered to \(weekSessions.count) current week sessions")
+            allSessions.append(contentsOf: weekSessions)
+            
+            // If rewrite needed, save back to the year file
+            if needsRewrite {
+                let csvContent = parser.convertSessionsToCSV(sessions)
+                try await csvManager.writeToYearFile(csvContent, for: currentYear)
+            }
+            
+            // Sort by date descending
+            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            
+            print("[SessionDataManager] Current week sessions loaded: \(allSessions.count)")
+            self.allSessions = allSessions
+            self.lastUpdated = Date()
+        } catch {
+            print("❌ Error loading sessions from \(currentYear)-data.csv: \(error)")
         }
     }
     

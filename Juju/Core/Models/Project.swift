@@ -18,6 +18,9 @@ class ProjectStatisticsCache {
     private var lastCacheTime: Date?
     private let cacheExpiryTime: TimeInterval = 30 // Cache expires after 30 seconds
     
+    // Thread safety using a concurrent queue with barriers
+    private let cacheQueue = DispatchQueue(label: "com.juju.projectStatisticsCache", attributes: .concurrent)
+    
     private init() {
         // Listen for session changes to invalidate cache
         NotificationCenter.default.addObserver(
@@ -42,9 +45,6 @@ class ProjectStatisticsCache {
     }
     
     func getTotalDuration(for projectID: String) -> Double {
-        // Validate cache integrity before accessing (clears corrupted entries)
-        validateCacheIntegrity()
-        
         // Check if cache is still valid
         guard let lastTime = lastCacheTime,
               Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
@@ -53,14 +53,13 @@ class ProjectStatisticsCache {
             return 0
         }
         
-        // Safe access with nil coalescing - this prevents crashes from corrupted cache
-        return totalDurationCache[projectID] ?? 0
+        // Thread-safe access to cache
+        return cacheQueue.sync {
+            return totalDurationCache[projectID] ?? 0
+        }
     }
     
     func getLastSessionDate(for projectID: String) -> Date? {
-        // Validate cache integrity before accessing (clears corrupted entries)
-        validateCacheIntegrity()
-        
         // Check if cache is still valid
         guard let lastTime = lastCacheTime,
               Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
@@ -69,8 +68,15 @@ class ProjectStatisticsCache {
             return nil
         }
         
-        // Safe access with nil coalescing - this prevents crashes from corrupted cache
-        return lastSessionDateCache[projectID] ?? nil
+        // Thread-safe access to cache with type safety
+        return cacheQueue.sync {
+            // Double-check the type to prevent crashes from corrupted cache entries
+            if let cachedValue = lastSessionDateCache[projectID] {
+                // If the value exists, it should be a Date? - if not, this will be caught by the type system
+                return cachedValue
+            }
+            return nil
+        }
     }
     
     func setTotalDuration(_ duration: Double, for projectID: String) {
@@ -79,8 +85,12 @@ class ProjectStatisticsCache {
             print("⚠️ Invalid duration value \(duration) for project \(projectID), skipping cache")
             return
         }
-        totalDurationCache[projectID] = duration
-        lastCacheTime = Date()
+        
+        // Thread-safe cache update
+        cacheQueue.async(flags: .barrier) {
+            self.totalDurationCache[projectID] = duration
+            self.lastCacheTime = Date()
+        }
     }
     
     func setLastSessionDate(_ date: Date?, for projectID: String) {
@@ -97,56 +107,19 @@ class ProjectStatisticsCache {
             }
         }
         
-        lastSessionDateCache[projectID] = date
-        lastCacheTime = Date()
+        // Thread-safe cache update
+        cacheQueue.async(flags: .barrier) {
+            self.lastSessionDateCache[projectID] = date
+            self.lastCacheTime = Date()
+        }
     }
     
     func invalidateCache() {
-        totalDurationCache.removeAll()
-        lastSessionDateCache.removeAll()
-        lastCacheTime = nil
-    }
-    
-    /// Validate cache integrity and clear if corrupted
-    func validateCacheIntegrity() {
-        // Check for any suspicious cache entries that might cause crashes
-        var hasCorruptedEntries = false
-        
-        // Validate duration cache (safe iteration with error handling)
-        do {
-            for (projectID, duration) in totalDurationCache {
-                if duration.isNaN || duration.isInfinite {
-                    print("⚠️ Found corrupted duration \(duration) for project \(projectID)")
-                    hasCorruptedEntries = true
-                    break
-                }
-            }
-        } catch {
-            print("⚠️ Error iterating duration cache, clearing cache")
-            hasCorruptedEntries = true
-        }
-        
-        // Validate date cache (basic check for obviously corrupted dates)
-        let now = Date()
-        let minReasonableDate = Calendar.current.date(byAdding: .year, value: -50, to: now) ?? Date.distantPast
-        let maxReasonableDate = Calendar.current.date(byAdding: .year, value: 50, to: now) ?? Date.distantFuture
-        
-        do {
-            for (projectID, date) in lastSessionDateCache {
-                if let date = date, (date < minReasonableDate || date > maxReasonableDate) {
-                    print("⚠️ Found suspicious date \(date) for project \(projectID)")
-                    hasCorruptedEntries = true
-                    break
-                }
-            }
-        } catch {
-            print("⚠️ Error iterating date cache, clearing cache")
-            hasCorruptedEntries = true
-        }
-        
-        if hasCorruptedEntries {
-            print("⚠️ Cache corruption detected, clearing cache")
-            invalidateCache()
+        // Thread-safe cache invalidation
+        cacheQueue.async(flags: .barrier) {
+            self.totalDurationCache.removeAll()
+            self.lastSessionDateCache.removeAll()
+            self.lastCacheTime = nil
         }
     }
     
@@ -162,8 +135,9 @@ class ProjectStatisticsCache {
                 
                 // Update cache on main thread
                 await MainActor.run {
-                    ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: project.id)
-                    ProjectStatisticsCache.shared.setLastSessionDate(lastDate, for: project.id)
+                    // Use thread-safe cache methods
+                    self.setTotalDuration(totalDuration, for: project.id)
+                    self.setLastSessionDate(lastDate, for: project.id)
                 }
             }
         }
@@ -714,10 +688,17 @@ class ProjectManager {
                 await withTaskGroup(of: Void.self) { group in
                     for project in batch {
                         group.addTask {
-                            // Just trigger the background computation by accessing the properties
-                            // This will populate the cache automatically
-                            _ = project.totalDurationHours
-                            _ = project.lastSessionDate
+                            // Compute statistics directly to avoid cache corruption
+                            let sessionManager = SessionManager.shared
+                            let filteredSessions = sessionManager.allSessions.filter { $0.projectID == project.id }
+                            let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
+                            let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+                            
+                            // Update cache on main thread using thread-safe methods
+                            await MainActor.run {
+                                ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: project.id)
+                                ProjectStatisticsCache.shared.setLastSessionDate(lastDate, for: project.id)
+                            }
                         }
                     }
                 }

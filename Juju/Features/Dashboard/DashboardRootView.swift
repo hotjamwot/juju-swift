@@ -9,6 +9,13 @@ struct DashboardRootView: View {
     // Navigation state for weekly/yearly dashboard views
     @State private var dashboardViewType: DashboardViewType = .weekly
     
+    // State objects for dashboard views to ensure proper state management
+    @StateObject private var weeklyDashboardState = ChartDataPreparer()
+    @StateObject private var yearlyDashboardState = ChartDataPreparer()
+    @StateObject private var sessionManager = SessionManager.shared
+    @StateObject private var projectsViewModel = ProjectsViewModel.shared
+    @StateObject private var editorialEngine = EditorialEngine()
+    
     var body: some View {
         ZStack {
             HStack(spacing: 0) {
@@ -27,10 +34,20 @@ struct DashboardRootView: View {
                                 ZStack {
                                     switch dashboardViewType {
                                     case .weekly:
-                                        WeeklyDashboardView()
+                                        WeeklyDashboardView(
+                                            chartDataPreparer: weeklyDashboardState,
+                                            sessionManager: sessionManager,
+                                            projectsViewModel: projectsViewModel,
+                                            editorialEngine: editorialEngine
+                                        )
                                             .transition(.opacity)
                                     case .yearly:
-                                        YearlyDashboardView()
+                                        YearlyDashboardView(
+                                            chartDataPreparer: yearlyDashboardState,
+                                            sessionManager: sessionManager,
+                                            projectsViewModel: projectsViewModel,
+                                            editorialEngine: editorialEngine
+                                        )
                                             .transition(.opacity)
                                     }
                                 }

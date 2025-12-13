@@ -10,13 +10,15 @@ import Charts
 /// Yearly Dashboard View
 /// Dedicated view for all yearly charts and metrics
 struct YearlyDashboardView: View {
-    // MARK: - State objects
-    @StateObject private var chartDataPreparer = ChartDataPreparer()
-    @StateObject private var sessionManager = SessionManager.shared
-    @StateObject private var projectsViewModel = ProjectsViewModel.shared
-    @StateObject private var editorialEngine = EditorialEngine()
+    // MARK: - State objects (passed from DashboardRootView)
+    @ObservedObject var chartDataPreparer: ChartDataPreparer
+    @ObservedObject var sessionManager: SessionManager
+    @ObservedObject var projectsViewModel: ProjectsViewModel
+    @ObservedObject var editorialEngine: EditorialEngine
     
-    // MARK: - Loading state (removed - not needed for yearly dashboard)
+    // MARK: - State objects (local to this view)
+    @State private var currentYearSessions: [SessionRecord] = []
+    @State private var isLoading = false
     
     // MARK: - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -122,9 +124,18 @@ struct YearlyDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
             Task {
+                // Reload ALL sessions and filter to current year when session starts
+                let allSessions = await sessionManager.loadAllSessions()
+                let currentYearSessions = allSessions.filter { session in
+                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
+                    let currentYear = Calendar.current.component(.year, from: Date())
+                    return sessionYear == currentYear
+                }
                 await MainActor.run {
+                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
+                        sessions: currentYearSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -132,10 +143,18 @@ struct YearlyDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
             Task {
+                // Reload ALL sessions and filter to current year when session ends
                 let allSessions = await sessionManager.loadAllSessions()
+                let currentYearSessions = allSessions.filter { session in
+                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
+                    let currentYear = Calendar.current.component(.year, from: Date())
+                    return sessionYear == currentYear
+                }
                 await MainActor.run {
+                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: allSessions,
+                        sessions: currentYearSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -145,7 +164,7 @@ struct YearlyDashboardView: View {
             Task {
                 await MainActor.run {
                     chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
+                        sessions: currentYearSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -153,9 +172,18 @@ struct YearlyDashboardView: View {
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
             Task {
+                // Reload ALL sessions and filter to current year when session count changes
+                let allSessions = await sessionManager.loadAllSessions()
+                let currentYearSessions = allSessions.filter { session in
+                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
+                    let currentYear = Calendar.current.component(.year, from: Date())
+                    return sessionYear == currentYear
+                }
                 await MainActor.run {
+                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
+                        sessions: currentYearSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -165,7 +193,7 @@ struct YearlyDashboardView: View {
             Task {
                 await MainActor.run {
                     chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
+                        sessions: currentYearSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -183,8 +211,17 @@ struct YearlyDashboardView: View {
     private func loadProjectsAndSessions() async {
         await projectsViewModel.loadProjects()
         
-        // Load only current year sessions for yearly dashboard (more efficient)
-        let currentYearSessions = await sessionManager.loadSessions(in: currentYearInterval)
+        // Load ALL sessions from current year for yearly dashboard - force full year load
+        let allSessions = await sessionManager.loadAllSessions()
+        let currentYearSessions = allSessions.filter { session in
+            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+            let sessionYear = Calendar.current.component(.year, from: sessionDate)
+            let currentYear = Calendar.current.component(.year, from: Date())
+            return sessionYear == currentYear
+        }
+        
+        // Debug logging
+        print("[YearlyDashboard] Loaded \(currentYearSessions.count) sessions from current year out of \(allSessions.count) total sessions")
         
         await prepareYearlyData(sessions: currentYearSessions)
     }
@@ -230,5 +267,11 @@ struct BackNavigationButton: View {
 }
 
 #Preview {
-    YearlyDashboardView()
+    YearlyDashboardView(
+        chartDataPreparer: ChartDataPreparer(),
+        sessionManager: SessionManager.shared,
+        projectsViewModel: ProjectsViewModel.shared,
+        editorialEngine: EditorialEngine()
+    )
 }
+

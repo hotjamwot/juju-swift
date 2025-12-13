@@ -11,28 +11,38 @@ extension Date {
 }
 
 struct WeeklyDashboardView: View {
-    // MARK: - State objects
-    @StateObject private var chartDataPreparer = ChartDataPreparer()
-    @StateObject private var sessionManager = SessionManager.shared
-    @StateObject private var projectsViewModel = ProjectsViewModel.shared
-    @StateObject private var editorialEngine = EditorialEngine()
+    // MARK: - State objects (passed from DashboardRootView)
+    @ObservedObject var chartDataPreparer: ChartDataPreparer
+    @ObservedObject var sessionManager: SessionManager
+    @ObservedObject var projectsViewModel: ProjectsViewModel
+    @ObservedObject var editorialEngine: EditorialEngine
     
     // MARK: - Loading state
     @State private var isLoading = false
     
     // MARK: - Responsive layout helpers
     private func editorialViewWidth(availableWidth: CGFloat) -> CGFloat {
-        // Editorial view takes 35-40% of width, minimum 300px, maximum 500px
+        // Account for sidebar (50px) and DashboardRootView padding (Theme.spacingLarge * 2)
+        let sidebarWidth: CGFloat = 50
+        let dashboardPadding: CGFloat = Theme.spacingLarge * 2
+        let effectiveWidth = availableWidth - sidebarWidth - dashboardPadding
+        
+        // Editorial view takes 35-40% of effective width, minimum 300px, maximum 500px
         let minWidth: CGFloat = 300
         let maxWidth: CGFloat = 500
-        let preferredWidth = availableWidth * 0.38
+        let preferredWidth = effectiveWidth * 0.38
         return max(minWidth, min(maxWidth, preferredWidth))
     }
     
     private func bubbleChartWidth(availableWidth: CGFloat) -> CGFloat {
+        // Account for sidebar (50px) and DashboardRootView padding (Theme.spacingLarge * 2)
+        let sidebarWidth: CGFloat = 50
+        let dashboardPadding: CGFloat = Theme.spacingLarge * 2
+        let effectiveWidth = availableWidth - sidebarWidth - dashboardPadding
+        
         // Bubble chart takes remaining space after editorial view
         let editorialWidth = editorialViewWidth(availableWidth: availableWidth)
-        return max(300, availableWidth - editorialWidth - Theme.spacingLarge)
+        return max(300, effectiveWidth - editorialWidth - Theme.spacingLarge)
     }
     
     private func calendarChartHeight(availableHeight: CGFloat) -> CGFloat {
@@ -56,8 +66,8 @@ struct WeeklyDashboardView: View {
                     .position(x: geometry.size.width - 16, y: geometry.size.height / 2)
                     .zIndex(2)
                 
-                // Main content with responsive layout
-                VStack(spacing: 32) {
+                // Main content with tidy, balanced layout
+                VStack(spacing: Theme.spacingMedium) { // Reduced gap between top and bottom views
                     // Sticky Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
@@ -70,31 +80,30 @@ struct WeeklyDashboardView: View {
                     
                     // Top Row: Editorial View and Activity Bubble Chart
                     HStack(spacing: Theme.spacingLarge) {
-                        // Left Column: Weekly Editorial View
+                        // Left Column: Weekly Editorial View (already has built-in surface pane)
                         WeeklyEditorialView(
                             editorialEngine: editorialEngine
                         )
                         .frame(width: editorialViewWidth(availableWidth: geometry.size.width))
+                        .frame(maxHeight: .infinity) // Allow flexible height
                         
-                        // Right Column: Weekly Activity Bubble Chart
+                        // Right Column: Weekly Activity Bubble Chart (self-contained with surface pane)
+                        // Use flexible height to match editorial view
                         WeeklyActivityBubbleChartView(
                             data: chartDataPreparer.weeklyActivityTotals()
                         )
-                        .padding(Theme.spacingExtraLarge)
-                        .frame(width: bubbleChartWidth(availableWidth: geometry.size.width), height: 300)
+                        .frame(width: bubbleChartWidth(availableWidth: geometry.size.width))
+                        .frame(maxHeight: .infinity) // Allow flexible height
                     }
-                    .padding(.horizontal, Theme.spacingLarge)
+                    .frame(maxHeight: geometry.size.height * 0.45) // Allocate 45% of height to top row
                     
-                    // Second Row: Session Calendar Chart (full width)
+                    // Second Row: Session Calendar Chart (self-contained with surface pane)
                     SessionCalendarChartView(
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
-                    .padding(Theme.spacingExtraLarge)
-                    .frame(height: calendarChartHeight(availableHeight: geometry.size.height))
-                    .padding(.horizontal, Theme.spacingLarge)
+                    .frame(maxHeight: geometry.size.height * 0.45) // Allocate 45% of height to bottom row
                 }
-                .padding(.top, 20)
-                .padding(.trailing, 20)
+                .padding(Theme.spacingLarge)
                 .background(Theme.Colors.background)
             }
             
@@ -159,8 +168,9 @@ struct WeeklyDashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
                 Task {
                     await MainActor.run {
+                        // Load current week sessions for weekly dashboard performance
                         Task {
-                            await sessionManager.loadRecentSessions(limit: 40)
+                            await sessionManager.loadCurrentWeekSessions()
                         }
                         chartDataPreparer.prepareWeeklyData(
                             sessions: sessionManager.allSessions,
@@ -248,7 +258,12 @@ struct NavigationButton: View {
 
 struct WeeklyDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        WeeklyDashboardView()
+        WeeklyDashboardView(
+            chartDataPreparer: ChartDataPreparer(),
+            sessionManager: SessionManager.shared,
+            projectsViewModel: ProjectsViewModel.shared,
+            editorialEngine: EditorialEngine()
+        )
             .frame(width: 1200, height: 1200)
             .preferredColorScheme(.dark)
     }

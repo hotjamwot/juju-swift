@@ -410,12 +410,9 @@ final class ChartDataPreparer: ObservableObject {
             return cached
         }
         
-        let yearSessions = viewModel.sessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-            return currentYearInterval.contains(sessionDate)
-        }
-        
-        let result = aggregateProjectTotals(from: yearSessions)
+        // Use the sessions already filtered to current year in viewModel.sessions
+        // No need to filter again - they should already be current year sessions
+        let result = aggregateProjectTotals(from: viewModel.sessions)
         yearlyCache[cacheKey] = result
         return result
     }
@@ -429,18 +426,13 @@ final class ChartDataPreparer: ObservableObject {
             return cached
         }
         
-        let yearSessions = viewModel.sessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-            return currentYearInterval.contains(sessionDate)
-        }
-        
         // Filter out sessions with uncategorized activity types at the session level
-        let filteredSessions = yearSessions.filter { session in
+        let filteredSessions = viewModel.sessions.filter { session in
             let activityID = session.activityTypeID ?? "uncategorized"
             return activityID != "uncategorized"
         }
         
-        print("[ChartDataPreparer] Yearly sessions: \(yearSessions.count), Filtered sessions: \(filteredSessions.count)")
+        print("[ChartDataPreparer] Yearly sessions: \(viewModel.sessions.count), Filtered sessions: \(filteredSessions.count)")
         
         let result = aggregateActivityTotalsForPieChart(from: filteredSessions)
         yearlyCache[cacheKey] = result

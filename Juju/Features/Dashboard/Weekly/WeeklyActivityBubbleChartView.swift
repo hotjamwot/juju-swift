@@ -18,15 +18,14 @@ struct WeeklyActivityBubbleChartView: View {
                 Text("No sessions this week")
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: 300)
-                    .background(Theme.Colors.surface.opacity(0.5))
-                    .cornerRadius(Theme.Design.cornerRadius)
-                    .shadow(radius: 2)
+                    .frame(maxWidth: .infinity, minHeight: 200)
                     .padding(.horizontal)
             } else {
                 GeometryReader { geometry in
+                    // Calculate available height for bubbles (subtract padding and label area)
+                    let bubbleAreaHeight = geometry.size.height - Theme.spacingLarge * 2 - 80 // Padding + label area
                     let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let maxDiameter = geometry.size.height * 0.55
+                    let maxDiameter = min(bubbleAreaHeight * 0.7, 140) // Use 70% of bubble area height, max 140px
                     
                     // Calculate diameters based on total hours
                     let diameters = data.map { CGFloat($0.totalHours) / CGFloat(maxHours) * maxDiameter }
@@ -38,11 +37,11 @@ struct WeeklyActivityBubbleChartView: View {
                     // Calculate starting X position to center the layout
                     let startX = max(0, (geometry.size.width - totalWidth) / 2)
                     
-                    // Create horizontal layout positions
+                    // Create horizontal layout positions with proper vertical centering
                     let bubblePositions = computeHorizontalLayout(
                         diameters: diameters,
                         startX: startX,
-                        centerY: geometry.size.height / 2
+                        centerY: geometry.size.height / 2 - 20 // Slightly lower for better visual balance
                     )
                     
                     ZStack {
@@ -71,7 +70,7 @@ struct WeeklyActivityBubbleChartView: View {
                                 .position(x: position.x, y: position.y)
                         }
                         
-                        // Labels aligned at the bottom
+                        // Labels aligned at the bottom with better spacing
                         VStack {
                             Spacer() // Push labels to bottom
                             
@@ -79,7 +78,7 @@ struct WeeklyActivityBubbleChartView: View {
                                 ForEach(Array(bubblePositions.enumerated()), id: \.offset) { _, position in
                                     let bubbleData = data[position.index]
                                     
-                                    VStack(spacing: 4) {
+                                    VStack(spacing: 6) {
                                         Text(bubbleData.activityName)
                                             .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(Theme.Colors.textPrimary)
@@ -98,10 +97,17 @@ struct WeeklyActivityBubbleChartView: View {
                         }
                     }
                 }
-                .frame(height: 250) // Match HeroSectionView height
+                .frame(maxHeight: .infinity) // Allow flexible height to adapt to available space
             }
         }
-        .padding(.vertical, Theme.spacingExtraSmall)
+        .padding(Theme.spacingLarge) // Increased padding inside the pane
+        .background(Theme.Colors.surface.opacity(0.5))
+        .cornerRadius(Theme.Design.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .stroke(Theme.Colors.divider, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
     }
 
     // MARK: - Layout computation
