@@ -124,23 +124,22 @@ final class EditorialEngine: ObservableObject {
     
     private func filterSessions(for period: ChartTimePeriod) -> [SessionRecord] {
         let calendar = Calendar.current
-        let formatter = DateFormatter.yyyyMMdd
         
         switch period {
         case .week:
             let weekInterval = calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                formatter.date(from: session.date).map { weekInterval.contains($0) } ?? false
+                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { weekInterval.contains($0) } ?? false
             }
         case .month:
             let monthInterval = calendar.dateInterval(of: .month, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                formatter.date(from: session.date).map { monthInterval.contains($0) } ?? false
+                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { monthInterval.contains($0) } ?? false
             }
         case .year:
             let yearInterval = calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                formatter.date(from: session.date).map { yearInterval.contains($0) } ?? false
+                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { yearInterval.contains($0) } ?? false
             }
         case .allTime:
             return sessionManager.allSessions
@@ -200,20 +199,20 @@ final class EditorialEngine: ObservableObject {
         }
         
         let recentSessions = sessions.filter { session in
-            guard let sessionDate = DateFormatter.yyyyMMdd.date(from: session.date) else { return false }
+            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
             return sessionDate >= oneWeekAgo && (session.milestoneText?.isEmpty == false)
         }
         
         // Return the most recent milestone
         let sortedSessions = recentSessions.sorted { session1, session2 in
-            guard let date1 = DateFormatter.yyyyMMdd.date(from: session1.date),
-                  let date2 = DateFormatter.yyyyMMdd.date(from: session2.date) else { return false }
+            guard let date1 = DateFormatter.cachedYYYYMMDD.date(from: session1.date),
+                  let date2 = DateFormatter.cachedYYYYMMDD.date(from: session2.date) else { return false }
             return date1 > date2
         }
         
         guard let milestoneSession = sortedSessions.first,
               let milestoneText = milestoneSession.milestoneText,
-              let sessionDate = DateFormatter.yyyyMMdd.date(from: milestoneSession.date) else {
+              let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: milestoneSession.date) else {
             return nil
         }
         

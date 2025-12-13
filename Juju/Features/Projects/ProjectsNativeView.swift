@@ -176,12 +176,12 @@ struct ProjectRowView: View {
                 
                 Spacer()
                 
-                // Session count capsule
+                // Total duration capsule
                 HStack(spacing: 6) {
                     Image(systemName: "clock.fill")
                         .font(.system(size: 10))
                         .foregroundColor(Theme.Colors.textSecondary)
-                    Text("\(project.sessionCount) sessions")
+                    Text("\(String(format: "%.1f", project.totalDurationHours))h total")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                 }

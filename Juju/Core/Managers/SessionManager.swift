@@ -183,7 +183,10 @@ class SessionManager: ObservableObject {
     // MARK: - Session Data Operations (Delegated to Data Manager)
     
     func loadAllSessions() async -> [SessionRecord] {
-        await dataManager.loadAllSessions()
+        print("[SessionManager] loadAllSessions called")
+        let sessions = await dataManager.loadAllSessions()
+        print("[SessionManager] loadAllSessions returning \(sessions.count) sessions")
+        return sessions
     }
     
     func loadSessions(in dateInterval: DateInterval?) async -> [SessionRecord] {

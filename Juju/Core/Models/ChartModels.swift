@@ -81,10 +81,18 @@ struct MonthlyHour: Identifiable {
     let hours: Double
     var id: Date { date }
 }
+
+struct WeeklyHour: Identifiable {
+    let weekNumber: Int // 1-52
+    let hours: Double
+    var id: Int { weekNumber }
+}
+
 // Represents a complete series (one layer of the stacked chart) for a single project
 struct ProjectSeriesData: Identifiable {
     let projectName: String
-    let monthlyHours: [MonthlyHour] // An array of all data points for this project
+    let monthlyHours: [MonthlyHour] // An array of all data points for this project (for monthly charts)
+    let weeklyHours: [WeeklyHour] // An array of all data points for this project (for weekly charts)
     let color: String
     let emoji: String
     var id: String { projectName }
@@ -103,45 +111,20 @@ struct WeeklySession: Identifiable {
     var duration: Double { endHour - startHour }
 }
 
-// MARK: - Weekly Stacked Bar Chart Data Models
-
-/// Represents a single week of the year with its associated data
-struct WeekOfYear: Identifiable {
+// MARK: - Pie Chart Data Models
+struct ActivityTypePieSlice: Identifiable, Equatable {
     let id = UUID()
-    let weekNumber: Int // 1-52
-    let year: Int
-    let month: Int // 1-12 for month abbreviation mapping
-    var monthLabel: String {
-        let monthAbbreviations = ["", "J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
-        return monthAbbreviations[month]
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+    let color: Color
+    
+    var label: String {
+        "\(emoji) \(activityName) - \(String(format: "%.1f", percentage))%"
     }
-    let startDate: Date
-    let endDate: Date
     
-    var id_legacy: Int { weekNumber } // For SwiftUI Charts compatibility
-}
-
-/// Represents individual project data for a specific week
-struct ProjectWeeklyData: Identifiable {
-    let id = UUID()
-    let projectName: String
-    let projectColor: String
-    let projectEmoji: String
-    let hours: Double
-    let weekId: Int // Reference to WeekOfYear.weekNumber
-    
-    var colorSwiftUI: Color {
-        Color(hex: projectColor)
-    }
-}
-
-/// Represents the complete weekly stacked bar chart data
-struct WeeklyStackedBarChartData: Identifiable {
-    let id = UUID()
-    let week: WeekOfYear
-    let projectData: [ProjectWeeklyData]
-    
-    var totalHours: Double {
-        projectData.reduce(0) { $0 + $1.hours }
+    static func == (lhs: ActivityTypePieSlice, rhs: ActivityTypePieSlice) -> Bool {
+        return lhs.activityName == rhs.activityName
     }
 }

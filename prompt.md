@@ -188,7 +188,6 @@ No data is stored elsewhere.
 │   │   │   └── ActivityTypesViewModel.swift # Activity types data binding and business logic
 │   │   ├── Dashboard/
 │   │   │   ├── DashboardRootView.swift # Main dashboard SwiftUI view
-│   │   │   ├── SummaryMetricView.swift # Total hours/sessions display
 │   │   │   ├── Shared/ # Shared components used by both weekly and yearly views
 │   │   │   │   └── ActiveSessionStatusView.swift # Real-time active session display (always visible)
 │   │   │   ├── Weekly/ # Weekly-focused dashboard components
@@ -198,9 +197,8 @@ No data is stored elsewhere.
 │   │   │   │   └── SessionCalendarChartView.swift # Weekly calendar-style view with activity emojis
 │   │   │   └── Yearly/ # Yearly-focused dashboard components
 │   │   │       ├── YearlyDashboardView.swift # Complete yearly dashboard with all charts
-│   │   │       ├── YearlyTotalBarChartView.swift # Yearly total overview chart
-│   │   │       ├── WeeklyStackedBarChartView.swift # Monday-Sunday colored bars (52-week distribution)
-│   │   │       └── StackedAreaChartCardView.swift # Yearly overview area chart
+│   │   │       ├── YearlyActivityPieChartView.swift # Yearly total of activity types pie chart
+│   │   │       └── StackedAreaChartView.swift # Stacked Area shart of entire year project total flow colored bars (52-week distribution)
 │   │   ├── Notes/
 │   │   │   ├── NotesManager.swift # Session notes persistence
 │   │   │   ├── NotesModalView.swift # Notes input/editing interface

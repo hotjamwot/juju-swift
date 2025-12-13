@@ -13,7 +13,7 @@ extension Notification.Name {
 class ProjectStatisticsCache {
     static let shared = ProjectStatisticsCache()
     
-    private var sessionCountCache: [String: Int] = [:]
+    private var totalDurationCache: [String: Double] = [:] // projectID -> total hours
     private var lastSessionDateCache: [String: Date?] = [:]
     private var lastCacheTime: Date?
     private let cacheExpiryTime: TimeInterval = 30 // Cache expires after 30 seconds
@@ -41,7 +41,10 @@ class ProjectStatisticsCache {
         NotificationCenter.default.removeObserver(self)
     }
     
-    func getSessionCount(for projectID: String) -> Int {
+    func getTotalDuration(for projectID: String) -> Double {
+        // Validate cache integrity before accessing (clears corrupted entries)
+        validateCacheIntegrity()
+        
         // Check if cache is still valid
         guard let lastTime = lastCacheTime,
               Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
@@ -50,10 +53,14 @@ class ProjectStatisticsCache {
             return 0
         }
         
-        return sessionCountCache[projectID] ?? 0
+        // Safe access with nil coalescing - this prevents crashes from corrupted cache
+        return totalDurationCache[projectID] ?? 0
     }
     
     func getLastSessionDate(for projectID: String) -> Date? {
+        // Validate cache integrity before accessing (clears corrupted entries)
+        validateCacheIntegrity()
+        
         // Check if cache is still valid
         guard let lastTime = lastCacheTime,
               Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
@@ -62,23 +69,85 @@ class ProjectStatisticsCache {
             return nil
         }
         
+        // Safe access with nil coalescing - this prevents crashes from corrupted cache
         return lastSessionDateCache[projectID] ?? nil
     }
     
-    func setSessionCount(_ count: Int, for projectID: String) {
-        sessionCountCache[projectID] = count
+    func setTotalDuration(_ duration: Double, for projectID: String) {
+        // Validate the duration value before caching
+        guard !duration.isNaN && !duration.isInfinite else {
+            print("⚠️ Invalid duration value \(duration) for project \(projectID), skipping cache")
+            return
+        }
+        totalDurationCache[projectID] = duration
         lastCacheTime = Date()
     }
     
     func setLastSessionDate(_ date: Date?, for projectID: String) {
+        // Validate the date before caching (check for corrupted dates)
+        if let date = date {
+            // Check if date is reasonable (not a corrupted tagged pointer)
+            let now = Date()
+            let minReasonableDate = Calendar.current.date(byAdding: .year, value: -50, to: now) ?? Date.distantPast
+            let maxReasonableDate = Calendar.current.date(byAdding: .year, value: 50, to: now) ?? Date.distantFuture
+            
+            if date < minReasonableDate || date > maxReasonableDate {
+                print("⚠️ Suspicious date \(date) for project \(projectID), skipping cache")
+                return
+            }
+        }
+        
         lastSessionDateCache[projectID] = date
         lastCacheTime = Date()
     }
     
     func invalidateCache() {
-        sessionCountCache.removeAll()
+        totalDurationCache.removeAll()
         lastSessionDateCache.removeAll()
         lastCacheTime = nil
+    }
+    
+    /// Validate cache integrity and clear if corrupted
+    func validateCacheIntegrity() {
+        // Check for any suspicious cache entries that might cause crashes
+        var hasCorruptedEntries = false
+        
+        // Validate duration cache (safe iteration with error handling)
+        do {
+            for (projectID, duration) in totalDurationCache {
+                if duration.isNaN || duration.isInfinite {
+                    print("⚠️ Found corrupted duration \(duration) for project \(projectID)")
+                    hasCorruptedEntries = true
+                    break
+                }
+            }
+        } catch {
+            print("⚠️ Error iterating duration cache, clearing cache")
+            hasCorruptedEntries = true
+        }
+        
+        // Validate date cache (basic check for obviously corrupted dates)
+        let now = Date()
+        let minReasonableDate = Calendar.current.date(byAdding: .year, value: -50, to: now) ?? Date.distantPast
+        let maxReasonableDate = Calendar.current.date(byAdding: .year, value: 50, to: now) ?? Date.distantFuture
+        
+        do {
+            for (projectID, date) in lastSessionDateCache {
+                if let date = date, (date < minReasonableDate || date > maxReasonableDate) {
+                    print("⚠️ Found suspicious date \(date) for project \(projectID)")
+                    hasCorruptedEntries = true
+                    break
+                }
+            }
+        } catch {
+            print("⚠️ Error iterating date cache, clearing cache")
+            hasCorruptedEntries = true
+        }
+        
+        if hasCorruptedEntries {
+            print("⚠️ Cache corruption detected, clearing cache")
+            invalidateCache()
+        }
     }
     
     func warmCache(for projects: [Project]) {
@@ -88,12 +157,12 @@ class ProjectStatisticsCache {
             
             for project in projects {
                 let filteredSessions = sessions.filter { $0.projectID == project.id }
-                let count = filteredSessions.count
+                let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
                 let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
                 
                 // Update cache on main thread
                 await MainActor.run {
-                    ProjectStatisticsCache.shared.setSessionCount(count, for: project.id)
+                    ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: project.id)
                     ProjectStatisticsCache.shared.setLastSessionDate(lastDate, for: project.id)
                 }
             }
@@ -128,19 +197,21 @@ struct Project: Codable, Identifiable, Hashable {
     var phases: [Phase]
     
     // Computed properties for session statistics (using cache)
-    var sessionCount: Int {
+    var totalDurationHours: Double {
         // Try to get from cache first
-        let cachedCount = ProjectStatisticsCache.shared.getSessionCount(for: id)
-        if cachedCount > 0 {
-            return cachedCount
+        let cachedDuration = ProjectStatisticsCache.shared.getTotalDuration(for: id)
+        if cachedDuration > 0 {
+            return cachedDuration
         }
         
         // If not in cache or cache expired, compute and cache it
-        let count = SessionManager.shared.allSessions
+        // Use a safe access pattern to avoid crashes
+        let sessionManager = SessionManager.shared
+        let totalDuration = sessionManager.allSessions
             .filter { $0.projectID == id }
-            .count
-        ProjectStatisticsCache.shared.setSessionCount(count, for: id)
-        return count
+            .reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
+        ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: id)
+        return totalDuration
     }
     
     var lastSessionDate: Date? {
@@ -150,7 +221,9 @@ struct Project: Codable, Identifiable, Hashable {
         }
         
         // If not in cache or cache expired, compute and cache it
-        let sessions = SessionManager.shared.allSessions
+        // Use a safe access pattern to avoid crashes
+        let sessionManager = SessionManager.shared
+        let sessions = sessionManager.allSessions
             .filter { $0.projectID == id }
             .compactMap { $0.startDateTime }
         let date = sessions.max()
@@ -164,10 +237,10 @@ struct Project: Codable, Identifiable, Hashable {
     /// This is a static method to avoid mutating self on a let constant
     static func updateSessionStatistics(for project: Project) -> Project {
         Task {
-            // Compute session count and last session date in background
+            // Compute total duration and last session date in background
             let sessions = SessionManager.shared.allSessions
             let filteredSessions = sessions.filter { $0.projectID == project.id }
-            let count = filteredSessions.count
+            let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
             let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
             
             // Update cached values on main thread
@@ -643,7 +716,7 @@ class ProjectManager {
                         group.addTask {
                             // Just trigger the background computation by accessing the properties
                             // This will populate the cache automatically
-                            _ = project.sessionCount
+                            _ = project.totalDurationHours
                             _ = project.lastSessionDate
                         }
                     }

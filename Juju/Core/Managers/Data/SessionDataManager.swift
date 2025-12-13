@@ -46,21 +46,27 @@ class SessionDataManager: ObservableObject {
     // MARK: - Session Loading
     
     func loadAllSessions() async -> [SessionRecord] {
+        print("[SessionDataManager] loadAllSessions called")
         let availableYears = csvManager.getAvailableYears()
+        print("[SessionDataManager] Available years: \(availableYears)")
+        
         var allSessions: [SessionRecord] = []
         
         if !availableYears.isEmpty {
             for year in availableYears {
                 do {
+                    print("[SessionDataManager] Loading sessions from \(year)")
                     let content = try await csvManager.readFromYearFile(for: year)
                     let lines = content.components(separatedBy: .newlines)
                     guard let headerLine = lines.first, !headerLine.isEmpty else {
+                        print("[SessionDataManager] No header line found for \(year)")
                         continue
                     }
                     
                     let hasIdColumn = headerLine.lowercased().contains("id")
                     let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
                     
+                    print("[SessionDataManager] Parsed \(sessions.count) sessions from \(year)")
                     allSessions.append(contentsOf: sessions)
                     
                     // If rewrite needed, save back to the year file
@@ -76,6 +82,7 @@ class SessionDataManager: ObservableObject {
             // Sort by date descending
             allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
             
+            print("[SessionDataManager] Total sessions loaded: \(allSessions.count)")
             self.allSessions = allSessions
             self.lastUpdated = Date()
             return allSessions
@@ -83,12 +90,14 @@ class SessionDataManager: ObservableObject {
     
         // Fallback to legacy data.csv file if it exists
         if let legacyURL = dataFileURL, FileManager.default.fileExists(atPath: legacyURL.path) {
+            print("[SessionDataManager] Falling back to legacy file")
             let sessions = loadSessionsFromLegacyFile(legacyURL)
             self.allSessions = sessions
             self.lastUpdated = Date()
             return sessions
         }
     
+        print("[SessionDataManager] No sessions found")
         self.allSessions = []
         self.lastUpdated = Date()
         return []

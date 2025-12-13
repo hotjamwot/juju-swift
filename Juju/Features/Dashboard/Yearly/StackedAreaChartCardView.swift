@@ -2,12 +2,12 @@ import SwiftUI
 import Charts
 
 struct StackedAreaChartCardView: View {
-    // The view now expects the new data shape!
+    // The view now expects weekly data instead of monthly data!
     let data: [ProjectSeriesData]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingLarge) {
-            Text("Monthly Trends")
+            Text("Weekly Trends")
                 .font(Theme.Fonts.header)
                 .foregroundColor(Theme.Colors.textSecondary)
 
@@ -28,82 +28,77 @@ struct StackedAreaChartCardView: View {
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+        .padding(.bottom, Theme.spacingLarge) // Add bottom padding to prevent chart from pressing against window edge
     }
 
     @ViewBuilder
     private var chartView: some View {
-        // This chart implementation is now clean and correct!
         let chart = Chart(data) { series in // Loop through each project series
-            ForEach(series.monthlyHours) { monthlyHour in // Loop through the months FOR THAT project
+            ForEach(series.weeklyHours) { weeklyHour in // Loop through the weeks FOR THAT project
                 AreaMark(
-                    x: .value("Month", monthlyHour.date, unit: .month), // Use the Date
-                    y: .value("Hours", monthlyHour.hours),
+                    x: .value("Week", weeklyHour.weekNumber),
+                    y: .value("Hours", weeklyHour.hours),
                     stacking: .center
                 )
                 // The foregroundStyle now correctly applies to the entire series
                 .foregroundStyle(by: .value("Project", series.projectName))
-                .interpolationMethod(.catmullRom) // Or .cardinal like the example
+                .interpolationMethod(.catmullRom)
             }
         }
         // Build the domain/range map from our series data
         .chartForegroundStyleScale(domain: data.map { $0.projectName },
                                      range: data.map { Color(hex: $0.color) })
         .chartYAxis { AxisMarks(stroke: StrokeStyle(lineWidth: 0)) }
-        // Format the X-axis to show month abbreviations
+        // Format the X-axis to show week numbers
         .chartXAxis {
-            AxisMarks(values: .stride(by: .month)) { value in
+            AxisMarks(values: Array(1...52)) { value in
                 AxisGridLine()
                 AxisTick()
-                if let date = value.as(Date.self) {
-                    // FIX: Wrap the Text view in an AxisValueLabel
+                if let weekNumber = value.as(Int.self) {
                     AxisValueLabel {
-                        Text(date.formatted(.dateTime.month(.narrow)))
+                        Text("W\(weekNumber)")
                     }
                 }
             }
         }
         .frame(height: 250)
-            chart
+        chart
     }
 }
 
 
 // MARK: Preview
 #Preview {
-    
-    func dateFor(month: Int) -> Date {
-        let calendar = Calendar.current
-        let year = calendar.component(.year, from: Date())
-        return calendar.date(from: DateComponents(year: year, month: month))!
-    }
-    
     let mockData: [ProjectSeriesData] = [
         ProjectSeriesData(
             projectName: "Film",
-            monthlyHours: [
-                MonthlyHour(date: dateFor(month: 1), hours: 20), // Jan
-                MonthlyHour(date: dateFor(month: 2), hours: 10), // Feb
-                MonthlyHour(date: dateFor(month: 3), hours: 0)   // Mar (add 0 to make the line continuous)
+            monthlyHours: [],
+            weeklyHours: [
+                WeeklyHour(weekNumber: 1, hours: 20),
+                WeeklyHour(weekNumber: 2, hours: 10),
+                WeeklyHour(weekNumber: 3, hours: 0)
             ],
             color: "#FFA500",
             emoji: "🎬"
         ),
         ProjectSeriesData(
             projectName: "Writing",
-            monthlyHours: [
-                MonthlyHour(date: dateFor(month: 1), hours: 15), // Jan
-                MonthlyHour(date: dateFor(month: 2), hours: 0),   // Feb (add 0)
-                MonthlyHour(date: dateFor(month: 3), hours: 12)  // Mar
+            monthlyHours: [],
+            weeklyHours: [
+                WeeklyHour(weekNumber: 1, hours: 15),
+                WeeklyHour(weekNumber: 2, hours: 0),
+                WeeklyHour(weekNumber: 3, hours: 12)
             ],
             color: "#800080",
             emoji: "✍️"
         ),
         ProjectSeriesData(
             projectName: "Design",
-            monthlyHours: [
-                MonthlyHour(date: dateFor(month: 1), hours: 0),   // Jan (add 0)
-                MonthlyHour(date: dateFor(month: 2), hours: 5),  // Feb
-                MonthlyHour(date: dateFor(month: 3), hours: 8)   // Mar
+            monthlyHours: [],
+            weeklyHours: [
+                WeeklyHour(weekNumber: 1, hours: 0),
+                WeeklyHour(weekNumber: 2, hours: 5),
+                WeeklyHour(weekNumber: 3, hours: 8)
             ],
             color: "#0000FF",
             emoji: "🎨"
