@@ -1,0 +1,133 @@
+flowName: Juju Application Critical Data Flow Map
+description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies.
+
+nodes:
+  # Session Management Flow
+  - id: A1_Session_Recorder
+    component: SessionManager
+    function: Capture Session Duration
+    description: Records start/stop times and calculates session duration
+  - id: A2_Persistence_Writer
+    component: SessionDataManager
+    function: Persist Session Data
+    description: Writes session data to CSV files with thread-safe operations
+  - id: A3_Session_Cache_Updater
+    component: ProjectStatisticsCache
+    function: Update Project Statistics
+    description: Updates cached project statistics after session changes
+
+  # Dashboard Data Flow
+  - id: B1_Data_Aggregator
+    component: ChartDataPreparer
+    function: Aggregate Dashboard Data
+    description: Processes raw session data into dashboard-ready formats
+  - id: B2_Editorial_Engine
+    component: EditorialEngine
+    function: Generate Narrative Headlines
+    description: Creates dynamic editorial content for dashboard
+
+  # Project Management Flow
+  - id: C1_Project_Loader
+    component: ProjectManager
+    function: Load Projects from JSON
+    description: Reads and deserializes project data from JSON files
+  - id: C2_Project_Saver
+    component: ProjectManager
+    function: Save Projects to JSON
+    description: Serializes and writes project data to JSON files
+
+  # Activity Type Management Flow
+  - id: D1_ActivityType_Loader
+    component: ActivityTypeManager
+    function: Load Activity Types from JSON
+    description: Reads and deserializes activity type data from JSON files
+  - id: D2_ActivityType_Saver
+    component: ActivityTypeManager
+    function: Save Activity Types to JSON
+    description: Serializes and writes activity type data to JSON files
+
+  # Data Integrity and Management Flow
+  - id: E1_Data_Validator
+    component: DataValidator
+    function: Validate Data Integrity
+    description: Validates sessions, projects, and activity types before persistence
+  - id: E2_Cache_Manager
+    component: CacheManager
+    function: Manage Cache Invalidation
+    description: Handles cache invalidation and warming strategies
+  - id: E3_Data_Migrator
+    component: DataMigrationManager
+    function: Migrate Legacy Data
+    description: Handles migration of legacy sessions to new schema
+  - id: E4_Error_Handler
+    component: ErrorHandler
+    function: Handle Data Errors
+    description: Manages error recovery and user notifications
+
+edges:
+  # Session Flow
+  - source: A1_Session_Recorder
+    target: A2_Persistence_Writer
+    data_packet: SessionRecord
+  - source: A2_Persistence_Writer
+    target: A3_Session_Cache_Updater
+    data_packet: SessionRecord
+
+  # Dashboard Flow
+  - source: A2_Persistence_Writer
+    target: B1_Data_Aggregator
+    data_packet: SessionRecord
+  - source: B1_Data_Aggregator
+    target: B2_Editorial_Engine
+    data_packet: DashboardData
+
+  # Project Flow
+  - source: C1_Project_Loader
+    target: C2_Project_Saver
+    data_packet: Project
+
+  # Activity Type Flow
+  - source: D1_ActivityType_Loader
+    target: D2_ActivityType_Saver
+    data_packet: ActivityType
+
+  # Data Migration Flow
+  - source: E3_Data_Migrator
+    target: A2_Persistence_Writer
+    data_packet: SessionRecord
+  - source: E3_Data_Migrator
+    target: C2_Project_Saver
+    data_packet: Project
+
+  # Cache Management Flow
+  - source: A3_Session_Cache_Updater
+    target: E2_Cache_Manager
+    data_packet: CacheUpdate
+  - source: E2_Cache_Manager
+    target: B1_Data_Aggregator
+    data_packet: CachedData
+
+  # Data Validation Flow
+  - source: A1_Session_Recorder
+    target: E1_Data_Validator
+    data_packet: SessionRecord
+  - source: C1_Project_Loader
+    target: E1_Data_Validator
+    data_packet: Project
+  - source: D1_ActivityType_Loader
+    target: E1_Data_Validator
+    data_packet: ActivityType
+  - source: E1_Data_Validator
+    target: A2_Persistence_Writer
+    data_packet: ValidatedSessionRecord
+  - source: E1_Data_Validator
+    target: C2_Project_Saver
+    data_packet: ValidatedProject
+
+  # Error Handling Flow
+  - source: A2_Persistence_Writer
+    target: E4_Error_Handler
+    data_packet: Error
+  - source: E3_Data_Migrator
+    target: E4_Error_Handler
+    data_packet: MigrationError
