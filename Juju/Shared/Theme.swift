@@ -50,6 +50,32 @@ public struct Theme {
         public static let animationDuration = 0.2
     }
 
+    // MARK: Dashboard Layout Constants
+    // Single source of truth for all dashboard layout values
+    public struct DashboardLayout {
+        // Core spacing system - single source of truth
+        public static let chartPadding: CGFloat = 12
+        public static let chartGap: CGFloat = 24
+        public static let dashboardPadding: CGFloat = 24
+        public static let chartCornerRadius: CGFloat = 16
+        public static let chartBorderWidth: CGFloat = 1
+        
+        // Responsive breakpoints
+        public static let breakpoints = (
+            small: 800,
+            medium: 1200,
+            large: 1600
+        )
+        
+        // Chart aspect ratios
+        public static let topChartAspectRatio: CGFloat = 0.6
+        public static let bottomChartAspectRatio: CGFloat = 0.4
+        
+        // Yearly layout ratios
+        public static let yearlyLeftColumnRatio: CGFloat = 0.45
+        public static let yearlyRightColumnRatio: CGFloat = 0.55
+    }
+
     // MARK: Row-specific styling for list layout
     public struct Row {
         public static let height: CGFloat = 44

@@ -37,20 +37,17 @@ struct WeeklyDashboardView: View {
                     .zIndex(2)
                 
                 // Main content with tidy, balanced layout
-                ZStack {
+                VStack(spacing: 0) {
                     // Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
-                            .padding(.horizontal, Theme.spacingLarge)
-                            .padding(.top, Theme.spacingLarge)
-                            .padding(.bottom, Theme.spacingSmall)
-                            .background(Theme.Colors.background)
-                            .position(x: geometry.size.width / 2, y: Theme.spacingLarge + 40) // Position at top center
-                            .zIndex(2)
+                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.top, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced padding
                     }
                     
-                    // Dashboard charts using simple layout
-                    DashboardLayout(
+                    // Dashboard charts using optimized layout
+                    DashboardLayout.weekly(
                         topLeft: {
                             WeeklyEditorialView(
                                 editorialEngine: editorialEngine
@@ -65,10 +62,11 @@ struct WeeklyDashboardView: View {
                             SessionCalendarChartView(
                                 sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                             )
-                        }
+                        },
+                        topHeightRatio: 0.45,  // More space for editorial content
+                        bottomHeightRatio: 0.55
                     )
                 }
-                .padding(Theme.spacingLarge)
                 .background(Theme.Colors.background)
             }
             

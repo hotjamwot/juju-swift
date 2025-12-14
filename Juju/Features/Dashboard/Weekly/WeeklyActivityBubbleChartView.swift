@@ -13,7 +13,7 @@ struct WeeklyActivityBubbleChartView: View {
     ]
 
     var body: some View {
-        VStack(alignment: .center, spacing: Theme.spacingSmall) {
+        VStack(alignment: .center, spacing: Theme.DashboardLayout.chartPadding) {
             if data.isEmpty {
                 Text("No sessions this week")
                     .font(Theme.Fonts.header)
@@ -98,13 +98,6 @@ struct WeeklyActivityBubbleChartView: View {
                 }
             }
         }
-        .background(Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
     }
 
     // MARK: - Layout computation

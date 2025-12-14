@@ -81,7 +81,7 @@ struct SessionCalendarChartView: View {
     
 // Mark: Body
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+        VStack(alignment: .leading, spacing: Theme.DashboardLayout.chartPadding) {
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -133,14 +133,7 @@ struct SessionCalendarChartView: View {
                 .chartXScale(domain: weekDays)
             }
         }
-        .padding(Theme.spacingLarge) // Add padding for breathing room
-        .background(Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+        .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced bottom padding to prevent touching bottom
     }
 }
 

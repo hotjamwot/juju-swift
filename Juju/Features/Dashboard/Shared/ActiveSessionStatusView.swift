@@ -5,13 +5,13 @@ struct ActiveSessionStatusView: View {
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
     
     var body: some View {
-        HStack(spacing: Theme.spacingMedium) {
+        HStack(spacing: Theme.DashboardLayout.chartGap) {
             // Live Pill Indicator (left side)
             Text("Live")
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundColor(.white)
-                .padding(.horizontal, Theme.spacingSmall)
-                .padding(.vertical, Theme.spacingExtraSmall)
+                .padding(.horizontal, Theme.DashboardLayout.chartPadding)
+                .padding(.vertical, Theme.DashboardLayout.chartPadding / 2) // Reduced vertical padding
                 .background(
                     LinearGradient(
                         colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
@@ -24,7 +24,7 @@ struct ActiveSessionStatusView: View {
             Spacer()
             
             // Project Emoji and Name (centered)
-            HStack(spacing: Theme.spacingSmall) {
+            HStack(spacing: Theme.DashboardLayout.chartPadding) {
                 let project = getProjectForSession()
                 Text(project?.emoji ?? sessionManager.activeSession?.getActivityTypeDisplay().emoji ?? "⚡")
                     .font(.system(size: 16, weight: .bold))
@@ -43,7 +43,8 @@ struct ActiveSessionStatusView: View {
                 LiveTimerView(session: activeSession)
             }
         }
-        .padding(Theme.spacingSmall)
+        .padding(.horizontal, Theme.DashboardLayout.chartPadding)
+        .padding(.vertical, Theme.DashboardLayout.chartPadding / 3) // Further reduced vertical padding
         .background(
             LinearGradient(
                 colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.8)],

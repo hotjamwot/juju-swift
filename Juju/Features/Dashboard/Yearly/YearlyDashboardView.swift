@@ -37,39 +37,65 @@ struct YearlyDashboardView: View {
                 Theme.Colors.background
                 
                 // Main content
-                ZStack {
+                VStack(spacing: 0) {
                     // Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
-                            .padding(.horizontal, Theme.spacingLarge)
-                            .padding(.top, Theme.spacingLarge)
-                            .padding(.bottom, Theme.spacingSmall)
-                            .background(Theme.Colors.background)
-                            .position(x: geometry.size.width / 2, y: Theme.spacingLarge + 40) // Position at top center
-                            .zIndex(2)
+                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.top, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced padding
                     }
                     
-                    // Dashboard charts using simple layout
-                    DashboardLayout(
-                        topLeft: {
-                            ProjectDistributionBarChartView(
-                                data: chartDataPreparer.yearlyProjectBarChartData()
-                            )
+                    // Dashboard charts using optimized two-column layout
+                    DashboardLayout.yearly(
+                        left: {
+                            // Monthly Activity Breakdown Chart - REMOVED
+                            // Keeping frame with placeholder text
+                            VStack {
+                                Text("Charts coming soon")
+                                    .font(Theme.Fonts.header)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                
+                                Text("Monthly activity breakdown chart will be available soon")
+                                    .font(Theme.Fonts.body)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding()
+                            }
                         },
-                        topRight: {
-                            ActivityDistributionBarChartView(
-                                data: chartDataPreparer.yearlyActivityBarChartData()
-                            )
+                        rightTop: {
+                            // Project Distribution Chart - REMOVED
+                            // Keeping frame with placeholder text
+                            VStack {
+                                Text("Charts coming soon")
+                                    .font(Theme.Fonts.header)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                
+                                Text("Project distribution chart will be available soon")
+                                    .font(Theme.Fonts.body)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding()
+                            }
                         },
-                        bottom: {
-                            MonthlyActivityGroupedBarChartView(
-                                groups: chartDataPreparer.yearlyMonthlyActivityGroups()
-                            )
+                        rightBottom: {
+                            // Activity Distribution Chart - REMOVED
+                            // Keeping frame with placeholder text
+                            VStack {
+                                Text("Charts coming soon")
+                                    .font(Theme.Fonts.header)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                
+                                Text("Activity distribution chart will be available soon")
+                                    .font(Theme.Fonts.body)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding()
+                            }
                         }
                     )
+                    .frame(maxHeight: sessionManager.activeSession != nil ? .infinity : nil) // Add responsive height when active session is present
                 }
-                .padding(.top, Theme.spacingLarge)
-                .padding(.trailing, Theme.spacingLarge)
                 .background(Theme.Colors.background)
                 
                 // Floating navigation button (back to weekly dashboard)

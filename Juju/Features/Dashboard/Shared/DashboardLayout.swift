@@ -1,20 +1,88 @@
 import SwiftUI
 
-/// Dashboard Layout
-/// A simple, responsive layout for dashboard charts
+/// Unified Dashboard Layout
+/// A flexible, responsive layout system for all dashboard charts with configurable parameters
 struct DashboardLayout: View {
-    let topLeftContent: AnyView
-    let topRightContent: AnyView
-    let bottomContent: AnyView
+    enum LayoutType {
+        case weekly(
+            topLeft: AnyView,
+            topRight: AnyView,
+            bottom: AnyView
+        )
+        case yearly(
+            left: AnyView,
+            rightTop: AnyView,
+            rightBottom: AnyView
+        )
+    }
     
-    init<T: View, U: View, V: View>(
-        @ViewBuilder topLeft: () -> T,
-        @ViewBuilder topRight: () -> U,
-        @ViewBuilder bottom: () -> V
+    let layoutType: LayoutType
+    
+    // Configurable layout parameters
+    let topHeightRatio: CGFloat
+    let bottomHeightRatio: CGFloat
+    let spacing: CGFloat
+    let gap: CGFloat
+    
+    init(
+        layoutType: LayoutType,
+        topHeightRatio: CGFloat = 0.4,
+        bottomHeightRatio: CGFloat = 0.5,
+        spacing: CGFloat = Theme.DashboardLayout.dashboardPadding,
+        gap: CGFloat = Theme.DashboardLayout.chartGap
     ) {
-        self.topLeftContent = AnyView(topLeft())
-        self.topRightContent = AnyView(topRight())
-        self.bottomContent = AnyView(bottom())
+        self.layoutType = layoutType
+        self.topHeightRatio = topHeightRatio
+        self.bottomHeightRatio = bottomHeightRatio
+        self.spacing = spacing
+        self.gap = gap
+    }
+    
+    // Convenience initializers
+    private init(
+        layoutType: LayoutType,
+        topHeightRatio: CGFloat = 0.4,
+        bottomHeightRatio: CGFloat = 0.5
+    ) {
+        self.layoutType = layoutType
+        self.topHeightRatio = topHeightRatio
+        self.bottomHeightRatio = bottomHeightRatio
+        self.spacing = Theme.DashboardLayout.dashboardPadding
+        self.gap = Theme.DashboardLayout.chartGap
+    }
+    
+    // Convenience initializer for weekly layout
+    static func weekly(
+        @ViewBuilder topLeft: () -> some View,
+        @ViewBuilder topRight: () -> some View,
+        @ViewBuilder bottom: () -> some View,
+        topHeightRatio: CGFloat = 0.45,
+        bottomHeightRatio: CGFloat = 0.55
+    ) -> DashboardLayout {
+        DashboardLayout(
+            layoutType: .weekly(
+                topLeft: AnyView(topLeft()),
+                topRight: AnyView(topRight()),
+                bottom: AnyView(bottom())
+            ),
+            topHeightRatio: topHeightRatio,
+            bottomHeightRatio: bottomHeightRatio
+        )
+    }
+    
+    // Convenience initializer for yearly layout
+    static func yearly(
+        @ViewBuilder left: () -> some View,
+        @ViewBuilder rightTop: () -> some View,
+        @ViewBuilder rightBottom: () -> some View
+    ) -> DashboardLayout {
+        DashboardLayout(
+            layoutType: .yearly(
+                left: AnyView(left()),
+                rightTop: AnyView(rightTop()),
+                rightBottom: AnyView(rightBottom())
+            )
+        )
     }
     
     var body: some View {
@@ -22,68 +90,82 @@ struct DashboardLayout: View {
             let width = geometry.size.width
             let height = geometry.size.height
             
-            // Calculate available space (accounting for sidebar and padding)
-            let availableWidth = max(0, width - 50 - 40) // sidebarWidth + dashboardPadding
-            let availableHeight = max(0, height)
+            // Calculate available space
+            let availableWidth = max(0, width - (spacing * 2))
+            let availableHeight = max(0, height - (spacing * 2))
             
-            // Top row: two charts side by side
-            HStack(spacing: 24) {
-                // Left chart (48% of available width)
-                VStack {
-                    topLeftContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Theme.Colors.surface.opacity(0.5))
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                        .shadow(color: Theme.Colors.divider.opacity(0.2), radius: 8, x: 0, y: 2)
+            switch layoutType {
+            case .weekly(let topLeft, let topRight, let bottom):
+                // Weekly layout: 2x2 grid
+                VStack(spacing: 0) {
+                    HStack(spacing: gap) {
+                        ChartContainer(content: topLeft)
+                            .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
+                        
+                        ChartContainer(content: topRight)
+                            .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
+                    }
+                    .padding(.horizontal, spacing)
+                    .padding(.top, spacing)
+                    
+                    Spacer(minLength: gap)
+                    
+                    ChartContainer(content: bottom)
+                        .frame(width: availableWidth, height: availableHeight * bottomHeightRatio)
+                        .padding(.horizontal, spacing)
+                        .padding(.bottom, spacing) // Add bottom padding to prevent touching bottom
                 }
-                .frame(width: availableWidth * 0.48, height: availableHeight * 0.4)
+                .padding(.bottom, spacing) // Apply bottom padding to the entire VStack
                 
-                // Right chart (48% of available width)
-                VStack {
-                    topRightContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Theme.Colors.surface.opacity(0.5))
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                        .shadow(color: Theme.Colors.divider.opacity(0.2), radius: 8, x: 0, y: 2)
+            case .yearly(let left, let rightTop, let rightBottom):
+                // Yearly layout: left column full height, right column stacked
+                HStack(spacing: gap) {
+                    // Left Column: Monthly distribution chart (full height)
+                    ChartContainer(content: left)
+                        .frame(width: availableWidth * Theme.DashboardLayout.yearlyLeftColumnRatio, height: availableHeight)
+                    
+                    // Right Column: Stacked charts with flexible height allocation
+                    VStack(spacing: gap) {
+                        ChartContainer(content: rightTop)
+                            .frame(maxWidth: .infinity)
+                            .layoutPriority(1) // Take available space
+                        
+                        ChartContainer(content: rightBottom)
+                            .frame(maxWidth: .infinity)
+                            .layoutPriority(1) // Take available space
+                    }
+                    .frame(width: availableWidth * Theme.DashboardLayout.yearlyRightColumnRatio, height: availableHeight)
                 }
-                .frame(width: availableWidth * 0.48, height: availableHeight * 0.4)
+                .padding(.horizontal, spacing)
+                .padding(.vertical, spacing)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            
-            // Bottom row: full width chart
+        }
+    }
+    
+    // Reusable chart container for consistent styling
+    private struct ChartContainer<Content: View>: View {
+        let content: Content
+        
+        var body: some View {
             VStack {
-                Spacer()
-                VStack {
-                    bottomContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Theme.Colors.surface.opacity(0.5))
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                        .shadow(color: Theme.Colors.divider.opacity(0.2), radius: 8, x: 0, y: 2)
-                }
-                .frame(width: availableWidth - 48, height: availableHeight * 0.5)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .padding(Theme.DashboardLayout.chartPadding)
+            .background(Theme.Colors.surface.opacity(0.5))
+            .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.DashboardLayout.chartCornerRadius)
+                    .stroke(Theme.Colors.divider, lineWidth: Theme.DashboardLayout.chartBorderWidth)
+            )
+            .shadow(color: Theme.Colors.divider.opacity(0.2), radius: 8, x: 0, y: 2)
         }
     }
 }
 
 // MARK: - Preview
 #Preview {
-    DashboardLayout(
+    DashboardLayout.weekly(
         topLeft: {
             VStack {
                 Text("Top Left Chart")
@@ -117,6 +199,53 @@ struct DashboardLayout: View {
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text("This is the bottom chart")
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+        }
+    )
+    .frame(width: 1200, height: 800)
+    .background(Theme.Colors.background)
+}
+
+// MARK: - Yearly Dashboard Layout Preview
+#Preview {
+    DashboardLayout.yearly(
+        left: {
+            VStack {
+                Text("Monthly Distribution")
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Text("Full-height monthly chart")
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+        },
+        rightTop: {
+            VStack {
+                Text("Project Distribution")
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Text("Top-right chart")
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
+        },
+        rightBottom: {
+            VStack {
+                Text("Activity Types")
+                    .font(Theme.Fonts.header)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Text("Bottom-right chart")
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .multilineTextAlignment(.center)

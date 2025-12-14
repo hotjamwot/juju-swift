@@ -89,7 +89,7 @@ struct WeeklyEditorialView: View {
     }
 
     var body: some View {
-        VStack(alignment: .center, spacing: Theme.spacingMedium) {
+        VStack(alignment: .center, spacing: Theme.DashboardLayout.chartPadding) {
             // Three-line editorial information with accent colors
             VStack(alignment: .center, spacing: Theme.spacingSmall) {
                 // Line 1: Total logged time
@@ -140,16 +140,7 @@ struct WeeklyEditorialView: View {
                 // Milestone List
                 milestoneList
             }
-            .padding(.horizontal, Theme.spacingLarge)
-            .padding(.vertical, Theme.spacingMedium)
         }
-        .background(Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
         .onAppear {
             // Generate initial headline
             editorialEngine.generateWeeklyHeadline()
