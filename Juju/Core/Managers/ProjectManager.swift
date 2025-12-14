@@ -218,18 +218,45 @@ class ProjectManager {
     }
     
     func saveProjects(_ projects: [Project]) {
+        // Validate all projects before saving
+        let validator = DataValidator.shared
+        let errorHandler = ErrorHandler.shared
+        
+        var validProjects: [Project] = []
+        var invalidProjects: [(Project, String)] = []
+        
+        for project in projects {
+            switch validator.validateProject(project) {
+            case .valid:
+                validProjects.append(project)
+            case .invalid(let reason):
+                invalidProjects.append((project, reason))
+                errorHandler.handleValidationError(
+                    NSError(domain: "DataValidation", code: 1002, userInfo: [NSLocalizedDescriptionKey: reason]),
+                    dataType: "Project"
+                )
+            }
+        }
+        
+        if !invalidProjects.isEmpty {
+            print("⚠️ Found \(invalidProjects.count) invalid projects. Skipping them.")
+            for (project, reason) in invalidProjects {
+                print("  - Project '\(project.name)': \(reason)")
+            }
+        }
+        
         if let projectsFile = projectsFile {
             do {
                 let encoder = JSONEncoder()
                 encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-                let data = try encoder.encode(projects)
+                let data = try encoder.encode(validProjects)
                 try data.write(to: projectsFile)
-                print("✅ Saved \(projects.count) projects to \(projectsFile.path)")
+                print("✅ Saved \(validProjects.count) projects to \(projectsFile.path)")
                 // Clear cache after saving to ensure fresh data on next load
                 clearCache()
                 NotificationCenter.default.post(name: .projectsDidChange, object: nil)
             } catch {
-                print("❌ Error saving projects to \(projectsFile.path): \(error)")
+                errorHandler.handleFileError(error, operation: "write", filePath: projectsFile.path)
             }
         }
     }

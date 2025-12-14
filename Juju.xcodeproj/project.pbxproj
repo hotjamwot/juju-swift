@@ -43,6 +43,8 @@
 		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
 		66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C452FA2EB4133200DE7FE6 /* TooltipView.swift */; };
 		66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D02EEED25E00D06502 /* ProjectManager.swift */; };
+		66D9D0D32EEED4C500D06502 /* DataValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D22EEED4C500D06502 /* DataValidator.swift */; };
+		66D9D0D52EEED4F500D06502 /* ErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D42EEED4F500D06502 /* ErrorHandler.swift */; };
 		66E6FD722EEDA93000BEB0D4 /* YearlyActivityPieChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E6FD712EEDA93000BEB0D4 /* YearlyActivityPieChartView.swift */; };
 		66E746792EE3249200A353C1 /* ActivityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E746782EE3249200A353C1 /* ActivityType.swift */; };
 		66E7467B2EE3254F00A353C1 /* SessionMigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E7467A2EE3254F00A353C1 /* SessionMigrationManager.swift */; };
@@ -104,6 +106,8 @@
 		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
 		66C452FA2EB4133200DE7FE6 /* TooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TooltipView.swift; sourceTree = "<group>"; };
 		66D9D0D02EEED25E00D06502 /* ProjectManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectManager.swift; sourceTree = "<group>"; };
+		66D9D0D22EEED4C500D06502 /* DataValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataValidator.swift; sourceTree = "<group>"; };
+		66D9D0D42EEED4F500D06502 /* ErrorHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
 		66E6FD712EEDA93000BEB0D4 /* YearlyActivityPieChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyActivityPieChartView.swift; sourceTree = "<group>"; };
 		66E746782EE3249200A353C1 /* ActivityType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityType.swift; sourceTree = "<group>"; };
 		66E7467A2EE3254F00A353C1 /* SessionMigrationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionMigrationManager.swift; sourceTree = "<group>"; };
@@ -200,6 +204,8 @@
 		66B147FC2EA8EA4B00E9BB4A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				66D9D0D42EEED4F500D06502 /* ErrorHandler.swift */,
+				66D9D0D22EEED4C500D06502 /* DataValidator.swift */,
 				66D9D0D02EEED25E00D06502 /* ProjectManager.swift */,
 				665909662EE47949007D1303 /* SidebarStateManager.swift */,
 				6695BFBE2EE36CC300503CD7 /* EditorialEngine.swift */,
@@ -519,6 +525,7 @@
 				663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */,
 				665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */,
 				6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */,
+				66D9D0D52EEED4F500D06502 /* ErrorHandler.swift in Sources */,
 				66F4483C2EEC9131008FA5DD /* YearlyDashboardView.swift in Sources */,
 				66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */,
 				66E6FD722EEDA93000BEB0D4 /* YearlyActivityPieChartView.swift in Sources */,
@@ -532,6 +539,7 @@
 				66F448272EEC911F008FA5DD /* DashboardViewType.swift in Sources */,
 				66EF3E792EC5F2B200A6952E /* SessionFileManager.swift in Sources */,
 				66B148512EA8EA4B00E9BB4A /* ShortcutManager.swift in Sources */,
+				66D9D0D32EEED4C500D06502 /* DataValidator.swift in Sources */,
 				66E746792EE3249200A353C1 /* ActivityType.swift in Sources */,
 				666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */,
 				66EF3E7B2EC5F2B200A6952E /* SessionDataParser.swift in Sources */,

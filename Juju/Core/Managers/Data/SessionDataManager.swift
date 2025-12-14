@@ -469,10 +469,37 @@ class SessionDataManager: ObservableObject {
     // MARK: - Data Persistence
     
     func saveAllSessions(_ sessions: [SessionRecord]) {
-        // Group sessions by year (based on start date)
-        var sessionsByYear: [Int: [SessionRecord]] = [:]
+        // Validate all sessions before saving
+        let validator = DataValidator.shared
+        let errorHandler = ErrorHandler.shared
+        
+        var validSessions: [SessionRecord] = []
+        var invalidSessions: [(SessionRecord, String)] = []
         
         for session in sessions {
+            switch validator.validateSession(session) {
+            case .valid:
+                validSessions.append(session)
+            case .invalid(let reason):
+                invalidSessions.append((session, reason))
+                errorHandler.handleValidationError(
+                    NSError(domain: "DataValidation", code: 1001, userInfo: [NSLocalizedDescriptionKey: reason]),
+                    dataType: "Session"
+                )
+            }
+        }
+        
+        if !invalidSessions.isEmpty {
+            print("⚠️ Found \(invalidSessions.count) invalid sessions. Skipping them.")
+            for (session, reason) in invalidSessions {
+                print("  - Session \(session.id): \(reason)")
+            }
+        }
+        
+        // Group valid sessions by year (based on start date)
+        var sessionsByYear: [Int: [SessionRecord]] = [:]
+        
+        for session in validSessions {
             guard let startDate = session.startDateTime else { continue }
             let year = Calendar.current.component(.year, from: startDate)
             if sessionsByYear[year] == nil {
@@ -495,7 +522,7 @@ class SessionDataManager: ObservableObject {
                     print("✅ Saved \(yearSessions.count) sessions to \(year)-data.csv")
                     print("🔍 CSV Header: \(csvContent.components(separatedBy: "\n").first ?? "No header")")
                 } catch {
-                    print("❌ Error saving sessions to \(year)-data.csv: \(error)")
+                    errorHandler.handleFileError(error, operation: "write", filePath: "\(year)-data.csv")
                 }
             }
             
