@@ -61,7 +61,6 @@
 		66F448372EEC9131008FA5DD /* WeeklyActivityBubbleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F4482A2EEC9130008FA5DD /* WeeklyActivityBubbleChartView.swift */; };
 		66F448382EEC9131008FA5DD /* WeeklyDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F4482B2EEC9130008FA5DD /* WeeklyDashboardView.swift */; };
 		66F4483C2EEC9131008FA5DD /* YearlyDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448302EEC9130008FA5DD /* YearlyDashboardView.swift */; };
-		66F4483D2EEC9131008FA5DD /* YearlyTotalBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448312EEC9130008FA5DD /* YearlyTotalBarChartView.swift */; };
 		66F4483E2EEC9131008FA5DD /* ActiveSessionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448332EEC9131008FA5DD /* ActiveSessionStatusView.swift */; };
 		66F448402EEC9145008FA5DD /* DashboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F4483F2EEC9144008FA5DD /* DashboardWindowController.swift */; };
 		66F448422EEC9164008FA5DD /* DashboardRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448412EEC9164008FA5DD /* DashboardRootView.swift */; };
@@ -126,7 +125,6 @@
 		66F4482A2EEC9130008FA5DD /* WeeklyActivityBubbleChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyActivityBubbleChartView.swift; sourceTree = "<group>"; };
 		66F4482B2EEC9130008FA5DD /* WeeklyDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyDashboardView.swift; sourceTree = "<group>"; };
 		66F448302EEC9130008FA5DD /* YearlyDashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyDashboardView.swift; sourceTree = "<group>"; };
-		66F448312EEC9130008FA5DD /* YearlyTotalBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyTotalBarChartView.swift; sourceTree = "<group>"; };
 		66F448332EEC9131008FA5DD /* ActiveSessionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActiveSessionStatusView.swift; sourceTree = "<group>"; };
 		66F4483F2EEC9144008FA5DD /* DashboardWindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardWindowController.swift; sourceTree = "<group>"; };
 		66F448412EEC9164008FA5DD /* DashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardRootView.swift; sourceTree = "<group>"; };
@@ -393,7 +391,6 @@
 				66D9D0D82EEEEE5100D06502 /* MonthlyActivityBreakdownChartView.swift */,
 				66D9D0D72EEEEE5100D06502 /* ProjectsBarChartView.swift */,
 				66F448302EEC9130008FA5DD /* YearlyDashboardView.swift */,
-				66F448312EEC9130008FA5DD /* YearlyTotalBarChartView.swift */,
 			);
 			path = Yearly;
 			sourceTree = "<group>";
@@ -540,7 +537,6 @@
 				6695BFBF2EE36CC300503CD7 /* EditorialEngine.swift in Sources */,
 				66881FCA2EC653E300AB32F1 /* FilterExportControls.swift in Sources */,
 				66D9D0DB2EEEEE5200D06502 /* MonthlyActivityBreakdownChartView.swift in Sources */,
-				66F4483D2EEC9131008FA5DD /* YearlyTotalBarChartView.swift in Sources */,
 				66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */,
 				66B148542EA8EA4B00E9BB4A /* ProjectsViewModel.swift in Sources */,
 				66B148802EA8EA4B00E9BB4A /* SessionsView.swift in Sources */,

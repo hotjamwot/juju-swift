@@ -129,47 +129,6 @@ final class ChartDataPreparer: ObservableObject {
         }
     }
     
-    /// Background version for heavy data processing with caching
-    func prepareAllTimeDataInBackground(sessions: [SessionRecord], projects: [Project]) async {
-        await Task.detached {
-            // Process on background thread
-            let filteredSessions = sessions.filter { session in
-                guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-                // Calculate current year interval on background thread
-                let calendar = Calendar.current
-                guard let year = calendar.dateInterval(of: .year, for: Date()) else {
-                    return false
-                }
-                return year.contains(sessionDate)
-            }
-            
-            // Update UI on main thread
-            await MainActor.run {
-                self.viewModel.sessions = filteredSessions
-                self.viewModel.projects = projects
-                self.clearCache()
-                self.cacheTimestamp = Date()
-            }
-            print("[ChartDataPreparer] Background preparation complete")
-        }
-    }
-
-    private let sessionDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        formatter.timeZone = TimeZone.current // Use the user's local time zone
-        return formatter
-    }()
-
-    func prepareData(sessions: [SessionRecord], projects: [Project], filter: ChartTimePeriod) {
-        print("[ChartDataPreparer] Re‑calculating for: \(filter.title)")
-        
-        // Apply filtering based on the selected time period
-        let filteredSessions = filterSessions(sessions: sessions, filter: filter)
-        viewModel.sessions = filteredSessions
-        viewModel.projects = projects
-    }
-    
     // MARK: - Core Accessors
     
     private let calendar = Calendar.current
@@ -397,14 +356,6 @@ final class ChartDataPreparer: ObservableObject {
         return year
     }
 
-    /// Current week project totals for weekly bubbles
-    func weeklyProjectTotals() -> [ProjectChartData] {
-        let filteredSessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
-        }
-        return aggregateProjectTotals(from: filteredSessions)
-    }
-
     /// Current week activity totals for activity bubbles
     func weeklyActivityTotals() -> [ActivityChartData] {
         let filteredSessions = viewModel.sessions.filter { session in
@@ -444,84 +395,6 @@ final class ChartDataPreparer: ObservableObject {
                 activityEmoji: activityEmoji
             )
         }
-    }
-
-    /// Year to date project totals for yearly bubbles with caching
-    func yearlyProjectTotals() -> [ProjectChartData] {
-        let cacheKey = "yearlyProjectTotals_\(viewModel.sessions.count)_\(viewModel.projects.count)"
-        
-        if !shouldInvalidateCache(),
-           let cached = yearlyCache[cacheKey] as? [ProjectChartData] {
-            return cached
-        }
-        
-        // Use the sessions already filtered to current year in viewModel.sessions
-        // No need to filter again - they should already be current year sessions
-        let result = aggregateProjectTotals(from: viewModel.sessions)
-        yearlyCache[cacheKey] = result
-        return result
-    }
-
-    /// Year to date activity type totals for yearly pie chart with caching
-    func yearlyActivityTotals() -> [ActivityTypePieSlice] {
-        let cacheKey = "yearlyActivityTotals_\(viewModel.sessions.count)_\(viewModel.projects.count)"
-        
-        if !shouldInvalidateCache(),
-           let cached = yearlyCache[cacheKey] as? [ActivityTypePieSlice] {
-            return cached
-        }
-        
-        // Filter out sessions with uncategorized activity types at the session level
-        let filteredSessions = viewModel.sessions.filter { session in
-            let activityID = session.activityTypeID ?? "uncategorized"
-            return activityID != "uncategorized"
-        }
-        
-        print("[ChartDataPreparer] Yearly sessions: \(viewModel.sessions.count), Filtered sessions: \(filteredSessions.count)")
-        
-        let result = aggregateActivityTotalsForPieChart(from: filteredSessions)
-        yearlyCache[cacheKey] = result
-        return result
-    }
-    
-    
-    
-    
-    public func yearlyTotalHours() -> Double {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        let yearlySessions = viewModel.sessions.filter { session in
-            // FIX: Use session.date instead of session.startTime for year filtering
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-            let sessionYear = Calendar.current.component(.year, from: sessionDate)
-            return sessionYear == currentYear
-        }
-        
-        let totalSeconds = yearlySessions.reduce(into: 0.0) { result, session in
-            result += Double(session.durationMinutes) * 60 // Convert Int to Double
-        }
-        return totalSeconds / 3600.0
-    }
-    
-
-
-    /// Weekly total hours for headline (uses activity totals for consistency)
-    func weeklyTotalHours() -> Double {
-        weeklyActivityTotals().reduce(into: 0.0) { result, value in
-            result += value.totalHours
-        }
-    }
-
-    /// All-Time Total Hours for SummaryMetricView
-    func allTimeTotalHours() -> Double {
-        let totalMinutes = viewModel.sessions.reduce(into: 0) { result, value in
-            result += value.durationMinutes
-        }
-        return Double(totalMinutes) / 60.0
-    }
-    
-    /// All-Time Total Sessions for SummaryMetricView
-    func allTimeTotalSessions() -> Int {
-        return viewModel.sessions.count
     }
 
 
