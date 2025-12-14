@@ -33,7 +33,7 @@ struct WeeklyDashboardView: View {
             ZStack {
                 // Floating navigation button (always visible in center-right, even closer to edge)
                 NavigationButton()
-                    .position(x: geometry.size.width - 16, y: geometry.size.height / 2)
+                    .position(x: geometry.size.width - 26, y: geometry.size.height / 2)
                     .zIndex(2)
                 
                 // Main content with tidy, balanced layout
@@ -67,6 +67,8 @@ struct WeeklyDashboardView: View {
                         bottomHeightRatio: 0.55
                     )
                 }
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                .padding(.bottom, Theme.DashboardLayout.dashboardPadding)
                 .background(Theme.Colors.background)
             }
             

@@ -96,6 +96,8 @@ struct YearlyDashboardView: View {
                     )
                     .frame(maxHeight: sessionManager.activeSession != nil ? .infinity : nil) // Add responsive height when active session is present
                 }
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                .padding(.bottom, Theme.DashboardLayout.dashboardPadding)
                 .background(Theme.Colors.background)
                 
                 // Floating navigation button (back to weekly dashboard)

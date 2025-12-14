@@ -89,7 +89,7 @@ struct WeeklyEditorialView: View {
     }
 
     var body: some View {
-        VStack(alignment: .center, spacing: Theme.DashboardLayout.chartPadding) {
+        VStack(alignment: .center, spacing: 0) {
             // Three-line editorial information with accent colors
             VStack(alignment: .center, spacing: Theme.spacingSmall) {
                 // Line 1: Total logged time

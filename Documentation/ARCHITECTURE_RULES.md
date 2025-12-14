@@ -119,10 +119,11 @@ The dashboard uses a simplified, responsive layout system built around the `Dash
 - **DashboardRootView**: Root container that manages navigation between Weekly and Yearly dashboard views
 
 **Layout Structure:**
-- **Top Row**: Two charts side by side (48% width each, 40% height)
-- **Bottom Row**: One full-width chart (100% width, 50% height)
+- **Top Row**: Two charts side by side (48% width each, 45% height)
+- **Bottom Row**: One full-width chart (100% width, 55% height)
 - **Spacing**: 24px between charts, 24px padding around edges
 - **Responsive**: Uses GeometryReader to adapt to window size changes
+- **Consistent Padding**: Both Weekly and Yearly dashboards use identical padding structure (24px horizontal and bottom padding)
 
 **Chart Views (No Frame Constraints):**
 - **WeeklyEditorialView**: Narrative summary with total hours and focus activity

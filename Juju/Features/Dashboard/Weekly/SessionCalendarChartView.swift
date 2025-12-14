@@ -81,7 +81,7 @@ struct SessionCalendarChartView: View {
     
 // Mark: Body
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.DashboardLayout.chartPadding) {
+        VStack(alignment: .leading, spacing: 0) {
             if sessions.isEmpty {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -99,7 +99,7 @@ struct SessionCalendarChartView: View {
                         sessionRectangle(for: session)
                     }
                 }
-                .chartYScale(domain: 6.0 ... 23.0)
+                .chartYScale(domain: 5.5 ... 23.5) // Extended domain to create padding at top and bottom
                 .chartYAxis {
                     AxisMarks(values: .automatic) { value in
                         if let hour = value.as(Double.self) {
@@ -133,7 +133,6 @@ struct SessionCalendarChartView: View {
                 .chartXScale(domain: weekDays)
             }
         }
-        .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced bottom padding to prevent touching bottom
     }
 }
 

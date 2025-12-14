@@ -97,7 +97,7 @@ struct DashboardLayout: View {
             switch layoutType {
             case .weekly(let topLeft, let topRight, let bottom):
                 // Weekly layout: 2x2 grid
-                VStack(spacing: 0) {
+                VStack(spacing: gap) {
                     HStack(spacing: gap) {
                         ChartContainer(content: topLeft)
                             .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
@@ -105,17 +105,12 @@ struct DashboardLayout: View {
                         ChartContainer(content: topRight)
                             .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
                     }
-                    .padding(.horizontal, spacing)
-                    .padding(.top, spacing)
-                    
-                    Spacer(minLength: gap)
                     
                     ChartContainer(content: bottom)
                         .frame(width: availableWidth, height: availableHeight * bottomHeightRatio)
-                        .padding(.horizontal, spacing)
-                        .padding(.bottom, spacing) // Add bottom padding to prevent touching bottom
                 }
-                .padding(.bottom, spacing) // Apply bottom padding to the entire VStack
+                .padding(.horizontal, spacing)
+                .padding(.vertical, spacing)
                 
             case .yearly(let left, let rightTop, let rightBottom):
                 // Yearly layout: left column full height, right column stacked
