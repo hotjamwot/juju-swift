@@ -374,6 +374,13 @@ class ProjectManager {
         return project.phases
     }
     
+    /// Get project name from projectID for session creation
+    /// - Returns: Project name if found, nil if project doesn't exist
+    func getProjectName(from projectID: String) -> String? {
+        let projects = loadProjects()
+        return projects.first(where: { $0.id == projectID })?.name
+    }
+    
     private func migrateProjects(_ loadedProjects: [Project]) -> [Project] {
         var needsRewrite = false
         var migratedProjects: [Project] = []

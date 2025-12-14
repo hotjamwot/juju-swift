@@ -8,7 +8,7 @@ public struct SessionRecord: Identifiable {
     let endTime: String
     let durationMinutes: Int
     let projectName: String  // Kept for backward compatibility; use projectID for new sessions
-    let projectID: String?  // New: Project identifier (optional to support interim state)
+    let projectID: String?  // Updated: Project identifier (required for new sessions, optional for legacy)
     let activityTypeID: String?  // New: Activity Type identifier (nil during active session, set at end)
     let projectPhaseID: String?  // New: Project Phase identifier (optional)
     let milestoneText: String?  // New: Milestone text (optional)
@@ -152,6 +152,53 @@ extension SessionRecord {
     var isLegacySession: Bool {
         return activityTypeID == nil && projectPhaseID == nil
     }
+    
+    /// Check if this session has a valid projectID (required for new sessions)
+    var hasValidProjectID: Bool {
+        return projectID != nil && !projectID!.isEmpty
+    }
+    
+    /// Create a new session with required projectID validation
+    /// - Throws: SessionError.invalidProjectID if projectID is nil or empty
+    static func createNewSession(
+        id: String = UUID().uuidString,
+        date: String,
+        startTime: String,
+        endTime: String,
+        durationMinutes: Int,
+        projectName: String,
+        projectID: String,
+        activityTypeID: String? = nil,
+        projectPhaseID: String? = nil,
+        milestoneText: String? = nil,
+        notes: String = "",
+        mood: Int? = nil
+    ) throws -> SessionRecord {
+        guard !projectID.isEmpty else {
+            throw SessionError.invalidProjectID
+        }
+        
+        return SessionRecord(
+            id: id,
+            date: date,
+            startTime: startTime,
+            endTime: endTime,
+            durationMinutes: durationMinutes,
+            projectName: projectName,
+            projectID: projectID,
+            activityTypeID: activityTypeID,
+            projectPhaseID: projectPhaseID,
+            milestoneText: milestoneText,
+            notes: notes,
+            mood: mood
+        )
+    }
+}
+
+enum SessionError: Error {
+    case invalidProjectID
+    case invalidDate
+    case invalidTimeRange
 }
 
 // MARK: - Session Data Transfer Object
@@ -160,7 +207,7 @@ struct SessionData {
     let endTime: Date
     let durationMinutes: Int
     let projectName: String  // Kept for backward compatibility
-    let projectID: String?  // New: Project identifier
+    let projectID: String   // Updated: Project identifier (required for new sessions)
     let activityTypeID: String?  // New: Activity Type identifier
     let projectPhaseID: String?  // New: Project Phase identifier
     let milestoneText: String?  // New: Milestone text

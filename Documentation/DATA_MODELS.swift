@@ -15,6 +15,7 @@ import Foundation
 
 // MARK: - 1. Session Model
 // Represents a single block of tracked work/time. Must be Codable for CSV persistence.
+// **UPDATED: Phase 1 & 2 Complete - Project Name Phaseout Infrastructure Ready**
 public struct Session: Codable, Identifiable {
     public let id: String
     public let date: String
@@ -22,7 +23,7 @@ public struct Session: Codable, Identifiable {
     public let endTime: String
     public let durationMinutes: Int
     public let projectName: String  // Kept for backward compatibility
-    public let projectID: String?
+    public let projectID: String?  // **UPDATED: Required for new sessions, optional for legacy**
     public let activityTypeID: String?
     public let projectPhaseID: String?
     public let milestoneText: String?
@@ -201,14 +202,14 @@ public struct SessionData {
     public let startTime: Date
     public let endTime: Date
     public let durationMinutes: Int
-    public let projectName: String
-    public let projectID: String?
+    public let projectName: String  // Kept for backward compatibility
+    public let projectID: String   // Updated: Required for new sessions
     public let activityTypeID: String?
     public let projectPhaseID: String?
     public let milestoneText: String?
     public let notes: String
     
-    public init(startTime: Date, endTime: Date, durationMinutes: Int, projectName: String, projectID: String?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, notes: String) {
+    public init(startTime: Date, endTime: Date, durationMinutes: Int, projectName: String, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, notes: String) {
         self.startTime = startTime
         self.endTime = endTime
         self.durationMinutes = durationMinutes

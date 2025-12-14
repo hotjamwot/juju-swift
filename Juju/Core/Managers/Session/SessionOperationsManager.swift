@@ -72,12 +72,18 @@ class SessionOperationsManager: ObservableObject {
         print("   Activity: \(activityTypeID ?? "none"), Phase: \(projectPhaseID ?? "none"), Milestone: \(milestoneText ?? "none")")
         
         // Create session data with new fields
+        guard let projectID = currentProjectID else {
+            print("❌ Cannot end session: projectID is nil")
+            completion(false)
+            return
+        }
+        
         let sessionData = SessionData(
             startTime: startTime,
             endTime: endTime,
             durationMinutes: durationMinutes,
             projectName: projectName,
-            projectID: currentProjectID,
+            projectID: projectID,
             activityTypeID: activityTypeID,
             projectPhaseID: projectPhaseID,
             milestoneText: milestoneText,
@@ -154,7 +160,7 @@ class SessionOperationsManager: ObservableObject {
         let moodStr = mood.map { String($0) } ?? ""
         
         // Build CSV row with new fields
-        let projectID = sessionData.projectID.map { csvManager.csvEscape($0) } ?? ""
+        let projectID = csvManager.csvEscape(sessionData.projectID)
         let activityTypeID = sessionData.activityTypeID.map { csvManager.csvEscape($0) } ?? ""
         let projectPhaseID = sessionData.projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
         let milestoneText = sessionData.milestoneText.map { csvManager.csvEscape($0) } ?? ""

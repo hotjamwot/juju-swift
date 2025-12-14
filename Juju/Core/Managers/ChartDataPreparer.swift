@@ -39,17 +39,44 @@ final class ChartDataPreparer: ObservableObject {
     private var yearlyCache: [String: Any] = [:]
     private var lastCacheKey: String = ""
     private var cacheTimestamp: Date = Date.distantPast
+    private var cacheAccessCount: [String: Int] = [:]
     
     // MARK: - Cache Management
     private func clearCache() {
         yearlyCache.removeAll()
         lastCacheKey = ""
         cacheTimestamp = Date.distantPast
+        cacheAccessCount.removeAll()
     }
     
     private func shouldInvalidateCache() -> Bool {
-        // Invalidate cache if it's older than 5 seconds
-        return Date().timeIntervalSince(cacheTimestamp) > 5.0
+        // Invalidate cache if it's older than 10 seconds or if data has changed significantly
+        let age = Date().timeIntervalSince(cacheTimestamp)
+        return age > 10.0
+    }
+    
+    // MARK: - Advanced Caching with LRU Eviction
+    private func setCacheValue(_ key: String, value: Any) {
+        yearlyCache[key] = value
+        cacheAccessCount[key, default: 0] += 1
+        cacheTimestamp = Date()
+        
+        // LRU eviction: remove oldest entries if cache gets too large
+        if yearlyCache.count > 20 {
+            let oldestKey = cacheAccessCount.min { lhs, rhs in
+                lhs.value < rhs.value
+            }?.key
+            
+            if let keyToRemove = oldestKey {
+                yearlyCache.removeValue(forKey: keyToRemove)
+                cacheAccessCount.removeValue(forKey: keyToRemove)
+            }
+        }
+    }
+    
+    private func getCacheValue<T>(_ key: String) -> T? {
+        cacheAccessCount[key, default: 0] += 1
+        return yearlyCache[key] as? T
     }
     
     // MARK: - Public Entry Point
@@ -269,23 +296,34 @@ final class ChartDataPreparer: ObservableObject {
         return colors[index]
     }
     
-    /// Filters sessions based on the selected time period
+    /// Filters sessions based on the selected time period with optimized performance
     private func filterSessions(sessions: [SessionRecord], filter: ChartTimePeriod) -> [SessionRecord] {
+        // For allTime, return sessions directly without filtering
+        if filter == .allTime {
+            return sessions
+        }
+        
+        // Pre-calculate interval boundaries for better performance
+        let (start, end) = getIntervalBounds(for: filter)
+        
+        // Use optimized filtering with early returns
+        return sessions.compactMap { session in
+            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return nil }
+            return (sessionDate >= start && sessionDate < end) ? session : nil
+        }
+    }
+    
+    /// Get interval bounds for optimized filtering
+    private func getIntervalBounds(for filter: ChartTimePeriod) -> (Date, Date) {
         switch filter {
         case .week:
-            return sessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
-            }
+            return (currentWeekInterval.start, currentWeekInterval.end)
         case .month:
-            return sessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentMonthInterval.contains($0) } ?? false
-            }
+            return (currentMonthInterval.start, currentMonthInterval.end)
         case .year:
-            return sessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
-            }
+            return (currentYearInterval.start, currentYearInterval.end)
         case .allTime:
-            return sessions
+            return (Date.distantPast, Date.distantFuture)
         }
     }
     

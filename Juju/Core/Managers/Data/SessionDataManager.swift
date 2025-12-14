@@ -295,7 +295,7 @@ class SessionDataManager: ObservableObject {
             // Filter to current week only
             let currentWeekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
             let weekSessions = sessions.filter { session in
-                guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+                guard let sessionDate = DateFormatter().date(from: session.date) else { return false }
                 return currentWeekInterval.contains(sessionDate)
             }
             
@@ -454,6 +454,55 @@ class SessionDataManager: ObservableObject {
         lastUpdated = Date()
         
         return true
+    }
+    
+    // MARK: - Session Creation with Required ProjectID
+    
+    /// Create a new session with required projectID validation
+    /// - Throws: SessionError.invalidProjectID if projectID is nil or empty
+    func createSession(data: SessionData) throws -> SessionRecord {
+        // Validate that projectID is provided for new sessions
+        guard !data.projectID.isEmpty else {
+            throw SessionError.invalidProjectID
+        }
+        
+        // Get project name from projectID if not provided
+        let projectName = data.projectName.isEmpty ? 
+            ProjectManager.shared.getProjectName(from: data.projectID) ?? "Unknown Project" : 
+            data.projectName
+        
+        // Create date formatters for session creation
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        
+        // Create session record with validated data
+        let session = try SessionRecord.createNewSession(
+            date: dateFormatter.string(from: data.startTime),
+            startTime: timeFormatter.string(from: data.startTime),
+            endTime: timeFormatter.string(from: data.endTime),
+            durationMinutes: data.durationMinutes,
+            projectName: projectName,
+            projectID: data.projectID,
+            activityTypeID: data.activityTypeID,
+            projectPhaseID: data.projectPhaseID,
+            milestoneText: data.milestoneText,
+            notes: data.notes,
+            mood: nil
+        )
+        
+        // Add to in-memory collection
+        allSessions.append(session)
+        
+        // Save to file
+        saveAllSessions(allSessions)
+        
+        // Update timestamp to trigger UI refresh
+        lastUpdated = Date()
+        
+        return session
     }
     
     // MARK: - Session Export

@@ -1,26 +1,30 @@
 flowName: Juju Application Critical Data Flow Map
-description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies.
+description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies. **UPDATED: Phase 1 & 2 Complete - Project Name Phaseout Infrastructure Ready**
 
 nodes:
   # Session Management Flow
   - id: A1_Session_Recorder
     component: SessionManager
     function: Capture Session Duration
-    description: Records start/stop times and calculates session duration
+    description: Records start/stop times and calculates session duration. **UPDATED: Now supports projectID parameter for new sessions**
   - id: A2_Persistence_Writer
     component: SessionDataManager
     function: Persist Session Data
-    description: Writes session data to CSV files with thread-safe operations
+    description: Writes session data to CSV files with thread-safe operations. **UPDATED: Validates projectID for new sessions**
   - id: A3_Session_Cache_Updater
     component: ProjectStatisticsCache
     function: Update Project Statistics
-    description: Updates cached project statistics after session changes
+    description: Updates cached project statistics after session changes. **UPDATED: Supports projectID-based lookups**
+  - id: A4_Session_Operations
+    component: SessionOperationsManager
+    function: Manage Session State
+    description: Handles session state management and CSV operations. **NEW: Phase 1 Complete**
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
     component: ChartDataPreparer
     function: Aggregate Dashboard Data
-    description: Processes raw session data into dashboard-ready formats
+    description: Processes raw session data into dashboard-ready formats. **UPDATED: Uses projectID for data aggregation**
   - id: B2_Editorial_Engine
     component: EditorialEngine
     function: Generate Narrative Headlines
@@ -30,11 +34,15 @@ nodes:
   - id: C1_Project_Loader
     component: ProjectManager
     function: Load Projects from JSON
-    description: Reads and deserializes project data from JSON files
+    description: Reads and deserializes project data from JSON files. **UPDATED: Added getProjectName(from:) method**
   - id: C2_Project_Saver
     component: ProjectManager
     function: Save Projects to JSON
     description: Serializes and writes project data to JSON files
+  - id: C3_Project_Name_Resolver
+    component: ProjectManager
+    function: Resolve Project Names from IDs
+    description: **NEW: Phase 1 Complete - Resolves project names from projectID for display**
 
   # Activity Type Management Flow
   - id: D1_ActivityType_Loader
@@ -45,6 +53,26 @@ nodes:
     component: ActivityTypeManager
     function: Save Activity Types to JSON
     description: Serializes and writes activity type data to JSON files
+
+  # UI Session Recording Flow
+  - id: U1_Menu_Bar_Interface
+    component: MenuManager
+    function: Session Recording via Menu Bar
+    description: **NEW: Phase 2 Complete - Menu bar interface uses projectID for session creation**
+  - id: U2_Dashboard_Display
+    component: ActiveSessionStatusView
+    function: Display Active Session Status
+    description: **NEW: Phase 2 Complete - Dashboard resolves project names from projectID**
+  - id: U3_Session_Editing
+    component: SessionsRowView
+    function: Edit Session Details
+    description: **NEW: Phase 2 Complete - Session editing uses projectID internally**
+
+  # Project Selection Flow
+  - id: P1_Project_Selection
+    component: InlineSelectionPopover
+    function: Generic Project Selection
+    description: **NEW: Phase 2 Complete - ID-based project selection with SelectionItem protocol**
 
   # Data Integrity and Management Flow
   - id: E1_Data_Validator
@@ -72,6 +100,9 @@ edges:
   - source: A2_Persistence_Writer
     target: A3_Session_Cache_Updater
     data_packet: SessionRecord
+  - source: A1_Session_Recorder
+    target: A4_Session_Operations
+    data_packet: SessionData
 
   # Dashboard Flow
   - source: A2_Persistence_Writer
@@ -85,11 +116,33 @@ edges:
   - source: C1_Project_Loader
     target: C2_Project_Saver
     data_packet: Project
+  - source: C1_Project_Loader
+    target: C3_Project_Name_Resolver
+    data_packet: Project
 
   # Activity Type Flow
   - source: D1_ActivityType_Loader
     target: D2_ActivityType_Saver
     data_packet: ActivityType
+
+  # UI Session Recording Flow
+  - source: U1_Menu_Bar_Interface
+    target: A1_Session_Recorder
+    data_packet: SessionData
+  - source: U2_Dashboard_Display
+    target: C3_Project_Name_Resolver
+    data_packet: ProjectID
+  - source: U3_Session_Editing
+    target: A1_Session_Recorder
+    data_packet: SessionData
+
+  # Project Selection Flow
+  - source: P1_Project_Selection
+    target: U1_Menu_Bar_Interface
+    data_packet: Project
+  - source: P1_Project_Selection
+    target: U3_Session_Editing
+    data_packet: Project
 
   # Data Migration Flow
   - source: E3_Data_Migrator
@@ -131,3 +184,11 @@ edges:
   - source: E3_Data_Migrator
     target: E4_Error_Handler
     data_packet: MigrationError
+
+  # Project Name Resolution Flow
+  - source: U2_Dashboard_Display
+    target: C3_Project_Name_Resolver
+    data_packet: ProjectID
+  - source: C3_Project_Name_Resolver
+    target: U2_Dashboard_Display
+    data_packet: ProjectName
