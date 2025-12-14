@@ -21,37 +21,7 @@ struct WeeklyDashboardView: View {
     @State private var isLoading = false
     
     // MARK: - Responsive layout helpers
-    private func editorialViewWidth(availableWidth: CGFloat) -> CGFloat {
-        // Account for sidebar (50px) and DashboardRootView padding (Theme.spacingLarge * 2)
-        let sidebarWidth: CGFloat = 50
-        let dashboardPadding: CGFloat = Theme.spacingLarge * 2
-        let effectiveWidth = availableWidth - sidebarWidth - dashboardPadding
-        
-        // Editorial view takes 35-40% of effective width, minimum 300px, maximum 500px
-        let minWidth: CGFloat = 300
-        let maxWidth: CGFloat = 500
-        let preferredWidth = effectiveWidth * 0.38
-        return max(minWidth, min(maxWidth, preferredWidth))
-    }
-    
-    private func bubbleChartWidth(availableWidth: CGFloat) -> CGFloat {
-        // Account for sidebar (50px) and DashboardRootView padding (Theme.spacingLarge * 2)
-        let sidebarWidth: CGFloat = 50
-        let dashboardPadding: CGFloat = Theme.spacingLarge * 2
-        let effectiveWidth = availableWidth - sidebarWidth - dashboardPadding
-        
-        // Bubble chart takes remaining space after editorial view
-        let editorialWidth = editorialViewWidth(availableWidth: availableWidth)
-        return max(300, effectiveWidth - editorialWidth - Theme.spacingLarge)
-    }
-    
-    private func calendarChartHeight(availableHeight: CGFloat) -> CGFloat {
-        // Calendar chart takes 45-55% of available height, minimum 350px, maximum 500px
-        let minHeight: CGFloat = 350
-        let maxHeight: CGFloat = 500
-        let preferredHeight = availableHeight * 0.5
-        return max(minHeight, min(maxHeight, preferredHeight))
-    }
+    // Note: Removed old layout helper functions since we're using the new grid system
     
     // MARK: - Component Views
     // Note: Removed thisYearSection, weeklyStackedBarChart, and stackedAreaChart
@@ -67,41 +37,36 @@ struct WeeklyDashboardView: View {
                     .zIndex(2)
                 
                 // Main content with tidy, balanced layout
-                VStack(spacing: Theme.spacingMedium) { // Reduced gap between top and bottom views
-                    // Sticky Active Session Bar (always visible at top)
+                ZStack {
+                    // Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
                             .padding(.horizontal, Theme.spacingLarge)
                             .padding(.top, Theme.spacingLarge)
                             .padding(.bottom, Theme.spacingSmall)
                             .background(Theme.Colors.background)
-                            .zIndex(1) // Ensure it stays above content
+                            .position(x: geometry.size.width / 2, y: Theme.spacingLarge + 40) // Position at top center
+                            .zIndex(2)
                     }
                     
-                    // Top Row: Editorial View and Activity Bubble Chart
-                    HStack(spacing: Theme.spacingLarge) {
-                        // Left Column: Weekly Editorial View (already has built-in surface pane)
-                        WeeklyEditorialView(
-                            editorialEngine: editorialEngine
-                        )
-                        .frame(width: editorialViewWidth(availableWidth: geometry.size.width))
-                        .frame(maxHeight: .infinity) // Allow flexible height
-                        
-                        // Right Column: Weekly Activity Bubble Chart (self-contained with surface pane)
-                        // Use flexible height to match editorial view
-                        WeeklyActivityBubbleChartView(
-                            data: chartDataPreparer.weeklyActivityTotals()
-                        )
-                        .frame(width: bubbleChartWidth(availableWidth: geometry.size.width))
-                        .frame(maxHeight: .infinity) // Allow flexible height
-                    }
-                    .frame(maxHeight: geometry.size.height * 0.45) // Allocate 45% of height to top row
-                    
-                    // Second Row: Session Calendar Chart (self-contained with surface pane)
-                    SessionCalendarChartView(
-                        sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                    // Dashboard charts using simple layout
+                    DashboardLayout(
+                        topLeft: {
+                            WeeklyEditorialView(
+                                editorialEngine: editorialEngine
+                            )
+                        },
+                        topRight: {
+                            WeeklyActivityBubbleChartView(
+                                data: chartDataPreparer.weeklyActivityTotals()
+                            )
+                        },
+                        bottom: {
+                            SessionCalendarChartView(
+                                sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                            )
+                        }
                     )
-                    .frame(maxHeight: geometry.size.height * 0.45) // Allocate 45% of height to bottom row
                 }
                 .padding(Theme.spacingLarge)
                 .background(Theme.Colors.background)

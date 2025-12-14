@@ -143,7 +143,6 @@ struct WeeklyEditorialView: View {
             .padding(.horizontal, Theme.spacingLarge)
             .padding(.vertical, Theme.spacingMedium)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center) // Flexible height to adapt to available space
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(

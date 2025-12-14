@@ -29,6 +29,14 @@ nodes:
     component: EditorialEngine
     function: Generate Narrative Headlines
     description: Creates dynamic editorial content for dashboard
+  - id: B3_Dashboard_Navigator
+    component: DashboardRootView
+    function: Navigate Between Dashboard Views
+    description: Handles switching between weekly and yearly dashboard views
+  - id: B4_Yearly_Data_Aggregator
+    component: ChartDataPreparer
+    function: Aggregate Yearly Dashboard Data
+    description: Processes raw session data into yearly dashboard formats
 
   # Project Management Flow
   - id: C1_Project_Loader
@@ -143,6 +151,14 @@ edges:
   - source: P1_Project_Selection
     target: U3_Session_Editing
     data_packet: Project
+
+  # Dashboard Navigation Flow
+  - source: B3_Dashboard_Navigator
+    target: B4_Yearly_Data_Aggregator
+    data_packet: DashboardViewType
+  - source: B4_Yearly_Data_Aggregator
+    target: YearlyDashboardView
+    data_packet: YearlyDashboardData
 
   # Data Migration Flow
   - source: E3_Data_Migrator

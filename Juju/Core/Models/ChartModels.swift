@@ -128,3 +128,91 @@ struct ActivityTypePieSlice: Identifiable, Equatable {
         return lhs.activityName == rhs.activityName
     }
 }
+
+// MARK: - New Yearly Dashboard Chart Data Models
+
+/// Horizontal bar chart data for project distribution
+public struct ProjectBarChartData: Identifiable {
+    public let id: UUID
+    public let projectName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let percentage: Double
+    public let color: Color
+    
+    public var colorSwiftUI: Color {
+        color
+    }
+    
+    public init(id: String = UUID().uuidString, projectName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
+        self.id = UUID(uuidString: id) ?? UUID()
+        self.projectName = projectName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.percentage = percentage
+        self.color = color
+    }
+}
+
+/// Horizontal bar chart data for activity type distribution
+public struct ActivityTypeBarChartData: Identifiable {
+    public let id: UUID
+    public let activityName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let percentage: Double
+    public let color: Color
+    
+    public var colorSwiftUI: Color {
+        color
+    }
+    
+    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
+        self.id = UUID(uuidString: id) ?? UUID()
+        self.activityName = activityName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.percentage = percentage
+        self.color = color
+    }
+}
+
+/// Grouped bar chart data for monthly activity breakdown
+public struct MonthlyActivityGroup: Identifiable {
+    public let id: UUID
+    public let month: String
+    public let monthNumber: Int
+    public let activities: [ActivityBarData]
+    
+    public init(id: String = UUID().uuidString, month: String, monthNumber: Int, activities: [ActivityBarData]) {
+        self.id = UUID(uuidString: id) ?? UUID()
+        self.month = month
+        self.monthNumber = monthNumber
+        self.activities = activities
+    }
+}
+
+public struct ActivityBarData: Identifiable {
+    public let id: UUID
+    public let activityName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let color: Color
+    
+    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, color: Color) {
+        self.id = UUID(uuidString: id) ?? UUID()
+        self.activityName = activityName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.color = color
+    }
+}
+
+/// Monthly hour data for charts
+struct MonthlyActivityHour: Identifiable {
+    let id = UUID()
+    let month: String
+    let monthNumber: Int
+    let activityName: String
+    let totalHours: Double
+}

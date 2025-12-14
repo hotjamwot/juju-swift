@@ -86,7 +86,6 @@ struct SessionCalendarChartView: View {
                 Text("No sessions this week")
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(maxHeight: .infinity) // Allow flexible height to adapt to available space
             } else {
                 Chart {
                     // Working hours shaded area (9 AM to 5 PM)
@@ -108,7 +107,6 @@ struct SessionCalendarChartView: View {
                         }
                     }
                 }
-
                 .chartXAxis {
                     AxisMarks(values: weekDays) { value in
                         let day = value.as(String.self) ?? ""
@@ -131,13 +129,11 @@ struct SessionCalendarChartView: View {
                 .chartPlotStyle { plotArea in
                     plotArea
                         .background(.clear)
-                    }
+                }
                 .chartXScale(domain: weekDays)
-
-                .frame(maxHeight: .infinity) // Allow flexible height to adapt to available space
             }
         }
-        .padding(Theme.spacingLarge) // Increased padding inside the pane
+        .padding(Theme.spacingLarge) // Add padding for breathing room
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(

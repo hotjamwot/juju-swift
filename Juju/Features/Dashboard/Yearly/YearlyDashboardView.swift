@@ -16,9 +16,6 @@ struct YearlyDashboardView: View {
     @ObservedObject var projectsViewModel: ProjectsViewModel
     @ObservedObject var editorialEngine: EditorialEngine
     
-    // MARK: - State objects (local to this view)
-    @State private var currentYearSessions: [SessionRecord] = []
-    @State private var isLoading = false
     
     // MARK: - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -30,43 +27,8 @@ struct YearlyDashboardView: View {
     }
     
     // MARK: - Component Views
-    private var projectTotalsChart: some View {
-        YearlyTotalBarChartView(
-            data: chartDataPreparer.yearlyProjectTotals()
-        )
-        .padding(Theme.spacingLarge)
-        .background(
-            Theme.Colors.surface.opacity(0.5)
-        )
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-    }
+    // Note: Removed old layout helper functions since we're using the new grid system
     
-    private var activityDistributionChart: some View {
-        YearlyActivityPieChartView(
-            data: chartDataPreparer.yearlyActivityTotals()
-        )
-        .padding(Theme.spacingLarge)
-        .background(
-            Theme.Colors.surface.opacity(0.5)
-        )
-        .cornerRadius(Theme.Design.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-    }
-    
-    
-    private var stackedAreaChart: some View {
-        StackedAreaChartCardView(
-            data: chartDataPreparer.weeklyProjectTotalsForStackedArea()
-        )
-    }
-
     // MARK - Body
     var body: some View {
         GeometryReader { geometry in
@@ -75,41 +37,39 @@ struct YearlyDashboardView: View {
                 Theme.Colors.background
                 
                 // Main content
-                VStack(spacing: 0) {
-                    // Sticky Active Session Bar (always visible at top)
+                ZStack {
+                    // Active Session Bar (always visible at top)
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
                             .padding(.horizontal, Theme.spacingLarge)
                             .padding(.top, Theme.spacingLarge)
                             .padding(.bottom, Theme.spacingSmall)
                             .background(Theme.Colors.background)
-                            .zIndex(1)
+                            .position(x: geometry.size.width / 2, y: Theme.spacingLarge + 40) // Position at top center
+                            .zIndex(2)
                     }
                     
-                    // Non-scrolling content
-                    VStack(spacing: 32) {
-                        // Top Row: Project Totals and Activity Distribution
-                        HStack(spacing: Theme.spacingLarge) {
-                            projectTotalsChart
-                                .layoutPriority(2)
-                                .frame(maxHeight: .infinity)
-                            
-                            activityDistributionChart
-                                .layoutPriority(1)
-                                .frame(maxHeight: .infinity)
+                    // Dashboard charts using simple layout
+                    DashboardLayout(
+                        topLeft: {
+                            ProjectDistributionBarChartView(
+                                data: chartDataPreparer.yearlyProjectBarChartData()
+                            )
+                        },
+                        topRight: {
+                            ActivityDistributionBarChartView(
+                                data: chartDataPreparer.yearlyActivityBarChartData()
+                            )
+                        },
+                        bottom: {
+                            MonthlyActivityGroupedBarChartView(
+                                groups: chartDataPreparer.yearlyMonthlyActivityGroups()
+                            )
                         }
-                        
-                        // Stacked Area Chart
-                        stackedAreaChart
-                    }
-                    .padding(.vertical, Theme.spacingLarge)
-                    .padding(.horizontal, Theme.spacingLarge)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.Colors.background)
-                    .cornerRadius(Theme.Design.cornerRadius)
+                    )
                 }
-                .padding(.top, 20)
-                .padding(.trailing, 20)
+                .padding(.top, Theme.spacingLarge)
+                .padding(.trailing, Theme.spacingLarge)
                 .background(Theme.Colors.background)
                 
                 // Floating navigation button (back to weekly dashboard)
@@ -124,18 +84,9 @@ struct YearlyDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
             Task {
-                // Reload ALL sessions and filter to current year when session starts
-                let allSessions = await sessionManager.loadAllSessions()
-                let currentYearSessions = allSessions.filter { session in
-                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
-                    let currentYear = Calendar.current.component(.year, from: Date())
-                    return sessionYear == currentYear
-                }
                 await MainActor.run {
-                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: currentYearSessions,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -143,18 +94,9 @@ struct YearlyDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
             Task {
-                // Reload ALL sessions and filter to current year when session ends
-                let allSessions = await sessionManager.loadAllSessions()
-                let currentYearSessions = allSessions.filter { session in
-                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
-                    let currentYear = Calendar.current.component(.year, from: Date())
-                    return sessionYear == currentYear
-                }
                 await MainActor.run {
-                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: currentYearSessions,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -164,7 +106,7 @@ struct YearlyDashboardView: View {
             Task {
                 await MainActor.run {
                     chartDataPreparer.prepareYearlyData(
-                        sessions: currentYearSessions,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -172,18 +114,9 @@ struct YearlyDashboardView: View {
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
             Task {
-                // Reload ALL sessions and filter to current year when session count changes
-                let allSessions = await sessionManager.loadAllSessions()
-                let currentYearSessions = allSessions.filter { session in
-                    guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-                    let sessionYear = Calendar.current.component(.year, from: sessionDate)
-                    let currentYear = Calendar.current.component(.year, from: Date())
-                    return sessionYear == currentYear
-                }
                 await MainActor.run {
-                    self.currentYearSessions = currentYearSessions
                     chartDataPreparer.prepareYearlyData(
-                        sessions: currentYearSessions,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -193,7 +126,7 @@ struct YearlyDashboardView: View {
             Task {
                 await MainActor.run {
                     chartDataPreparer.prepareYearlyData(
-                        sessions: currentYearSessions,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                 }
@@ -204,34 +137,13 @@ struct YearlyDashboardView: View {
     // MARK: - Data Loading
     private func loadData() {
         Task {
-            await loadProjectsAndSessions()
-        }
-    }
-    
-    private func loadProjectsAndSessions() async {
-        await projectsViewModel.loadProjects()
-        
-        // Load ALL sessions from current year for yearly dashboard - force full year load
-        let allSessions = await sessionManager.loadAllSessions()
-        let currentYearSessions = allSessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-            let sessionYear = Calendar.current.component(.year, from: sessionDate)
-            let currentYear = Calendar.current.component(.year, from: Date())
-            return sessionYear == currentYear
-        }
-        
-        // Debug logging
-        print("[YearlyDashboard] Loaded \(currentYearSessions.count) sessions from current year out of \(allSessions.count) total sessions")
-        
-        await prepareYearlyData(sessions: currentYearSessions)
-    }
-    
-    private func prepareYearlyData(sessions: [SessionRecord]) async {
-        await MainActor.run {
-            chartDataPreparer.prepareYearlyData(
-                sessions: sessions,
-                projects: projectsViewModel.projects
-            )
+            await projectsViewModel.loadProjects()
+            await MainActor.run {
+                chartDataPreparer.prepareYearlyData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
     }
     
@@ -274,4 +186,3 @@ struct BackNavigationButton: View {
         editorialEngine: EditorialEngine()
     )
 }
-

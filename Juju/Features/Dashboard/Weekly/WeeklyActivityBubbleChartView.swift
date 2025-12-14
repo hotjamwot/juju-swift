@@ -18,8 +18,7 @@ struct WeeklyActivityBubbleChartView: View {
                 Text("No sessions this week")
                     .font(Theme.Fonts.header)
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: 200)
-                    .padding(.horizontal)
+                    .frame(maxWidth: .infinity)
             } else {
                 GeometryReader { geometry in
                     // Calculate available height for bubbles (subtract padding and label area)
@@ -48,14 +47,14 @@ struct WeeklyActivityBubbleChartView: View {
                         // Bubbles
                         ForEach(Array(bubblePositions.enumerated()), id: \.offset) { idx, position in
                             let bubbleData = data[position.index]
-                            let diameter = position.diameter
+                            let diameter = max(20, position.diameter) // Ensure minimum diameter to prevent negative values
                             
                             Circle()
                                 .fill(Theme.Colors.accentColor.opacity(0.7))
                                 .frame(width: diameter, height: diameter)
                                 .overlay(
                                     Text(bubbleData.emoji)
-                                        .font(.system(size: max(18, diameter * 0.60), design: .rounded))
+                                        .font(.system(size: max(18, min(diameter * 0.60, 40)), design: .rounded)) // Cap font size
                                 )
                                 .scaleEffect(hoveredIndex == idx ? 1.05 : 1)
                                 .animation(.easeInOut(duration: Theme.Design.animationDuration),
@@ -97,10 +96,8 @@ struct WeeklyActivityBubbleChartView: View {
                         }
                     }
                 }
-                .frame(maxHeight: .infinity) // Allow flexible height to adapt to available space
             }
         }
-        .padding(Theme.spacingLarge) // Increased padding inside the pane
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(

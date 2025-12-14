@@ -46,92 +46,35 @@ No data is stored elsewhere.
 ## 🎯 Context of Juju app:
 
 ### ✅ System Tray Interface
-- Lives in your menu bar (macOS).
-- Dynamic icon: shows active/idle state.
-**Quick actions from drop-down menu:**
-- Start Session: Choose a project to begin tracking.
-- End Session: Finish your session and log notes and mood.
-- View Dashboard: Open a clean analytics window.
-- Quit: Exit Juju.
+- Dynamic menu bar icon showing active/idle state
+- **Quick actions**: Start Session, End Session, View Dashboard, Quit
 
 ### ⏱ Session Tracking
-- Precise start/end auto-timestamps for each session.
-- Automatic duration calculation.
-- Project association for every session.
-- Post-session notes: Add context or reflections.
-- Mood tracking: Rate your session (0–10) to capture how you felt.
-- All data saved as CSV for transparency and portability.
+- Precise start/end timestamps with automatic duration calculation
+- Project association, post-session notes, and mood tracking (0–10)
+- All data saved as CSV for transparency and portability
 
 ### 📁 Local Storage
-- Sessions: ~/Library/Application Support/juju/YYYY-data.csv
-- Projects: projects.json in the same folder.
-- Activity Types: activityTypes.json in the same folder
-- Flat file system: No cloud, no lock-in, no hidden database.
+- Flat file system: No cloud, no lock-in, no hidden database
+- Sessions: YYYY-data.csv, Projects: projects.json, Activity Types: activityTypes.json
 
 ### 📊 Dashboard
-**Navigation:**
-- **Sidebar**: Permanent sidebar with icons for Charts, Sessions, Projects, and Activity Types
-- **Charts Tab** (default): Main analytics dashboard
-- **Sessions Tab**: Session management with filtering and export
-- **Projects Tab**: Project management interface
-- **Activity Types Tab**: Activity type management with emoji picker and archiving
-- **Live 'Active Session' Timer**: Shows pill of active project during session with timer
 
-**Charts Tab (Default):**
-1. **Hero Section** – "This Week in Juju"
-   - **Juju logo** with **dynamic narrative headline**: "This week you logged 13h. Your focus was **Writing** on **Project X**, where you reached a milestone: **'Finished Act I'**."
-   - **Left side**: Active Session Status showing current activity type and progress
-   - **Right side**: **Weekly Activity Bubble Chart** showing time distribution by activity type (Writing, Editing, Admin, etc.)
-   - **Full-width Session Calendar Chart** below showing daily activity with **activity emojis** on session bars
+**Navigation**: Permanent sidebar with icons for Charts (default), Sessions, Projects, and Activity Types
 
-2. **This Year Section**
-   - Header: "This Year" with yearly overview
-   - Left: Yearly Total Bar Chart showing project time distribution
-   - Right: Summary Metrics (Total Hours, Total Sessions, Average Duration)
+**Layout**: Fixed 1400x1000 window with responsive 2x2 grid layout using GeometryReader
 
-3. **Weekly Stacked Bar Chart**
-   - Vertical Monday -> Sunday chart with colored bars for sessions
-   - Shows daily breakdown with project color coding
+**Charts Tab**: 
+- Weekly/Yearly toggle with floating navigation buttons
+- Hero section with dynamic narrative headline and active session status
+- Weekly: Activity Bubble Chart + Session Calendar Chart
+- Yearly: Project/Activity Distribution charts + Monthly Breakdown chart
 
-4. **Stacked Area Chart**
-   - Monthly trends visualization showing project time distribution over time
-   - Full-width chart for historical analysis
+**Sessions Tab**: Current week focus with filter/export controls and inline edit/delete actions
 
-**Sessions Tab:**
-- **Current Week Focus**: Default view shows only current week sessions
-- **Filter & Export Controls**: Floating panel with:
-  - Date Filter: Today, This Week, This Month, This Year, Custom Range, Clear
-  - Project Filter: Dropdown to filter by specific projects
-  - Export: Dropdown to select format (CSV, TXT, Markdown, PDF)
-  - Session Count: Shows number of sessions matching current filters
-- **Session Rows**: Display project, duration, start/end times, activity type, phase, notes, mood
-- **Inline Actions**: Edit and delete session functionality
-  - **Delete Button**: bin icon positioned on right side, triggers confirmation dialog
-- **No Pagination**: Simplified view focused on current week with optional filtering
-- **Auto-Refresh**: UI automatically updates after session edits, deletes, or data changes
+**Projects Tab**: Project list with CRUD operations, color management, archiving, and session counting
 
-**Projects Tab:**
-- **Project List**: Vertical list of all projects
-- **Project Cards**: Each showing color swatch, name with emoji, optional description, session count, and last session date, and phase list
-- **Add Project**: Button to create new projects
-- **Edit/Delete**: Full CRUD operations with modal interface
-- **Color Management**: Color picker for project color-coding
-- **About Field**: Optional project description
-- **Archived Projects Toggle**: Button to show/hide archived projects
-- **Session Counting**: Each project displays total number of associated sessions
-- **Last Session Date**: Projects show when they were last worked on
-- **Project Phases**: Support for project subdivisions with archiving
-- **Project Name Changes**: Automatic CSV updates when project names change
-- **Data Migration**: Tool to assign project IDs to legacy sessions
-
-**Activity Types Tab:**
-- **Activity Types List**: Vertical list of all activity types
-- **Activity Type Cards**: Each showing emoji, name, and optional description
-- **Add Activity Type**: Button to create new activity types with emoji picker
-- **Edit/Delete**: Full CRUD operations with modal interface
-- **Archive/Unarchive**: Toggle functionality to hide/show activity types
-- **Emoji Picker Integration**: Shared emoji picker with search functionality
-- **Protected Fallback**: Uncensored "Uncategorized" type cannot be deleted
+**Activity Types Tab**: Activity type management with emoji picker, archiving, and CRUD operations
 
 ---
 
@@ -161,3 +104,59 @@ When making any change to the data flow or adding new features, the AI assistant
 3. **Strict Data Packet Definition:** For every `edge`, the `data_packet` must be defined as a specific `struct` or `class` name. This forces the use of strongly-typed inputs/outputs for the connected components.
 4. **Enforce Unidirectional Flow:** The flow must be a directed graph. There should be no cyclical dependencies (i.e., Node A \rightarrow Node B \rightarrow Node A) that represent an endless loop in the data pipeline.
 5. **Maintain YAML Syntax:** Ensure all updates are properly indented and follow correct YAML key-value pair syntax for machine-readability.
+
+---
+
+## 📊 Dashboard Architecture
+
+### Dashboard Layout System
+
+The dashboard uses a simplified, responsive layout system built around the `DashboardLayout` component:
+
+**Core Components:**
+- **DashboardLayout**: Main layout container that arranges charts in a 2x2 grid (top row: 2 charts, bottom row: 1 full-width chart)
+- **Individual Chart Views**: Each chart is self-contained with no frame constraints, allowing the layout system to control sizing
+- **DashboardRootView**: Root container that manages navigation between Weekly and Yearly dashboard views
+
+**Layout Structure:**
+- **Top Row**: Two charts side by side (48% width each, 40% height)
+- **Bottom Row**: One full-width chart (100% width, 50% height)
+- **Spacing**: 24px between charts, 24px padding around edges
+- **Responsive**: Uses GeometryReader to adapt to window size changes
+
+**Chart Views (No Frame Constraints):**
+- **WeeklyEditorialView**: Narrative summary with total hours and focus activity
+- **WeeklyActivityBubbleChartView**: Bubble chart showing activity distribution
+- **SessionCalendarChartView**: Calendar view of weekly sessions with activity emojis
+- **ProjectDistributionBarChartView**: Horizontal bars showing project time distribution
+- **ActivityDistributionBarChartView**: Horizontal bars showing activity type distribution
+- **MonthlyActivityBreakdownChartView**: Grouped bar chart showing monthly trends
+
+**Chart Styling:**
+- All charts use consistent styling: surface background, corner radius, border, and shadow
+- Charts have padding for "breathing room" inside their allocated space
+- No individual chart titles (charts speak for themselves)
+
+**Navigation:**
+- Floating navigation buttons for switching between Weekly and Yearly views
+- Active session status bar positioned at top of dashboard
+- Sidebar remains visible with permanent navigation icons
+
+**Performance:**
+- Charts use flexible sizing to adapt to available space
+- No fixed frame constraints that could cause layout conflicts
+- Efficient data preparation with ChartDataPreparer
+- Event-driven updates when sessions or projects change
+
+**Data Flow:**
+1. DashboardRootView passes state objects to Weekly/Yearly views
+2. Chart views receive data through @ObservedObject bindings
+3. Charts display data without business logic (pure presentation)
+4. Layout system controls all sizing and positioning
+5. Floating elements (navigation, active session) position independently
+
+**Key Files:**
+- `DashboardLayout.swift`: Main layout component
+- `WeeklyDashboardView.swift`: Weekly dashboard implementation
+- `YearlyDashboardView.swift`: Yearly dashboard implementation
+- `DashboardRootView.swift`: Root container with navigation

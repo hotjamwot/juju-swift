@@ -268,6 +268,143 @@ public struct BubbleChartDataPoint: Codable {
     }
 }
 
+// MARK: - Yearly Dashboard Data Models
+
+/// Yearly Dashboard Data Model
+public struct YearlyDashboardData: Codable {
+    public let projectDistribution: [ProjectBarChartData]
+    public let activityDistribution: [ActivityTypeBarChartData]
+    public let monthlyBreakdown: [MonthlyActivityGroup]
+    public let totalHours: Double
+    public let narrativeHeadline: String
+    
+    public init(projectDistribution: [ProjectBarChartData], activityDistribution: [ActivityTypeBarChartData], monthlyBreakdown: [MonthlyActivityGroup], totalHours: Double, narrativeHeadline: String) {
+        self.projectDistribution = projectDistribution
+        self.activityDistribution = activityDistribution
+        self.monthlyBreakdown = monthlyBreakdown
+        self.totalHours = totalHours
+        self.narrativeHeadline = narrativeHeadline
+    }
+}
+
+/// Dashboard View Type for Navigation
+public enum DashboardViewType: CaseIterable {
+    case weekly
+    case yearly
+    
+    public var title: String {
+        switch self {
+        case .weekly:
+            return "Weekly"
+        case .yearly:
+            return "Yearly"
+        }
+    }
+    
+    public var next: DashboardViewType {
+        switch self {
+        case .weekly:
+            return .yearly
+        case .yearly:
+            return .weekly
+        }
+    }
+}
+
+/// Horizontal bar chart data for project distribution
+public struct ProjectBarChartData: Codable {
+    public let id: String
+    public let projectName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let percentage: Double
+    public let color: Color
+    
+    public init(id: String = UUID().uuidString, projectName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
+        self.id = id
+        self.projectName = projectName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.percentage = percentage
+        self.color = color
+    }
+    
+    public var colorSwiftUI: Color {
+        color
+    }
+}
+
+/// Horizontal bar chart data for activity type distribution
+public struct ActivityTypeBarChartData: Codable {
+    public let id: String
+    public let activityName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let percentage: Double
+    public let color: Color
+    
+    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
+        self.id = id
+        self.activityName = activityName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.percentage = percentage
+        self.color = color
+    }
+    
+    public var colorSwiftUI: Color {
+        color
+    }
+}
+
+/// Grouped bar chart data for monthly activity breakdown
+public struct MonthlyActivityGroup: Codable {
+    public let id: String
+    public let month: String
+    public let monthNumber: Int
+    public let activities: [ActivityBarData]
+    
+    public init(id: String = UUID().uuidString, month: String, monthNumber: Int, activities: [ActivityBarData]) {
+        self.id = id
+        self.month = month
+        self.monthNumber = monthNumber
+        self.activities = activities
+    }
+}
+
+public struct ActivityBarData: Codable {
+    public let id: String
+    public let activityName: String
+    public let emoji: String
+    public let totalHours: Double
+    public let color: Color
+    
+    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, color: Color) {
+        self.id = id
+        self.activityName = activityName
+        self.emoji = emoji
+        self.totalHours = totalHours
+        self.color = color
+    }
+}
+
+/// Monthly hour data for charts
+public struct MonthlyActivityHour: Codable {
+    public let id: String
+    public let month: String
+    public let monthNumber: Int
+    public let activityName: String
+    public let totalHours: Double
+    
+    public init(id: String = UUID().uuidString, month: String, monthNumber: Int, activityName: String, totalHours: Double) {
+        self.id = id
+        self.month = month
+        self.monthNumber = monthNumber
+        self.activityName = activityName
+        self.totalHours = totalHours
+    }
+}
+
 // MARK: - Extension for Color Support
 // Note: This requires JujuUtils.Color extension for hex string conversion
 public extension Color {

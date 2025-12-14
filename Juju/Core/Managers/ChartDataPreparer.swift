@@ -183,11 +183,15 @@ final class ChartDataPreparer: ObservableObject {
         
         var totals: [String: Double] = [:]
         for session in sessions {
-            totals[session.projectName, default: 0] += Double(session.durationMinutes) / 60
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60)
+            totals[session.projectName, default: 0] += hours
         }
         
         let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (name, hours) in
+        return totals.compactMap { (name: String, hours: Double) in
+            // Skip projects with zero hours
+            guard hours > 0 else { return nil }
             let project = projectLookup[name]
             let color = project?.color ?? "#999999"
             let emoji = project?.emoji ?? "📁"
@@ -213,12 +217,15 @@ final class ChartDataPreparer: ObservableObject {
         
         for session in sessions {
             let activityID = session.activityTypeID ?? "uncategorized"
-            let hours = Double(session.durationMinutes) / 60.0
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60.0)
             totals[activityID, default: 0] += hours
         }
         
         let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (activityID, hours) in
+        return totals.compactMap { (activityID: String, hours: Double) in
+            // Skip activities with zero hours
+            guard hours > 0 else { return nil }
             let activityType = activityLookup[activityID] ??
                               activityTypeManager.getUncategorizedActivityType()
             return ActivityChartData(
@@ -477,6 +484,176 @@ final class ChartDataPreparer: ObservableObject {
         return result
     }
     
+    /// New: Project distribution for horizontal bar chart
+    func yearlyProjectBarChartData() -> [ProjectBarChartData] {
+        let cacheKey = "yearlyProjectBarChartData_\(viewModel.sessions.count)_\(viewModel.projects.count)"
+        
+        if !shouldInvalidateCache(),
+           let cached = yearlyCache[cacheKey] as? [ProjectBarChartData] {
+            return cached
+        }
+        
+        // Pre-build project lookup dictionary for O(1) access
+        let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.map { ($0.name, $0) })
+        
+        var totals: [String: Double] = [:]
+        for session in viewModel.sessions {
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60)
+            totals[session.projectName, default: 0] += hours
+        }
+        
+        let totalHours = totals.values.reduce(0, +)
+        let result = totals.compactMap { (name: String, hours: Double) -> ProjectBarChartData? in
+            // Skip projects with zero hours
+            guard hours > 0 else { return nil }
+            let project = projectLookup[name]
+            let color = Color(hex: project?.color ?? "#999999") ?? Color.gray
+            let emoji = project?.emoji ?? "📁"
+            let percentage = totalHours > 0 ? (hours / totalHours * 100) : 0
+            
+            return ProjectBarChartData(
+                projectName: name,
+                emoji: emoji,
+                totalHours: hours,
+                percentage: percentage,
+                color: color
+            )
+        }.sorted { (a: ProjectBarChartData, b: ProjectBarChartData) in a.totalHours > b.totalHours }
+        
+        yearlyCache[cacheKey] = result
+        return result
+    }
+    
+    /// New: Activity type distribution for horizontal bar chart
+    func yearlyActivityBarChartData() -> [ActivityTypeBarChartData] {
+        let cacheKey = "yearlyActivityBarChartData_\(viewModel.sessions.count)_\(viewModel.projects.count)"
+        
+        if !shouldInvalidateCache(),
+           let cached = yearlyCache[cacheKey] as? [ActivityTypeBarChartData] {
+            return cached
+        }
+        
+        // Pre-build activity type lookup dictionary for O(1) access
+        let activityTypeManager = ActivityTypeManager.shared
+        let activityLookup = Dictionary(uniqueKeysWithValues: 
+            activityTypeManager.getAllActivityTypes().map { ($0.id, $0) }
+        )
+        
+        var totals: [String: Double] = [:]
+        
+        for session in viewModel.sessions {
+            let activityID = session.activityTypeID ?? "uncategorized"
+            // Skip uncategorized activities
+            if activityID == "uncategorized" {
+                continue
+            }
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            totals[activityID, default: 0] += hours
+        }
+        
+        // If no valid activities remain, return empty array
+        guard !totals.isEmpty else { return [] }
+        
+        let totalHours = totals.values.reduce(0, +)
+        let result = totals.compactMap { (activityID: String, hours: Double) -> ActivityTypeBarChartData? in
+            // Skip activities with zero hours
+            guard hours > 0 else { return nil }
+            let activityType = activityLookup[activityID]
+            let color = generateColorForActivityType(activityType?.name ?? "Unknown")
+            let emoji = activityType?.emoji ?? "❓"
+            let percentage = totalHours > 0 ? (hours / totalHours * 100) : 0
+            
+            return ActivityTypeBarChartData(
+                activityName: activityType?.name ?? "Unknown",
+                emoji: emoji,
+                totalHours: hours,
+                percentage: percentage,
+                color: color
+            )
+        }.sorted { (a: ActivityTypeBarChartData, b: ActivityTypeBarChartData) in a.totalHours > b.totalHours }
+        
+        yearlyCache[cacheKey] = result
+        return result
+    }
+    
+    /// New: Monthly activity breakdown for grouped bar chart
+    func yearlyMonthlyActivityGroups() -> [MonthlyActivityGroup] {
+        let cacheKey = "yearlyMonthlyActivityGroups_\(viewModel.sessions.count)_\(viewModel.projects.count)"
+        
+        if !shouldInvalidateCache(),
+           let cached = yearlyCache[cacheKey] as? [MonthlyActivityGroup] {
+            return cached
+        }
+        
+        // Pre-build activity type lookup dictionary for O(1) access
+        let activityTypeManager = ActivityTypeManager.shared
+        let activityLookup = Dictionary(uniqueKeysWithValues: 
+            activityTypeManager.getAllActivityTypes().map { ($0.id, $0) }
+        )
+        
+        // Group sessions by month and activity type
+        var monthlyActivityTotals: [Int: [String: Double]] = [:] // [monthNumber: [activityID: hours]]
+        
+        for session in viewModel.sessions {
+            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { continue }
+            let monthNumber = Calendar.current.component(.month, from: sessionDate)
+            let activityID = session.activityTypeID ?? "uncategorized"
+            
+            // Skip uncategorized activities
+            if activityID == "uncategorized" {
+                continue
+            }
+            
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            monthlyActivityTotals[monthNumber, default: [:]][activityID, default: 0] += hours
+        }
+        
+        // Generate all months 1-12
+        let allMonths = Array(1...12)
+        let monthNames = [
+            1: "January", 2: "February", 3: "March", 4: "April",
+            5: "May", 6: "June", 7: "July", 8: "August",
+            9: "September", 10: "October", 11: "November", 12: "December"
+        ]
+        
+        var result: [MonthlyActivityGroup] = []
+        
+        for monthNumber in allMonths {
+            let monthName = monthNames[monthNumber] ?? "Month \(monthNumber)"
+            let activityTotals = monthlyActivityTotals[monthNumber] ?? [:]
+            
+            // Convert activity totals to ActivityBarData
+            let activities = activityTotals.compactMap { (activityID, hours) in
+                let activityType = activityLookup[activityID]
+                let color = generateColorForActivityType(activityType?.name ?? "Unknown")
+                let emoji = activityType?.emoji ?? "❓"
+                
+                return ActivityBarData(
+                    activityName: activityType?.name ?? "Unknown",
+                    emoji: emoji,
+                    totalHours: hours,
+                    color: color
+                )
+            }.sorted { $0.totalHours > $1.totalHours }
+            
+            if !activities.isEmpty {
+                result.append(
+                    MonthlyActivityGroup(
+                        month: monthName,
+                        monthNumber: monthNumber,
+                        activities: activities
+                    )
+                )
+            }
+        }
+        
+        yearlyCache[cacheKey] = result
+        return result
+    }
+    
     public func yearlyTotalHours() -> Double {
         let currentYear = Calendar.current.component(.year, from: Date())
         let yearlySessions = viewModel.sessions.filter { session in
@@ -493,133 +670,6 @@ final class ChartDataPreparer: ObservableObject {
     }
     
 
-    /// Stacked Area Chart Helpers
-    func prepareStackedAreaData() -> [ProjectSeriesData] {
-        var monthlyTotals: [Date: [String: Double]] = [:]
-        let yearSessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
-        }
-        for session in yearSessions {
-            guard let date = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { continue }
-            let components = calendar.dateComponents([.year, .month], from: date)
-            guard let monthStart = calendar.date(from: components) else { continue }
-            let hours = Double(session.durationMinutes) / 60.0
-            monthlyTotals[monthStart, default: [:]][session.projectName, default: 0] += hours
-        }
-        
-        var projectData: [String: [MonthlyHour]] = [:]
-        for (monthDate, projectHours) in monthlyTotals {
-            for (projectName, hours) in projectHours {
-                let monthlyHour = MonthlyHour(date: monthDate, hours: hours)
-                projectData[projectName, default: []].append(monthlyHour)
-            }
-        }
-        
-        let allMonths = (1...12).compactMap { month -> Date? in
-            var components = calendar.dateComponents([.year], from: Date())
-            components.month = month
-            return calendar.date(from: components)
-        }
-        
-        var finalData: [ProjectSeriesData] = []
-        for (projectName, hoursData) in projectData {
-            var completeMonthlyHours: [MonthlyHour] = []
-            for month in allMonths {
-                if let existingData = hoursData.first(where: { $0.date == month }) {
-                    completeMonthlyHours.append(existingData)
-                } else {
-                    completeMonthlyHours.append(MonthlyHour(date: month, hours: 0))
-                }
-            }
-            
-            completeMonthlyHours.sort(by: { $0.date < $1.date })
-            let project = viewModel.projects.first(where: { $0.name == projectName })
-            let projectColor = project?.color ?? "#999999"
-            let projectEmoji = project?.emoji ?? "📁"
-            
-            finalData.append(
-                ProjectSeriesData(
-                    projectName: projectName,
-                    monthlyHours: completeMonthlyHours,
-                    weeklyHours: [],
-                    color: projectColor,
-                    emoji: projectEmoji
-                )
-            )
-        }
-        
-        return finalData.sorted { $0.projectName < $1.projectName }
-    }
-
-    /// Weekly project totals for stacked area chart (yearly dashboard)
-    func weeklyProjectTotalsForStackedArea() -> [ProjectSeriesData] {
-        return prepareWeeklyStackedAreaData()
-    }
-    
-    /// Monthly project totals for stacked area chart (legacy - for future use)
-    func monthlyProjectTotals() -> [ProjectSeriesData] {
-        return prepareStackedAreaData()
-    }
-    
-    /// Prepares weekly data for stacked area chart (yearly dashboard)
-    private func prepareWeeklyStackedAreaData() -> [ProjectSeriesData] {
-        var weeklyTotals: [Int: [String: Double]] = [:] // [weekNumber: [projectName: hours]]
-        let yearSessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
-        }
-        
-        for session in yearSessions {
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { continue }
-            
-            // Find which week this session belongs to
-            if let weekOfYear = calendar.dateInterval(of: .weekOfYear, for: sessionDate) {
-                let weekNumber = calendar.component(.weekOfYear, from: sessionDate)
-                let hours = Double(session.durationMinutes) / 60.0
-                
-                weeklyTotals[weekNumber, default: [:]][session.projectName, default: 0] += hours
-            }
-        }
-        
-        var projectData: [String: [WeeklyHour]] = [:]
-        for (weekNumber, projectHours) in weeklyTotals {
-            for (projectName, hours) in projectHours {
-                let weeklyHour = WeeklyHour(weekNumber: weekNumber, hours: hours)
-                projectData[projectName, default: []].append(weeklyHour)
-            }
-        }
-        
-        // Generate all weeks 1-52
-        let allWeeks = Array(1...52)
-        
-        var finalData: [ProjectSeriesData] = []
-        for (projectName, hoursData) in projectData {
-            var completeWeeklyHours: [WeeklyHour] = []
-            for weekNumber in allWeeks {
-                if let existingData = hoursData.first(where: { $0.weekNumber == weekNumber }) {
-                    completeWeeklyHours.append(existingData)
-                } else {
-                    completeWeeklyHours.append(WeeklyHour(weekNumber: weekNumber, hours: 0))
-                }
-            }
-            
-            completeWeeklyHours.sort(by: { $0.weekNumber < $1.weekNumber })
-            let project = viewModel.projects.first(where: { $0.name == projectName })
-            let projectColor = project?.color ?? "#999999"
-            let projectEmoji = project?.emoji ?? "📁"
-            
-            finalData.append(
-                ProjectSeriesData(
-                    projectName: projectName,
-                    monthlyHours: [], // Not used for weekly charts
-                    weeklyHours: completeWeeklyHours,
-                    color: projectColor,
-                    emoji: projectEmoji
-                )
-            )
-        }
-        
-        return finalData.sorted { $0.projectName < $1.projectName }
-    }
 
     /// Weekly total hours for headline (uses activity totals for consistency)
     func weeklyTotalHours() -> Double {
