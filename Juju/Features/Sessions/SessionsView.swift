@@ -1,6 +1,9 @@
 import SwiftUI
 import Foundation
 
+// Import the filter types that are defined in FilterExportTypes
+// These are needed for the filter state management
+
 // MARK: - Ordinal Helper
 private extension Int {
     var ordinalSuffix: String {
@@ -111,8 +114,8 @@ public struct SessionsView: View {
                         // Date text
                         VStack(alignment: .leading, spacing: 2) {
                             Text(group.date.prettyHeader)
-                                .font(Theme.Fonts.header)
-                                .foregroundColor(Theme.Colors.textPrimary)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
                         }
                         
                         // Session count badge
@@ -178,8 +181,6 @@ public struct SessionsView: View {
     
     // UI state
     @State private var isLoading = false // This can be used for initial load if needed
-    @State private var showingExportAlert = false
-    @State private var exportMessage = ""
     
     // Current week sessions only - no pagination needed
     @State private var currentWeekSessions: [GroupedSession] = []
@@ -200,6 +201,18 @@ public struct SessionsView: View {
     @State private var lastAppliedFilter: SessionsDateFilter = .thisWeek
     @State private var lastAppliedProjectFilter: String = "All"
     @State private var lastAppliedCustomRange: DateRange? = nil
+    
+    // Cached session count to avoid recalculation
+    @State private var cachedSessionCount = 0
+    
+    // Force session count update when sessions change
+    @State private var sessionCountVersion = 0
+    
+    // Track filter state changes to update session count
+    @State private var filterStateVersion = 0
+    
+    // Track when sessions are loaded to ensure count is accurate
+    @State private var sessionsLoaded = false
 
     // MARK: - Computed Properties
     
@@ -211,8 +224,11 @@ public struct SessionsView: View {
         // Apply project filter if not "All"
         let filteredByProject = applyProjectFilter(to: initialSessions)
         
+        // Apply activity type filter if not "All"
+        let filteredByActivityType = applyActivityTypeFilter(to: filteredByProject)
+        
         // Sort by start date time (most recent first)
-        let sortedSessions = sortSessionsByDate(filteredByProject)
+        let sortedSessions = sortSessionsByDate(filteredByActivityType)
         
         return sortedSessions
     }
@@ -227,6 +243,16 @@ public struct SessionsView: View {
         return sessions.filter { $0.projectID == filterState.projectFilter }
     }
     
+    /// Apply activity type filter to sessions
+    private func applyActivityTypeFilter(to sessions: [SessionRecord]) -> [SessionRecord] {
+        guard filterState.activityTypeFilter != "All" else {
+            return sessions
+        }
+        
+        // Filter by activity type ID
+        return sessions.filter { $0.activityTypeID == filterState.activityTypeFilter }
+    }
+    
     /// Sort sessions by start date time (most recent first)
     private func sortSessionsByDate(_ sessions: [SessionRecord]) -> [SessionRecord] {
         return sessions.sorted { session1, session2 in
@@ -236,22 +262,36 @@ public struct SessionsView: View {
         }
     }
     
-    /// Count of sessions in currentWeekSessions
+    /// Count of sessions in currentWeekSessions (cached to avoid recalculation)
     private var currentSessionCount: Int {
+        // Update cache when sessions change
         var count = 0
         for group in currentWeekSessions {
             count += group.sessions.count
         }
-        return count
+        cachedSessionCount = count
+        return cachedSessionCount
+    }
+    
+    /// Update session count when sessions change
+    private func updateSessionCount() {
+        var count = 0
+        for group in currentWeekSessions {
+            count += group.sessions.count
+        }
+        cachedSessionCount = count
+        sessionCountVersion += 1
     }
     
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
-        ForEach(currentWeekSessions, id: \.id) { group in
+        let activeProjects = projectsViewModel.activeProjects
+        let activeActivityTypes = activityTypesViewModel.activeActivityTypes
+        return ForEach(currentWeekSessions, id: \.id) { group in
             GroupedSessionView(
                 group: group,
-                projects: projectsViewModel.projects,
-                activityTypes: activityTypesViewModel.activeActivityTypes,
+                projects: activeProjects,
+                activityTypes: activeActivityTypes,
                 sidebarState: sidebarState,
                 onDelete: handleDeleteSession,
                 onNotesChanged: handleNotesChanged,
@@ -312,11 +352,13 @@ public struct SessionsView: View {
     }
     
     private func handleProjectChanged() {
-        // Trigger refresh when project is changed
-        // Force reload of projects to ensure we have the latest phase data
+        print("🔄 Project changed callback triggered in SessionsView")
+        // Do NOT automatically refresh sessions when project is changed
+        // Only refresh when user clicks "Confirm" button
         Task {
             await projectsViewModel.loadProjects()
-            await self.loadCurrentWeekSessions()
+            // Removed: await self.loadCurrentWeekSessions()
+            // Sessions will be refreshed when user clicks "Confirm" button
         }
     }
     
@@ -509,10 +551,10 @@ public struct SessionsView: View {
     @ViewBuilder
     private var mainContentArea: some View {
         if projectsViewModel.isLoading {
-            // Projects are loading
+            // Projects or activity types are loading
             VStack {
                 Spacer()
-                ProgressView("Loading projects...")
+                ProgressView("Loading projects and activity types...")
                     .scaleEffect(1.5)
                 Spacer()
             }
@@ -540,10 +582,10 @@ public struct SessionsView: View {
         } else {
             // Grid View
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: Theme.spacingLarge) {
+                LazyVStack(alignment: .leading, spacing: Theme.spacingSmall) {
                     groupedSessionViews
                 }
-                .padding(.vertical, Theme.spacingMedium)
+                .padding(.vertical, Theme.spacingSmall)
             }
             .scrollContentBackground(.hidden)
         }
@@ -566,7 +608,7 @@ public struct SessionsView: View {
     private func bottomFilterBarView() -> some View {
         BottomFilterBar(
             filterState: filterState,
-            projects: projectsViewModel.projects,
+            projects: projectsViewModel.activeProjects,
             activityTypes: activityTypesViewModel.activeActivityTypes,
             filteredSessionsCount: currentSessionCount,
             onDateFilterChange: handleDateFilterSelection,
@@ -574,7 +616,6 @@ public struct SessionsView: View {
             onProjectFilterChange: handleProjectFilterChange,
             onActivityTypeFilterChange: handleActivityTypeFilterChange,
             onConfirmFilters: confirmFilters,
-            onExport: exportSessionsNative,
             onClose: { filterState.isExpanded = false }
         )
     }
@@ -632,25 +673,45 @@ public struct SessionsView: View {
         }
         .background(Theme.Colors.background)
         .task { 
-            await projectsViewModel.loadProjects()
-            activityTypesViewModel.loadActivityTypes()
-            // Load current week sessions when view appears
-            Task {
-                await loadCurrentWeekSessions()
+            // Load current week sessions first (essential for display)
+            await loadCurrentWeekSessions()
+            
+            // Load projects and activity types in background with delays to avoid blocking
+            DispatchQueue.global(qos: .background).async {
+                // Small delay to let sessions load first
+                Thread.sleep(forTimeInterval: 0.05)
+                
+                Task {
+                    await projectsViewModel.loadProjects()
+                    
+                    // Another small delay before loading activity types
+                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
+                    
+                    await activityTypesViewModel.loadActivityTypes()
+                }
             }
         }
         .onAppear {
-            // Ensure we only have current week sessions loaded
-            Task {
-                await loadCurrentWeekSessions()
-            }
-        }
-        .onAppear { 
             // Initialize with current week filter
             filterState.selectedDateFilter = .thisWeek
         }
         .onChange(of: sessionManager.lastUpdated) { _ in
-            handleSessionUpdate()
+            // Only handle session updates that don't require filter refresh
+            // This prevents automatic filter refresh when sessions are edited inline
+            // Filters will only refresh when user clicks "Confirm" button
+            Task {
+                // Update chart data when sessions change, but don't refresh filters
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                // Refresh projects data to ensure phases are up to date
+                await projectsViewModel.loadProjects()
+                // Update session count when sessions change
+                await MainActor.run {
+                    updateSessionCount()
+                }
+            }
         }
         .onChange(of: activityTypesViewModel.activityTypes) { _ in
             handleActivityTypesChange()
@@ -658,21 +719,12 @@ public struct SessionsView: View {
         .onChange(of: filterState.isExpanded) { _, isExpanded in
             handleFilterExpansionChange(isExpanded)
         }
-        .onChange(of: filterState.projectFilter) { _, _ in
-            // No pagination needed anymore
-        }
-        .onChange(of: filterState.activityTypeFilter) { _, _ in
-            // No pagination needed anymore
-        }
         .onChange(of: filterState.shouldRefresh) { _, _ in
             handleManualRefresh()
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             handleProjectsChange()
         }
-        .alert("Export Complete", isPresented: $showingExportAlert) {
-            Button("OK") { }
-        } message: { Text(exportMessage) }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
             Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
                 deleteSession(session)
@@ -683,32 +735,12 @@ public struct SessionsView: View {
     }
     
     // MARK: - Helper methods to simplify mainView
-    private func handleSessionUpdate() {
-        Task {
-            // Only refresh if we're on the default "This Week" filter
-            // This preserves custom filters when sessions are updated
-            if filterState.selectedDateFilter == .thisWeek && 
-               filterState.projectFilter == "All" && 
-               filterState.customDateRange == nil {
-                await loadCurrentWeekSessions()
-            } else {
-                // Apply the current filters to refresh with the same filter state
-                await applyFiltersPreservingState()
-            }
-            
-            // Update chart data when sessions change
-            chartDataPreparer.prepareAllTimeData(
-                sessions: sessionManager.allSessions,
-                projects: projectsViewModel.projects
-            )
-            // Refresh projects data to ensure phases are up to date
-            await projectsViewModel.loadProjects()
-        }
-    }
-    
     private func handleActivityTypesChange() {
         Task {
             await loadCurrentWeekSessions()
+            await MainActor.run {
+                updateSessionCount()
+            }
         }
     }
     
@@ -719,6 +751,9 @@ public struct SessionsView: View {
             // When filter is closed, go back to current week only
             Task {
                 await loadCurrentWeekSessions()
+                await MainActor.run {
+                    updateSessionCount()
+                }
             }
         }
         // When filter is opened, do nothing - keep current data visible
@@ -727,12 +762,18 @@ public struct SessionsView: View {
     private func handleManualRefresh() {
         Task {
             await applyFiltersPreservingState()
+            await MainActor.run {
+                updateSessionCount()
+            }
         }
     }
     
     private func handleProjectsChange() {
         Task {
             await projectsViewModel.loadProjects()
+            await MainActor.run {
+                updateSessionCount()
+            }
         }
     }
     
@@ -743,6 +784,8 @@ public struct SessionsView: View {
         isLoading = true
         let sessions = getCurrentWeekSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
+        // Force session count update
+        updateSessionCount()
         isLoading = false
     }
     
@@ -787,22 +830,6 @@ public struct SessionsView: View {
     
     // MARK: - Data Functions
     
-    private func exportSessions(format: String) {
-        let sessions = getFullyFilteredSessions()
-        guard !sessions.isEmpty else {
-            exportMessage = "Nothing to export – no sessions match the current filter."
-            showingExportAlert = true
-            return
-        }
-
-        if let path = sessionManager.exportSessions(sessions, format: format) {
-            exportMessage = "Sessions exported to \(path.path)"
-        } else {
-            exportMessage = "Export failed."
-        }
-        showingExportAlert = true
-    }
-    
     private func deleteSession(_ session: SessionRecord) {
         if sessionManager.deleteSession(id: session.id) {
         }
@@ -834,18 +861,6 @@ public struct SessionsView: View {
         filterState.requestManualRefresh()
     }
     
-    private func exportSessionsNative(_ format: ExportFormat) {
-        let sessions = getFullyFilteredSessions()
-        guard !sessions.isEmpty else {
-            exportMessage = "Nothing to export – no sessions match the current filter."
-            showingExportAlert = true
-            return
-        }
-        
-        // Use the native export button's completion handler
-        // For now, we'll use the existing exportSessions method
-        exportSessions(format: format.fileExtension)
-    }
     
     private func applyFilters() {
         // Apply filters and update the session list
@@ -895,6 +910,9 @@ public struct SessionsView: View {
                     guard let start = session.startDateTime else { return false }
                     return start >= yearRange.start && start <= yearRange.end
                 }
+            case .allTime:
+                // No date filtering - use all sessions
+                break
             case .custom:
                 if let customRange = filterState.customDateRange {
                     filteredSessions = filteredSessions.filter { session in
@@ -960,6 +978,9 @@ public struct SessionsView: View {
                 guard let start = session.startDateTime else { return false }
                 return start >= yearRange.start && start <= yearRange.end
             }
+        case .allTime:
+            // No date filtering - use all sessions
+            break
         case .custom:
             if let customRange = filterState.customDateRange {
                 filteredSessions = filteredSessions.filter { session in

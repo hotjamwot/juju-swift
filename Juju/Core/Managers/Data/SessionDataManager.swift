@@ -53,34 +53,48 @@ class SessionDataManager: ObservableObject {
         var allSessions: [SessionRecord] = []
         
         if !availableYears.isEmpty {
-            for year in availableYears {
-                do {
-                    print("[SessionDataManager] Loading sessions from \(year)")
-                    let content = try await csvManager.readFromYearFile(for: year)
-                    let lines = content.components(separatedBy: .newlines)
-                    guard let headerLine = lines.first, !headerLine.isEmpty else {
-                        print("[SessionDataManager] No header line found for \(year)")
-                        continue
+            // Use TaskGroup for concurrent loading of multiple years
+            let loadedSessions = await withTaskGroup(of: [SessionRecord].self) { group in
+                for year in availableYears {
+                    group.addTask { [weak self] in
+                        guard let self = self else { return [] }
+                        
+                        do {
+                            print("[SessionDataManager] Loading sessions from \(year)")
+                            let content = try await self.csvManager.readFromYearFile(for: year)
+                            let lines = content.components(separatedBy: .newlines)
+                            guard let headerLine = lines.first, !headerLine.isEmpty else {
+                                print("[SessionDataManager] No header line found for \(year)")
+                                return []
+                            }
+                            
+                            let hasIdColumn = headerLine.lowercased().contains("id")
+                            let (sessions, needsRewrite) = self.parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
+                            
+                            // If rewrite needed, save back to the year file
+                            if needsRewrite {
+                                let csvContent = self.parser.convertSessionsToCSV(sessions)
+                                try await self.csvManager.writeToYearFile(csvContent, for: year)
+                            }
+                            
+                            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(year)")
+                            return sessions
+                        } catch {
+                            print("❌ Error loading sessions from \(year)-data.csv: \(error)")
+                            return []
+                        }
                     }
-                    
-                    let hasIdColumn = headerLine.lowercased().contains("id")
-                    let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
-                    
-                    print("[SessionDataManager] Parsed \(sessions.count) sessions from \(year)")
-                    allSessions.append(contentsOf: sessions)
-                    
-                    // If rewrite needed, save back to the year file
-                    if needsRewrite {
-                        let csvContent = parser.convertSessionsToCSV(sessions)
-                        try await csvManager.writeToYearFile(csvContent, for: year)
-                    }
-                } catch {
-                    print("❌ Error loading sessions from \(year)-data.csv: \(error)")
                 }
+                
+                var allLoaded: [SessionRecord] = []
+                for await sessions in group {
+                    allLoaded.append(contentsOf: sessions)
+                }
+                return allLoaded
             }
             
             // Sort by date descending
-            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            allSessions = loadedSessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
             
             print("[SessionDataManager] Total sessions loaded: \(allSessions.count)")
             self.allSessions = allSessions
@@ -273,6 +287,7 @@ class SessionDataManager: ObservableObject {
     }
     
     /// Load only current week sessions for dashboard performance
+    /// Optimized to parse only sessions within the current week date range
     func loadCurrentWeekSessions() async {
         let currentYear = Calendar.current.component(.year, from: Date())
         print("[SessionDataManager] Loading sessions for current week from year: \(currentYear)")
@@ -290,17 +305,15 @@ class SessionDataManager: ObservableObject {
             }
             
             let hasIdColumn = headerLine.lowercased().contains("id")
-            let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
             
-            // Filter to current week only
+            // Get current week date interval for filtering
             let currentWeekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-            let weekSessions = sessions.filter { session in
-                guard let sessionDate = DateFormatter().date(from: session.date) else { return false }
-                return currentWeekInterval.contains(sessionDate)
-            }
             
-            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(currentYear), filtered to \(weekSessions.count) current week sessions")
-            allSessions.append(contentsOf: weekSessions)
+            // Parse sessions and filter by current week in a single pass
+            let (sessions, needsRewrite) = parser.parseSessionsFromCSVForCurrentWeek(content, hasIdColumn: hasIdColumn, weekInterval: currentWeekInterval)
+            
+            print("[SessionDataManager] Parsed \(sessions.count) current week sessions from \(currentYear)")
+            allSessions.append(contentsOf: sessions)
             
             // If rewrite needed, save back to the year file
             if needsRewrite {
@@ -372,15 +385,21 @@ class SessionDataManager: ObservableObject {
         let projects = ProjectManager.shared.loadProjects()
         let newProjectID = projects.first { $0.name == projectName }?.id
         
+        // Validate that we found a project with the given name
+        guard let newProjectID = newProjectID else {
+            print("❌ Failed to find project with name: '\(projectName)' - cannot update session \(id)")
+            return false
+        }
+        
         // Validate that the projectPhaseID belongs to the correct project
         var validatedProjectPhaseID = projectPhaseID
-        var validatedProjectID = newProjectID ?? session.projectID  // Use new projectID if found, otherwise keep old
+        var validatedProjectID = newProjectID  // Always use the new projectID
         
         if let phaseID = projectPhaseID {
             var phaseBelongsToCorrectProject = false
             
             // Check if the phase exists in the new project
-            if let newProject = projects.first(where: { $0.id == validatedProjectID }) {
+            if let newProject = projects.first(where: { $0.id == newProjectID }) {
                 if newProject.phases.contains(where: { $0.id == phaseID && !$0.archived }) {
                     // Phase exists in the new project - validation passed
                     phaseBelongsToCorrectProject = true
@@ -390,6 +409,7 @@ class SessionDataManager: ObservableObject {
             if !phaseBelongsToCorrectProject {
                 // Phase doesn't exist in the new project
                 validatedProjectPhaseID = nil
+                print("⚠️ Phase \(phaseID) not found in project \(projectName), clearing phaseID")
             }
         }
 
@@ -434,6 +454,7 @@ class SessionDataManager: ObservableObject {
                 userInfo: ["sessionID": id]
             )
             
+            print("✅ Successfully updated session \(id) with project '\(projectName)' (ID: \(newProjectID))")
             return true
         }
 

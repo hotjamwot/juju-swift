@@ -833,6 +833,8 @@ struct SessionsRowView: View {
     /// 5. Triggers a UI refresh by calling the callback
     /// 6. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionProject(_ project: Project) {
+        print("🔄 Updating session \(session.id) project from '\(currentSession.projectName)' to '\(project.name)' (ID: \(project.id))")
+        
         // Determine the new phaseID
         var newPhaseID: String? = currentSession.projectPhaseID
         
@@ -843,6 +845,9 @@ struct SessionsRowView: View {
             if !phaseExistsInNewProject {
                 // Clear the phaseID if it doesn't exist in the new project
                 newPhaseID = nil
+                print("⚠️ Phase \(currentPhaseID) not found in project \(project.name), clearing phaseID")
+            } else {
+                print("✅ Phase \(currentPhaseID) found in project \(project.name)")
             }
         }
         
@@ -861,6 +866,7 @@ struct SessionsRowView: View {
         )
         
         if success {
+            print("✅ Successfully updated session \(session.id) with new project")
             // Force immediate refresh of the session observer to update the UI
             // Use a more robust synchronization approach with multiple refresh attempts
             refreshSessionData()
@@ -871,6 +877,8 @@ struct SessionsRowView: View {
             
             // Notify parent that project has changed so it can refresh the view
             onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new project")
         }
     }
     

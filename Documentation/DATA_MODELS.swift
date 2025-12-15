@@ -16,7 +16,7 @@ import Foundation
 // MARK: - 1. Session Model
 // Represents a single block of tracked work/time. Must be Codable for CSV persistence.
 // **UPDATED: Phase 1 & 2 Complete - Project Name Phaseout Infrastructure Ready**
-public struct Session: Codable, Identifiable {
+public struct SessionRecord: Codable, Identifiable {
     public let id: String
     public let date: String
     public let startTime: String
@@ -66,7 +66,15 @@ public struct Session: Codable, Identifiable {
         components.minute = timeComponents.minute
         components.second = timeComponents.second ?? 0
 
-        return Calendar.current.date(from: components)
+        var endDate = Calendar.current.date(from: components)
+        
+        // Fix for sessions that cross midnight: if end time is between midnight and 4 AM,
+        // add 24 hours to properly calculate duration across days
+        if let hour = timeComponents.hour, hour >= 0 && hour < 4 {
+            endDate = Calendar.current.date(byAdding: .day, value: 1, to: endDate ?? date)
+        }
+        
+        return endDate
     }
     
     // Helper to check if session overlaps with a date interval
@@ -108,6 +116,65 @@ public struct Session: Codable, Identifiable {
     }
 }
 
+// MARK: - SessionRecord Extension for Data Processing
+public extension SessionRecord {
+    /// Fix sessions that cross midnight by adjusting end time if it's between midnight and 4 AM
+    /// This ensures proper duration calculation for sessions that span across days
+    /// - Returns: Fixed session record with corrected end time and duration
+    func fixMidnightCrossingSession() -> SessionRecord {
+        // Parse end time to check if it's between midnight and 4 AM
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let paddedEndTime = endTime.count == 5 ? endTime + ":00" : endTime
+        
+        guard let endTimeDate = timeFormatter.date(from: paddedEndTime),
+              let endHour = Calendar.current.dateComponents([.hour], from: endTimeDate).hour,
+              endHour >= 0 && endHour < 4 else {
+            // End time is not between midnight and 4 AM, no fix needed
+            return self
+        }
+        
+        // Check if this session likely crosses midnight by comparing start and end times
+        let paddedStartTime = startTime.count == 5 ? startTime + ":00" : startTime
+        guard let startTimeDate = timeFormatter.date(from: paddedStartTime) else {
+            return self
+        }
+        
+        // If end time is earlier than start time, it likely crosses midnight
+        if endTimeDate < startTimeDate {
+            // Calculate the actual duration by treating end time as next day
+            let nextDayEndTime = Calendar.current.date(byAdding: .day, value: 1, to: endTimeDate)
+            let startDateTime = startDateTime ?? Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date()))!
+            
+            guard let actualEndDateTime = nextDayEndTime else {
+                return self
+            }
+            
+            let durationMinutes = Int(round(actualEndDateTime.timeIntervalSince(startDateTime) / 60))
+            
+            print("🔧 Fixed midnight-crossing session \(id): \(startTime) -> \(endTime) (next day), duration: \(durationMinutes) minutes")
+            
+            // Return fixed session with corrected duration
+            return SessionRecord(
+                id: id,
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                durationMinutes: durationMinutes,
+                projectName: projectName,
+                projectID: projectID,
+                activityTypeID: activityTypeID,
+                projectPhaseID: projectPhaseID,
+                milestoneText: milestoneText,
+                notes: notes,
+                mood: mood
+            )
+        }
+        
+        return self
+    }
+}
+
 // MARK: - 2. Project Model
 // Represents the entities being tracked. Must be Codable for JSON persistence.
 public struct Project: Codable, Identifiable, Hashable {
@@ -120,17 +187,39 @@ public struct Project: Codable, Identifiable, Hashable {
     public var archived: Bool 
     public var phases: [Phase]
     
-    // Computed properties for session statistics
+    // Computed properties for session statistics - **UPDATED: Now implemented with caching**
     public var totalDurationHours: Double {
-        // This would typically be calculated from sessions
-        // Implementation depends on SessionManager integration
-        return 0.0
+        // Uses ProjectStatisticsCache for performance optimization
+        // Falls back to SessionManager calculation if cache miss
+        let cachedDuration = ProjectStatisticsCache.shared.getTotalDuration(for: id)
+        if cachedDuration > 0 {
+            return cachedDuration
+        }
+        
+        // Fallback calculation (should rarely be needed due to caching)
+        let sessionManager = SessionManager.shared
+        let totalDuration = sessionManager.allSessions
+            .filter { $0.projectID == id }
+            .reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
+        ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: id)
+        return totalDuration
     }
     
     public var lastSessionDate: Date? {
-        // This would typically be calculated from sessions
-        // Implementation depends on SessionManager integration
-        return nil
+        // Uses ProjectStatisticsCache for performance optimization
+        // Falls back to SessionManager calculation if cache miss
+        if let cachedDate = ProjectStatisticsCache.shared.getLastSessionDate(for: id) {
+            return cachedDate
+        }
+        
+        // Fallback calculation (should rarely be needed due to caching)
+        let sessionManager = SessionManager.shared
+        let sessions = sessionManager.allSessions
+            .filter { $0.projectID == id }
+            .compactMap { $0.startDateTime }
+        let date = sessions.max()
+        ProjectStatisticsCache.shared.setLastSessionDate(date, for: id)
+        return date
     }
     
     public var swiftUIColor: Color {
@@ -267,16 +356,78 @@ public struct DataIntegrityReport {
 
 // MARK: - Dashboard Data Models
 public struct DashboardData: Codable {
-    public let weeklySessions: [Session]
+    public let weeklySessions: [SessionRecord]
     public let projectTotals: [String: Double] // projectID -> total hours
     public let activityTypeTotals: [String: Double] // activityTypeID -> total hours
     public let narrativeHeadline: String
     
-    public init(weeklySessions: [Session], projectTotals: [String: Double], activityTypeTotals: [String: Double], narrativeHeadline: String) {
+    public init(weeklySessions: [SessionRecord], projectTotals: [String: Double], activityTypeTotals: [String: Double], narrativeHeadline: String) {
         self.weeklySessions = weeklySessions
         self.projectTotals = projectTotals
         self.activityTypeTotals = activityTypeTotals
         self.narrativeHeadline = narrativeHeadline
+    }
+}
+
+// MARK: - Filter Bar Data Models
+/// Date range for custom date filtering in sessions
+public struct DateRange: Codable, Identifiable {
+    public let id = UUID()
+    public var startDate: Date
+    public var endDate: Date
+    
+    var isValid: Bool {
+        return startDate <= endDate
+    }
+    
+    var durationDescription: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.day, .weekOfMonth]
+        formatter.maximumUnitCount = 1
+        formatter.unitsStyle = .abbreviated
+        
+        let duration = endDate.timeIntervalSince(startDate)
+        return formatter.string(from: duration) ?? "0d"
+    }
+}
+
+/// Available date filter options for sessions
+public enum SessionsDateFilter: String, CaseIterable, Identifiable {
+    case today = "Today"
+    case thisWeek = "This Week"
+    case thisMonth = "This Month"
+    case thisYear = "This Year"
+    case custom = "Custom Range"
+    case clear = "Clear"
+    
+    public var id: String { rawValue }
+    public var title: String { rawValue }
+}
+
+/// Observable filter state for sessions view
+public class FilterExportState: ObservableObject {
+    @Published var isExpanded: Bool = false
+    
+    // Filter state
+    @Published var projectFilter: String = "All"
+    @Published var activityTypeFilter: String = "All"
+    @Published var selectedDateFilter: SessionsDateFilter = .thisWeek
+    @Published var customDateRange: DateRange? = nil
+    
+    // Manual refresh control
+    @Published var shouldRefresh: Bool = false
+    
+    /// Call this when you want to manually refresh the filtered data
+    func requestManualRefresh() {
+        shouldRefresh.toggle()
+    }
+    
+    /// Clear all filters and reset to default state
+    func clearFilters() {
+        projectFilter = "All"
+        activityTypeFilter = "All"
+        selectedDateFilter = .thisWeek
+        customDateRange = nil
     }
 }
 

@@ -69,7 +69,7 @@ class SessionDataParser {
             let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
             
             // Create session record with all fields
-            let record = SessionRecord(
+            var record = SessionRecord(
                 id: id,
                 date: dateStr,
                 startTime: cleanField(safeFields[2]),
@@ -83,6 +83,10 @@ class SessionDataParser {
                 notes: notes,
                 mood: mood
             )
+            
+            // Apply midnight crossing fix to ensure proper duration calculation
+            record = record.fixMidnightCrossingSession()
+            
             sessions.append(record)
         }
         
@@ -140,7 +144,7 @@ class SessionDataParser {
             let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
             let durationMinutes = Int(durationStr) ?? 0
             
-            let record = SessionRecord(
+            var record = SessionRecord(
                 id: id,
                 date: dateStr,
                 startTime: startTime,
@@ -154,10 +158,103 @@ class SessionDataParser {
                 notes: notes,
                 mood: mood
             )
+            
+            // Apply midnight crossing fix to ensure proper duration calculation
+            record = record.fixMidnightCrossingSession()
+            
             sessions.append(record)
         }
         
         return sessions
+    }
+    
+    /// Parse sessions from CSV content, filtering only those within the current week
+    /// This is an optimized version that only processes sessions within the specified week interval
+    func parseSessionsFromCSVForCurrentWeek(_ csvContent: String, hasIdColumn: Bool, weekInterval: DateInterval) -> ([SessionRecord], Bool) {
+        let lines = parseCSVContentWithProperQuoting(csvContent)
+        
+        guard let headerLine = lines.first, !headerLine.isEmpty else {
+            return ([], false)
+        }
+        
+        // Detect format based on header
+        let headerFields = parseCSVLineOptimized(headerLine)
+        let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
+        let expectedColumnCount = hasNewFields ? 12 : 8
+        
+        let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        var sessions: [SessionRecord] = []
+        var needsRewrite = false
+        
+        for (index, line) in dataLines.enumerated() {
+            let rowIndex = index + 1  // +1 to skip header
+            
+            let fields = parseCSVLineOptimized(line)
+            
+            // Ensure minimum fields based on format
+            var safeFields = fields + Array(repeating: "", count: max(0, expectedColumnCount - fields.count))
+            
+            var id: String
+            if hasIdColumn {
+                id = cleanField(safeFields[0])
+            } else {
+                // No ID column, generate one
+                id = UUID().uuidString
+                needsRewrite = true
+                print("[SessionManager] Assigned new ID \(id) to row \(rowIndex)")
+                safeFields.insert(id, at: 0)
+            }
+            
+            // Ensure all required fields exist after potential ID insertion
+            while safeFields.count < expectedColumnCount {
+                safeFields.append("")
+            }
+            
+            let dateStr = cleanField(safeFields[1])
+            guard !dateStr.isEmpty, let date = dateFormatter.date(from: dateStr) else {
+                print("⚠️ Skipping invalid date in row \(rowIndex): \(dateStr)")
+                continue
+            }
+            
+            // Quick filter: only process sessions within the current week
+            guard date >= weekInterval.start && date <= weekInterval.end else {
+                continue
+            }
+            
+            // Extract fields based on format
+            let projectName = cleanField(safeFields[5])
+            let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
+            let activityTypeID = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
+            let projectPhaseID = hasNewFields && safeFields.count > 8 ? (safeFields[8].isEmpty ? nil : cleanField(safeFields[8])) : nil
+            let milestoneText = hasNewFields && safeFields.count > 9 ? (safeFields[9].isEmpty ? nil : cleanField(safeFields[9])) : nil
+            let notesIndex = hasNewFields ? 10 : 6
+            let moodIndex = hasNewFields ? 11 : 7
+            let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
+            let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+            
+            // Create session record with all fields
+            var record = SessionRecord(
+                id: id,
+                date: dateStr,
+                startTime: cleanField(safeFields[2]),
+                endTime: cleanField(safeFields[3]),
+                durationMinutes: Int(cleanField(safeFields[4])) ?? 0,
+                projectName: projectName,
+                projectID: projectID,
+                activityTypeID: activityTypeID,
+                projectPhaseID: projectPhaseID,
+                milestoneText: milestoneText,
+                notes: notes,
+                mood: mood
+            )
+            
+            // Apply midnight crossing fix to ensure proper duration calculation
+            record = record.fixMidnightCrossingSession()
+            
+            sessions.append(record)
+        }
+        
+        return (sessions, needsRewrite)
     }
     
     // MARK: - CSV Parsing Optimizations

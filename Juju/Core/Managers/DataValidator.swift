@@ -232,6 +232,9 @@ class DataValidator {
             errors.append("Referential integrity: \(reason)")
         }
         
+        // Additional validation checks would go here
+        // Note: DataValidationHelper was removed as it's no longer needed
+        
         return errors
     }
     

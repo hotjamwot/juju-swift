@@ -50,7 +50,7 @@ nodes:
   - id: C1_Project_Loader
     component: ProjectManager
     function: Load Projects from JSON
-    description: Reads and deserializes project data from JSON files. **UPDATED: Added getProjectName(from:) method**
+    description: Reads and deserializes project data from JSON files. Supports project phases and cached statistics
   - id: C2_Project_Saver
     component: ProjectManager
     function: Save Projects to JSON
@@ -58,7 +58,11 @@ nodes:
   - id: C3_Project_Name_Resolver
     component: ProjectManager
     function: Resolve Project Names from IDs
-    description: Resolves project names from projectID for display
+    description: Resolves project names from projectID for display. Includes getProjectName(from:) method
+  - id: C4_Project_Statistics_Cache
+    component: ProjectStatisticsCache
+    function: Cache Project Statistics
+    description: Caches project statistics (total duration, last session date) for performance optimization
 
   # Activity Type Management Flow
   - id: D1_ActivityType_Loader
@@ -107,6 +111,42 @@ nodes:
     component: ErrorHandler
     function: Handle Data Errors
     description: Manages error recovery and user notifications
+  - id: E5_Midnight_Session_Fixer
+    component: SessionRecord.fixMidnightCrossingSession
+    function: Fix Midnight-Crossing Sessions
+    description: Automatically fixes sessions that cross midnight by adjusting end time when end time is between midnight and 4 AM, ensuring proper duration calculation for sessions spanning across days
+
+  # Session Data Processing Flow
+  - id: S1_Session_Parser
+    component: SessionDataParser
+    function: Parse Session CSV Data
+    description: Parses CSV session data and applies midnight-crossing fixes to all loaded sessions
+  - id: S2_Session_Model_Creation
+    component: SessionRecord
+    function: Create Session Models
+    description: Creates SessionRecord models with proper date/time calculations including midnight fix
+  - id: S3_Midnight_Fix_Application
+    component: SessionRecord.fixMidnightCrossingSession
+    function: Apply Midnight Fix to Sessions
+    description: Automatically applies midnight-crossing fix during session parsing to ensure proper duration calculation
+
+  # Filter Bar and Session Filtering Flow
+  - id: F1_Filter_Toggle_Button
+    component: FilterToggleButton
+    function: Toggle Filter Bar Visibility
+    description: Displays session count and toggles filter bar. Shows current session count for current week
+  - id: F2_Bottom_Filter_Bar
+    component: BottomFilterBar
+    function: Filter Session Data
+    description: Provides filtering by project, activity type, and date range. Displays session count for filtered results
+  - id: F3_Filter_Export_State
+    component: FilterExportState
+    function: Manage Filter State
+    description: ObservableObject managing filter state (project, activity type, date filters, custom date ranges)
+  - id: F4_Sessions_View
+    component: SessionsView
+    function: Display Filtered Sessions
+    description: Main sessions view that applies filters and displays grouped session data
 
 edges:
   # Session Flow
@@ -216,3 +256,43 @@ edges:
   - source: C3_Project_Name_Resolver
     target: U2_Dashboard_Display
     data_packet: ProjectName
+
+  # Project Statistics Cache Flow
+  - source: A6_Session_Cache_Updater
+    target: C4_Project_Statistics_Cache
+    data_packet: ProjectStatisticsUpdate
+  - source: C4_Project_Statistics_Cache
+    target: Project
+    data_packet: CachedStatistics
+  - source: C1_Project_Loader
+    target: C4_Project_Statistics_Cache
+    data_packet: ProjectID
+  - source: C4_Project_Statistics_Cache
+    target: C1_Project_Loader
+    data_packet: CachedStatistics
+
+  # Filter Bar and Session Filtering Flow
+  - source: F1_Filter_Toggle_Button
+    target: F2_Bottom_Filter_Bar
+    data_packet: FilterState
+  - source: F2_Bottom_Filter_Bar
+    target: F4_Sessions_View
+    data_packet: FilteredSessions
+  - source: F3_Filter_Export_State
+    target: F2_Bottom_Filter_Bar
+    data_packet: FilterParameters
+  - source: F4_Sessions_View
+    target: F1_Filter_Toggle_Button
+    data_packet: SessionCount
+  - source: F4_Sessions_View
+    target: F3_Filter_Export_State
+    data_packet: FilterState
+  - source: F4_Sessions_View
+    target: A2_Persistence_Writer
+    data_packet: SessionRecord
+  - source: F4_Sessions_View
+    target: C1_Project_Loader
+    data_packet: Project
+  - source: F4_Sessions_View
+    target: D1_ActivityType_Loader
+    data_packet: ActivityType

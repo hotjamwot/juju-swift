@@ -52,7 +52,25 @@ public struct SessionRecord: Identifiable {
         components.minute = timeComponents.minute
         components.second = timeComponents.second ?? 0
 
-        return Calendar.current.date(from: components)
+        var endDate = Calendar.current.date(from: components)
+        
+        // Fix for sessions that cross midnight: if end time is between midnight and 4 AM,
+        // add 24 hours to properly calculate duration across days
+        // Special handling for 12:xx AM which appears as 00:xx in 24-hour format
+        let endHour: Int
+        if endTime.hasPrefix("12:") {
+            // 12:xx in the CSV could be 12:xx AM (which is 00:xx) or 12:xx PM (which is 12:xx)
+            // We need to check if this is likely a midnight-crossing session
+            endHour = 0 // Treat 12:xx as 0 (midnight) for midnight-crossing detection
+        } else {
+            endHour = timeComponents.hour ?? -1
+        }
+        
+        if endHour >= 0 && endHour < 4 {
+            endDate = Calendar.current.date(byAdding: .day, value: 1, to: endDate ?? date)
+        }
+        
+        return endDate
     }
 
     // Helper to check if session overlaps with a date interval
@@ -192,6 +210,82 @@ extension SessionRecord {
             notes: notes,
             mood: mood
         )
+    }
+    
+    /// Fix sessions that cross midnight by adjusting end time if it's between midnight and 4 AM
+    /// This ensures proper duration calculation for sessions that span across days
+    /// - Returns: Fixed session record with corrected end time and duration
+    func fixMidnightCrossingSession() -> SessionRecord {
+        // Parse end time to check if it's between midnight and 4 AM
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let paddedEndTime = endTime.count == 5 ? endTime + ":00" : endTime
+        
+        guard let endTimeDate = timeFormatter.date(from: paddedEndTime) else {
+            return self
+        }
+        
+        // Check if end time is between midnight and 4 AM
+        // Special handling for 12:xx AM which appears as 00:xx in 24-hour format
+        let endHour: Int
+        if endTime.hasPrefix("12:") {
+            // 12:xx in the CSV could be 12:xx AM (which is 00:xx) or 12:xx PM (which is 12:xx)
+            // We need to check if this is likely a midnight-crossing session
+            endHour = 0 // Treat 12:xx as 0 (midnight) for midnight-crossing detection
+        } else {
+            endHour = Calendar.current.dateComponents([.hour], from: endTimeDate).hour ?? -1
+        }
+        
+        guard endHour >= 0 && endHour < 4 else {
+            // End time is not between midnight and 4 AM, no fix needed
+            return self
+        }
+        
+        // Check if this session likely crosses midnight by comparing start and end times
+        let paddedStartTime = startTime.count == 5 ? startTime + ":00" : startTime
+        guard let startTimeDate = timeFormatter.date(from: paddedStartTime) else {
+            return self
+        }
+        
+        // If end time is earlier than start time, it likely crosses midnight
+        if endTimeDate < startTimeDate {
+            // Calculate the actual duration by treating end time as next day
+            let nextDayEndTime = Calendar.current.date(byAdding: .day, value: 1, to: endTimeDate)
+            let startDateTime = startDateTime ?? Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date()))!
+            
+            guard let actualEndDateTime = nextDayEndTime else {
+                return self
+            }
+            
+            let durationMinutes = Int(round(actualEndDateTime.timeIntervalSince(startDateTime) / 60))
+            
+            // Only fix if the calculated duration is significantly different from stored duration
+            // This prevents fixing sessions that were already correctly calculated
+            let durationDifference = abs(durationMinutes - self.durationMinutes)
+            if durationDifference > 60 { // Only fix if difference is more than 1 hour
+                print("🔧 Fixed midnight-crossing session \(id): \(startTime) -> \(endTime) (next day), duration: \(durationMinutes) minutes (was \(self.durationMinutes))")
+                
+                // Return fixed session with corrected duration
+                return SessionRecord(
+                    id: id,
+                    date: date,
+                    startTime: startTime,
+                    endTime: endTime,
+                    durationMinutes: durationMinutes,
+                    projectName: projectName,
+                    projectID: projectID,
+                    activityTypeID: activityTypeID,
+                    projectPhaseID: projectPhaseID,
+                    milestoneText: milestoneText,
+                    notes: notes,
+                    mood: mood
+                )
+            } else {
+                print("✅ Session \(id) already has correct duration: \(durationMinutes) minutes")
+            }
+        }
+        
+        return self
     }
 }
 
