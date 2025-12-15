@@ -222,6 +222,49 @@ public struct SessionData {
     }
 }
 
+// MARK: - Year-Based File System Models
+public struct YearlySessionFile {
+    public let year: Int
+    public let fileName: String
+    public let fileURL: URL
+    
+    public init(year: Int, jujuPath: URL) {
+        self.year = year
+        self.fileName = "\(year)-data.csv"
+        self.fileURL = jujuPath.appendingPathComponent(fileName)
+    }
+}
+
+// MARK: - Data Migration Models
+public struct DataMigrationResult {
+    public let success: Bool
+    public let migratedSessions: Int
+    public let createdProjects: [String]
+    public let errors: [String]
+    
+    public init(success: Bool, migratedSessions: Int, createdProjects: [String] = [], errors: [String] = []) {
+        self.success = success
+        self.migratedSessions = migratedSessions
+        self.createdProjects = createdProjects
+        self.errors = errors
+    }
+}
+
+// MARK: - Data Validation Models
+public struct DataIntegrityReport {
+    public let isValid: Bool
+    public let errors: [String]
+    public let warnings: [String]
+    public let repairsPerformed: [String]
+    
+    public init(isValid: Bool, errors: [String] = [], warnings: [String] = [], repairsPerformed: [String] = []) {
+        self.isValid = isValid
+        self.errors = errors
+        self.warnings = warnings
+        self.repairsPerformed = repairsPerformed
+    }
+}
+
 // MARK: - Dashboard Data Models
 public struct DashboardData: Codable {
     public let weeklySessions: [Session]

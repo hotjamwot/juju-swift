@@ -242,8 +242,34 @@ class DataValidator {
     func autoRepairIssues() -> [String] {
         var repairs: [String] = []
         
-        // Find sessions with invalid project references
+        // Check if we need to run project ID migration
         let sessionManager = SessionManager.shared
+        let sessionsWithoutProjectID = sessionManager.allSessions.filter { $0.projectID == nil }
+        
+        if !sessionsWithoutProjectID.isEmpty {
+            print("🔄 Found \(sessionsWithoutProjectID.count) sessions without projectID - triggering migration")
+            
+            // Import SessionMigrationManager to access migration functionality
+            // We need to access the jujuPath from SessionManager
+            // Since SessionManager is a singleton, we can access it directly
+            guard let jujuPath = sessionManager.jujuPathForMigration else {
+                print("❌ Could not access jujuPath for migration")
+                return repairs
+            }
+            
+            let sessionFileManager = SessionFileManager()
+            let migrationManager = SessionMigrationManager(sessionFileManager: sessionFileManager, jujuPath: jujuPath)
+            
+            // Run project ID migration
+            Task {
+                await migrationManager.migrateSessionProjectIDs()
+                print("✅ Project ID migration completed")
+            }
+            
+            repairs.append("Triggered project ID migration for \(sessionsWithoutProjectID.count) sessions")
+        }
+        
+        // Find sessions with invalid project references
         let projectManager = ProjectManager.shared
         let projects = projectManager.loadProjects()
         

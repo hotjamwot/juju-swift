@@ -7,18 +7,30 @@ nodes:
     component: SessionManager
     function: Capture Session Duration
     description: Records start/stop times and calculates session duration. Now supports projectID parameter for new sessions
-  - id: A2_Persistence_Writer
+  - id: A2_Session_State_Manager
+    component: SessionStateManager
+    function: Manage Session State
+    description: Handles session state management, start/end operations, and session data creation
+  - id: A3_CSV_Operations
+    component: SessionCSVManager
+    function: CSV Operations
+    description: Handles CSV formatting, year-based file routing, and header management
+  - id: A4_File_Operations
+    component: SessionFileManager
+    function: File I/O Operations
+    description: Thread-safe file operations (read, write, append) with proper quoting support
+  - id: A5_Persistence_Writer
     component: SessionDataManager
     function: Persist Session Data
-    description: Writes session data to CSV files with thread-safe operations. Validates projectID for new sessions
-  - id: A3_Session_Cache_Updater
+    description: Coordinates session persistence through CSV and File managers. Validates projectID for new sessions
+  - id: A6_Session_Cache_Updater
     component: ProjectStatisticsCache
     function: Update Project Statistics
     description: Updates cached project statistics after session changes. Supports projectID-based lookups
-  - id: A4_Session_Operations
-    component: SessionOperationsManager
-    function: Manage Session State
-    description: Handles session state management and CSV operations.
+  - id: A7_Data_Validator
+    component: DataValidator
+    function: Validate Session Data
+    description: Validates sessions before persistence and triggers automatic migration if needed
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator

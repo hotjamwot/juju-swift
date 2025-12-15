@@ -111,6 +111,11 @@ class SessionManager: ObservableObject {
     private let jujuPath: URL?
     private let dataFileURL: URL?
     
+    // Public access to jujuPath for migration and validation
+    var jujuPathForMigration: URL? {
+        return jujuPath
+    }
+    
     // MARK: - Initialization
     private init() {
         // Setup file paths
@@ -133,6 +138,9 @@ class SessionManager: ObservableObject {
         Task {
             let migrationManager = SessionMigrationManager(sessionFileManager: sessionFileManager, jujuPath: jujuPath)
             _ = await migrationManager.migrateIfNecessary()
+            
+            // After migration, run data validation and auto-repair
+            await self.runDataValidationAndRepair()
         }
     }
     
@@ -236,6 +244,40 @@ class SessionManager: ObservableObject {
     
     func minutesBetween(start: String, end: String) -> Int {
         operationsManager.minutesBetween(start: start, end: end)
+    }
+    
+    // MARK: - Data Validation and Repair
+    
+    /// Run data validation and automatic repair if needed
+    private func runDataValidationAndRepair() async {
+        print("🔍 Running data validation and repair...")
+        
+        let validator = DataValidator.shared
+        
+        // Run integrity check
+        let errors = validator.runIntegrityCheck()
+        
+        if !errors.isEmpty {
+            print("⚠️ Found \(errors.count) data integrity issues:")
+            for error in errors {
+                print("  - \(error)")
+            }
+            
+            // Attempt automatic repair
+            print("🔧 Attempting automatic repair...")
+            let repairs = validator.autoRepairIssues()
+            
+            if !repairs.isEmpty {
+                print("✅ Automatic repair completed with \(repairs.count) actions:")
+                for repair in repairs {
+                    print("  - \(repair)")
+                }
+            } else {
+                print("❌ No automatic repairs available for these issues")
+            }
+        } else {
+            print("✅ Data validation passed - no issues found")
+        }
     }
     
     deinit {
