@@ -9,6 +9,8 @@ struct SessionCalendarChartView: View {
         "Thursday", "Friday", "Saturday", "Sunday"
     ]
     
+    @State private var currentTime = Date()
+    
     let dayToLetter: [String: String] = [
             "Monday":    "MON",
             "Tuesday":   "TUE",
@@ -47,6 +49,31 @@ struct SessionCalendarChartView: View {
         )
         .foregroundStyle(Theme.Colors.divider.opacity(0.15))
         .cornerRadius(Theme.Design.cornerRadius / 2)
+    }
+    
+    // Current time indicator for the current day only
+    private func currentTimeIndicator() -> some ChartContent {
+        let calendar = Calendar.current
+        let currentHour = Double(calendar.component(.hour, from: currentTime))
+        let currentMinute = Double(calendar.component(.minute, from: currentTime))
+        let currentDay = calendar.weekdaySymbols[calendar.component(.weekday, from: currentTime) - 1]
+        
+        // Only show on the current day
+        if weekDays.contains(currentDay) {
+            return RectangleMark(
+                x: .value("Current Day", currentDay),
+                yStart: .value("Current Time", currentHour + (currentMinute / 60.0) - 0.01),
+                yEnd: .value("Current Time", currentHour + (currentMinute / 60.0) + 0.01)
+            )
+            .foregroundStyle(Theme.Colors.accentColor)
+        } else {
+            // Return an empty rectangle mark if not current day (shouldn't happen in normal use)
+            return RectangleMark(
+                yStart: .value("Current Time", currentHour + (currentMinute / 60.0) - 0.01),
+                yEnd: .value("Current Time", currentHour + (currentMinute / 60.0) + 0.01)
+            )
+            .foregroundStyle(Color.clear)
+        }
     }
     
     // Session rectangle for a specific session
@@ -95,6 +122,9 @@ struct SessionCalendarChartView: View {
                     gridLine(for: 6.0)
                     gridLine(for: 23.0)
                     
+                    // Current time indicator (only appears on current day)
+                    currentTimeIndicator()
+                    
                     ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
                         sessionRectangle(for: session)
                     }
@@ -131,6 +161,12 @@ struct SessionCalendarChartView: View {
                         .background(.clear)
                 }
                 .chartXScale(domain: weekDays)
+            }
+        }
+        .onAppear {
+            // Update current time every minute to keep the indicator accurate
+            Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { _ in
+                currentTime = Date()
             }
         }
     }
