@@ -1,42 +1,38 @@
 flowName: Juju Application Critical Data Flow Map
-description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies. **UPDATED: Phase 1 & 2 Complete - Project Name Phaseout Infrastructure Ready**
+description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies.
 
 nodes:
   # Session Management Flow
   - id: A1_Session_Recorder
     component: SessionManager
     function: Capture Session Duration
-    description: Records start/stop times and calculates session duration. **UPDATED: Now supports projectID parameter for new sessions**
+    description: Records start/stop times and calculates session duration. Now supports projectID parameter for new sessions
   - id: A2_Persistence_Writer
     component: SessionDataManager
     function: Persist Session Data
-    description: Writes session data to CSV files with thread-safe operations. **UPDATED: Validates projectID for new sessions**
+    description: Writes session data to CSV files with thread-safe operations. Validates projectID for new sessions
   - id: A3_Session_Cache_Updater
     component: ProjectStatisticsCache
     function: Update Project Statistics
-    description: Updates cached project statistics after session changes. **UPDATED: Supports projectID-based lookups**
+    description: Updates cached project statistics after session changes. Supports projectID-based lookups
   - id: A4_Session_Operations
     component: SessionOperationsManager
     function: Manage Session State
-    description: Handles session state management and CSV operations. **NEW: Phase 1 Complete**
+    description: Handles session state management and CSV operations.
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
     component: ChartDataPreparer
-    function: Aggregate Dashboard Data
-    description: Processes raw session data into dashboard-ready formats. **UPDATED: Uses projectID for data aggregation**
+    function: Aggregate Weekly Dashboard Data
+    description: Processes raw session data into weekly dashboard-ready formats. Filters to current week only for optimal performance
   - id: B2_Editorial_Engine
     component: EditorialEngine
     function: Generate Narrative Headlines
-    description: Creates dynamic editorial content for dashboard
+    description: Creates dynamic editorial content for dashboard. Enhanced with future analytics capabilities
   - id: B3_Dashboard_Navigator
     component: DashboardRootView
     function: Navigate Between Dashboard Views
     description: Handles switching between weekly and yearly dashboard views
-  - id: B4_Yearly_Data_Aggregator
-    component: ChartDataPreparer
-    function: Aggregate Yearly Dashboard Data
-    description: Processes raw session data into yearly dashboard formats
 
   # Project Management Flow
   - id: C1_Project_Loader
@@ -50,7 +46,7 @@ nodes:
   - id: C3_Project_Name_Resolver
     component: ProjectManager
     function: Resolve Project Names from IDs
-    description: **NEW: Phase 1 Complete - Resolves project names from projectID for display**
+    description: Resolves project names from projectID for display
 
   # Activity Type Management Flow
   - id: D1_ActivityType_Loader
@@ -66,21 +62,21 @@ nodes:
   - id: U1_Menu_Bar_Interface
     component: MenuManager
     function: Session Recording via Menu Bar
-    description: **NEW: Phase 2 Complete - Menu bar interface uses projectID for session creation**
+    description: Menu bar interface uses projectID for session creation
   - id: U2_Dashboard_Display
     component: ActiveSessionStatusView
     function: Display Active Session Status
-    description: **NEW: Phase 2 Complete - Dashboard resolves project names from projectID**
+    description: Dashboard resolves project names from projectID
   - id: U3_Session_Editing
     component: SessionsRowView
     function: Edit Session Details
-    description: **NEW: Phase 2 Complete - Session editing uses projectID internally**
+    description: Session editing uses projectID internally
 
   # Project Selection Flow
   - id: P1_Project_Selection
     component: InlineSelectionPopover
     function: Generic Project Selection
-    description: **NEW: Phase 2 Complete - ID-based project selection with SelectionItem protocol**
+    description: ID-based project selection with SelectionItem protocol
 
   # Data Integrity and Management Flow
   - id: E1_Data_Validator

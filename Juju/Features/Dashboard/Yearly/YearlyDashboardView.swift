@@ -111,54 +111,19 @@ struct YearlyDashboardView: View {
             loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            Task {
-                await MainActor.run {
-                    chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                }
-            }
+            // Yearly charts not implemented yet - placeholder view only
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            Task {
-                await MainActor.run {
-                    chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                }
-            }
+            // Yearly charts not implemented yet - placeholder view only
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
-            Task {
-                await MainActor.run {
-                    chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                }
-            }
+            // Yearly charts not implemented yet - placeholder view only
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
-            Task {
-                await MainActor.run {
-                    chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                }
-            }
+            // Yearly charts not implemented yet - placeholder view only
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
-            Task {
-                await MainActor.run {
-                    chartDataPreparer.prepareYearlyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                }
-            }
+            // Yearly charts not implemented yet - placeholder view only
         }
     }
 
@@ -166,12 +131,8 @@ struct YearlyDashboardView: View {
     private func loadData() {
         Task {
             await projectsViewModel.loadProjects()
-            await MainActor.run {
-                chartDataPreparer.prepareYearlyData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-            }
+            // Yearly charts not implemented yet - placeholder view only
+            // chartDataPreparer.prepareYearlyData() removed - no yearly data preparation needed
         }
     }
     

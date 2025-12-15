@@ -23,7 +23,7 @@ public struct Session: Codable, Identifiable {
     public let endTime: String
     public let durationMinutes: Int
     public let projectName: String  // Kept for backward compatibility
-    public let projectID: String?  // **UPDATED: Required for new sessions, optional for legacy**
+    public let projectID: String?
     public let activityTypeID: String?
     public let projectPhaseID: String?
     public let milestoneText: String?
@@ -225,14 +225,12 @@ public struct SessionData {
 // MARK: - Dashboard Data Models
 public struct DashboardData: Codable {
     public let weeklySessions: [Session]
-    public let yearlySessions: [Session]
     public let projectTotals: [String: Double] // projectID -> total hours
     public let activityTypeTotals: [String: Double] // activityTypeID -> total hours
     public let narrativeHeadline: String
     
-    public init(weeklySessions: [Session], yearlySessions: [Session], projectTotals: [String: Double], activityTypeTotals: [String: Double], narrativeHeadline: String) {
+    public init(weeklySessions: [Session], projectTotals: [String: Double], activityTypeTotals: [String: Double], narrativeHeadline: String) {
         self.weeklySessions = weeklySessions
-        self.yearlySessions = yearlySessions
         self.projectTotals = projectTotals
         self.activityTypeTotals = activityTypeTotals
         self.narrativeHeadline = narrativeHeadline
@@ -268,26 +266,112 @@ public struct BubbleChartDataPoint: Codable {
     }
 }
 
-// MARK: - Yearly Dashboard Data Models
-
-/// Yearly Dashboard Data Model
-public struct YearlyDashboardData: Codable {
-    public let projectDistribution: [ProjectBarChartData]
-    public let activityDistribution: [ActivityTypeBarChartData]
-    public let monthlyBreakdown: [MonthlyActivityGroup]
+// MARK: - Editorial Engine Data Models
+/// Enhanced session data for a specific time period with comprehensive analytics
+/// FUTURE USE: Foundation for comparative analytics and trend detection
+public struct PeriodSessionData: Identifiable {
+    public let id = UUID()
+    public let period: ChartTimePeriod
+    public let sessions: [SessionRecord]
     public let totalHours: Double
-    public let narrativeHeadline: String
+    public let topActivity: (name: String, emoji: String)
+    public let topProject: (name: String, emoji: String)
+    public let milestones: [Milestone]
+    public let averageDailyHours: Double
+    public let activityDistribution: [String: Double] // activityID -> hours
+    public let projectDistribution: [String: Double] // projectName -> hours
+    public let timeRange: DateInterval
     
-    public init(projectDistribution: [ProjectBarChartData], activityDistribution: [ActivityTypeBarChartData], monthlyBreakdown: [MonthlyActivityGroup], totalHours: Double, narrativeHeadline: String) {
-        self.projectDistribution = projectDistribution
-        self.activityDistribution = activityDistribution
-        self.monthlyBreakdown = monthlyBreakdown
+    public init(period: ChartTimePeriod, sessions: [SessionRecord], totalHours: Double, topActivity: (String, String), topProject: (String, String), milestones: [Milestone], averageDailyHours: Double, activityDistribution: [String : Double], projectDistribution: [String : Double], timeRange: DateInterval) {
+        self.period = period
+        self.sessions = sessions
         self.totalHours = totalHours
-        self.narrativeHeadline = narrativeHeadline
+        self.topActivity = topActivity
+        self.topProject = topProject
+        self.milestones = milestones
+        self.averageDailyHours = averageDailyHours
+        self.activityDistribution = activityDistribution
+        self.projectDistribution = projectDistribution
+        self.timeRange = timeRange
     }
 }
 
-/// Dashboard View Type for Navigation
+/// Comparative analytics between two time periods
+/// FUTURE USE: Week-on-week, month-on-month comparisons
+public struct ComparativeAnalytics: Identifiable {
+    public let id = UUID()
+    public let current: PeriodSessionData
+    public let previous: PeriodSessionData
+    public let trends: AnalyticsTrends
+    
+    public init(current: PeriodSessionData, previous: PeriodSessionData, trends: AnalyticsTrends) {
+        self.current = current
+        self.previous = previous
+        self.trends = trends
+    }
+}
+
+/// Trend analysis results for comparative analytics
+/// FUTURE USE: Comparative analytics and insight generation
+public struct AnalyticsTrends: Identifiable {
+    public let id = UUID()
+    public let totalHoursChange: Double // Percentage change
+    public let topActivityChange: (from: String, to: String, change: Double)
+    public let topProjectChange: (from: String, to: String, change: Double)
+    public let milestoneCountChange: Int
+    public let averageDailyHoursChange: Double
+    public let activityDistributionChanges: [String: Double] // activityID -> percentage change
+    public let projectDistributionChanges: [String: Double] // projectName -> percentage change
+    
+    public init(totalHoursChange: Double, topActivityChange: (String, String, Double), topProjectChange: (String, String, Double), milestoneCountChange: Int, averageDailyHoursChange: Double, activityDistributionChanges: [String : Double], projectDistributionChanges: [String : Double]) {
+        self.totalHoursChange = totalHoursChange
+        self.topActivityChange = topActivityChange
+        self.topProjectChange = topProjectChange
+        self.milestoneCountChange = milestoneCountChange
+        self.averageDailyHoursChange = averageDailyHoursChange
+        self.activityDistributionChanges = activityDistributionChanges
+        self.projectDistributionChanges = projectDistributionChanges
+    }
+}
+
+/// Time period enum for Editorial Engine filtering
+/// FUTURE USE: Designed to support comparative analytics (week-on-week, month-on-month)
+public enum ChartTimePeriod: String, CaseIterable, Identifiable {
+    case week
+    case month
+    case year
+    case allTime
+
+    public var id: String { self.rawValue }
+
+    public var title: String {
+        switch self {
+        case .week: return "This Week"
+        case .month: return "This Month"
+        case .year: return "This Year"
+        case .allTime: return "All Time"
+        }
+    }
+    
+    /// Get the previous period for comparative analysis
+    /// FUTURE USE: Enables week-on-week, month-on-month comparisons
+    public var previousPeriod: ChartTimePeriod {
+        return self // Placeholder for future implementation
+    }
+    
+    /// Get the duration in days for this period
+    /// FUTURE USE: Normalization for fair comparisons across different time periods
+    public var durationInDays: Int {
+        switch self {
+        case .week: return 7
+        case .month: return 30 // Approximate
+        case .year: return 365 // Approximate
+        case .allTime: return Int.max
+        }
+    }
+}
+
+// MARK: - Dashboard View Type for Navigation
 public enum DashboardViewType: CaseIterable {
     case weekly
     case yearly
@@ -308,100 +392,6 @@ public enum DashboardViewType: CaseIterable {
         case .yearly:
             return .weekly
         }
-    }
-}
-
-/// Horizontal bar chart data for project distribution
-public struct ProjectBarChartData: Codable {
-    public let id: String
-    public let projectName: String
-    public let emoji: String
-    public let totalHours: Double
-    public let percentage: Double
-    public let color: Color
-    
-    public init(id: String = UUID().uuidString, projectName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
-        self.id = id
-        self.projectName = projectName
-        self.emoji = emoji
-        self.totalHours = totalHours
-        self.percentage = percentage
-        self.color = color
-    }
-    
-    public var colorSwiftUI: Color {
-        color
-    }
-}
-
-/// Horizontal bar chart data for activity type distribution
-public struct ActivityTypeBarChartData: Codable {
-    public let id: String
-    public let activityName: String
-    public let emoji: String
-    public let totalHours: Double
-    public let percentage: Double
-    public let color: Color
-    
-    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, percentage: Double, color: Color) {
-        self.id = id
-        self.activityName = activityName
-        self.emoji = emoji
-        self.totalHours = totalHours
-        self.percentage = percentage
-        self.color = color
-    }
-    
-    public var colorSwiftUI: Color {
-        color
-    }
-}
-
-/// Grouped bar chart data for monthly activity breakdown
-public struct MonthlyActivityGroup: Codable {
-    public let id: String
-    public let month: String
-    public let monthNumber: Int
-    public let activities: [ActivityBarData]
-    
-    public init(id: String = UUID().uuidString, month: String, monthNumber: Int, activities: [ActivityBarData]) {
-        self.id = id
-        self.month = month
-        self.monthNumber = monthNumber
-        self.activities = activities
-    }
-}
-
-public struct ActivityBarData: Codable {
-    public let id: String
-    public let activityName: String
-    public let emoji: String
-    public let totalHours: Double
-    public let color: Color
-    
-    public init(id: String = UUID().uuidString, activityName: String, emoji: String, totalHours: Double, color: Color) {
-        self.id = id
-        self.activityName = activityName
-        self.emoji = emoji
-        self.totalHours = totalHours
-        self.color = color
-    }
-}
-
-/// Monthly hour data for charts
-public struct MonthlyActivityHour: Codable {
-    public let id: String
-    public let month: String
-    public let monthNumber: Int
-    public let activityName: String
-    public let totalHours: Double
-    
-    public init(id: String = UUID().uuidString, month: String, monthNumber: Int, activityName: String, totalHours: Double) {
-        self.id = id
-        self.month = month
-        self.monthNumber = monthNumber
-        self.activityName = activityName
-        self.totalHours = totalHours
     }
 }
 
