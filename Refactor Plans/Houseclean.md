@@ -339,19 +339,6 @@ Both `ProjectsViewModel.swift` and `ActivityTypesViewModel.swift` have similar p
 
 ---
 
-## Next Steps
-
-1. **Start with ChartDataPreparer cleanup** (HIGH PRIORITY)
-2. **Create backup of current implementation**
-3. **Implement changes incrementally**
-4. **Test thoroughly at each step**
-5. **Update documentation as we go**
-6. **Plan Filter/Export system overhaul**
-7. **Address state management improvements**
-8. **Prepare dashboard for chart implementation**
-
----
-
 ## Future-Proofing Guidelines
 
 To ensure future code stays tidy and well-organized, here are guidelines for implementing yearly charts and other features:
