@@ -64,34 +64,16 @@ struct YearlyDashboardView: View {
                             }
                         },
                         rightTop: {
-                            // Project Distribution Chart - REMOVED
-                            // Keeping frame with placeholder text
-                            VStack {
-                                Text("Charts coming soon")
-                                    .font(Theme.Fonts.header)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                
-                                Text("Project distribution chart will be available soon")
-                                    .font(Theme.Fonts.body)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
+                            // Project Distribution Chart
+                            YearlyProjectBarChartView(
+                                data: chartDataPreparer.yearlyProjectTotals()
+                            )
                         },
                         rightBottom: {
-                            // Activity Distribution Chart - REMOVED
-                            // Keeping frame with placeholder text
-                            VStack {
-                                Text("Charts coming soon")
-                                    .font(Theme.Fonts.header)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                
-                                Text("Activity distribution chart will be available soon")
-                                    .font(Theme.Fonts.body)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
+                            // Activity Types Distribution Chart
+                            YearlyActivityTypeBarChartView(
+                                data: chartDataPreparer.yearlyActivityTypeTotals()
+                            )
                         }
                     )
                     .frame(maxHeight: sessionManager.activeSession != nil ? .infinity : nil) // Add responsive height when active session is present
@@ -111,19 +93,49 @@ struct YearlyDashboardView: View {
             loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            // Yearly charts not implemented yet - placeholder view only
+            // Update chart data when session starts
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            // Yearly charts not implemented yet - placeholder view only
+            // Update chart data when session ends
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
-            // Yearly charts not implemented yet - placeholder view only
+            // Update chart data when projects change
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
-            // Yearly charts not implemented yet - placeholder view only
+            // Update chart data when session data changes
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
-            // Yearly charts not implemented yet - placeholder view only
+            // Update chart data when project data changes
+            Task {
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+            }
         }
     }
 
@@ -131,8 +143,11 @@ struct YearlyDashboardView: View {
     private func loadData() {
         Task {
             await projectsViewModel.loadProjects()
-            // Yearly charts not implemented yet - placeholder view only
-            // chartDataPreparer.prepareYearlyData() removed - no yearly data preparation needed
+            await sessionManager.loadAllSessions()
+            chartDataPreparer.prepareAllTimeData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
         }
     }
     

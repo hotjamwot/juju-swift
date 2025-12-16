@@ -119,15 +119,14 @@ struct DashboardLayout: View {
                     ChartContainer(content: left)
                         .frame(width: availableWidth * Theme.DashboardLayout.yearlyLeftColumnRatio, height: availableHeight)
                     
-                    // Right Column: Stacked charts with flexible height allocation
+                    // Right Column: Stacked charts with explicit height allocation
+                    // Top chart gets 60% of right column height, bottom chart gets 40%
                     VStack(spacing: gap) {
                         ChartContainer(content: rightTop)
-                            .frame(maxWidth: .infinity)
-                            .layoutPriority(1) // Take available space
+                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.6)
                         
                         ChartContainer(content: rightBottom)
-                            .frame(maxWidth: .infinity)
-                            .layoutPriority(1) // Take available space
+                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.4)
                     }
                     .frame(width: availableWidth * Theme.DashboardLayout.yearlyRightColumnRatio, height: availableHeight)
                 }

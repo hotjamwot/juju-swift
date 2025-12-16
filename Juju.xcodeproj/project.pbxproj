@@ -17,6 +17,8 @@
 		665909702EE4798F007D1303 /* SidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096E2EE4798F007D1303 /* SidebarEditView.swift */; };
 		665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909712EE48F89007D1303 /* EmojiColorPickerView.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
+		667F765E2EF17EDA00C04ADA /* YearlyProjectBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */; };
+		667F76602EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */; };
 		6695BFBF2EE36CC300503CD7 /* EditorialEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6695BFBE2EE36CC300503CD7 /* EditorialEngine.swift */; };
 		66A30B0F2EEB001200C03DE4 /* InlineSelectionPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A30B0E2EEB001200C03DE4 /* InlineSelectionPopover.swift */; };
 		66A51B152EF02905007E2343 /* SessionStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A51B142EF02905007E2343 /* SessionStateManager.swift */; };
@@ -48,8 +50,6 @@
 		66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D02EEED25E00D06502 /* ProjectManager.swift */; };
 		66D9D0D32EEED4C500D06502 /* DataValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D22EEED4C500D06502 /* DataValidator.swift */; };
 		66D9D0D52EEED4F500D06502 /* ErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D42EEED4F500D06502 /* ErrorHandler.swift */; };
-		66D9D0D92EEEEE5200D06502 /* ActivityTypesBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D62EEEEE5100D06502 /* ActivityTypesBarChartView.swift */; };
-		66D9D0DA2EEEEE5200D06502 /* ProjectsBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D72EEEEE5100D06502 /* ProjectsBarChartView.swift */; };
 		66D9D0DB2EEEEE5200D06502 /* MonthlyActivityBreakdownChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D82EEEEE5100D06502 /* MonthlyActivityBreakdownChartView.swift */; };
 		66D9D0E32EEF065400D06502 /* DashboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0E22EEF065400D06502 /* DashboardLayout.swift */; };
 		66E746792EE3249200A353C1 /* ActivityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E746782EE3249200A353C1 /* ActivityType.swift */; };
@@ -81,6 +81,8 @@
 		6659096E2EE4798F007D1303 /* SidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarEditView.swift; sourceTree = "<group>"; };
 		665909712EE48F89007D1303 /* EmojiColorPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiColorPickerView.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
+		667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyProjectBarChartView.swift; sourceTree = "<group>"; };
+		667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyActivityTypeBarChartView.swift; sourceTree = "<group>"; };
 		6695BFBE2EE36CC300503CD7 /* EditorialEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditorialEngine.swift; sourceTree = "<group>"; };
 		66A30B0E2EEB001200C03DE4 /* InlineSelectionPopover.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InlineSelectionPopover.swift; sourceTree = "<group>"; };
 		66A51B142EF02905007E2343 /* SessionStateManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionStateManager.swift; sourceTree = "<group>"; };
@@ -114,8 +116,6 @@
 		66D9D0D02EEED25E00D06502 /* ProjectManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectManager.swift; sourceTree = "<group>"; };
 		66D9D0D22EEED4C500D06502 /* DataValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataValidator.swift; sourceTree = "<group>"; };
 		66D9D0D42EEED4F500D06502 /* ErrorHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
-		66D9D0D62EEEEE5100D06502 /* ActivityTypesBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesBarChartView.swift; sourceTree = "<group>"; };
-		66D9D0D72EEEEE5100D06502 /* ProjectsBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectsBarChartView.swift; sourceTree = "<group>"; };
 		66D9D0D82EEEEE5100D06502 /* MonthlyActivityBreakdownChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MonthlyActivityBreakdownChartView.swift; sourceTree = "<group>"; };
 		66D9D0E22EEF065400D06502 /* DashboardLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardLayout.swift; sourceTree = "<group>"; };
 		66E746782EE3249200A353C1 /* ActivityType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityType.swift; sourceTree = "<group>"; };
@@ -393,9 +393,9 @@
 		66F448322EEC9130008FA5DD /* Yearly */ = {
 			isa = PBXGroup;
 			children = (
-				66D9D0D62EEEEE5100D06502 /* ActivityTypesBarChartView.swift */,
+				667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */,
+				667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */,
 				66D9D0D82EEEEE5100D06502 /* MonthlyActivityBreakdownChartView.swift */,
-				66D9D0D72EEEEE5100D06502 /* ProjectsBarChartView.swift */,
 				66F448302EEC9130008FA5DD /* YearlyDashboardView.swift */,
 			);
 			path = Yearly;
@@ -510,7 +510,6 @@
 				66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
-				66D9D0DA2EEEEE5200D06502 /* ProjectsBarChartView.swift in Sources */,
 				66F448362EEC9131008FA5DD /* SessionCalendarChartView.swift in Sources */,
 				66A51B1F2EF03779007E2343 /* BottomFilterBar.swift in Sources */,
 				66D9D0E32EEF065400D06502 /* DashboardLayout.swift in Sources */,
@@ -523,13 +522,14 @@
 				66B148762EA8EA4B00E9BB4A /* NotesManager.swift in Sources */,
 				66B1484D2EA8EA4B00E9BB4A /* ChartDataPreparer.swift in Sources */,
 				66B148502EA8EA4B00E9BB4A /* SessionManager.swift in Sources */,
+				667F765E2EF17EDA00C04ADA /* YearlyProjectBarChartView.swift in Sources */,
 				665909702EE4798F007D1303 /* SidebarEditView.swift in Sources */,
-				66D9D0D92EEEEE5200D06502 /* ActivityTypesBarChartView.swift in Sources */,
 				66EF3E7D2EC5F2C300A6952E /* SessionModels.swift in Sources */,
 				66B148522EA8EA4B00E9BB4A /* ChartModels.swift in Sources */,
 				66F4483E2EEC9131008FA5DD /* ActiveSessionStatusView.swift in Sources */,
 				66F448462EEC9FDF008FA5DD /* WeeklyEditorialView.swift in Sources */,
 				66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */,
+				667F76602EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift in Sources */,
 				66F448422EEC9164008FA5DD /* DashboardRootView.swift in Sources */,
 				66A51B172EF0290E007E2343 /* SessionCSVManager.swift in Sources */,
 				665909672EE47949007D1303 /* SidebarStateManager.swift in Sources */,

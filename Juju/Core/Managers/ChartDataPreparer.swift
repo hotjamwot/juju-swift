@@ -153,6 +153,16 @@ final class ChartDataPreparer: ObservableObject {
         
         return DateInterval(start: mondayStart, end: sundayEnd)
     }
+    
+    // MARK: - Yearly Date Intervals
+    
+    private var currentYearInterval: DateInterval {
+        let today = Date()
+        guard let year = calendar.dateInterval(of: .year, for: today) else {
+            return DateInterval(start: today, end: today)
+        }
+        return year
+    }
 
 
     /// Current week activity totals for activity bubbles
@@ -213,6 +223,125 @@ final class ChartDataPreparer: ObservableObject {
     }
 
 
+    // MARK: - Yearly Project Data
+    
+    /// Prepare yearly project data for current year only
+    /// 
+    /// USE CASE: YearlyProjectBarChartView
+    /// OUTPUT: Array of YearlyProjectChartData with project names, emojis, colors, and percentages
+    /// PERFORMANCE: Filters sessions to current year only for optimal performance
+    /// 
+    /// - Returns: YearlyProjectChartData array sorted by total hours (descending)
+    func yearlyProjectTotals() -> [YearlyProjectChartData] {
+        let yearlySessions = viewModel.sessions.filter { session in
+            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+        }
+        return aggregateYearlyProjectTotals(from: yearlySessions)
+    }
+    
+    /// Aggregates yearly project totals with optimized lookups
+    /// 
+    /// PERFORMANCE: Pre-builds project lookup dictionary for O(1) access
+    /// MAINTENANCE: Reuses existing project color system for consistency
+    /// FILTERING: Only includes active projects (archived: false)
+    /// 
+    /// - Parameter sessions: Filtered sessions for current year
+    /// - Returns: Array of YearlyProjectChartData sorted by total hours
+    private func aggregateYearlyProjectTotals(from sessions: [SessionRecord]) -> [YearlyProjectChartData] {
+        // Pre-build project lookup dictionary for O(1) access, filtering out archived projects
+        let activeProjects = viewModel.projects.filter { !$0.archived }
+        let projectLookup = Dictionary(uniqueKeysWithValues: 
+            activeProjects.map { ($0.name, $0) }
+        )
+        
+        var totals: [String: Double] = [:]
+        
+        for session in sessions {
+            // Only include sessions for active projects
+            guard projectLookup[session.projectName] != nil else { continue }
+            
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            totals[session.projectName, default: 0] += hours
+        }
+        
+        let totalHours = totals.values.reduce(0, +)
+        return totals.compactMap { (projectName: String, hours: Double) in
+            // Skip projects with zero hours
+            guard hours > 0 else { return nil }
+            let project = projectLookup[projectName] ??
+                         Project(name: projectName, color: "#999999", emoji: "📁")
+            return YearlyProjectChartData(
+                projectName: projectName,
+                color: project.color,
+                emoji: project.emoji,
+                totalHours: hours,
+                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
+            )
+        }.sorted { $0.totalHours > $1.totalHours }
+    }
+    
+    // MARK: - Yearly Activity Types Data
+    
+    /// Prepare yearly activity type data for current year only
+    /// 
+    /// USE CASE: YearlyActivityTypeBarChartView
+    /// OUTPUT: Array of YearlyActivityTypeChartData with activity names, emojis, and percentages
+    /// PERFORMANCE: Filters sessions to current year only for optimal performance
+    /// FILTERING: Only includes active (non-archived) activity types
+    /// 
+    /// - Returns: YearlyActivityTypeChartData array sorted by total hours (descending)
+    func yearlyActivityTypeTotals() -> [YearlyActivityTypeChartData] {
+        let yearlySessions = viewModel.sessions.filter { session in
+            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+        }
+        return aggregateYearlyActivityTypeTotals(from: yearlySessions)
+    }
+    
+    /// Aggregates yearly activity type totals with optimized lookups
+    /// 
+    /// PERFORMANCE: Pre-builds activity type lookup dictionary for O(1) access
+    /// MAINTENANCE: Reuses existing activity type system for consistency
+    /// FILTERING: Only includes active (non-archived) activity types
+    /// 
+    /// - Parameter sessions: Filtered sessions for current year
+    /// - Returns: Array of YearlyActivityTypeChartData sorted by total hours
+    private func aggregateYearlyActivityTypeTotals(from sessions: [SessionRecord]) -> [YearlyActivityTypeChartData] {
+        // Pre-build activity type lookup dictionary for O(1) access, filtering out archived activity types
+        let activityTypeManager = ActivityTypeManager.shared
+        let activeActivityTypes = activityTypeManager.getActiveActivityTypes()
+        let activityLookup = Dictionary(uniqueKeysWithValues: 
+            activeActivityTypes.map { ($0.id, $0) }
+        )
+        
+        var totals: [String: Double] = [:]
+        
+        for session in sessions {
+            let activityID = session.activityTypeID ?? "uncategorized"
+            
+            // Only include sessions for active activity types
+            guard activityLookup[activityID] != nil else { continue }
+            
+            // Ensure duration is positive
+            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            totals[activityID, default: 0] += hours
+        }
+        
+        let totalHours = totals.values.reduce(0, +)
+        return totals.compactMap { (activityID: String, hours: Double) in
+            // Skip activity types with zero hours
+            guard hours > 0 else { return nil }
+            let activityType = activityLookup[activityID] ??
+                              activityTypeManager.getUncategorizedActivityType()
+            return YearlyActivityTypeChartData(
+                activityName: activityType.name,
+                emoji: activityType.emoji,
+                totalHours: hours,
+                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
+            )
+        }.sorted { $0.totalHours > $1.totalHours }
+    }
+    
     // Accessors for convenience in views
     var projects: [Project] { viewModel.projects }
     var sessions: [SessionRecord] { viewModel.sessions }

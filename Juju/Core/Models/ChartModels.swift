@@ -138,3 +138,64 @@ struct MonthlyActivityHour: Identifiable {
     let activityName: String
     let totalHours: Double
 }
+
+// MARK: - Yearly Chart Data Models
+
+/// Yearly project chart data model for project distribution chart
+struct YearlyProjectChartData: Identifiable {
+    let id = UUID()
+    let projectName: String
+    let color: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+    
+    var colorSwiftUI: Color {
+        Color(hex: color)
+    }
+}
+
+/// Yearly project data point for individual data points
+struct YearlyProjectDataPoint: Identifiable {
+    let id = UUID()
+    let projectName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}
+
+/// Yearly activity type chart data model for activity types distribution chart
+struct YearlyActivityTypeChartData: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}
+
+/// Yearly activity type data point for individual data points
+struct YearlyActivityTypeDataPoint: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}
+
+/// Yearly monthly chart data model for monthly activity breakdown chart
+struct YearlyMonthlyChartData: Identifiable {
+    let id = UUID()
+    let month: String
+    let monthNumber: Int
+    let activityBreakdown: [YearlyMonthlyActivityDataPoint]
+    let totalHours: Double
+}
+
+/// Yearly monthly activity data point for individual activity breakdowns within months
+struct YearlyMonthlyActivityDataPoint: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}
