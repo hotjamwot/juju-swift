@@ -217,8 +217,8 @@ class SessionManager: ObservableObject {
         dataManager.updateSession(id: id, field: field, value: value)
     }
     
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil) -> Bool {
-        let result = dataManager.updateSessionFull(id: id, date: date, startTime: startTime, endTime: endTime, projectName: projectName, notes: notes, mood: mood, activityTypeID: activityTypeID, projectPhaseID: projectPhaseID, milestoneText: milestoneText)
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
+        let result = dataManager.updateSessionFull(id: id, date: date, startTime: startTime, endTime: endTime, projectName: projectName, notes: notes, mood: mood, activityTypeID: activityTypeID, projectPhaseID: projectPhaseID, milestoneText: milestoneText, projectID: projectID)
         
         // Ensure the main manager's lastUpdated is also updated
         if result {

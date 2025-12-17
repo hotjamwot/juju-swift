@@ -507,8 +507,9 @@ class ProjectManager {
         
         var updatedCount = 0
         
-        // Update each session to use the new project name
+        // Update each session to use the new project name and correct projectID
         for session in sessionsToUpdate {
+            // Use the SessionManager's updateSessionFull method with correct argument order
             let success = sessionManager.updateSessionFull(
                 id: session.id,
                 date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
@@ -519,7 +520,8 @@ class ProjectManager {
                 mood: session.mood,
                 activityTypeID: session.activityTypeID,
                 projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText
+                milestoneText: session.milestoneText,
+                projectID: projectID // Pass the correct projectID as the last parameter
             )
             
             if success {

@@ -399,17 +399,25 @@ class SessionDataManager: ObservableObject {
         return false
     }
     
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil) -> Bool {
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
         guard let session = allSessions.first(where: { $0.id == id }) else {
             return false
         }
 
-        // Get the projectID for the new project name
+        // Use the provided projectID if available, otherwise look it up by name
         let projects = ProjectManager.shared.loadProjects()
-        let newProjectID = projects.first { $0.name == projectName }?.id
+        let newProjectID: String
         
-        // Validate that we found a project with the given name
-        guard let newProjectID = newProjectID else {
+        if let providedProjectID = projectID {
+            // Use the provided projectID directly (safer for migrations)
+            newProjectID = providedProjectID
+        } else {
+            // Look up projectID by name (legacy behavior)
+            newProjectID = projects.first { $0.name == projectName }?.id ?? session.projectID ?? ""
+        }
+        
+        // Validate that we found a project with the given name or ID
+        guard !newProjectID.isEmpty else {
             return false
         }
         
