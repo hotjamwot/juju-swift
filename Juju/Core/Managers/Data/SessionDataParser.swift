@@ -86,7 +86,7 @@ class SessionDataParser {
                 // Extract fields based on new format
                 // Note: projectName is kept for backward compatibility, projectID is source of truth
                 let projectName = safeFields.count > 3 ? (safeFields[3].isEmpty ? "" : cleanField(safeFields[3])) : ""
-                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? "unknown" : cleanField(safeFields[4])) : "unknown"
+                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? nil : cleanField(safeFields[4])) : nil
                 let activityTypeID = hasNewFields && safeFields.count > 5 ? (safeFields[5].isEmpty ? nil : cleanField(safeFields[5])) : nil
                 let projectPhaseID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
                 let milestoneText = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
@@ -94,6 +94,9 @@ class SessionDataParser {
                 let moodIndex = hasNewFields ? 9 : 5
                 let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
                 let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
                 
                 // Calculate duration from start and end dates
                 let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
@@ -104,7 +107,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -122,7 +125,7 @@ class SessionDataParser {
                 
                 // Extract fields based on format
                 let projectName = safeFields.count > 5 ? cleanField(safeFields[5]) : ""
-                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? "unknown" : cleanField(safeFields[6])) : "unknown"
+                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
                 let activityTypeID = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
                 let projectPhaseID = hasNewFields && safeFields.count > 8 ? (safeFields[8].isEmpty ? nil : cleanField(safeFields[8])) : nil
                 let milestoneText = hasNewFields && safeFields.count > 9 ? (safeFields[9].isEmpty ? nil : cleanField(safeFields[9])) : nil
@@ -130,6 +133,9 @@ class SessionDataParser {
                 let moodIndex = hasNewFields ? 11 : 7
                 let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
                 let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
                 
                 // For legacy format, we need to parse start and end times to create proper Date objects
                 let startTime = cleanField(safeFields[2])
@@ -146,7 +152,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -199,7 +205,7 @@ class SessionDataParser {
                 let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
                 
                 // Extract new fields if available
-                let projectID = hasNewFields && fieldCount > 4 && fields.count > 4 ? (fields[4].isEmpty ? "unknown" : cleanField(fields[4])) : "unknown"
+                let projectID = hasNewFields && fieldCount > 4 && fields.count > 4 ? (fields[4].isEmpty ? nil : cleanField(fields[4])) : nil
                 let activityTypeID = hasNewFields && fieldCount > 5 && fields.count > 5 ? (fields[5].isEmpty ? nil : cleanField(fields[5])) : nil
                 let projectPhaseID = hasNewFields && fieldCount > 6 && fields.count > 6 ? (fields[6].isEmpty ? nil : cleanField(fields[6])) : nil
                 let milestoneText = hasNewFields && fieldCount > 7 && fields.count > 7 ? (fields[7].isEmpty ? nil : cleanField(fields[7])) : nil
@@ -211,6 +217,9 @@ class SessionDataParser {
                 let moodStr = (moodIndex < fieldCount) ? fields[moodIndex] : ""
                 let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
                 
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
+                
                 // Calculate duration from start and end dates
                 let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
                 
@@ -220,7 +229,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -251,7 +260,7 @@ class SessionDataParser {
                 let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
                 
                 // Extract new fields if available
-                let projectID = hasNewFields && fieldCount > 6 ? (fields[6].isEmpty ? "unknown" : cleanField(fields[6])) : "unknown"
+                let projectID = hasNewFields && fieldCount > 6 ? (fields[6].isEmpty ? nil : cleanField(fields[6])) : nil
                 let activityTypeID = hasNewFields && fieldCount > 7 ? (fields[7].isEmpty ? nil : cleanField(fields[7])) : nil
                 let projectPhaseID = hasNewFields && fieldCount > 8 ? (fields[8].isEmpty ? nil : cleanField(fields[8])) : nil
                 let milestoneText = hasNewFields && fieldCount > 9 ? (fields[9].isEmpty ? nil : cleanField(fields[9])) : nil
@@ -263,6 +272,9 @@ class SessionDataParser {
                 let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
                 let durationMinutes = Int(durationStr) ?? 0
                 
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
+                
                 // For legacy format, parse start and end times to create proper Date objects
                 let startDate = combineDateWithTimeString(date, timeString: startTime)
                 let endDate = combineDateWithTimeString(date, timeString: endTime)
@@ -273,7 +285,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -359,7 +371,7 @@ class SessionDataParser {
                 
                 // Extract fields based on new format
                 let projectName = safeFields.count > 3 ? (safeFields[3].isEmpty ? "" : cleanField(safeFields[3])) : ""
-                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? "unknown" : cleanField(safeFields[4])) : "unknown"
+                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? nil : cleanField(safeFields[4])) : nil
                 let activityTypeID = hasNewFields && safeFields.count > 5 ? (safeFields[5].isEmpty ? nil : cleanField(safeFields[5])) : nil
                 let projectPhaseID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
                 let milestoneText = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
@@ -367,6 +379,9 @@ class SessionDataParser {
                 let moodIndex = hasNewFields ? 9 : 5
                 let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
                 let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
                 
                 // Calculate duration from start and end dates
                 let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
@@ -377,7 +392,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -400,7 +415,7 @@ class SessionDataParser {
                 
                 // Extract fields based on format
                 let projectName = safeFields.count > 5 ? cleanField(safeFields[5]) : ""
-                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? "unknown" : cleanField(safeFields[6])) : "unknown"
+                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
                 let activityTypeID = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
                 let projectPhaseID = hasNewFields && safeFields.count > 8 ? (safeFields[8].isEmpty ? nil : cleanField(safeFields[8])) : nil
                 let milestoneText = hasNewFields && safeFields.count > 9 ? (safeFields[9].isEmpty ? nil : cleanField(safeFields[9])) : nil
@@ -408,6 +423,9 @@ class SessionDataParser {
                 let moodIndex = hasNewFields ? 11 : 7
                 let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
                 let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                
+                // Resolve project ID from project name if projectID is missing
+                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
                 
                 // For legacy format, parse start and end times to create proper Date objects
                 let startTime = cleanField(safeFields[2])
@@ -421,7 +439,7 @@ class SessionDataParser {
                     startDate: startDate,
                     endDate: endDate,
                     projectName: projectName,
-                    projectID: projectID,
+                    projectID: resolvedProjectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -434,6 +452,31 @@ class SessionDataParser {
         }
         
         return (sessions, needsRewrite)
+    }
+    
+    // MARK: - Project ID Resolution
+    
+    /// Resolve project ID from project name when projectID is missing or empty
+    /// This prevents sessions from getting "unknown" project IDs during CSV parsing
+    private func resolveProjectID(from projectID: String?, projectName: String) -> String {
+        // If we already have a valid projectID, use it
+        if let projectID = projectID, !projectID.isEmpty {
+            return projectID
+        }
+        
+        // If we have a project name but no projectID, try to resolve it
+        if !projectName.isEmpty {
+            let projectManager = ProjectManager.shared
+            let projects = projectManager.loadProjects()
+            
+            // Find the project by name (case-insensitive)
+            if let project = projects.first(where: { $0.name.lowercased() == projectName.lowercased() }) {
+                return project.id
+            }
+        }
+        
+        // Fallback: return "unknown" for sessions that can't be resolved
+        return "unknown"
     }
     
     // MARK: - CSV Parsing Optimizations
