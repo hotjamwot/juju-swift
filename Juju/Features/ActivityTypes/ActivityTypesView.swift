@@ -15,24 +15,6 @@ struct ActivityTypesView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
-                    
-                    Button {
-                        // Create a new activity type instance with proper ID
-                        let newActivityType = ActivityType(
-                            id: UUID().uuidString,
-                            name: "",
-                            emoji: "⚡",
-                            description: "",
-                            archived: false
-                        )
-                        sidebarState.show(.newActivityType(newActivityType))
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus")
-                            Text("Add Activity Type")
-                        }
-                    }
-                    .buttonStyle(.primary)
                 }
             }
             .padding(.vertical, Theme.spacingLarge)
@@ -62,26 +44,6 @@ struct ActivityTypesView: View {
                             }
                         }
                         
-                        // Archive toggle button (centered, part of scrollable content)
-                        Button(action: {
-                            viewModel.showArchivedActivityTypes.toggle()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
-                                Text(viewModel.showArchivedActivityTypes ? "Hide Archived" : "Show Archived")
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Theme.Colors.divider.opacity(0.3))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
-                        .accessibilityLabel("Toggle Archived Activity Types")
-                        .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        
                         // Archived Activity Types (only show if toggle is enabled)
                         if shouldShowArchived {
                             ForEach(viewModel.archivedActivityTypes) { activityType in
@@ -98,6 +60,56 @@ struct ActivityTypesView: View {
                 }
             }
         }
+        .overlay(
+            HStack(spacing: Theme.spacingSmall) {
+                // Add Activity Type button with accent color
+                Button {
+                    // Create a new activity type instance with proper ID
+                    let newActivityType = ActivityType(
+                        id: UUID().uuidString,
+                        name: "",
+                        emoji: "⚡",
+                        description: "",
+                        archived: false
+                    )
+                    sidebarState.show(.newActivityType(newActivityType))
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                        Text("Add")
+                    }
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Theme.Colors.accentColor)
+                    .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .pointingHandOnHover()
+                .accessibilityLabel("Add Activity Type")
+                .accessibilityHint("Creates a new activity type")
+                
+                // Archive toggle button
+                Button(action: {
+                    viewModel.showArchivedActivityTypes.toggle()
+                }) {
+                    Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .frame(width: 32, height: 32)
+                        .background(Theme.Colors.divider.opacity(0.3))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .pointingHandOnHover()
+                .accessibilityLabel(viewModel.showArchivedActivityTypes ? "Hide Archived Activity Types" : "Show Archived Activity Types")
+                .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
+            }
+            .padding(.bottom, Theme.spacingLarge)
+            .padding(.leading, Theme.spacingLarge),
+            alignment: .bottomLeading
+        )
         .background(Theme.Colors.background)
     }
 }

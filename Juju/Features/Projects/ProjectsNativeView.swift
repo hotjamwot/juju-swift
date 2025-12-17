@@ -18,26 +18,6 @@ struct ProjectsNativeView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
-                    
-                    Button {
-                        // Create a new project instance with empty ID to indicate it's new
-                        let newProject = Project(
-                            id: "",
-                            name: "",
-                            color: "#007AFF",
-                            about: nil,
-                            order: 0,
-                            emoji: "📝",
-                            phases: []
-                        )
-                        sidebarState.show(.newProject(newProject))
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus")
-                            Text("Add Project")
-                        }
-                    }
-                    .buttonStyle(.primary)
                 }
             }
             .padding(.vertical, Theme.spacingLarge)
@@ -67,26 +47,6 @@ struct ProjectsNativeView: View {
                             }
                         }
                         
-                        // Archive toggle button (centered, part of scrollable content)
-                        Button(action: {
-                            viewModel.showArchivedProjects.toggle()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
-                                Text(viewModel.showArchivedProjects ? "Hide Archived" : "Show Archived")
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Theme.Colors.divider.opacity(0.3))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
-                        .accessibilityLabel("Toggle Archived Projects")
-                        .accessibilityHint(viewModel.showArchivedProjects ? "Hides archived projects" : "Shows archived projects")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        
                         // Archived Projects (only show if toggle is enabled)
                         if shouldShowArchived {
                             ForEach(viewModel.archivedProjects) { project in
@@ -103,6 +63,58 @@ struct ProjectsNativeView: View {
                 }
             }
         }
+        .overlay(
+            HStack(spacing: Theme.spacingSmall) {
+                // Add Project button with accent color
+                Button {
+                    // Create a new project instance with empty ID to indicate it's new
+                    let newProject = Project(
+                        id: "",
+                        name: "",
+                        color: "#007AFF",
+                        about: nil,
+                        order: 0,
+                        emoji: "📝",
+                        phases: []
+                    )
+                    sidebarState.show(.newProject(newProject))
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                        Text("Add")
+                    }
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Theme.Colors.accentColor)
+                    .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .pointingHandOnHover()
+                .accessibilityLabel("Add Project")
+                .accessibilityHint("Creates a new project")
+                
+                // Archive toggle button
+                Button(action: {
+                    viewModel.showArchivedProjects.toggle()
+                }) {
+                    Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .frame(width: 32, height: 32)
+                        .background(Theme.Colors.divider.opacity(0.3))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .pointingHandOnHover()
+                .accessibilityLabel(viewModel.showArchivedProjects ? "Hide Archived Projects" : "Show Archived Projects")
+                .accessibilityHint(viewModel.showArchivedProjects ? "Hides archived projects" : "Shows archived projects")
+            }
+            .padding(.bottom, Theme.spacingLarge)
+            .padding(.leading, Theme.spacingLarge),
+            alignment: .bottomLeading
+        )
         .background(Theme.Colors.background)
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             // Refresh projects when they change

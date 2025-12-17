@@ -78,10 +78,11 @@ class DataValidator {
         }
         
         // Validate activity type reference (if provided)
+        // Note: Sessions can reference archived activity types - this preserves historical data
         if let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty {
             let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
-            guard activityTypes.contains(where: { $0.id == activityTypeID && !$0.archived }) else {
-                return .invalid(reason: "Session references non-existent or archived activity type: \(activityTypeID)")
+            guard activityTypes.contains(where: { $0.id == activityTypeID }) else {
+                return .invalid(reason: "Session references non-existent activity type: \(activityTypeID)")
             }
         }
         
@@ -330,14 +331,14 @@ class DataValidator {
     
     /// Quick check if an activity type ID is valid
     /// - Parameter activityTypeID: The activity type ID to check
-    /// - Returns: True if the activity type ID is valid and not archived
+    /// - Returns: True if the activity type ID exists (including archived)
     func isValidActivityTypeID(_ activityTypeID: String?) -> Bool {
         guard let activityTypeID = activityTypeID, !activityTypeID.isEmpty else {
             return false
         }
         
         let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
-        return activityTypes.contains { $0.id == activityTypeID && !$0.archived }
+        return activityTypes.contains { $0.id == activityTypeID }
     }
     
     /// Quick check if a phase ID belongs to a project
