@@ -76,8 +76,9 @@ struct LiveTimerView: View {
     
     init(session: SessionRecord) {
         self.session = session
-        // Convert initial duration to seconds
-        self._liveDurationSeconds = State(initialValue: session.durationMinutes * 60)
+        // Calculate initial duration using DurationCalculator
+        let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+        self._liveDurationSeconds = State(initialValue: durationMinutes * 60)
     }
     
     var body: some View {
@@ -96,10 +97,9 @@ struct LiveTimerView: View {
         stopTimer() // Ensure no duplicate timers
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if let startTime = session.startDateTime {
-                let durationSeconds = Int(Date().timeIntervalSince(startTime))
-                liveDurationSeconds = durationSeconds
-            }
+            let startTime = session.startDate
+            let durationSeconds = Int(Date().timeIntervalSince(startTime))
+            liveDurationSeconds = durationSeconds
         }
     }
     

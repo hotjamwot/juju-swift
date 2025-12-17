@@ -67,7 +67,8 @@ class SessionCSVManager {
     /// Read content from a year-based file
     func readFromYearFile(for year: Int) async throws -> String {
         let fileURL = getDataFileURL(for: year)
-        return try await fileManager.readFromFile(fileURL)
+        let content = try await fileManager.readFromFile(fileURL)
+        return content
     }
     
     /// Get all available years with data files
@@ -155,40 +156,9 @@ class SessionCSVManager {
     }
     
     private func parseCSVLine(_ line: String) -> [String] {
-        var fields: [String] = []
-        var currentField = ""
-        var inQuotes = false
-        var i = 0
-        
-        while i < line.count {
-            let char = line[line.index(line.startIndex, offsetBy: i)]
-            
-            if char == "\"" {
-                if inQuotes {
-                    // Check for escaped quote
-                    if i + 1 < line.count && line[line.index(line.startIndex, offsetBy: i + 1)] == "\"" {
-                        currentField += "\""
-                        i += 1 // Skip next quote
-                    } else {
-                        inQuotes = false
-                    }
-                } else {
-                    inQuotes = true
-                }
-            } else if char == "," && !inQuotes {
-                fields.append(currentField.trimmingCharacters(in: .whitespacesAndNewlines))
-                currentField = ""
-            } else {
-                currentField += String(char)
-            }
-            
-            i += 1
-        }
-        
-        // Add the last field
-        fields.append(currentField.trimmingCharacters(in: .whitespacesAndNewlines))
-        
-        return fields
+        // Use the SessionDataParser's optimized method instead of duplicating logic
+        let parser = SessionDataParser()
+        return parser.parseCSVLineOptimized(line)
     }
     
     // MARK: - CSV Helpers

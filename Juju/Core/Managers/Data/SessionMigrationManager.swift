@@ -86,11 +86,21 @@ class SessionMigrationManager {
                 let projectIDSuccess = sessionManager.updateSession(id: session.id, field: "project_id", value: projectID)
                 
                 // Then update other fields if needed (this will preserve the projectID)
+                // Convert Date objects to strings for the legacy updateSessionFull method
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let timeFormatter = DateFormatter()
+                timeFormatter.dateFormat = "HH:mm:ss"
+                
+                let dateStr = dateFormatter.string(from: session.startDate)
+                let startTimeStr = timeFormatter.string(from: session.startDate)
+                let endTimeStr = timeFormatter.string(from: session.endDate)
+                
                 let otherFieldsSuccess = sessionManager.updateSessionFull(
                     id: session.id,
-                    date: session.date,
-                    startTime: session.startTime,
-                    endTime: session.endTime,
+                    date: dateStr,
+                    startTime: startTimeStr,
+                    endTime: endTimeStr,
                     projectName: session.projectName,
                     notes: session.notes,
                     mood: session.mood,
@@ -126,11 +136,21 @@ class SessionMigrationManager {
                 let projectIDSuccess = sessionManager.updateSession(id: session.id, field: "project_id", value: newProject.id)
                 
                 // Then update other fields if needed (this will preserve the projectID)
+                // Convert Date objects to strings for the legacy updateSessionFull method
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let timeFormatter = DateFormatter()
+                timeFormatter.dateFormat = "HH:mm:ss"
+                
+                let dateStr = dateFormatter.string(from: session.startDate)
+                let startTimeStr = timeFormatter.string(from: session.startDate)
+                let endTimeStr = timeFormatter.string(from: session.endDate)
+                
                 let otherFieldsSuccess = sessionManager.updateSessionFull(
                     id: session.id,
-                    date: session.date,
-                    startTime: session.startTime,
-                    endTime: session.endTime,
+                    date: dateStr,
+                    startTime: startTimeStr,
+                    endTime: endTimeStr,
                     projectName: session.projectName,
                     notes: session.notes,
                     mood: session.mood,
@@ -198,10 +218,7 @@ class SessionMigrationManager {
             var sessionsByYear: [Int: [SessionRecord]] = [:]
             
             for session in allSessions {
-                guard let startDate = session.startDateTime else {
-                    print("⚠️ Skipping session \(session.id) - invalid start date")
-                    continue
-                }
+                let startDate = session.startDate
                 
                 let year = Calendar.current.component(.year, from: startDate)
                 if sessionsByYear[year] == nil {

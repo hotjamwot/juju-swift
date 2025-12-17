@@ -46,9 +46,7 @@ class SessionDataManager: ObservableObject {
     // MARK: - Session Loading
     
     func loadAllSessions() async -> [SessionRecord] {
-        print("[SessionDataManager] loadAllSessions called")
         let availableYears = csvManager.getAvailableYears()
-        print("[SessionDataManager] Available years: \(availableYears)")
         
         var allSessions: [SessionRecord] = []
         
@@ -60,15 +58,15 @@ class SessionDataManager: ObservableObject {
                         guard let self = self else { return [] }
                         
                         do {
-                            print("[SessionDataManager] Loading sessions from \(year)")
                             let content = try await self.csvManager.readFromYearFile(for: year)
+                            
                             let lines = content.components(separatedBy: .newlines)
                             guard let headerLine = lines.first, !headerLine.isEmpty else {
-                                print("[SessionDataManager] No header line found for \(year)")
                                 return []
                             }
                             
                             let hasIdColumn = headerLine.lowercased().contains("id")
+                            
                             let (sessions, needsRewrite) = self.parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
                             
                             // If rewrite needed, save back to the year file
@@ -77,10 +75,8 @@ class SessionDataManager: ObservableObject {
                                 try await self.csvManager.writeToYearFile(csvContent, for: year)
                             }
                             
-                            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(year)")
                             return sessions
                         } catch {
-                            print("❌ Error loading sessions from \(year)-data.csv: \(error)")
                             return []
                         }
                     }
@@ -94,26 +90,40 @@ class SessionDataManager: ObservableObject {
             }
             
             // Sort by date descending
-            allSessions = loadedSessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            let sortedSessions = loadedSessions.sorted { (session1: SessionRecord, session2: SessionRecord) in
+                session1.startDate > session2.startDate
+            }
             
-            print("[SessionDataManager] Total sessions loaded: \(allSessions.count)")
-            self.allSessions = allSessions
-            self.lastUpdated = Date()
-            return allSessions
+            // Update the UI on main thread
+            await MainActor.run { [weak self] in
+                self?.allSessions = sortedSessions
+                self?.lastUpdated = Date()
+                
+                // Post notification that sessions have been loaded
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("sessionsDidLoad"),
+                    object: nil,
+                    userInfo: ["sessionCount": sortedSessions.count]
+                )
+            }
+            
+            return sortedSessions
         }
     
         // Fallback to legacy data.csv file if it exists
         if let legacyURL = dataFileURL, FileManager.default.fileExists(atPath: legacyURL.path) {
-            print("[SessionDataManager] Falling back to legacy file")
             let sessions = loadSessionsFromLegacyFile(legacyURL)
-            self.allSessions = sessions
-            self.lastUpdated = Date()
+            await MainActor.run { [weak self] in
+                self?.allSessions = sessions
+                self?.lastUpdated = Date()
+            }
             return sessions
         }
     
-        print("[SessionDataManager] No sessions found")
-        self.allSessions = []
-        self.lastUpdated = Date()
+        await MainActor.run { [weak self] in
+            self?.allSessions = []
+            self?.lastUpdated = Date()
+        }
         return []
     }
     
@@ -137,6 +147,13 @@ class SessionDataManager: ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 self?.allSessions = sessions
                 self?.lastUpdated = Date()
+                
+                // Post notification that sessions have been loaded
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("sessionsDidLoad"),
+                    object: nil,
+                    userInfo: ["sessionCount": sessions.count]
+                )
             }
             
             return sessions
@@ -201,12 +218,21 @@ class SessionDataManager: ObservableObject {
         }
         
         // Sort by date descending
-        let sortedSessions = loadedSessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+        let sortedSessions = loadedSessions.sorted { (session1: SessionRecord, session2: SessionRecord) in
+            session1.startDate > session2.startDate
+        }
         
         // Update the UI on main thread
         await MainActor.run { [weak self] in
             self?.allSessions = sortedSessions
             self?.lastUpdated = Date()
+            
+            // Post notification that sessions have been loaded
+            NotificationCenter.default.post(
+                name: NSNotification.Name("sessionsDidLoad"),
+                object: nil,
+                userInfo: ["sessionCount": sortedSessions.count]
+            )
         }
         
         // Trigger background session counting for all projects
@@ -230,11 +256,20 @@ class SessionDataManager: ObservableObject {
             let hasIdColumn = headerLine.lowercased().contains("id")
             
             let sessions = parser.parseSessionsFromCSVForDateRange(content, hasIdColumn: hasIdColumn, dateInterval: dateInterval)
-            let sortedSessions = sessions.sorted { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            let sortedSessions = sessions.sorted { (session1: SessionRecord, session2: SessionRecord) in
+                session1.startDate > session2.startDate
+            }
             
             DispatchQueue.main.async { [weak self] in
                 self?.allSessions = sortedSessions
                 self?.lastUpdated = Date()
+                
+                // Post notification that sessions have been loaded
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("sessionsDidLoad"),
+                    object: nil,
+                    userInfo: ["sessionCount": sortedSessions.count]
+                )
             }
             
             return sortedSessions
@@ -247,24 +282,20 @@ class SessionDataManager: ObservableObject {
     /// Load only current year sessions for dashboard performance
     func loadCurrentYearSessions() async -> [SessionRecord] {
         let currentYear = Calendar.current.component(.year, from: Date())
-        print("[SessionDataManager] Loading sessions for current year: \(currentYear)")
         
         var allSessions: [SessionRecord] = []
         
         // Only load current year sessions
         do {
-            print("[SessionDataManager] Loading sessions from \(currentYear)")
             let content = try await csvManager.readFromYearFile(for: currentYear)
             let lines = content.components(separatedBy: .newlines)
             guard let headerLine = lines.first, !headerLine.isEmpty else {
-                print("[SessionDataManager] No header line found for \(currentYear)")
                 return []
             }
             
             let hasIdColumn = headerLine.lowercased().contains("id")
             let (sessions, needsRewrite) = parser.parseSessionsFromCSV(content, hasIdColumn: hasIdColumn)
             
-            print("[SessionDataManager] Parsed \(sessions.count) sessions from \(currentYear)")
             allSessions.append(contentsOf: sessions)
             
             // If rewrite needed, save back to the year file
@@ -274,14 +305,22 @@ class SessionDataManager: ObservableObject {
             }
             
             // Sort by date descending
-            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            allSessions.sort { (session1: SessionRecord, session2: SessionRecord) in
+                session1.startDate > session2.startDate
+            }
             
-            print("[SessionDataManager] Current year sessions loaded: \(allSessions.count)")
             self.allSessions = allSessions
             self.lastUpdated = Date()
+            
+            // Post notification that sessions have been loaded
+            NotificationCenter.default.post(
+                name: NSNotification.Name("sessionsDidLoad"),
+                object: nil,
+                userInfo: ["sessionCount": allSessions.count]
+            )
+            
             return allSessions
         } catch {
-            print("❌ Error loading sessions from \(currentYear)-data.csv: \(error)")
             return []
         }
     }
@@ -290,17 +329,14 @@ class SessionDataManager: ObservableObject {
     /// Optimized to parse only sessions within the current week date range
     func loadCurrentWeekSessions() async {
         let currentYear = Calendar.current.component(.year, from: Date())
-        print("[SessionDataManager] Loading sessions for current week from year: \(currentYear)")
         
         var allSessions: [SessionRecord] = []
         
         // Load current year sessions and filter to current week
         do {
-            print("[SessionDataManager] Loading sessions from \(currentYear)")
             let content = try await csvManager.readFromYearFile(for: currentYear)
             let lines = content.components(separatedBy: .newlines)
             guard let headerLine = lines.first, !headerLine.isEmpty else {
-                print("[SessionDataManager] No header line found for \(currentYear)")
                 return
             }
             
@@ -312,7 +348,6 @@ class SessionDataManager: ObservableObject {
             // Parse sessions and filter by current week in a single pass
             let (sessions, needsRewrite) = parser.parseSessionsFromCSVForCurrentWeek(content, hasIdColumn: hasIdColumn, weekInterval: currentWeekInterval)
             
-            print("[SessionDataManager] Parsed \(sessions.count) current week sessions from \(currentYear)")
             allSessions.append(contentsOf: sessions)
             
             // If rewrite needed, save back to the year file
@@ -322,13 +357,21 @@ class SessionDataManager: ObservableObject {
             }
             
             // Sort by date descending
-            allSessions.sort { ($0.startDateTime ?? Date.distantPast) > ($1.startDateTime ?? Date.distantPast) }
+            allSessions.sort { (session1: SessionRecord, session2: SessionRecord) in
+                session1.startDate > session2.startDate
+            }
             
-            print("[SessionDataManager] Current week sessions loaded: \(allSessions.count)")
             self.allSessions = allSessions
             self.lastUpdated = Date()
+            
+            // Post notification that sessions have been loaded
+            NotificationCenter.default.post(
+                name: NSNotification.Name("sessionsDidLoad"),
+                object: nil,
+                userInfo: ["sessionCount": allSessions.count]
+            )
         } catch {
-            print("❌ Error loading sessions from \(currentYear)-data.csv: \(error)")
+            return
         }
     }
     
@@ -339,30 +382,10 @@ class SessionDataManager: ObservableObject {
             return false
         }
 
-        // 1️⃣  First produce a copy with the new field
-        var updated = session.withUpdated(field: field, value: value)
+        // Use the updated withUpdated method that works with full Date objects
+        let updated = session.withUpdated(field: field, value: value)
 
-        // 2️⃣  Re‑calculate duration if a time was changed
-        if field == "start_time" || field == "end_time" {
-            let newDuration = minutesBetween(start: updated.startTime, end: updated.endTime)
-            // Replace the immutable durationMinutes field, preserving all fields
-            updated = SessionRecord(
-                id: updated.id,
-                date: updated.date,
-                startTime: updated.startTime,
-                endTime: updated.endTime,
-                durationMinutes: newDuration,
-                projectName: updated.projectName,
-                projectID: updated.projectID,
-                activityTypeID: updated.activityTypeID,
-                projectPhaseID: updated.projectPhaseID,
-                milestoneText: updated.milestoneText,
-                notes: updated.notes,
-                mood: updated.mood
-            )
-        }
-
-        // 3️⃣  Persist the change
+        // Persist the change
         if let index = allSessions.firstIndex(where: { $0.id == id }) {
             allSessions[index] = updated
             saveAllSessions(allSessions)
@@ -387,7 +410,6 @@ class SessionDataManager: ObservableObject {
         
         // Validate that we found a project with the given name
         guard let newProjectID = newProjectID else {
-            print("❌ Failed to find project with name: '\(projectName)' - cannot update session \(id)")
             return false
         }
         
@@ -409,17 +431,52 @@ class SessionDataManager: ObservableObject {
             if !phaseBelongsToCorrectProject {
                 // Phase doesn't exist in the new project
                 validatedProjectPhaseID = nil
-                print("⚠️ Phase \(phaseID) not found in project \(projectName), clearing phaseID")
             }
         }
 
-        // Create updated session with all fields
+        // Create updated session with all fields using full Date objects
+        // Parse date and time strings into full Date objects
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        guard let parsedDate = dateFormatter.date(from: date) else {
+            return false
+        }
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let paddedStartTime = startTime.count == 5 ? startTime + ":00" : startTime
+        let paddedEndTime = endTime.count == 5 ? endTime + ":00" : endTime
+        guard let parsedStartTime = timeFormatter.date(from: paddedStartTime),
+              let parsedEndTime = timeFormatter.date(from: paddedEndTime) else {
+            return false
+        }
+        
+        // Combine date with time components
+        var startComponents = Calendar.current.dateComponents([.year, .month, .day], from: parsedDate)
+        let startHour = Calendar.current.component(.hour, from: parsedStartTime)
+        let startMinute = Calendar.current.component(.minute, from: parsedStartTime)
+        let startSecond = Calendar.current.component(.second, from: parsedStartTime)
+        startComponents.hour = startHour
+        startComponents.minute = startMinute
+        startComponents.second = startSecond ?? 0
+        
+        var endComponents = Calendar.current.dateComponents([.year, .month, .day], from: parsedDate)
+        let endHour = Calendar.current.component(.hour, from: parsedEndTime)
+        let endMinute = Calendar.current.component(.minute, from: parsedEndTime)
+        let endSecond = Calendar.current.component(.second, from: parsedEndTime)
+        endComponents.hour = endHour
+        endComponents.minute = endMinute
+        endComponents.second = endSecond ?? 0
+        
+        guard let startDate = Calendar.current.date(from: startComponents),
+              let endDate = Calendar.current.date(from: endComponents) else {
+            return false
+        }
+        
         var updated = SessionRecord(
             id: session.id,
-            date: date,
-            startTime: startTime,
-            endTime: endTime,
-            durationMinutes: minutesBetween(start: startTime, end: endTime),
+            startDate: startDate,
+            endDate: endDate,
             projectName: projectName,
             projectID: validatedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,
@@ -454,7 +511,6 @@ class SessionDataManager: ObservableObject {
                 userInfo: ["sessionID": id]
             )
             
-            print("✅ Successfully updated session \(id) with project '\(projectName)' (ID: \(newProjectID))")
             return true
         }
 
@@ -499,12 +555,11 @@ class SessionDataManager: ObservableObject {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
         
-        // Create session record with validated data
-        let session = try SessionRecord.createNewSession(
-            date: dateFormatter.string(from: data.startTime),
-            startTime: timeFormatter.string(from: data.startTime),
-            endTime: timeFormatter.string(from: data.endTime),
-            durationMinutes: data.durationMinutes,
+        // Create session record with validated data using full Date objects
+        let session = SessionRecord(
+            id: UUID().uuidString,
+            startDate: data.startTime,
+            endDate: data.endTime,
             projectName: projectName,
             projectID: data.projectID,
             activityTypeID: data.activityTypeID,
@@ -560,7 +615,6 @@ class SessionDataManager: ObservableObject {
         }
         
         if !invalidSessions.isEmpty {
-            print("⚠️ Found \(invalidSessions.count) invalid sessions. Skipping them.")
             for (session, reason) in invalidSessions {
                 print("  - Session \(session.id): \(reason)")
             }
@@ -570,7 +624,7 @@ class SessionDataManager: ObservableObject {
         var sessionsByYear: [Int: [SessionRecord]] = [:]
         
         for session in validSessions {
-            guard let startDate = session.startDateTime else { continue }
+            let startDate = session.startDate
             let year = Calendar.current.component(.year, from: startDate)
             if sessionsByYear[year] == nil {
                 sessionsByYear[year] = []
@@ -589,8 +643,6 @@ class SessionDataManager: ObservableObject {
                 do {
                     let csvContent = SessionDataParser().convertSessionsToCSV(yearSessions)
                     try await csvManager.writeToYearFile(csvContent, for: year)
-                    print("✅ Saved \(yearSessions.count) sessions to \(year)-data.csv")
-                    print("🔍 CSV Header: \(csvContent.components(separatedBy: "\n").first ?? "No header")")
                 } catch {
                     errorHandler.handleFileError(error, operation: "write", filePath: "\(year)-data.csv")
                 }
@@ -603,24 +655,6 @@ class SessionDataManager: ObservableObject {
     }
     
     // MARK: - Utility Functions
-    
-    private func minutesBetween(start: String, end: String) -> Int {
-        // Accept "HH:mm" or "HH:mm:ss"; if seconds are missing we'll pad them.
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-
-        // Pad missing seconds so the formatter can parse it
-        let paddedStart = start.count == 5 ? start + ":00" : start
-        let paddedEnd   = end.count   == 5 ? end   + ":00" : end
-
-        guard
-            let startDate = formatter.date(from: paddedStart),
-            let endDate   = formatter.date(from: paddedEnd)
-        else { return 0 }
-
-        let diff = endDate.timeIntervalSince(startDate)
-        return Int(round(diff / 60))   // minutes
-    }
     
     // MARK: - Session Export Helper
     

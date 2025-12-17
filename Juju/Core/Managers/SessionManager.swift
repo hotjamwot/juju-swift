@@ -74,23 +74,16 @@ class SessionManager: ObservableObject {
                 return nil
             }
             
-            // Create a SessionRecord for the active session
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            let timeFormatter = DateFormatter()
-            timeFormatter.dateFormat = "HH:mm:ss"
-            
-            let date = dateFormatter.string(from: startTime)
-            let startTimeString = timeFormatter.string(from: startTime)
+            // Create a SessionRecord for the active session using full Date objects
+            let endTime = Date() // Current time for active session
+            let durationMinutes = getCurrentSessionDurationMinutes()
             
             return SessionRecord(
                 id: "active-session", // Use a fixed ID for the active session
-                date: date,
-                startTime: startTimeString,
-                endTime: "",
-                durationMinutes: getCurrentSessionDurationMinutes(),
+                startDate: startTime,
+                endDate: endTime,
                 projectName: projectName,
-                projectID: operationsManager.currentProjectID,
+                projectID: operationsManager.currentProjectID ?? "",
                 activityTypeID: operationsManager.currentActivityTypeID,
                 projectPhaseID: operationsManager.currentProjectPhaseID,
                 milestoneText: nil,
@@ -158,6 +151,17 @@ class SessionManager: ObservableObject {
                 self?.lastUpdated = Date()
             }
         }
+        
+        // Observe when sessions are loaded from file
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("sessionsDidLoad"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.lastUpdated = Date()
+            }
+        }
     }
     
     // MARK: - Session State Management (Delegated to Operations Manager)
@@ -191,9 +195,7 @@ class SessionManager: ObservableObject {
     // MARK: - Session Data Operations (Delegated to Data Manager)
     
     func loadAllSessions() async -> [SessionRecord] {
-        print("[SessionManager] loadAllSessions called")
         let sessions = await dataManager.loadAllSessions()
-        print("[SessionManager] loadAllSessions returning \(sessions.count) sessions")
         return sessions
     }
     
@@ -242,41 +244,28 @@ class SessionManager: ObservableObject {
     
     // MARK: - Utility Functions
     
-    func minutesBetween(start: String, end: String) -> Int {
-        operationsManager.minutesBetween(start: start, end: end)
-    }
-    
     // MARK: - Data Validation and Repair
     
     /// Run data validation and automatic repair if needed
     private func runDataValidationAndRepair() async {
-        print("🔍 Running data validation and repair...")
-        
         let validator = DataValidator.shared
         
         // Run integrity check
         let errors = validator.runIntegrityCheck()
         
         if !errors.isEmpty {
-            print("⚠️ Found \(errors.count) data integrity issues:")
             for error in errors {
                 print("  - \(error)")
             }
             
             // Attempt automatic repair
-            print("🔧 Attempting automatic repair...")
             let repairs = validator.autoRepairIssues()
             
             if !repairs.isEmpty {
-                print("✅ Automatic repair completed with \(repairs.count) actions:")
                 for repair in repairs {
                     print("  - \(repair)")
                 }
-            } else {
-                print("❌ No automatic repairs available for these issues")
             }
-        } else {
-            print("✅ Data validation passed - no issues found")
         }
     }
     

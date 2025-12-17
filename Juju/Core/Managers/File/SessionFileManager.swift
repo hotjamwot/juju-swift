@@ -38,8 +38,17 @@ actor SessionFileManager {
         return try await withCheckedThrowingContinuation { continuation in
             fileQueue.sync {
                 do {
-                    let content = try String(contentsOf: url, encoding: .utf8)
-                    continuation.resume(returning: content)
+                    let data = try Data(contentsOf: url)
+                    
+                    // Try UTF-8 first
+                    if let content = String(data: data, encoding: .utf8) {
+                        continuation.resume(returning: content)
+                        return
+                    }
+                    
+                    // Try lossy UTF-8 conversion as fallback
+                    let lossyContent = String(decoding: data, as: UTF8.self)
+                    continuation.resume(returning: lossyContent)
                 } catch {
                     continuation.resume(throwing: error)
                 }

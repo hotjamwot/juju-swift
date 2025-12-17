@@ -261,7 +261,7 @@ struct SessionsRowView: View {
                         .popover(isPresented: $showingDatePicker) {
                             DatePickerPopover(
                                 title: "Edit Date",
-                                dateString: currentSession.date,
+                                dateString: formatDate(currentSession.startDate),
                                 onDateChanged: { newDate in
                                     updateSessionDate(newDate)
                                 },
@@ -287,7 +287,7 @@ struct SessionsRowView: View {
                         Button(action: {
                             showingStartTimePicker = true
                         }) {
-                            Text(formattedStartTime)
+                            Text(formatTime(currentSession.startDate))
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                         }
@@ -298,7 +298,7 @@ struct SessionsRowView: View {
                         .popover(isPresented: $showingStartTimePicker) {
                             TimePickerPopover(
                                 title: "Edit Start Time",
-                                timeString: currentSession.startTime,
+                                timeString: formatTime(currentSession.startDate),
                                 onTimeChanged: { newStartTime in
                                     updateSessionStartTime(newStartTime)
                                 },
@@ -328,7 +328,7 @@ struct SessionsRowView: View {
                         Button(action: {
                             showingEndTimePicker = true
                         }) {
-                            Text(formattedEndTime)
+                            Text(formatTime(currentSession.endDate))
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                         }
@@ -339,7 +339,7 @@ struct SessionsRowView: View {
                         .popover(isPresented: $showingEndTimePicker) {
                             TimePickerPopover(
                                 title: "Edit End Time",
-                                timeString: currentSession.endTime,
+                                timeString: formatTime(currentSession.endDate),
                                 onTimeChanged: { newEndTime in
                                     updateSessionEndTime(newEndTime)
                                 },
@@ -642,7 +642,7 @@ struct SessionsRowView: View {
                 }
                 
                 // Duration (moved to far right with flexible width)
-                Text(formatDuration(currentSession.durationMinutes))
+                Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(width: 80)
@@ -681,13 +681,13 @@ struct SessionsRowView: View {
             // Pulse bar overlay at the bottom of the row
             .overlay(alignment: .bottom) {
                 PulseBarView(
-                    startTime: currentSession.startTime,
-                    endTime: currentSession.endTime,
+                    startTime: formatTime(currentSession.startDate),
+                    endTime: formatTime(currentSession.endDate),
                     projectColor: projectColor
                 )
                 .padding(.horizontal, Theme.Row.contentPadding) // Match row's horizontal padding
-                .animation(.easeInOut(duration: 0.25), value: currentSession.startTime)
-                .animation(.easeInOut(duration: 0.25), value: currentSession.endTime)
+                .animation(.easeInOut(duration: 0.25), value: currentSession.startDate)
+                .animation(.easeInOut(duration: 0.25), value: currentSession.endDate)
             }
             .onHover { hovering in
                 isHovering = hovering
@@ -762,14 +762,32 @@ struct SessionsRowView: View {
     }
     
     private var formattedStartTime: String {
-        formatTime(currentSession.startTime)
+        formatTime(currentSession.startDate)
     }
     
     private var formattedEndTime: String {
-        formatTime(currentSession.endTime)
+        formatTime(currentSession.endDate)
     }
     
     // MARK: - Helper Methods
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+    
+    private func formatTimeFromDateString(_ dateString: String) -> String {
+        // Extract time from date string by creating a Date object and formatting it
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        guard let date = formatter.date(from: dateString) else {
+            return dateString
+        }
+        
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
     
     private func formatTime(_ timeString: String) -> String {
         let components = timeString.components(separatedBy: ":")
@@ -787,6 +805,13 @@ struct SessionsRowView: View {
         return formatter.string(from: date)
     }
     
+    // Overload for Date objects
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+    
     private func formatDuration(_ minutes: Int) -> String {
         let hours = minutes / 60
         let mins = minutes % 60
@@ -795,6 +820,11 @@ struct SessionsRowView: View {
         } else {
             return "\(mins)m"
         }
+    }
+    
+    private func formatDurationFromDates(_ startDate: Date, _ endDate: Date) -> String {
+        let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
+        return formatDuration(durationMinutes)
     }
     
     private func moodColor(for mood: Int) -> Color {
@@ -852,11 +882,21 @@ struct SessionsRowView: View {
         }
         
         // Update the session with new project information and the appropriate phaseID
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: project.name,
             notes: session.notes,
             mood: session.mood,
@@ -910,12 +950,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionPhase(_ phase: Phase) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new phaseID
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,
@@ -947,12 +997,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionActivityType(_ activityType: ActivityType) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new activityTypeID
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,
@@ -980,12 +1040,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionMood(_ mood: Int) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new mood value
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: mood, // Use the selected mood value
@@ -1013,12 +1083,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionStartTime(_ newStartTime: String) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = newStartTime // Use the new start time
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new start time
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: newStartTime, // Use the selected start time
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,
@@ -1046,12 +1126,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionEndTime(_ newEndTime: String) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = newEndTime // Use the new end time
+        
         // Update the session with the new end time
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: newEndTime, // Use the selected end time
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,
@@ -1079,12 +1169,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionDate(_ newDate: String) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = newDate // Use the new date
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new date
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: newDate, // Use the selected date
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,
@@ -1112,12 +1212,22 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionMilestone(_ milestone: String?) {
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: currentSession.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
+        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
+        
         // Update the session with the new milestone text
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
+            date: sessionDate,
+            startTime: sessionStartTime,
+            endTime: sessionEndTime,
             projectName: currentSession.projectName,
             notes: session.notes,
             mood: session.mood,

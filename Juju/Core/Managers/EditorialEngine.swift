@@ -243,17 +243,20 @@ final class EditorialEngine: ObservableObject {
         case .week:
             let weekInterval = calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { weekInterval.contains($0) } ?? false
+                let sessionDate = Calendar.current.startOfDay(for: session.startDate)
+                return weekInterval.contains(sessionDate)
             }
         case .month:
             let monthInterval = calendar.dateInterval(of: .month, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { monthInterval.contains($0) } ?? false
+                let sessionDate = Calendar.current.startOfDay(for: session.startDate)
+                return monthInterval.contains(sessionDate)
             }
         case .year:
             let yearInterval = calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
             return sessionManager.allSessions.filter { session in
-                DateFormatter.cachedYYYYMMDD.date(from: session.date).map { yearInterval.contains($0) } ?? false
+                let sessionDate = Calendar.current.startOfDay(for: session.startDate)
+                return yearInterval.contains(sessionDate)
             }
         case .allTime:
             return sessionManager.allSessions
@@ -262,7 +265,7 @@ final class EditorialEngine: ObservableObject {
     
     private func calculateTotalHours(from sessions: [SessionRecord]) -> Double {
         let totalMinutes = sessions.reduce(into: 0) { result, session in
-            result += session.durationMinutes
+            result += DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
         }
         return Double(totalMinutes) / 60.0
     }
@@ -272,7 +275,8 @@ final class EditorialEngine: ObservableObject {
         
         for session in sessions {
             let activityID = session.activityTypeID ?? "uncategorized"
-            let hours = Double(session.durationMinutes) / 60.0
+            let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+            let hours = Double(durationMinutes) / 60.0
             activityTotals[activityID, default: 0] += hours
         }
         
@@ -291,7 +295,8 @@ final class EditorialEngine: ObservableObject {
         
         for session in sessions {
             let projectName = session.projectName
-            let hours = Double(session.durationMinutes) / 60.0
+            let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+            let hours = Double(durationMinutes) / 60.0
             projectTotals[projectName, default: 0] += hours
         }
         
@@ -313,20 +318,19 @@ final class EditorialEngine: ObservableObject {
         }
         
         let recentSessions = sessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+            let sessionDate = Calendar.current.startOfDay(for: session.startDate)
             return sessionDate >= oneWeekAgo && (session.milestoneText?.isEmpty == false)
         }
         
         // Return the most recent milestone
         let sortedSessions = recentSessions.sorted { session1, session2 in
-            guard let date1 = DateFormatter.cachedYYYYMMDD.date(from: session1.date),
-                  let date2 = DateFormatter.cachedYYYYMMDD.date(from: session2.date) else { return false }
+            let date1 = session1.startDate
+            let date2 = session2.startDate
             return date1 > date2
         }
         
         guard let milestoneSession = sortedSessions.first,
-              let milestoneText = milestoneSession.milestoneText,
-              let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: milestoneSession.date) else {
+              let milestoneText = milestoneSession.milestoneText else {
             return nil
         }
         
@@ -335,7 +339,7 @@ final class EditorialEngine: ObservableObject {
         
         return Milestone(
             text: milestoneText,
-            date: sessionDate,
+            date: milestoneSession.startDate, // Use startDate directly
             projectName: milestoneSession.projectName,
             activityType: activityType.name
         )
@@ -347,20 +351,19 @@ final class EditorialEngine: ObservableObject {
         let weekInterval = calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
         
         let weekSessions = sessionManager.allSessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
+            let sessionDate = Calendar.current.startOfDay(for: session.startDate)
             return weekInterval.contains(sessionDate) && (session.milestoneText?.isEmpty == false)
         }
         
         // Sort by date (most recent first)
         let sortedSessions = weekSessions.sorted { session1, session2 in
-            guard let date1 = DateFormatter.cachedYYYYMMDD.date(from: session1.date),
-                  let date2 = DateFormatter.cachedYYYYMMDD.date(from: session2.date) else { return false }
+            let date1 = session1.startDate
+            let date2 = session2.startDate
             return date1 > date2
         }
         
         return sortedSessions.compactMap { session in
-            guard let milestoneText = session.milestoneText,
-                  let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else {
+            guard let milestoneText = session.milestoneText else {
                 return nil
             }
             
@@ -369,7 +372,7 @@ final class EditorialEngine: ObservableObject {
             
             return Milestone(
                 text: milestoneText,
-                date: sessionDate,
+                date: session.startDate, // Use startDate directly
                 projectName: session.projectName,
                 activityType: activityType.name
             )
@@ -382,8 +385,7 @@ final class EditorialEngine: ObservableObject {
     /// FUTURE USE: Part of enhanced analytics framework
     private func detectMilestones(in sessions: [SessionRecord]) -> [Milestone] {
         return sessions.compactMap { session in
-            guard let milestoneText = session.milestoneText,
-                  let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else {
+            guard let milestoneText = session.milestoneText else {
                 return nil
             }
             
@@ -392,7 +394,7 @@ final class EditorialEngine: ObservableObject {
             
             return Milestone(
                 text: milestoneText,
-                date: sessionDate,
+                date: session.startDate, // Use startDate directly
                 projectName: session.projectName,
                 activityType: activityType.name
             )
@@ -414,7 +416,8 @@ final class EditorialEngine: ObservableObject {
         
         for session in sessions {
             let activityID = session.activityTypeID ?? "uncategorized"
-            let hours = Double(session.durationMinutes) / 60.0
+            let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+            let hours = Double(durationMinutes) / 60.0
             distribution[activityID, default: 0] += hours
         }
         
@@ -428,7 +431,8 @@ final class EditorialEngine: ObservableObject {
         
         for session in sessions {
             let projectName = session.projectName
-            let hours = Double(session.durationMinutes) / 60.0
+            let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+            let hours = Double(durationMinutes) / 60.0
             distribution[projectName, default: 0] += hours
         }
         

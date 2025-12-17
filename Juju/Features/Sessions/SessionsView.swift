@@ -67,7 +67,9 @@ struct GroupedSession: Identifiable {
     
     /// Calculate total duration for all sessions in this group
     var totalDurationMinutes: Int {
-        return sessions.reduce(0) { $0 + $1.durationMinutes }
+        return sessions.reduce(0, { result, session in
+            result + DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+        })
     }
     
     /// Format duration as "1h 30m" or similar
@@ -256,9 +258,7 @@ public struct SessionsView: View {
     /// Sort sessions by start date time (most recent first)
     private func sortSessionsByDate(_ sessions: [SessionRecord]) -> [SessionRecord] {
         return sessions.sorted { session1, session2 in
-            let date1 = session1.startDateTime ?? Date.distantPast
-            let date2 = session2.startDateTime ?? Date.distantPast
-            return date1 > date2
+            return session1.startDate > session2.startDate
         }
     }
     
@@ -311,14 +311,21 @@ public struct SessionsView: View {
     private func handleNotesChanged(_ session: SessionRecord, _ newNotes: String) {
         // Update the session notes
         let sessionID = session.id
-        let sessionDate = session.date
-        let sessionStartTime = session.startTime
-        let sessionEndTime = session.endTime
         let sessionProjectName = session.projectName
         let sessionMood = session.mood ?? 0
         let sessionActivityTypeID = session.activityTypeID
         let sessionProjectPhaseID = session.projectPhaseID
         let sessionMilestoneText = session.milestoneText
+        
+        // Format date and time from startDate and endDate
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let sessionDate = dateFormatter.string(from: session.startDate)
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        let sessionStartTime = timeFormatter.string(from: session.startDate)
+        let sessionEndTime = timeFormatter.string(from: session.endDate)
         
         let success = sessionManager.updateSessionFull(
             id: sessionID,
@@ -450,12 +457,22 @@ public struct SessionsView: View {
                     
                     Button("Save") {
                         withAnimation(.easeInOut(duration: 0.2)) {
+                            // Format date and time from startDate and endDate
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "yyyy-MM-dd"
+                            let sessionDate = dateFormatter.string(from: session.startDate)
+                            
+                            let timeFormatter = DateFormatter()
+                            timeFormatter.dateFormat = "HH:mm:ss"
+                            let sessionStartTime = timeFormatter.string(from: session.startDate)
+                            let sessionEndTime = timeFormatter.string(from: session.endDate)
+                            
                             // Update the session notes
                             let success = sessionManager.updateSessionFull(
                                 id: session.id,
-                                date: session.date,
-                                startTime: session.startTime,
-                                endTime: session.endTime,
+                                date: sessionDate,
+                                startTime: sessionStartTime,
+                                endTime: sessionEndTime,
                                 projectName: session.projectName,
                                 notes: editedNotes,
                                 mood: session.mood ?? 0,
@@ -779,6 +796,16 @@ public struct SessionsView: View {
     
     // MARK: - Data Loading Functions
     
+    /// Load all sessions for default view
+    private func loadAllSessions() async {
+        isLoading = true
+        let sessions = getAllSessions()
+        currentWeekSessions = groupSessionsByDate(sessions)
+        // Force session count update
+        updateSessionCount()
+        isLoading = false
+    }
+    
     /// Load only current week sessions for default view
     private func loadCurrentWeekSessions() async {
         isLoading = true
@@ -787,6 +814,11 @@ public struct SessionsView: View {
         // Force session count update
         updateSessionCount()
         isLoading = false
+    }
+    
+    /// Get all sessions (not just current week)
+    private func getAllSessions() -> [SessionRecord] {
+        return sessionManager.allSessions
     }
     
     /// Get sessions from current week only
@@ -804,7 +836,7 @@ public struct SessionsView: View {
         }
         
         return sessionManager.allSessions.filter { session in
-            guard let start = session.startDateTime else { return false }
+            let start = session.startDate
             return start >= currentWeekStart && start <= today
         }
     }
@@ -812,7 +844,7 @@ public struct SessionsView: View {
     /// Group sessions by date for display
     private func groupSessionsByDate(_ sessions: [SessionRecord]) -> [GroupedSession] {
         let grouped = Dictionary(grouping: sessions) { session -> Date in
-            guard let start = session.startDateTime else { return Date() }
+            let start = session.startDate
             return Calendar.current.startOfDay(for: start)
         }
         
@@ -883,7 +915,7 @@ public struct SessionsView: View {
             case .today:
                 let today = Calendar.current.startOfDay(for: Date())
                 filteredSessions = filteredSessions.filter { session in
-                    guard let start = session.startDateTime else { return false }
+                    let start = session.startDate
                     return Calendar.current.isDate(start, inSameDayAs: today)
                 }
             case .thisWeek:
@@ -891,7 +923,7 @@ public struct SessionsView: View {
                 let today = Date()
                 guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
                 filteredSessions = filteredSessions.filter { session in
-                    guard let start = session.startDateTime else { return false }
+                    let start = session.startDate
                     return start >= weekRange.start && start <= weekRange.end
                 }
             case .thisMonth:
@@ -899,7 +931,7 @@ public struct SessionsView: View {
                 let today = Date()
                 guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
                 filteredSessions = filteredSessions.filter { session in
-                    guard let start = session.startDateTime else { return false }
+                    let start = session.startDate
                     return start >= monthRange.start && start <= monthRange.end
                 }
             case .thisYear:
@@ -907,7 +939,7 @@ public struct SessionsView: View {
                 let today = Date()
                 guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
                 filteredSessions = filteredSessions.filter { session in
-                    guard let start = session.startDateTime else { return false }
+                    let start = session.startDate
                     return start >= yearRange.start && start <= yearRange.end
                 }
             case .allTime:
@@ -916,7 +948,7 @@ public struct SessionsView: View {
             case .custom:
                 if let customRange = filterState.customDateRange {
                     filteredSessions = filteredSessions.filter { session in
-                        guard let start = session.startDateTime else { return false }
+                        let start = session.startDate
                         return start >= customRange.startDate && start <= customRange.endDate
                     }
                 }
@@ -951,7 +983,7 @@ public struct SessionsView: View {
         case .today:
             let today = Calendar.current.startOfDay(for: Date())
             filteredSessions = filteredSessions.filter { session in
-                guard let start = session.startDateTime else { return false }
+                let start = session.startDate
                 return Calendar.current.isDate(start, inSameDayAs: today)
             }
         case .thisWeek:
@@ -959,7 +991,7 @@ public struct SessionsView: View {
             let today = Date()
             guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
             filteredSessions = filteredSessions.filter { session in
-                guard let start = session.startDateTime else { return false }
+                let start = session.startDate
                 return start >= weekRange.start && start <= weekRange.end
             }
         case .thisMonth:
@@ -967,7 +999,7 @@ public struct SessionsView: View {
             let today = Date()
             guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
             filteredSessions = filteredSessions.filter { session in
-                guard let start = session.startDateTime else { return false }
+                let start = session.startDate
                 return start >= monthRange.start && start <= monthRange.end
             }
         case .thisYear:
@@ -975,7 +1007,7 @@ public struct SessionsView: View {
             let today = Date()
             guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
             filteredSessions = filteredSessions.filter { session in
-                guard let start = session.startDateTime else { return false }
+                let start = session.startDate
                 return start >= yearRange.start && start <= yearRange.end
             }
         case .allTime:
@@ -984,7 +1016,7 @@ public struct SessionsView: View {
         case .custom:
             if let customRange = filterState.customDateRange {
                 filteredSessions = filteredSessions.filter { session in
-                    guard let start = session.startDateTime else { return false }
+                    let start = session.startDate
                     return start >= customRange.startDate && start <= customRange.endDate
                 }
             }

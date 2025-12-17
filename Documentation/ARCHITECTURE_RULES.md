@@ -36,10 +36,27 @@ The macOS menu bar interface is controlled by MenuManager and IconManager. The m
 All data is user-owned and lives at: ~/Library/Application Support/juju/
 
 - **Sessions**: ~/Library/Application Support/juju/YYYY-data.csv
+  - **Format**: Modern Date-based CSV with `start_date` and `end_date` columns
+  - **Status**: ✅ Migration complete - computed properties removed, using full Date objects
+  - **Parser**: SessionDataParser handles both legacy and new formats with automatic format detection
 - **Projects**: projects.json in the same folder
 - **Activity Types**: activityTypes.json in the same folder
 
 No data is stored elsewhere.
+
+## 🔄 Session Data Architecture (Updated)
+
+### Core Session Model
+- **SessionRecord**: Uses `startDate` and `endDate` (Date objects) as single source of truth
+- **Duration Calculation**: Automatic via DurationCalculator from Date objects
+- **Backward Compatibility**: Legacy sessions automatically converted during parsing
+- **Error Handling**: ✅ Fixed - All 6 optional string unwrapping errors resolved in SessionDataParser
+
+### CSV Format Evolution
+- **Legacy Format**: `date`, `start_time`, `end_time`, `duration_minutes` columns
+- **Modern Format**: `start_date`, `end_date` columns (full timestamps)
+- **Migration**: Automatic format detection and conversion in SessionDataParser
+- **Performance**: Optimized parsing with proper bounds checking and optional handling
 
 ---
 
@@ -161,3 +178,158 @@ The dashboard uses a simplified, responsive layout system built around the `Dash
 - `WeeklyDashboardView.swift`: Weekly dashboard implementation
 - `YearlyDashboardView.swift`: Yearly dashboard implementation
 - `DashboardRootView.swift`: Root container with navigation
+
+---
+
+## 🏗️ Core Architectural Patterns
+
+### 1. **Unidirectional Data Flow**
+```
+UI Components → ViewModels → Managers → File I/O
+```
+- **UI Layer**: Pure presentation, no business logic
+- **ViewModel Layer**: State management and data transformation
+- **Manager Layer**: Business logic and data validation
+- **File Layer**: Persistence and I/O operations
+
+### 2. **Event-Driven Architecture**
+- **NotificationCenter**: Heavy use for reactive updates across components
+- **Pattern**: Managers post notifications → Views react and refresh
+- **Key Events**: `.sessionDidEnd`, `.projectsDidChange`, `.activityTypesDidChange`
+
+### 3. **Caching Strategy**
+- **ProjectStatisticsCache**: Intelligent caching with 30-second expiration
+- **Thread Safety**: Uses concurrent queues with barriers for safe access
+- **Performance**: Pre-computes statistics in batches to avoid overwhelming the system
+
+### 4. **Thread Safety Patterns**
+- **@MainActor**: All UI updates happen on main thread
+- **Concurrent Queues**: Background operations use DispatchQueue with barriers
+- **Async/Await**: Modern Swift concurrency for long-running operations
+
+---
+
+## 🔄 Manager Architecture
+
+### SessionManager
+- **Responsibility**: Session lifecycle and file operations
+- **Key Pattern**: Delegates file I/O to SessionFileManager
+- **Validation**: All operations pass through DataValidator
+- **Notifications**: Posts `.sessionDidEnd` when sessions complete
+
+### ProjectManager
+- **Responsibility**: Project and phase management with archiving
+- **Key Pattern**: Uses ProjectStatisticsCache for performance
+- **Validation**: Ensures project integrity before saving
+- **Notifications**: Posts `.projectsDidChange` for UI updates
+
+### ChartDataPreparer
+- **Responsibility**: Data aggregation for dashboard charts
+- **Key Pattern**: Filters data by date intervals for performance
+- **Optimization**: Weekly-only data for current dashboard performance
+- **Thread Safety**: Uses @MainActor for UI-bound data
+
+### DataValidator
+- **Responsibility**: Centralized validation logic
+- **Key Pattern**: Validates all data before persistence
+- **Error Handling**: Provides detailed error messages
+- **Migration**: Triggers automatic data migration when needed
+
+---
+
+## 📈 Data Flow Patterns
+
+### Session Data Flow
+1. **UI Input**: User creates/edits session
+2. **Validation**: DataValidator validates session data
+3. **Storage**: SessionManager stores via SessionFileManager
+4. **Notification**: Posts `.sessionDidEnd` notification
+5. **Cache Update**: ProjectStatisticsCache updates cached values
+6. **UI Refresh**: Views update in response to notifications
+
+### Dashboard Data Flow
+1. **Data Loading**: ChartDataPreparer loads all sessions
+2. **Filtering**: Filters to current week only for performance
+3. **Aggregation**: Aggregates by activity type and project
+4. **Caching**: Uses cached statistics for performance
+5. **Display**: Charts display aggregated data
+
+---
+
+## 🛠️ Key Architectural Decisions
+
+### 1. **Date-Based Session Architecture (MIGRATION COMPLETE)**
+- **Before**: `date` + `startTime` + `endTime` + `durationMinutes` (computed properties)
+- **After**: `startDate` + `endDate` (Date objects, single source of truth)
+- **Benefits**: 
+  - Better performance (no repeated string parsing)
+  - Type safety (strong typing with Date objects)
+  - Maintainability (centralized duration calculation)
+
+### 2. **Backward Compatibility Strategy**
+- **SessionDataParser**: Automatically detects and converts legacy CSV formats
+- **Migration**: Transparent conversion during data loading
+- **Error Handling**: Graceful handling of corrupted or invalid data
+
+### 3. **Performance Optimization**
+- **Caching**: ProjectStatisticsCache with intelligent expiration
+- **Filtering**: Date-based filtering for dashboard performance
+- **Batching**: Processes projects in batches to avoid overwhelming system
+- **Lazy Loading**: Only loads data when needed
+
+### 4. **Error Handling Philosophy**
+- **Graceful Degradation**: App continues functioning even with data errors
+- **User Feedback**: Detailed error messages for validation failures
+- **Data Recovery**: Automatic migration and fallback mechanisms
+- **Validation**: All data validated before storage, not silently corrected
+
+---
+
+## 📋 Coding Conventions
+
+### 1. **Error Handling**
+```swift
+// ✅ DO: Wrap file I/O in do-catch
+do {
+    let data = try Data(contentsOf: url)
+} catch {
+    errorHandler.handleFileError(error, operation: "read", filePath: url.path)
+}
+
+// ✅ DO: Validate before storage
+guard validator.validateProject(project).isValid else {
+    return // Reject invalid data
+}
+```
+
+### 2. **Thread Safety**
+```swift
+// ✅ DO: Use @MainActor for UI updates
+@MainActor
+class ChartDataPreparer: ObservableObject {
+    // UI-bound operations
+}
+
+// ✅ DO: Use concurrent queues for shared data
+private let cacheQueue = DispatchQueue(label: "com.juju.cache", attributes: .concurrent)
+cacheQueue.async(flags: .barrier) {
+    // Thread-safe updates
+}
+```
+
+### 3. **Data Flow**
+```swift
+// ✅ DO: Use notifications for cross-component communication
+NotificationCenter.default.post(name: .projectsDidChange, object: nil)
+
+// ✅ DO: Keep UI components pure
+// ViewModels handle state, Views handle presentation
+```
+
+---
+
+## 🎯 Future Architecture Considerations
+
+- **Scalability**: Monitor cache effectiveness as data grows
+- **Extensibility**: Managers are well-separated for easy extension
+- **Testing**: Each manager should have comprehensive tests

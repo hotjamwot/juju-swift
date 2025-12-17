@@ -40,7 +40,9 @@ struct Project: Codable, Identifiable, Hashable {
         let sessionManager = SessionManager.shared
         let totalDuration = sessionManager.allSessions
             .filter { $0.projectID == id }
-            .reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
+            .reduce(0) { total, session in
+                total + Double(session.endDate.timeIntervalSince(session.startDate) / 60.0) / 60.0
+            }
         ProjectStatisticsCache.shared.setTotalDuration(totalDuration, for: id)
         return totalDuration
     }
@@ -56,7 +58,7 @@ struct Project: Codable, Identifiable, Hashable {
         let sessionManager = SessionManager.shared
         let sessions = sessionManager.allSessions
             .filter { $0.projectID == id }
-            .compactMap { $0.startDateTime }
+            .compactMap { $0.startDate }
         let date = sessions.max()
         ProjectStatisticsCache.shared.setLastSessionDate(date, for: id)
         return date
@@ -71,8 +73,10 @@ struct Project: Codable, Identifiable, Hashable {
             // Compute total duration and last session date in background
             let sessions = SessionManager.shared.allSessions
             let filteredSessions = sessions.filter { $0.projectID == project.id }
-            let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
-            let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+            let totalDuration = filteredSessions.reduce(0) { total, session in
+                total + Double(session.endDate.timeIntervalSince(session.startDate) / 60.0) / 60.0
+            }
+            let lastDate = filteredSessions.compactMap { $0.startDate }.max()
             
             // Update cached values on main thread
             await MainActor.run {

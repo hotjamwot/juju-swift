@@ -127,7 +127,7 @@ struct ProjectRowView: View {
         let sessionManager = SessionManager.shared
         let sessions = sessionManager.allSessions
             .filter { $0.projectName == project.name }
-            .sorted { $0.date > $1.date }
+            .sorted { $0.startDate > $1.startDate }
         
         guard let mostRecentSession = sessions.first,
               let phaseID = mostRecentSession.projectPhaseID else {

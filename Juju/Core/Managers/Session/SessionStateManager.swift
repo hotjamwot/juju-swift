@@ -34,11 +34,9 @@ class SessionOperationsManager: ObservableObject {
     
     func startSession(for projectName: String, projectID: String? = nil) {
         guard !isSessionActive else {
-            print("⚠️ Session already active")
             return
         }
         
-        print("✅ Starting session for project: \(projectName) (ID: \(projectID ?? "nil"))")
         isSessionActive = true
         currentProjectName = projectName
         currentProjectID = projectID  // Store projectID from the beginning
@@ -59,7 +57,6 @@ class SessionOperationsManager: ObservableObject {
         completion: @escaping (Bool) -> Void
     ) {
         guard isSessionActive, let projectName = currentProjectName, let startTime = sessionStartTime else {
-            print("⚠️ No active session to end")
             completion(false)
             return
         }
@@ -68,12 +65,8 @@ class SessionOperationsManager: ObservableObject {
         let durationMs = endTime.timeIntervalSince(startTime)
         let durationMinutes = Int(round(durationMs / 60))
         
-        print("✅ Ending session for \(projectName) - Duration: \(durationMinutes) minutes")
-        print("   Activity: \(activityTypeID ?? "none"), Phase: \(projectPhaseID ?? "none"), Milestone: \(milestoneText ?? "none")")
-        
         // Create session data with new fields
         guard let projectID = currentProjectID else {
-            print("❌ Cannot end session: projectID is nil")
             completion(false)
             return
         }
@@ -81,7 +74,6 @@ class SessionOperationsManager: ObservableObject {
         let sessionData = SessionData(
             startTime: startTime,
             endTime: endTime,
-            durationMinutes: durationMinutes,
             projectName: projectName,
             projectID: projectID,
             activityTypeID: activityTypeID,
@@ -147,41 +139,34 @@ class SessionOperationsManager: ObservableObject {
     // MARK: - CSV Operations
     
     private func saveSessionToCSV(_ sessionData: SessionData, mood: Int? = nil, completion: @escaping (Bool) -> Void) {
-        // Format the CSV row
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
+        // Format the CSV row using full Date objects (new format)
+        let dateTimeFormatter = DateFormatter()
+        dateTimeFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
-        let date = dateFormatter.string(from: sessionData.startTime)
-        let startTime = timeFormatter.string(from: sessionData.startTime)
-        let endTime = timeFormatter.string(from: sessionData.endTime)
         let id = UUID().uuidString
+        let startDateStr = dateTimeFormatter.string(from: sessionData.startTime)
+        let endDateStr = dateTimeFormatter.string(from: sessionData.endTime)
         let moodStr = mood.map { String($0) } ?? ""
         
-        // Build CSV row with new fields
+        // Build CSV row with NEW format (start_date, end_date instead of date, start_time, end_time)
         let projectID = csvManager.csvEscape(sessionData.projectID)
         let activityTypeID = sessionData.activityTypeID.map { csvManager.csvEscape($0) } ?? ""
         let projectPhaseID = sessionData.projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
         let milestoneText = sessionData.milestoneText.map { csvManager.csvEscape($0) } ?? ""
         
-        let csvRow = "\(id),\(date),\(startTime),\(endTime),\(sessionData.durationMinutes),\(csvManager.csvEscape(sessionData.projectName)),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(csvManager.csvEscape(sessionData.notes)),\(moodStr)\n"
+        let csvRow = "\(id),\(startDateStr),\(endDateStr),\(csvManager.csvEscape(sessionData.projectName)),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(csvManager.csvEscape(sessionData.notes)),\(moodStr)\n"
         
-        // Determine year from session start date (use start_date.year, not end_date)
+        // Determine year from session start date
         let year = Calendar.current.component(.year, from: sessionData.startTime)
         
         Task {
             do {
-                // Use year-based file system: append to the appropriate year file
-                // The appendToYearFile method handles header checking automatically
                 try await csvManager.appendToYearFile(csvRow, for: year)
-                print("✅ Appended session data to \(year)-data.csv file")
                 
                 await MainActor.run {
                     completion(true)
                 }
             } catch {
-                print("❌ Error writing to CSV file: \(error)")
                 await MainActor.run {
                     completion(false)
                 }
@@ -189,23 +174,4 @@ class SessionOperationsManager: ObservableObject {
         }
     }
     
-    // MARK: - Utility Functions
-    
-    func minutesBetween(start: String, end: String) -> Int {
-        // Accept "HH:mm" or "HH:mm:ss"; if seconds are missing we'll pad them.
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-
-        // Pad missing seconds so the formatter can parse it
-        let paddedStart = start.count == 5 ? start + ":00" : start
-        let paddedEnd   = end.count   == 5 ? end   + ":00" : end
-
-        guard
-            let startDate = formatter.date(from: paddedStart),
-            let endDate   = formatter.date(from: paddedEnd)
-        else { return 0 }
-
-        let diff = endDate.timeIntervalSince(startDate)
-        return Int(round(diff / 60))   // minutes
-    }
 }

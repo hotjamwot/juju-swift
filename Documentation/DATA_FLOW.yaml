@@ -6,15 +6,15 @@ nodes:
   - id: A1_Session_Recorder
     component: SessionManager
     function: Capture Session Duration
-    description: Records start/stop times and calculates session duration. Now supports projectID parameter for new sessions
+    description: Records start/stop times and calculates session duration using full Date objects. Now supports projectID parameter for new sessions. Duration calculated on-demand using DurationCalculator. **UPDATED: No longer uses computed properties - uses startDate/endDate directly**
   - id: A2_Session_State_Manager
     component: SessionStateManager
     function: Manage Session State
-    description: Handles session state management, start/end operations, and session data creation
+    description: Handles session state management, start/end operations, and session data creation with unified DurationCalculator
   - id: A3_CSV_Operations
     component: SessionCSVManager
     function: CSV Operations
-    description: Handles CSV formatting, year-based file routing, and header management
+    description: Handles CSV formatting, year-based file routing, and header management for timestamp-based sessions
   - id: A4_File_Operations
     component: SessionFileManager
     function: File I/O Operations
@@ -22,15 +22,19 @@ nodes:
   - id: A5_Persistence_Writer
     component: SessionDataManager
     function: Persist Session Data
-    description: Coordinates session persistence through CSV and File managers. Validates projectID for new sessions
+    description: Coordinates session persistence through CSV and File managers. Uses timestamp-based SessionRecord with computed duration. Posts notifications when sessions are loaded to trigger UI updates
   - id: A6_Session_Cache_Updater
     component: ProjectStatisticsCache
     function: Update Project Statistics
-    description: Updates cached project statistics after session changes. Supports projectID-based lookups
+    description: Updates cached project statistics after session changes. Supports projectID-based lookups with automatic duration calculation
   - id: A7_Data_Validator
     component: DataValidator
     function: Validate Session Data
-    description: Validates sessions before persistence and triggers automatic migration if needed
+    description: Validates timestamp-based sessions before persistence and triggers automatic migration if needed
+  - id: A8_Session_Data_Parser
+    component: SessionDataParser
+    function: Parse CSV Session Data
+    description: Parses CSV session data with comprehensive debug logging. Handles both old and new CSV formats with automatic format detection. Filters data lines and creates SessionRecord objects. **UPDATED: Fixed all 6 optional string unwrapping errors - production ready**
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
@@ -151,6 +155,12 @@ nodes:
 edges:
   # Session Flow
   - source: A1_Session_Recorder
+    target: A2_Persistence_Writer
+    data_packet: SessionRecord
+  - source: A2_Persistence_Writer
+    target: A8_Session_Data_Parser
+    data_packet: CSVContent
+  - source: A8_Session_Data_Parser
     target: A2_Persistence_Writer
     data_packet: SessionRecord
   - source: A2_Persistence_Writer

@@ -57,10 +57,9 @@ final class ChartDataPreparer: ObservableObject {
     ///   - sessions: All session records (will be filtered to current week)
     ///   - projects: All projects to be included in analysis
     func prepareWeeklyData(sessions: [SessionRecord], projects: [Project]) {
-        // Filter sessions to current week only
+        // Filter sessions to current week only using startDate
         let weeklySessions = sessions.filter { session in
-            guard let sessionDate = DateFormatter.cachedYYYYMMDD.date(from: session.date) else { return false }
-            return currentWeekInterval.contains(sessionDate)
+            return currentWeekInterval.contains(session.startDate)
         }
         
         viewModel.sessions = weeklySessions
@@ -87,8 +86,10 @@ final class ChartDataPreparer: ObservableObject {
         
         for session in sessions {
             let activityID = session.activityTypeID ?? "uncategorized"
+            // Calculate duration from startDate and endDate
+            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
             // Ensure duration is positive
-            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            let hours = max(0, Double(durationMinutes) / 60.0)
             totals[activityID, default: 0] += hours
         }
         
@@ -174,7 +175,7 @@ final class ChartDataPreparer: ObservableObject {
     /// - Returns: ActivityChartData array sorted by total hours (descending)
     func weeklyActivityTotals() -> [ActivityChartData] {
         let filteredSessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
+            return currentWeekInterval.contains(session.startDate)
         }
         return aggregateActivityTotals(from: filteredSessions)
     }
@@ -192,16 +193,22 @@ final class ChartDataPreparer: ObservableObject {
     /// - Returns: WeeklySession array for calendar visualization
     func currentWeekSessionsForCalendar() -> [WeeklySession] {
         let weekSessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentWeekInterval.contains($0) } ?? false
+            return currentWeekInterval.contains(session.startDate)
         }
         return weekSessions.compactMap { session in
-            let startHour = parseTimeToHour(session.startTime)
-            let endHour = parseTimeToHour(session.endTime)
-            guard let date = DateFormatter.cachedYYYYMMDD.date(from: session.date), endHour > startHour else { return nil }
+            // Extract hour and minute from startDate
+            let startComponents = calendar.dateComponents([.hour, .minute], from: session.startDate)
+            let startHour = Double(startComponents.hour ?? 0) + Double(startComponents.minute ?? 0) / 60.0
+            
+            // Extract hour and minute from endDate
+            let endComponents = calendar.dateComponents([.hour, .minute], from: session.endDate)
+            let endHour = Double(endComponents.hour ?? 0) + Double(endComponents.minute ?? 0) / 60.0
+            
+            guard endHour > startHour else { return nil }
 
             let weekdayFormatter = DateFormatter()
             weekdayFormatter.dateFormat = "EEEE"
-            let day = weekdayFormatter.string(from: date)
+            let day = weekdayFormatter.string(from: session.startDate)
 
             let project = viewModel.projects.first(where: { $0.name == session.projectName })
             let projectColor = project?.color ?? "#999999"
@@ -234,7 +241,7 @@ final class ChartDataPreparer: ObservableObject {
     /// - Returns: YearlyProjectChartData array sorted by total hours (descending)
     func yearlyProjectTotals() -> [YearlyProjectChartData] {
         let yearlySessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+            return currentYearInterval.contains(session.startDate)
         }
         return aggregateYearlyProjectTotals(from: yearlySessions)
     }
@@ -260,8 +267,10 @@ final class ChartDataPreparer: ObservableObject {
             // Only include sessions for active projects
             guard projectLookup[session.projectName] != nil else { continue }
             
+            // Calculate duration from startDate and endDate
+            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
             // Ensure duration is positive
-            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            let hours = max(0, Double(durationMinutes) / 60.0)
             totals[session.projectName, default: 0] += hours
         }
         
@@ -293,7 +302,7 @@ final class ChartDataPreparer: ObservableObject {
     /// - Returns: YearlyActivityTypeChartData array sorted by total hours (descending)
     func yearlyActivityTypeTotals() -> [YearlyActivityTypeChartData] {
         let yearlySessions = viewModel.sessions.filter { session in
-            DateFormatter.cachedYYYYMMDD.date(from: session.date).map { currentYearInterval.contains($0) } ?? false
+            return currentYearInterval.contains(session.startDate)
         }
         return aggregateYearlyActivityTypeTotals(from: yearlySessions)
     }
@@ -322,8 +331,10 @@ final class ChartDataPreparer: ObservableObject {
             // Only include sessions for active activity types
             guard activityLookup[activityID] != nil else { continue }
             
+            // Calculate duration from startDate and endDate
+            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
             // Ensure duration is positive
-            let hours = max(0, Double(session.durationMinutes) / 60.0)
+            let hours = max(0, Double(durationMinutes) / 60.0)
             totals[activityID, default: 0] += hours
         }
         

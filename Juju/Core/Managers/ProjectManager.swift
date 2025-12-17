@@ -130,8 +130,10 @@ class ProjectStatisticsCache {
             
             for project in projects {
                 let filteredSessions = sessions.filter { $0.projectID == project.id }
-                let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
-                let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+                let totalDuration = filteredSessions.reduce(0) { total, session in
+                    total + Double(session.endDate.timeIntervalSince(session.startDate) / 60.0) / 60.0
+                }
+                let lastDate = filteredSessions.compactMap { $0.startDate }.max()
                 
                 // Update cache on main thread
                 await MainActor.run {
@@ -509,9 +511,9 @@ class ProjectManager {
         for session in sessionsToUpdate {
             let success = sessionManager.updateSessionFull(
                 id: session.id,
-                date: session.date,
-                startTime: session.startTime,
-                endTime: session.endTime,
+                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
+                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
+                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
                 projectName: newName,
                 notes: session.notes,
                 mood: session.mood,
@@ -560,8 +562,9 @@ class ProjectManager {
     
     /// Update session statistics for all projects in the background
     func updateAllProjectStatistics() {
-        Task {
-            let projects = loadProjects()
+        Task { [weak self] in
+            guard let self = self else { return }
+            let projects = self.loadProjects()
             
             // Process projects in batches to avoid overwhelming the system
             let batchSize = 10
@@ -576,8 +579,10 @@ class ProjectManager {
                             // Compute statistics directly to avoid cache corruption
                             let sessionManager = SessionManager.shared
                             let filteredSessions = sessionManager.allSessions.filter { $0.projectID == project.id }
-                            let totalDuration = filteredSessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
-                            let lastDate = filteredSessions.compactMap { $0.startDateTime }.max()
+                            let totalDuration = filteredSessions.reduce(0) { total, session in
+                                total + Double(session.endDate.timeIntervalSince(session.startDate) / 60.0) / 60.0
+                            }
+                            let lastDate = filteredSessions.compactMap { $0.startDate }.max()
                             
                             // Update cache on main thread using thread-safe methods
                             await MainActor.run {

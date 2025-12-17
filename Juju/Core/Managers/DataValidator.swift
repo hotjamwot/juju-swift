@@ -47,19 +47,12 @@ class DataValidator {
             return .invalid(reason: "Session ID cannot be empty")
         }
         
-        guard session.startDateTime != nil else {
-            return .invalid(reason: "Session start time is required")
-        }
-        
-        guard session.endDateTime != nil else {
-            return .invalid(reason: "Session end time is required")
-        }
+        // Note: startDate and endDate are now non-optional Date objects
+        // The validation is implicit - if they exist, they're valid Date objects
         
         // Validate time consistency
-        if let start = session.startDateTime, let end = session.endDateTime {
-            guard end >= start else {
-                return .invalid(reason: "Session end time must be after start time")
-            }
+        guard session.endDate >= session.startDate else {
+            return .invalid(reason: "Session end time must be after start time")
         }
         
         // Validate project reference (if provided)
