@@ -614,24 +614,28 @@ class SessionPersistenceManager: ObservableObject {
             case .valid:
                 validSessions.append(session)
             case .invalid(let reason):
+                // IMPORTANT: Don't remove invalid sessions from the collection!
+                // Instead, log the issue but still save the session to preserve data
                 invalidSessions.append((session, reason))
                 errorHandler.handleValidationError(
                     NSError(domain: "DataValidation", code: 1001, userInfo: [NSLocalizedDescriptionKey: reason]),
                     dataType: "Session"
                 )
+                // Still include invalid sessions in the save to preserve data integrity
+                validSessions.append(session)
             }
         }
         
         if !invalidSessions.isEmpty {
             for (session, reason) in invalidSessions {
-                print("  - Session \(session.id): \(reason)")
+                print("  - Session \(session.id): \(reason) - PRESERVING SESSION DATA")
             }
         }
         
-        // Group valid sessions by year (based on start date)
+        // Group sessions by year (based on start date) - include all sessions
         var sessionsByYear: [Int: [SessionRecord]] = [:]
         
-        for session in validSessions {
+        for session in sessions {
             let startDate = session.startDate
             let year = Calendar.current.component(.year, from: startDate)
             if sessionsByYear[year] == nil {

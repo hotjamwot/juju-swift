@@ -1,20 +1,24 @@
 # ARCHITECTURE_SCHEMA.md
+
 # Juju Project Tracking App
 
 ## 🤖 How to Use This Documentation
 
 **For AI Assistants and Developers:**
+
 - **Data Model Reference**: Use this file to understand the exact structure of all business entities
 - **Type Definitions**: All structs, enums, and their properties are defined here
 - **Cross-Reference**: See ARCHITECTURE_RULES.md for architectural patterns and DATA_FLOW.yaml for how these data types flow through the system
 - **Source of Truth**: All components (Views, ViewModels, Managers, Services) must use the types and properties defined here
 
 **Key Relationships:**
+
 - This file defines the DATA STRUCTURES used in the architecture from ARCHITECTURE_RULES.md
 - All data_packet types in DATA_FLOW.yaml are defined in this file
 - Component interactions in DATA_FLOW.yaml use these exact type definitions
 
 **When making changes:**
+
 1. Update type definitions here when adding new business entities
 2. Update DATA_FLOW.yaml to reflect new data_packet types
 3. Update ARCHITECTURE_RULES.md for any architectural pattern changes
@@ -28,6 +32,7 @@
 **Purpose**: Represents a single block of tracked work/time. Must be Codable for CSV persistence.
 
 **Key Features:**
+
 - ✅ **Timestamp-Based**: Uses `startDate` and `endDate` (Date objects) as single source of truth
 - ✅ **Migration Complete**: No longer uses computed properties - uses full Date objects
 - ✅ **ProjectID Required**: New sessions require projectID parameter
@@ -51,16 +56,19 @@
 #### SessionRecord Initializers
 
 **Legacy Session (backward compatibility):**
+
 ```swift
 init(id: String, date: String, startTime: String, endTime: String, durationMinutes: Int, projectName: String, notes: String, mood: Int?)
 ```
 
 **Full Session (all fields):**
+
 ```swift
 init(id: String, date: String, startTime: String, endTime: String, durationMinutes: Int, projectName: String, projectID: String?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, notes: String, mood: Int?)
 ```
 
 **Modern Session (preferred for new sessions):**
+
 ```swift
 init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectName: String, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, notes: String = "", mood: Int? = nil)
 ```
@@ -68,6 +76,7 @@ init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectName
 #### SessionRecord Methods
 
 **`overlaps(with interval: DateInterval) -> Bool`**
+
 - **Purpose**: Check if session overlaps with a date interval
 - **Returns**: `true` if session overlaps with the given interval
 
@@ -93,27 +102,32 @@ init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectName
 #### Project Computed Properties
 
 **`totalDurationHours: Double`**
+
 - **Purpose**: Calculate total duration in hours for this project
 - **Implementation**: Uses ProjectStatisticsCache for performance optimization
 - **Fallback**: Calculates from SessionManager if cache miss
 
 **`lastSessionDate: Date?`**
+
 - **Purpose**: Get the date of the last session for this project
 - **Implementation**: Uses ProjectStatisticsCache for performance optimization
 - **Fallback**: Calculates from SessionManager if cache miss
 
 **`swiftUIColor: Color`**
+
 - **Purpose**: Convert hex color to SwiftUI Color
 - **Implementation**: Uses JujuUtils.Color(hex:) extension
 
 #### Project Initializers
 
 **Full Project:**
+
 ```swift
 init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = "📁", phases: [Phase] = [])
 ```
 
 **Basic Project:**
+
 ```swift
 init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁", phases: [Phase] = [])
 ```
@@ -277,6 +291,7 @@ init(weeklySessions: [SessionRecord], projectTotals: [String: Double], activityT
 | `endDate` | Date | ✅ | Filter end date |
 
 **Computed Properties:**
+
 - `isValid: Bool` - Returns true if startDate <= endDate
 - `durationDescription: String` - Human-readable duration (e.g., "7d")
 
@@ -289,6 +304,7 @@ init(startDate: Date, endDate: Date)
 #### SessionsDateFilter Enum
 
 **Available Options:**
+
 - `today` - "Today"
 - `thisWeek` - "This Week"
 - `thisMonth` - "This Month"
@@ -363,12 +379,14 @@ init(startDate: Date, endDate: Date)
 #### ChartTimePeriod Enum
 
 **Available Options:**
+
 - `week` - "This Week"
 - `month` - "This Month"
 - `year` - "This Year"
 - `allTime` - "All Time"
 
 **Computed Properties:**
+
 - `previousPeriod: ChartTimePeriod` - Previous period for comparison
 - `durationInDays: Int` - Duration in days for normalization
 
@@ -379,10 +397,12 @@ init(startDate: Date, endDate: Date)
 #### DashboardViewType Enum
 
 **Available Options:**
+
 - `weekly` - "Weekly"
 - `yearly` - "Yearly"
 
 **Computed Properties:**
+
 - `title: String` - Display title
 - `next: DashboardViewType` - Next view type in sequence
 
@@ -395,14 +415,17 @@ init(startDate: Date, endDate: Date)
 **Purpose**: Convert hex color strings to SwiftUI Color objects
 
 **Initializer:**
+
 ```swift
 init(hex: String)
 ```
 
 **Parameters:**
+
 - `hex: String` - Hex color string (e.g., "#FF5733")
 
 **Implementation:**
+
 - Supports both "#RRGGBB" and "RRGGBB" formats
 - Parses hex values and converts to RGB components
 - Creates SwiftUI Color with normalized RGB values (0.0-1.0)
@@ -414,12 +437,14 @@ init(hex: String)
 This architecture schema defines all core business entities for the Juju time-tracking application:
 
 ### **Core Entities (Primary Business Objects):**
+
 1. **SessionRecord** - Individual time tracking sessions
 2. **Project** - Trackable projects with phases
 3. **Phase** - Project subdivisions/milestones
 4. **ActivityType** - Types of work being done
 
 ### **Supporting Data Types:**
+
 - **SessionData** - Session creation transfer object
 - **YearlySessionFile** - File system organization
 - **DataMigrationResult** - Migration tracking
@@ -427,6 +452,7 @@ This architecture schema defines all core business entities for the Juju time-tr
 - **DashboardData** - Dashboard display data
 
 ### **UI/UX Data Types:**
+
 - **DateRange** - Date filtering
 - **SessionsDateFilter** - Date filter options
 - **FilterExportState** - Filter state management
@@ -434,15 +460,18 @@ This architecture schema defines all core business entities for the Juju time-tr
 - **BubbleChartDataPoint** - Bubble chart data points
 
 ### **Advanced Analytics:**
+
 - **PeriodSessionData** - Time period analytics
 - **ComparativeAnalytics** - Comparative analysis
 - **AnalyticsTrends** - Trend analysis
 - **ChartTimePeriod** - Time period definitions
 
 ### **Navigation:**
+
 - **DashboardViewType** - Dashboard navigation
 
 ### **Utilities:**
+
 - **Color Extension** - Hex color conversion
 
 All components in the application must use these exact type definitions to ensure consistency and maintainability.
