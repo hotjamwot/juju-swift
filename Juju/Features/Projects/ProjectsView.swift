@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ProjectsNativeView: View {
+struct ProjectsView: View {
     @StateObject private var viewModel = ProjectsViewModel.shared
     @EnvironmentObject var sidebarState: SidebarStateManager
     
@@ -434,7 +434,7 @@ struct ProjectRowView: View {
 
 #if DEBUG
 @available(macOS 12.0, *)
-struct ProjectsNativeView_Previews: PreviewProvider {
+struct ProjectsView_Previews: PreviewProvider {
     
     static func createMockViewModel(with projects: [Project]) -> ProjectsViewModel {
         let mockVM = ProjectsViewModel()
@@ -455,7 +455,7 @@ struct ProjectsNativeView_Previews: PreviewProvider {
     }
 
     static var previews: some View {
-        ProjectsNativeView()
+        ProjectsView()
             .frame(width: 900, height: 800)
             .previewDisplayName("Live Data (from file)")
 

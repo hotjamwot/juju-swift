@@ -7,7 +7,7 @@ class SessionManager: ObservableObject {
     // MARK: - Component Managers
     private let sessionFileManager: SessionFileManager
     private let operationsManager: SessionOperationsManager
-    private let dataManager: SessionDataManager
+    private let dataManager: SessionPersistenceManager
     
     // MARK: - Published Properties (Delegated to component managers)
     private var _allSessions: [SessionRecord] = []
@@ -122,7 +122,7 @@ class SessionManager: ObservableObject {
         // Initialize component managers
         self.sessionFileManager = SessionFileManager()
         self.operationsManager = SessionOperationsManager(sessionFileManager: sessionFileManager, dataFileURL: dataFileURL)
-        self.dataManager = SessionDataManager(sessionFileManager: sessionFileManager, dataFileURL: dataFileURL)
+        self.dataManager = SessionPersistenceManager(sessionFileManager: sessionFileManager, dataFileURL: dataFileURL)
         
         // Setup observers to sync state changes
         setupObservers()

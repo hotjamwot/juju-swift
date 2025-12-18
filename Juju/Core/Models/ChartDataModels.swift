@@ -1,49 +1,6 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Unified Chart Data Model
-struct ChartEntry: Identifiable {
-    let id = UUID()
-    let startDate: Date  // Full timestamp: 2024-12-15 22:30:00
-    let endDate: Date    // Full timestamp: 2024-12-16 00:02:00
-    let projectName: String
-    let projectColor: String
-    let projectEmoji: String
-    let notes: String
-    let mood: Int?
-    
-    // Calculate duration from startDate and endDate
-    var durationMinutes: Int {
-        Int(endDate.timeIntervalSince(startDate) / 60)
-    }
-    
-    var durationHours: Double {
-        Double(durationMinutes) / 60.0
-    }
-    
-    // Helper properties for UI formatting when needed
-    var date: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: startDate)
-    }
-    
-    var startTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter.string(from: startDate)
-    }
-    
-    var endTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter.string(from: endDate)
-    }
-    
-    var projectColorSwiftUI: Color {
-        Color(hex: projectColor)
-    }
-}
 
 // MARK: - Chart Data Models
 struct ChartDataPoint: Identifiable {

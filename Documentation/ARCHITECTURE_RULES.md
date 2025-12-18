@@ -4,11 +4,29 @@ Use it as the source of truth when generating or modifying code.
 
 ---
 
+## 🤖 How to Use This Documentation
+
+**For AI Assistants and Developers:**
+- **Architecture Overview**: Start here to understand the overall structure and patterns
+- **Project Structure**: Navigate the codebase using the defined directory organization
+- **Coding Conventions**: Follow these rules when writing or modifying code
+- **Data Flow Reference**: See `DATA_FLOW.yaml` for detailed component interactions
+- **Data Models**: Refer to `ARCHITECTURE_SCHEMA.md` for exact type definitions
+
+**Key Relationships:**
+- This file defines the **architectural patterns** that guide the system design
+- `DATA_FLOW.yaml` shows **how data moves** through these architectural components
+- `ARCHITECTURE_SCHEMA.md` provides the **exact data structures** used in this architecture
+
+---
+
+## 📋 Quick Reference
+
 ## 📋 Quick Reference
 
 **Architecture**: MVVM + Managers (logic) + SwiftUI views  
 **Data Storage**: CSV/JSON files only (no Core Data or cloud)  
-**Session Management**: SessionDataManager is source of truth  
+**Session Management**: SessionPersistenceManager is source of truth
 **Threading**: Use @MainActor for SwiftUI-bound ViewModels  
 **Async**: All asynchronous work uses async/await (no completion handlers)  
 **Views**: Contain no business logic; ViewModels handle state and data flow  

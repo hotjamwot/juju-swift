@@ -61,11 +61,11 @@ struct DashboardRootView: View {
                                 .environmentObject(sidebarState)
                                 .transition(.opacity)
                         case .projects:
-                            ProjectsNativeView()
+                            ProjectsView()
                                 .environmentObject(sidebarState)
                                 .transition(.opacity)
                         case .activityTypes:
-                            ActivityTypesView()
+                            ActivityTypeView()
                                 .environmentObject(sidebarState)
                                 .transition(.opacity)
                         }

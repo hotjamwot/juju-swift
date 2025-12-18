@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ActivityTypesView: View {
+struct ActivityTypeView: View {
     @StateObject private var viewModel = ActivityTypesViewModel.shared
     @EnvironmentObject var sidebarState: SidebarStateManager
     
@@ -348,9 +348,9 @@ struct ActivityTypeRowView: View {
 
 #if DEBUG
 @available(macOS 12.0, *)
-struct ActivityTypesView_Previews: PreviewProvider {
+struct ActivityTypeView_Previews: PreviewProvider {
     static var previews: some View {
-        ActivityTypesView()
+        ActivityTypeView()
             .frame(width: 800, height: 800)
             .previewDisplayName("Live Data (from file)")
 

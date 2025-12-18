@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Session Data Manager
-class SessionDataManager: ObservableObject {
+class SessionPersistenceManager: ObservableObject {
     @Published var allSessions: [SessionRecord] = []
     @Published var lastUpdated = Date()
     

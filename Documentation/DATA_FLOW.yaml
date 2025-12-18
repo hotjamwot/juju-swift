@@ -1,3 +1,24 @@
+# Juju Application Critical Data Flow Map
+# 
+# 🤖 How to Use This Documentation
+#
+# For AI Assistants and Developers:
+# - Data Flow Reference: Use this file to understand how data moves through the system
+# - Component Dependencies: See which components depend on each other and how
+# - Processing Steps: Understand the sequence of data transformations
+# - Cross-Reference: See ARCHITECTURE_RULES.md for architectural patterns and 
+#   ARCHITECTURE_SCHEMA.md for exact data type definitions
+#
+# Key Relationships:
+# - This file shows the DATA FLOW through the architecture defined in ARCHITECTURE_RULES.md
+# - All data_packet types are defined in ARCHITECTURE_SCHEMA.md
+# - Component names map to actual Swift classes defined in the codebase
+#
+# When making changes:
+# 1. Update this file to reflect new data flows
+# 2. Update ARCHITECTURE_RULES.md for new architectural patterns
+# 3. Update ARCHITECTURE_SCHEMA.md for new data types
+
 flowName: Juju Application Critical Data Flow Map
 description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies.
 
@@ -20,7 +41,7 @@ nodes:
     function: File I/O Operations
     description: Thread-safe file operations (read, write, append) with proper quoting support
   - id: A5_Persistence_Writer
-    component: SessionDataManager
+    component: SessionPersistenceManager
     function: Persist Session Data
     description: Coordinates session persistence through CSV and File managers. Uses timestamp-based SessionRecord with computed duration. Posts notifications when sessions are loaded to trigger UI updates
   - id: A6_Session_Cache_Updater
