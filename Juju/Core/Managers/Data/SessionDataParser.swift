@@ -365,7 +365,7 @@ class SessionDataParser {
                 }
                 
                 // Quick filter: only process sessions within the current week
-                guard startDate >= weekInterval.start && startDate <= weekInterval.end else {
+                guard weekInterval.contains(startDate) else {
                     continue
                 }
                 

@@ -262,15 +262,10 @@ public struct SessionsView: View {
         }
     }
     
-    /// Count of sessions in currentWeekSessions (cached to avoid recalculation)
+    /// Count of sessions based on current filter state (accurate count for filtered sessions)
     private var currentSessionCount: Int {
-        // Update cache when sessions change
-        var count = 0
-        for group in currentWeekSessions {
-            count += group.sessions.count
-        }
-        cachedSessionCount = count
-        return cachedSessionCount
+        let filteredSessions = getFullyFilteredSessions()
+        return filteredSessions.count
     }
     
     /// Update session count when sessions change
@@ -765,9 +760,9 @@ public struct SessionsView: View {
         // Filter panel toggle should NOT load different data
         // The panel is just UI controls - data loading happens when filters are applied
         if !isExpanded {
-            // When filter is closed, go back to current week only
+            // When filter is closed, DO NOT reset filters - preserve current state
+            // Only update the session count to reflect current filters
             Task {
-                await loadCurrentWeekSessions()
                 await MainActor.run {
                     updateSessionCount()
                 }
@@ -887,6 +882,8 @@ public struct SessionsView: View {
     
     private func handleActivityTypeFilterChange(_ activityType: String) {
         filterState.activityTypeFilter = activityType
+        // Do NOT refresh immediately - wait for user to click "Confirm"
+        // The filter will be applied when confirmFilters() is called
     }
     
     private func confirmFilters() {
