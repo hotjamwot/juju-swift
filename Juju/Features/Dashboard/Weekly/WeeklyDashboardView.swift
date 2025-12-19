@@ -32,9 +32,9 @@ struct WeeklyDashboardView: View {
         GeometryReader { geometry in
             ZStack {
                 // Floating navigation button (always visible in center-right, even closer to edge)
-                NavigationButton()
-                    .position(x: geometry.size.width - 26, y: geometry.size.height / 2)
-                    .zIndex(2)
+                // NavigationButton()
+                //     .position(x: geometry.size.width - 26, y: geometry.size.height / 2)
+                //     .zIndex(2)
                 
                 // Main content with tidy, balanced layout
                 VStack(spacing: 0) {
@@ -68,7 +68,7 @@ struct WeeklyDashboardView: View {
                     )
                 }
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                .padding(.bottom, Theme.DashboardLayout.dashboardPadding)
+                .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32) 
                 .background(Theme.Colors.background)
             }
             

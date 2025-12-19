@@ -8,7 +8,7 @@ import Foundation
 
 /// Enum to track the current dashboard view state
 /// Used for navigation between weekly and yearly dashboard views
-enum DashboardViewType: CaseIterable {
+enum DashboardViewType: CaseIterable, Hashable {
     case weekly
     case yearly
     

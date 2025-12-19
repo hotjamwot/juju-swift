@@ -83,9 +83,9 @@ struct YearlyDashboardView: View {
                 .background(Theme.Colors.background)
                 
                 // Floating navigation button (back to weekly dashboard)
-                BackNavigationButton()
-                    .position(x: 16, y: geometry.size.height / 2)
-                    .zIndex(2)
+                // BackNavigationButton()
+                //     .position(x: 16, y: geometry.size.height / 2)
+                //     .zIndex(2)
                 
             }
         }

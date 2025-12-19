@@ -96,7 +96,7 @@ struct DashboardLayout: View {
             
             switch layoutType {
             case .weekly(let topLeft, let topRight, let bottom):
-                // Weekly layout: 2x2 grid
+                // Weekly layout: 2x2 grid with extra bottom padding for navigation circles
                 VStack(spacing: gap) {
                     HStack(spacing: gap) {
                         ChartContainer(content: topLeft)
@@ -110,7 +110,8 @@ struct DashboardLayout: View {
                         .frame(width: availableWidth, height: availableHeight * bottomHeightRatio)
                 }
                 .padding(.horizontal, spacing)
-                .padding(.vertical, spacing)
+                .padding(.top, spacing)
+                .padding(.bottom, spacing + 40) // Extra padding for navigation circles
                 
             case .yearly(let left, let rightTop, let rightBottom):
                 // Yearly layout: left column full height, right column stacked
@@ -204,6 +205,51 @@ struct DashboardLayout: View {
     .background(Theme.Colors.background)
 }
 
+// MARK: - Bottom Navigation Circles
+
+/// Bottom navigation circles for switching between weekly and yearly dashboard views
+/// Positioned at the bottom of the dashboard window, similar to the active session status bar
+struct BottomNavigationCircles: View {
+    @Binding var currentView: DashboardViewType?
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Weekly indicator circle
+            Circle()
+                .fill(currentView == .weekly ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
+                .frame(width: 10, height: 10)
+                .opacity(currentView == .weekly ? 0.8 : 0.3)
+                .scaleEffect(currentView == .weekly ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: currentView)
+                .contentShape(Circle()) // Make entire circle clickable
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        currentView = .weekly
+                    }
+                }
+                .help("Weekly Dashboard")
+            
+            // Yearly indicator circle
+            Circle()
+                .fill(currentView == .yearly ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
+                .frame(width: 10, height: 10)
+                .opacity(currentView == .yearly ? 0.8 : 0.3)
+                .scaleEffect(currentView == .yearly ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: currentView)
+                .contentShape(Circle()) // Make entire circle clickable
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        currentView = .yearly
+                    }
+                }
+                .help("Yearly Dashboard")
+        }
+        .padding(.bottom, 8)
+        .padding(.top, 4)
+        .padding(.horizontal, 16)
+    }
+}
+
 // MARK: - Yearly Dashboard Layout Preview
 #Preview {
     DashboardLayout.yearly(
@@ -249,4 +295,15 @@ struct DashboardLayout: View {
     )
     .frame(width: 1200, height: 800)
     .background(Theme.Colors.background)
+}
+
+// MARK: - Bottom Navigation Circles Preview
+#Preview {
+    VStack {
+        Spacer()
+        BottomNavigationCircles(currentView: .constant(.weekly))
+    }
+    .frame(width: 400, height: 100)
+    .background(Theme.Colors.background)
+    .preferredColorScheme(.dark)
 }

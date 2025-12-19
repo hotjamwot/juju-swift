@@ -174,7 +174,7 @@ The dashboard uses a simplified, responsive layout system built around the `Dash
 - No individual chart titles (charts speak for themselves)
 
 **Navigation:**
-- Floating navigation buttons for switching between Weekly and Yearly views
+- Small circle navigation circles for switching between Weekly and Yearly views, plus keyboard shortcut (cmd + arrows)
 - Active session status bar positioned at top of dashboard
 - Sidebar remains visible with permanent navigation icons
 

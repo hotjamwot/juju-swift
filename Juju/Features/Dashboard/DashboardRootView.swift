@@ -7,7 +7,7 @@ struct DashboardRootView: View {
     @Environment(\.presentationMode) private var presentationMode
     
     // Navigation state for weekly/yearly dashboard views
-    @State private var dashboardViewType: DashboardViewType = .weekly
+    @State private var dashboardViewType: DashboardViewType? = .weekly
     
     // State objects for dashboard views to ensure proper state management
     @StateObject private var weeklyDashboardState = ChartDataPreparer()
@@ -28,34 +28,53 @@ struct DashboardRootView: View {
                     ZStack {
                         switch selected {
                         case .charts:
-                            // Dashboard content with weekly/yearly navigation
-                            VStack(spacing: 0) {
-                                // Chart content with floating elements
-                                ZStack {
-                                    switch dashboardViewType {
-                                    case .weekly:
+                            // Dashboard content with weekly/yearly navigation using programmatic ScrollView
+                            ZStack {
+                                // ScrollView with both dashboards
+                                ScrollView(.horizontal) {
+                                    HStack(spacing: 0) {
+                                        // Weekly Dashboard
                                         WeeklyDashboardView(
                                             chartDataPreparer: weeklyDashboardState,
                                             sessionManager: sessionManager,
                                             projectsViewModel: projectsViewModel,
                                             editorialEngine: editorialEngine
                                         )
-                                            .transition(.opacity)
-                                    case .yearly:
+                                        .id(DashboardViewType.weekly)
+                                        .containerRelativeFrame(.horizontal)
+                                        
+                                        // Yearly Dashboard
                                         YearlyDashboardView(
                                             chartDataPreparer: yearlyDashboardState,
                                             sessionManager: sessionManager,
                                             projectsViewModel: projectsViewModel,
                                             editorialEngine: editorialEngine
                                         )
-                                            .transition(.opacity)
+                                        .id(DashboardViewType.yearly)
+                                        .containerRelativeFrame(.horizontal)
                                     }
                                 }
-                                .animation(.easeInOut(duration: 0.2), value: dashboardViewType)
+                                .scrollTargetLayout()
+                                .scrollTargetBehavior(.paging)
+                                .scrollIndicators(.hidden)
+                                .scrollPosition(id: $dashboardViewType)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .transition(.opacity)
+                                
+                                // Bottom navigation circles overlay
+                                .overlay(
+                                    VStack {
+                                        Spacer()
+                                        HStack {
+                                            Spacer()
+                                            BottomNavigationCircles(currentView: $dashboardViewType)
+                                            Spacer()
+                                        }
+                                    }
+                                    .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                                    .padding(.bottom, 16)
+                                )
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .transition(.opacity)
                         case .sessions:
                             SessionsView()
                                 .environmentObject(sidebarState)
@@ -89,6 +108,26 @@ struct DashboardRootView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .switchToWeeklyView)) { _ in
             dashboardViewType = .weekly
+        }
+        // Keyboard shortcuts for navigation
+        .onAppear {
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if event.modifierFlags.contains(.command) {
+                    switch event.keyCode {
+                    case 123: // Left Arrow key
+                        // Command + Left Arrow: Go to Weekly
+                        dashboardViewType = .weekly
+                        return nil
+                    case 124: // Right Arrow key
+                        // Command + Right Arrow: Go to Yearly
+                        dashboardViewType = .yearly
+                        return nil
+                    default:
+                        break
+                    }
+                }
+                return event
+            }
         }
     }
     
