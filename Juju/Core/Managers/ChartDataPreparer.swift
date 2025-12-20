@@ -190,12 +190,19 @@ final class ChartDataPreparer: ObservableObject {
     ///   - Project color and emoji
     ///   - Activity emoji
     /// 
+    /// SPECIAL HANDLING: Sessions that cross midnight are split into two segments:
+    ///   - First segment: from start time to 23:59:59 on the same day
+    ///   - Second segment: from 00:00:00 to end time on the next day
+    /// 
     /// - Returns: WeeklySession array for calendar visualization
     func currentWeekSessionsForCalendar() -> [WeeklySession] {
         let weekSessions = viewModel.sessions.filter { session in
             return currentWeekInterval.contains(session.startDate)
         }
-        return weekSessions.compactMap { session in
+        
+        var weeklySessions: [WeeklySession] = []
+        
+        for session in weekSessions {
             // Extract hour and minute from startDate
             let startComponents = calendar.dateComponents([.hour, .minute], from: session.startDate)
             let startHour = Double(startComponents.hour ?? 0) + Double(startComponents.minute ?? 0) / 60.0
@@ -204,29 +211,63 @@ final class ChartDataPreparer: ObservableObject {
             let endComponents = calendar.dateComponents([.hour, .minute], from: session.endDate)
             let endHour = Double(endComponents.hour ?? 0) + Double(endComponents.minute ?? 0) / 60.0
             
-            guard endHour > startHour else { return nil }
-
+            // Get day names for start and end dates
             let weekdayFormatter = DateFormatter()
             weekdayFormatter.dateFormat = "EEEE"
-            let day = weekdayFormatter.string(from: session.startDate)
-
+            let startDay = weekdayFormatter.string(from: session.startDate)
+            let endDay = weekdayFormatter.string(from: session.endDate)
+            
             let project = viewModel.projects.first(where: { $0.name == session.projectName })
             let projectColor = project?.color ?? "#999999"
             let projectEmoji = project?.emoji ?? "📁"
             
             // Get activity emoji with fallback to project emoji
             let activityEmoji = session.getActivityTypeDisplay().emoji
-
-            return WeeklySession(
-                day: day,
-                startHour: startHour,
-                endHour: endHour,
-                projectName: session.projectName,
-                projectColor: projectColor,
-                projectEmoji: projectEmoji,
-                activityEmoji: activityEmoji
-            )
+            
+            // Check if session crosses midnight (end time is earlier than start time)
+            if endHour < startHour && startDay != endDay {
+                // Session crosses midnight - split into two segments
+                
+                // First segment: from start time to end of day (23:59)
+                let firstSegment = WeeklySession(
+                    day: startDay,
+                    startHour: startHour,
+                    endHour: 23.99, // Nearly 24:00 to show full rectangle to end of day
+                    projectName: session.projectName,
+                    projectColor: projectColor,
+                    projectEmoji: projectEmoji,
+                    activityEmoji: activityEmoji
+                )
+                weeklySessions.append(firstSegment)
+                
+                // Second segment: from start of next day (00:00) to end time
+                let secondSegment = WeeklySession(
+                    day: endDay,
+                    startHour: 0.0,
+                    endHour: endHour,
+                    projectName: session.projectName,
+                    projectColor: projectColor,
+                    projectEmoji: projectEmoji,
+                    activityEmoji: activityEmoji
+                )
+                weeklySessions.append(secondSegment)
+            } else if endHour > startHour {
+                // Normal session that doesn't cross midnight
+                let weeklySession = WeeklySession(
+                    day: startDay,
+                    startHour: startHour,
+                    endHour: endHour,
+                    projectName: session.projectName,
+                    projectColor: projectColor,
+                    projectEmoji: projectEmoji,
+                    activityEmoji: activityEmoji
+                )
+                weeklySessions.append(weeklySession)
+            }
+            // If endHour == startHour, skip the session (zero duration)
         }
+        
+        return weeklySessions
     }
 
 

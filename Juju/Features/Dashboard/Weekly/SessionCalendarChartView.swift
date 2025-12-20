@@ -177,7 +177,10 @@ struct SessionCalendarChartView: View {
         WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activityEmoji: "🎬"),
         WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activityEmoji: "✍️"),
         WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activityEmoji: "🗂️"),
-        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activityEmoji: "🎬")
+        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activityEmoji: "🎬"),
+        // Session that crosses midnight (starts Monday 11 PM, ends Tuesday 1 AM)
+        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activityEmoji: "🎧"),
+        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activityEmoji: "🎧")
     ]
     return SessionCalendarChartView(sessions: mockSessions)
         .frame(width: 800, height: 350)
