@@ -165,6 +165,9 @@ struct SessionsRowView: View {
     // Track the current session state for reactive updates
     @State private var currentSession: SessionRecord
     
+    // Add a state variable to force UI refresh when session data changes
+    @State private var refreshKey: UUID = UUID()
+    
     // Track project data version to ensure popover shows correct phases
     @State private var projectDataVersion: UUID = UUID()
     
@@ -867,28 +870,20 @@ struct SessionsRowView: View {
             }
         }
         
-        // Update the session with new project information and the appropriate phaseID
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
+        // Update the session with new project and phase using the full update method
+        // This ensures all fields are properly updated and validated
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
+            date: formatDate(currentSession.startDate),
+            startTime: formatTime(currentSession.startDate),
+            endTime: formatTime(currentSession.endDate),
             projectName: project.name,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: newPhaseID, // Use the determined phaseID
-            milestoneText: session.milestoneText
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: newPhaseID,
+            milestoneText: currentSession.milestoneText,
+            projectID: project.id
         )
         
         if success {
@@ -914,16 +909,19 @@ struct SessionsRowView: View {
         // First attempt: immediate refresh
         DispatchQueue.main.async {
             self.sessionObserver.refreshTrigger = UUID()
+            self.refreshKey = UUID() // Force UI refresh
         }
         
         // Second attempt: after a short delay to ensure data store is updated
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.sessionObserver.refreshTrigger = UUID()
+            self.refreshKey = UUID() // Force UI refresh
         }
         
         // Third attempt: after a longer delay for full synchronization
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.sessionObserver.refreshTrigger = UUID()
+            self.refreshKey = UUID() // Force UI refresh
         }
     }
     
@@ -936,31 +934,24 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionPhase(_ phase: Phase) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new phaseID
+        // Update the session with new phase using the full update method
+        // This ensures all fields are properly updated and validated
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
+            date: formatDate(currentSession.startDate),
+            startTime: formatTime(currentSession.startDate),
+            endTime: formatTime(currentSession.endDate),
             projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: phase.id, // Use the selected phaseID
-            milestoneText: session.milestoneText
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: phase.id,
+            milestoneText: currentSession.milestoneText,
+            projectID: currentSession.projectID
         )
         
         if success {
+            print("✅ Successfully updated session \(session.id) with new phase")
             // Force immediate refresh of the session observer to update the UI
             // Use the same robust synchronization approach as project updates
             refreshSessionData()
@@ -971,6 +962,8 @@ struct SessionsRowView: View {
             
             // Notify parent that project has changed so it can refresh the view
             onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new phase")
         }
     }
     
@@ -983,37 +976,32 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionActivityType(_ activityType: ActivityType) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new activityTypeID
+        // Update the session with new activity type using the full update method
+        // This ensures all fields are properly updated and validated
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
+            date: formatDate(currentSession.startDate),
+            startTime: formatTime(currentSession.startDate),
+            endTime: formatTime(currentSession.endDate),
             projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: activityType.id, // Use the selected activityTypeID
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: session.milestoneText
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: activityType.id,
+            projectPhaseID: currentSession.projectPhaseID,
+            milestoneText: currentSession.milestoneText,
+            projectID: currentSession.projectID
         )
         
         if success {
+            print("✅ Successfully updated session \(session.id) with new activity type")
             // Force immediate refresh of the session observer to update the UI
             // Use the same robust synchronization approach as project and phase updates
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view
             onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new activity type")
         }
     }
     
@@ -1026,29 +1014,9 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionMood(_ mood: Int) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new mood value
-        let success = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
-            projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: mood, // Use the selected mood value
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: session.milestoneText
-        )
+        // Update only the mood field using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = SessionManager.shared.updateSession(id: session.id, field: "mood", value: String(mood))
         
         if success {
             // Force immediate refresh of the session observer to update the UI
@@ -1069,29 +1037,9 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionStartTime(_ newStartTime: String) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = newStartTime // Use the new start time
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new start time
-        let success = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
-            projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: session.milestoneText
-        )
+        // Update only the start time field using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = SessionManager.shared.updateSession(id: session.id, field: "startTime", value: newStartTime)
         
         if success {
             // Force immediate refresh of the session observer to update the UI
@@ -1112,29 +1060,9 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionEndTime(_ newEndTime: String) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = newEndTime // Use the new end time
-        
-        // Update the session with the new end time
-        let success = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
-            projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: session.milestoneText
-        )
+        // Update only the end time field using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = SessionManager.shared.updateSession(id: session.id, field: "endTime", value: newEndTime)
         
         if success {
             // Force immediate refresh of the session observer to update the UI
@@ -1155,29 +1083,9 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionDate(_ newDate: String) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = newDate // Use the new date
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new date
-        let success = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
-            projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: session.milestoneText
-        )
+        // Update only the date field using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = SessionManager.shared.updateSession(id: session.id, field: "date", value: newDate)
         
         if success {
             // Force immediate refresh of the session observer to update the UI
@@ -1198,37 +1106,32 @@ struct SessionsRowView: View {
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionMilestone(_ milestone: String?) {
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: currentSession.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: currentSession.startDate)
-        let sessionEndTime = timeFormatter.string(from: currentSession.endDate)
-        
-        // Update the session with the new milestone text
+        // Update the session with new milestone using the full update method
+        // This ensures all fields are properly updated and validated
         let success = SessionManager.shared.updateSessionFull(
             id: session.id,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
+            date: formatDate(currentSession.startDate),
+            startTime: formatTime(currentSession.startDate),
+            endTime: formatTime(currentSession.endDate),
             projectName: currentSession.projectName,
-            notes: session.notes,
-            mood: session.mood,
-            activityTypeID: session.activityTypeID,
-            projectPhaseID: session.projectPhaseID,
-            milestoneText: milestone // Use the selected milestone text
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: currentSession.projectPhaseID,
+            milestoneText: milestone,
+            projectID: currentSession.projectID
         )
         
         if success {
+            print("✅ Successfully updated session \(session.id) with new milestone")
             // Force immediate refresh of the session observer to update the UI
             // Use the same robust synchronization approach as other updates
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view
             onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new milestone")
         }
     }
 }

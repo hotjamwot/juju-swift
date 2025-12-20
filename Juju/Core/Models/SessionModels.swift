@@ -155,6 +155,85 @@ extension SessionRecord {
         var newStartDate = startDate
         var newEndDate = endDate
         
+        // Handle date field updates
+        if field == "date" {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            if let newDate = dateFormatter.date(from: value) {
+                // Update start date
+                let startComponents = Calendar.current.dateComponents([.hour, .minute, .second], from: startDate)
+                var newStartComponents = Calendar.current.dateComponents([.year, .month, .day], from: newDate)
+                newStartComponents.hour = startComponents.hour
+                newStartComponents.minute = startComponents.minute
+                newStartComponents.second = startComponents.second
+                if let updatedStartDate = Calendar.current.date(from: newStartComponents) {
+                    newStartDate = updatedStartDate
+                }
+                
+                // Update end date
+                let endComponents = Calendar.current.dateComponents([.hour, .minute, .second], from: endDate)
+                var newEndComponents = Calendar.current.dateComponents([.year, .month, .day], from: newDate)
+                newEndComponents.hour = endComponents.hour
+                newEndComponents.minute = endComponents.minute
+                newEndComponents.second = endComponents.second
+                if let updatedEndDate = Calendar.current.date(from: newEndComponents) {
+                    newEndDate = updatedEndDate
+                }
+            }
+        }
+        
+        // Handle start time field updates
+        if field == "startTime" {
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm:ss"
+            let paddedStartTime = value.count == 5 ? value + ":00" : value
+            if let newStartTime = timeFormatter.date(from: paddedStartTime) {
+                let startHour = Calendar.current.component(.hour, from: newStartTime)
+                let startMinute = Calendar.current.component(.minute, from: newStartTime)
+                let startSecond = Calendar.current.component(.second, from: newStartTime)
+                
+                var newStartComponents = Calendar.current.dateComponents([.year, .month, .day], from: startDate)
+                newStartComponents.hour = startHour
+                newStartComponents.minute = startMinute
+                newStartComponents.second = startSecond ?? 0
+                
+                if let updatedStartDate = Calendar.current.date(from: newStartComponents) {
+                    newStartDate = updatedStartDate
+                }
+            }
+        }
+        
+        // Handle end time field updates
+        if field == "endTime" {
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm:ss"
+            let paddedEndTime = value.count == 5 ? value + ":00" : value
+            if let newEndTime = timeFormatter.date(from: paddedEndTime) {
+                let endHour = Calendar.current.component(.hour, from: newEndTime)
+                let endMinute = Calendar.current.component(.minute, from: newEndTime)
+                let endSecond = Calendar.current.component(.second, from: newEndTime)
+                
+                var newEndComponents = Calendar.current.dateComponents([.year, .month, .day], from: endDate)
+                newEndComponents.hour = endHour
+                newEndComponents.minute = endMinute
+                newEndComponents.second = endSecond ?? 0
+                
+                if let updatedEndDate = Calendar.current.date(from: newEndComponents) {
+                    newEndDate = updatedEndDate
+                }
+            }
+        }
+        
+        // Validate and fix end date if it's earlier than start date
+        // This handles sessions that cross midnight
+        if newEndDate < newStartDate {
+            // End date is earlier than start date, assume session crosses midnight
+            // Add one day to end date
+            if let nextDayEndDate = Calendar.current.date(byAdding: .day, value: 1, to: newEndDate) {
+                newEndDate = nextDayEndDate
+            }
+        }
+        
         return SessionRecord(
             id: id,
             startDate: newStartDate,

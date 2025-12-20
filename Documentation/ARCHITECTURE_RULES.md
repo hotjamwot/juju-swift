@@ -301,6 +301,14 @@ UI Components → ViewModels → Managers → File I/O
 - **Data Recovery**: Automatic migration and fallback mechanisms
 - **Validation**: All data validated before storage, not silently corrected
 
+### 5. **Inline Session Editing Architecture**
+- **SessionsRowView**: Supports inline editing via popover components
+- **Full Update Method**: All inline edits use `updateSessionFull` for complete validation
+- **UI Synchronization**: Robust refresh mechanism with multiple timing attempts
+- **Midnight Session Handling**: Automatic end date adjustment for sessions crossing midnight
+- **Project/Phase Validation**: Automatic phase clearing when project changes to incompatible project
+- **Data Consistency**: All inline edits maintain data integrity through centralized validation
+
 ---
 
 ## 📋 Coding Conventions

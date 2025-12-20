@@ -124,6 +124,68 @@ init() {
     }
     
     func deleteProject(_ project: Project) {
+        // Show delete confirmation dialog with project migration options
+        Task {
+            await deleteProjectWithMigration(project)
+        }
+    }
+    
+    /// Delete a project with confirmation dialog and session migration
+    func deleteProjectWithConfirmation(_ project: Project) async {
+        let sessionManager = SessionManager.shared
+        let allSessions = sessionManager.allSessions
+        
+        // Get sessions for this project
+        let projectSessions = allSessions.filter { $0.projectID == project.id }
+        
+        if projectSessions.isEmpty {
+            // No sessions to migrate, safe to delete
+            projects.removeAll { $0.id == project.id }
+            if selectedProject?.id == project.id {
+                selectedProject = nil
+            }
+            projectManager.saveProjects(projects)
+            
+            // Refresh the UI after saving
+            await loadProjects()
+            return
+        }
+        
+        // Get other projects to migrate to
+        let otherProjects = projects.filter { $0.id != project.id && !$0.archived }
+        
+        if otherProjects.isEmpty {
+            // No other projects available, show warning
+            print("⚠️ Cannot delete project '\(project.name)' - no other projects available for session migration")
+            return
+        }
+        
+        // For now, we'll use the first available project as the default migration target
+        // In a full implementation, this would show a dialog to let the user choose
+        let migrationTarget = otherProjects.first!
+        
+        // Migrate all sessions to the target project
+        for session in projectSessions {
+            let success = sessionManager.updateSessionFull(
+                id: session.id,
+                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
+                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
+                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                projectName: migrationTarget.name,
+                notes: session.notes,
+                mood: session.mood,
+                activityTypeID: session.activityTypeID,
+                projectPhaseID: session.projectPhaseID,
+                milestoneText: session.milestoneText,
+                projectID: migrationTarget.id
+            )
+            
+            if !success {
+                print("❌ Failed to migrate session \(session.id) from project '\(project.name)' to '\(migrationTarget.name)'")
+            }
+        }
+        
+        // Remove the project
         projects.removeAll { $0.id == project.id }
         if selectedProject?.id == project.id {
             selectedProject = nil
@@ -131,9 +193,119 @@ init() {
         projectManager.saveProjects(projects)
         
         // Refresh the UI after saving
-        Task {
-            await loadProjects()
+        await loadProjects()
+        
+        print("✅ Successfully deleted project '\(project.name)' and migrated \(projectSessions.count) sessions to '\(migrationTarget.name)'")
+    }
+    
+    /// Delete a project with specific migration target
+    func deleteProjectWithMigration(_ project: Project, targetProject: Project) async {
+        let sessionManager = SessionManager.shared
+        let allSessions = sessionManager.allSessions
+        
+        // Get sessions for this project
+        let projectSessions = allSessions.filter { $0.projectID == project.id }
+        
+        // Migrate all sessions to the target project
+        for session in projectSessions {
+            let success = sessionManager.updateSessionFull(
+                id: session.id,
+                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
+                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
+                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                projectName: targetProject.name,
+                notes: session.notes,
+                mood: session.mood,
+                activityTypeID: session.activityTypeID,
+                projectPhaseID: session.projectPhaseID,
+                milestoneText: session.milestoneText,
+                projectID: targetProject.id
+            )
+            
+            if !success {
+                print("❌ Failed to migrate session \(session.id) from project '\(project.name)' to '\(targetProject.name)'")
+            }
         }
+        
+        // Remove the project
+        projects.removeAll { $0.id == project.id }
+        if selectedProject?.id == project.id {
+            selectedProject = nil
+        }
+        projectManager.saveProjects(projects)
+        
+        // Refresh the UI after saving
+        await loadProjects()
+        
+        print("✅ Successfully deleted project '\(project.name)' and migrated \(projectSessions.count) sessions to '\(targetProject.name)'")
+    }
+    
+    /// Delete a project with session migration
+    private func deleteProjectWithMigration(_ project: Project) async {
+        let sessionManager = SessionManager.shared
+        let allSessions = sessionManager.allSessions
+        
+        // Get sessions for this project
+        let projectSessions = allSessions.filter { $0.projectID == project.id }
+        
+        if projectSessions.isEmpty {
+            // No sessions to migrate, safe to delete
+            projects.removeAll { $0.id == project.id }
+            if selectedProject?.id == project.id {
+                selectedProject = nil
+            }
+            projectManager.saveProjects(projects)
+            
+            // Refresh the UI after saving
+            await loadProjects()
+            return
+        }
+        
+        // Get other projects to migrate to
+        let otherProjects = projects.filter { $0.id != project.id && !$0.archived }
+        
+        if otherProjects.isEmpty {
+            // No other projects available, show warning
+            print("⚠️ Cannot delete project '\(project.name)' - no other projects available for session migration")
+            return
+        }
+        
+        // For now, we'll use the first available project as the default migration target
+        // In a full implementation, this would show a dialog to let the user choose
+        let migrationTarget = otherProjects.first!
+        
+        // Migrate all sessions to the target project
+        for session in projectSessions {
+            let success = sessionManager.updateSessionFull(
+                id: session.id,
+                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
+                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
+                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                projectName: migrationTarget.name,
+                notes: session.notes,
+                mood: session.mood,
+                activityTypeID: session.activityTypeID,
+                projectPhaseID: session.projectPhaseID,
+                milestoneText: session.milestoneText,
+                projectID: migrationTarget.id
+            )
+            
+            if !success {
+                print("❌ Failed to migrate session \(session.id) from project '\(project.name)' to '\(migrationTarget.name)'")
+            }
+        }
+        
+        // Remove the project
+        projects.removeAll { $0.id == project.id }
+        if selectedProject?.id == project.id {
+            selectedProject = nil
+        }
+        projectManager.saveProjects(projects)
+        
+        // Refresh the UI after saving
+        await loadProjects()
+        
+        print("✅ Successfully deleted project '\(project.name)' and migrated \(projectSessions.count) sessions to '\(migrationTarget.name)'")
     }
     
     /// Archive a project

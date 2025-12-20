@@ -6,6 +6,9 @@ struct ProjectsView: View {
     
     @State private var showingAddProjectSheet = false
     @State private var selectedProjectForEdit: Project?
+    @State private var showArchivedProjects = false
+    @State private var projectToDeleteForConfirmation: Project?
+    @State private var selectedMigrationTargetForConfirmation: Project?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -41,7 +44,11 @@ struct ProjectsView: View {
                                 Button(action: {
                                     sidebarState.show(.project(project))
                                 }) {
-                                    ProjectRowView(project: project)
+                                    ProjectRowView(
+                                        project: project,
+                                        projectToDeleteForConfirmation: $projectToDeleteForConfirmation,
+                                        selectedMigrationTargetForConfirmation: $selectedMigrationTargetForConfirmation
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -53,7 +60,12 @@ struct ProjectsView: View {
                                 Button(action: {
                                     sidebarState.show(.project(project))
                                 }) {
-                                    ProjectRowView(project: project, isArchived: true)
+                                    ProjectRowView(
+                                        project: project,
+                                        isArchived: true,
+                                        projectToDeleteForConfirmation: $projectToDeleteForConfirmation,
+                                        selectedMigrationTargetForConfirmation: $selectedMigrationTargetForConfirmation
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -99,12 +111,17 @@ struct ProjectsView: View {
                 Button(action: {
                     viewModel.showArchivedProjects.toggle()
                 }) {
-                    Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
-                        .font(.system(size: 14))
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .frame(width: 32, height: 32)
-                        .background(Theme.Colors.divider.opacity(0.3))
-                        .cornerRadius(8)
+                    HStack(spacing: 6) {
+                        Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
+                            .font(.system(size: 14))
+                        Text(viewModel.showArchivedProjects ? "Hide Archived Projects" : "Archived Projects")
+                            .font(Theme.Fonts.caption)
+                    }
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Theme.Colors.divider.opacity(0.3))
+                    .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
@@ -125,10 +142,113 @@ struct ProjectsView: View {
     }
 }
 
+// MARK: - Delete Project Popover
+
+struct DeleteProjectPopover: View {
+    let project: Project?
+    let availableProjects: [Project]
+    @Binding var selectedProject: Project?
+    let onDelete: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: Theme.spacingLarge) {
+            VStack(spacing: Theme.spacingMedium) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(Theme.Colors.error)
+                
+                Text("Delete Project")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Text("Are you sure you want to delete '\(project?.name ?? "")'?")
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            if let project = project, !availableProjects.isEmpty {
+                VStack(spacing: Theme.spacingSmall) {
+                    Text("Migrate Sessions")
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Text("Select which project to migrate \(project.totalDurationHours > 0 ? "\(Int(project.totalDurationHours))h" : "0h") of sessions to:")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Picker("Select Project", selection: $selectedProject) {
+                        ForEach(availableProjects, id: \.id) { project in
+                            Text(project.name).tag(project as Project?)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.horizontal, Theme.spacingMedium)
+            } else if let project = project, project.totalDurationHours > 0 {
+                Text("This project has sessions that will be lost if deleted.")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            HStack(spacing: Theme.spacingMedium) {
+                Button("Cancel", action: onCancel)
+                    .buttonStyle(ConfirmationSecondaryButtonStyle())
+                
+                Button("Delete", action: onDelete)
+                    .buttonStyle(ConfirmationDangerButtonStyle())
+            }
+            .padding(.bottom, Theme.spacingMedium)
+        }
+        .padding(.horizontal, Theme.spacingLarge)
+        .padding(.vertical, Theme.spacingLarge)
+        .background(Theme.Colors.background)
+    }
+}
+
+// MARK: - Custom Button Styles
+
+struct ConfirmationSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.caption)
+            .foregroundColor(Theme.Colors.textPrimary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.Colors.divider.opacity(0.3))
+            .cornerRadius(8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+struct ConfirmationDangerButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.caption)
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.Colors.error)
+            .cornerRadius(8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 struct ProjectRowView: View {
     let project: Project
     var isArchived: Bool = false
     @EnvironmentObject var sidebarState: SidebarStateManager
+    
+    // Bindings for delete confirmation
+    @Binding var projectToDeleteForConfirmation: Project?
+    @Binding var selectedMigrationTargetForConfirmation: Project?
     
     // Hover state for interactive feedback
     @State private var isHovering = false
@@ -173,6 +293,29 @@ struct ProjectRowView: View {
                         .lineLimit(1)
                         .frame(minWidth: 120, maxWidth: 240)
                     
+                    // Current phase from most recent session (with more padding)
+                    if let currentPhase = currentPhase {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(project.swiftUIColor.opacity(0.9))
+                            Text(currentPhase.name)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(project.swiftUIColor.opacity(0.1))
+                        .clipShape(Capsule())
+                        .frame(width: 140)
+                    } else {
+                        // Empty space when no current phase
+                        Spacer().frame(width: 140)
+                    }
+                    
+                    // Add extra padding between phase and project info
+                    Spacer().frame(width: 16)
+                    
                     // Project about/description (flexible width - more space)
                     if let about = project.about, !about.isEmpty {
                         Text(about)
@@ -188,42 +331,7 @@ struct ProjectRowView: View {
                 
                 Spacer()
                 
-                // Total duration capsule
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    Text("\(String(format: "%.1f", project.totalDurationHours))h total")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Theme.Colors.divider.opacity(0.3))
-                .clipShape(Capsule())
-                .frame(width: 120)
-                
-                // Current phase from most recent session (moved to right side)
-                if let currentPhase = currentPhase {
-                    HStack(spacing: 4) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(project.swiftUIColor.opacity(0.9))
-                        Text(currentPhase.name)
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(project.swiftUIColor.opacity(0.1))
-                    .clipShape(Capsule())
-                    .frame(width: 140)
-                } else {
-                    // Empty space when no current phase
-                    Spacer().frame(width: 140)
-                }
-                
-                // Archived status or actions (moved to far right)
+                // Archived status or actions (moved inside, before duration)
                 if isArchived {
                     HStack(spacing: 8) {
                         Text("Archived")
@@ -257,41 +365,24 @@ struct ProjectRowView: View {
                     }
                     .frame(maxWidth: 160)
                 } else {
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                sidebarState.show(.project(project))
-                            }) {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                    .frame(width: 28, height: 28)
-                                    .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .pointingHandOnHover()
-                            .accessibilityLabel("Edit Project")
-                            .accessibilityHint("Opens the project editor")
-                            
-                            Button(action: {
-                                Task {
-                                    await ProjectsViewModel.shared.archiveProject(project)
-                                }
-                            }) {
-                                Image(systemName: "archivebox")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                    .frame(width: 28, height: 28)
-                                    .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .pointingHandOnHover()
-                            .accessibilityLabel("Archive Project")
-                            .accessibilityHint("Archives this project")
-                        }
-                    .frame(maxWidth: 160)
+                    // No buttons in main row - they're in the expanded dropdown
+                    Spacer().frame(maxWidth: 160)
                 }
+                
+                // Total duration capsule (now at the far right, last element)
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Text("\(String(format: "%.1f", project.totalDurationHours))h total")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Theme.Colors.divider.opacity(0.3))
+                .clipShape(Capsule())
+                .frame(width: 120)
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -299,7 +390,7 @@ struct ProjectRowView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
+                    .stroke(project.swiftUIColor.opacity(0.3), lineWidth: 2)
             )
             .cornerRadius(Theme.Row.cornerRadius)
             .contentShape(Rectangle())
@@ -418,6 +509,46 @@ struct ProjectRowView: View {
                             .pointingHandOnHover()
                             .accessibilityLabel("Archive Project")
                             .accessibilityHint("Archives this project")
+                            
+                            // Delete Button (Error color) with Popover
+                            Button(action: {
+                                // Show delete confirmation popover
+                                projectToDeleteForConfirmation = project
+                                selectedMigrationTargetForConfirmation = ProjectsViewModel.shared.activeProjects.first { $0.id != project.id }
+                            }) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.Colors.error)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Delete Project")
+                            .accessibilityHint("Deletes this project and migrates its sessions")
+                            .popover(isPresented: .constant(projectToDeleteForConfirmation != nil)) {
+                                DeleteProjectPopover(
+                                    project: projectToDeleteForConfirmation,
+                                    availableProjects: ProjectsViewModel.shared.activeProjects.filter { $0.id != projectToDeleteForConfirmation?.id },
+                                    selectedProject: $selectedMigrationTargetForConfirmation,
+                                    onDelete: {
+                                        if let project = projectToDeleteForConfirmation, let target = selectedMigrationTargetForConfirmation {
+                                            Task {
+                                                await ProjectsViewModel.shared.deleteProjectWithMigration(project, targetProject: target)
+                                                projectToDeleteForConfirmation = nil
+                                                selectedMigrationTargetForConfirmation = nil
+                                            }
+                                        }
+                                    },
+                                    onCancel: {
+                                        projectToDeleteForConfirmation = nil
+                                        selectedMigrationTargetForConfirmation = nil
+                                    }
+                                )
+                                .padding(20)
+                                .background(Theme.Colors.background)
+                            }
                         }
                         .padding(.trailing, Theme.Row.contentPadding)
                         .padding(.top, Theme.Row.contentPadding)
@@ -448,7 +579,11 @@ struct ProjectsView_Previews: PreviewProvider {
         var body: some View {
 
             List(viewModel.filteredProjects) { project in
-                ProjectRowView(project: project)
+                ProjectRowView(
+                    project: project,
+                    projectToDeleteForConfirmation: .constant(nil),
+                    selectedMigrationTargetForConfirmation: .constant(nil)
+                )
             }
             .frame(width: 800, height: 800)
         }
@@ -469,7 +604,11 @@ struct ProjectsView_Previews: PreviewProvider {
         ]
 
         List(mockProjects) { project in
-            ProjectRowView(project: project)
+            ProjectRowView(
+                project: project,
+                projectToDeleteForConfirmation: .constant(nil),
+                selectedMigrationTargetForConfirmation: .constant(nil)
+            )
         }
         .frame(width: 650, height: 600)
         .previewDisplayName("Mock Data (for UI testing)")

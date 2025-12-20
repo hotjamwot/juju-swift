@@ -113,6 +113,40 @@ nodes:
     function: Edit Session Details
     description: Session editing uses projectID internally
 
+  # Inline Session Editing Flow
+  - id: I1_Project_Editor
+    component: SessionsRowView
+    function: Edit Project Assignment
+    description: Inline project selection with automatic phase validation and clearing
+  - id: I2_Phase_Editor
+    component: SessionsRowView
+    function: Edit Project Phase
+    description: Inline phase selection with project compatibility validation
+  - id: I3_ActivityType_Editor
+    component: SessionsRowView
+    function: Edit Activity Type
+    description: Inline activity type selection with fallback to "Uncategorized"
+  - id: I4_Milestone_Editor
+    component: SessionsRowView
+    function: Edit Milestone Text
+    description: Inline milestone text editing with star icon display
+  - id: I5_Mood_Editor
+    component: SessionsRowView
+    function: Edit Mood Rating
+    description: Inline mood selection with emoji display (1-10 scale)
+  - id: I6_Time_Editor
+    component: SessionsRowView
+    function: Edit Start/End Times
+    description: Inline time picker for start and end times with midnight session handling
+  - id: I7_Date_Editor
+    component: SessionsRowView
+    function: Edit Session Date
+    description: Inline date picker with automatic midnight session adjustment
+  - id: I8_Notes_Editor
+    component: SessionsRowView
+    function: Edit Session Notes
+    description: Inline notes editing with overlay modal for longer text
+
   # Project Selection Flow
   - id: P1_Project_Selection
     component: InlineSelectionPopover

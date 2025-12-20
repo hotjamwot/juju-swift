@@ -393,6 +393,21 @@ class SessionPersistenceManager: ObservableObject {
             // Update timestamp to trigger UI refresh
             lastUpdated = Date()
             
+            // Post notification that session was updated
+            // Use a dedicated notification name for session updates to avoid conflicts
+            NotificationCenter.default.post(
+                name: .sessionDidEnd,
+                object: nil,
+                userInfo: ["sessionID": id]
+            )
+            
+            // Also post a general session update notification for broader listeners
+            NotificationCenter.default.post(
+                name: NSNotification.Name("sessionDidUpdate"),
+                object: nil,
+                userInfo: ["sessionID": id]
+            )
+            
             return true
         }
 
@@ -481,10 +496,21 @@ class SessionPersistenceManager: ObservableObject {
             return false
         }
         
+        // Validate and fix end date if it's earlier than start date
+        // This handles sessions that cross midnight
+        var finalEndDate = endDate
+        if endDate < startDate {
+            // End date is earlier than start date, assume session crosses midnight
+            // Add one day to end date
+            if let nextDayEndDate = Calendar.current.date(byAdding: .day, value: 1, to: endDate) {
+                finalEndDate = nextDayEndDate
+            }
+        }
+        
         var updated = SessionRecord(
             id: session.id,
             startDate: startDate,
-            endDate: endDate,
+            endDate: finalEndDate,
             projectName: projectName,
             projectID: validatedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,

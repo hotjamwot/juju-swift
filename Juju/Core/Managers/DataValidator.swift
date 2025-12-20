@@ -60,8 +60,10 @@ class DataValidator {
             let projectManager = ProjectManager.shared
             let projects = projectManager.loadProjects()
             
-            guard projects.contains(where: { $0.id == projectID && !$0.archived }) else {
-                return .invalid(reason: "Session references non-existent or archived project: \(projectID)")
+            // Allow sessions to reference archived projects (preserves historical data)
+            // Only reject if the project doesn't exist at all
+            guard projects.contains(where: { $0.id == projectID }) else {
+                return .invalid(reason: "Session references non-existent project: \(projectID)")
             }
             
             // If projectPhaseID is provided, validate it belongs to the project
