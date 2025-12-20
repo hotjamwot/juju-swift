@@ -13,12 +13,10 @@
 Juju needs **two different annual lenses**, not one overloaded one.
 
 1. **The Focus Lens**
-   *Where did my attention actually go this year?*
+   *Where did my attention actually go this year?* Activity Type based.
 
 2. **The Story Lens**
-   *What happened inside a project over time?*
-
-Trying to answer both questions in a single view creates noise and emotional confusion. This plan deliberately separates them.
+   *What happened inside a project over time?* Project based.
 
 ---
 
@@ -27,8 +25,6 @@ Trying to answer both questions in a single view creates noise and emotional con
 ### Purpose
 
 Give users a calm, immediate sense of how their **attention was distributed across the year**, without narrative detail.
-
-This is *context*, not storytelling.
 
 ---
 
@@ -42,41 +38,23 @@ This is *context*, not storytelling.
 
 ### 🎨 The Visual Concept — *Focus Map*
 
-A **vertical comparison band chart** showing **activity types** over time.
+A **horizontal grouped bar chart** showing **activity types** over time.
 
 **Structure:**
 
-* **X-axis:** Activity Types (emoji + colour)
-* **Y-axis:** Calendar time (Jan 1 → Today, ascending)
-* **Bands:**
+* **X-axis:** Grouped bar charts showing Activity Types (emoji + colour) duration
+* **Y-axis:** Calendar months (Jan - Dec)
+* **Grouped bars:**
 
-  * A vertical band is “on” for a day if *any* session of that activity exists
-  * Consecutive days form continuous bands
-  * Gaps are clearly visible
+  * A bar is grouped by activty type using duration
+  * The activity type icon is overlayed on the bar
+  * The color of all bars is our Theme.swift accentColor
 
 **Design Rules:**
 
-* No durations
+* No duration labels
 * No phases
 * Minimal labels
-* Calm colour palette
-* This chart must read instantly, even from across the room
-
----
-
-### 🧪 Build This in Tiny Steps
-
-**Step 1:**
-Render a single vertical band for *one* activity type across days.
-
-**Step 2:**
-Add multiple activity columns.
-
-**Step 3:**
-Add responsive Y-axis scaling (Jan → today).
-
-**Step 4:**
-Polish axes, spacing, and colour softness.
 
 > 🚫 No milestones here.
 > 🚫 No hover dependence.
@@ -86,7 +64,7 @@ Polish axes, spacing, and colour softness.
 
 ### Why This Lives on the Yearly Dashboard
 
-* It complements your existing bundle charts
+* It complements our existing bundle charts
 * It keeps the yearly dashboard reflective, not dense
 * It avoids turning the dashboard into a wall of story detail
 

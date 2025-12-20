@@ -49,19 +49,10 @@ struct YearlyDashboardView: View {
                     // Dashboard charts using optimized two-column layout
                     DashboardLayout.yearly(
                         left: {
-                            // Monthly Activity Breakdown Chart - REMOVED
-                            // Keeping frame with placeholder text
-                            VStack {
-                                Text("Charts coming soon")
-                                    .font(Theme.Fonts.header)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                
-                                Text("Monthly activity breakdown chart will be available soon")
-                                    .font(Theme.Fonts.body)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
+                            // Monthly Activity Type Grouped Bar Chart
+                            MonthlyActivityTypeGroupedBarChartView(
+                                data: chartDataPreparer.monthlyActivityTypeTotals()
+                            )
                         },
                         rightTop: {
                             // Project Distribution Chart
@@ -189,4 +180,7 @@ struct BackNavigationButton: View {
         projectsViewModel: ProjectsViewModel.shared,
         editorialEngine: EditorialEngine()
     )
+    .environmentObject(SidebarStateManager())
+    .frame(width: 1200, height: 700) // Dashboard preview size
+    .background(Theme.Colors.background)
 }

@@ -178,3 +178,21 @@ struct YearlyMonthlyActivityDataPoint: Identifiable {
     let totalHours: Double
     let percentage: Double
 }
+
+/// Monthly activity type chart data model for monthly activity type grouped bar chart
+struct MonthlyActivityTypeChartData: Identifiable {
+    let id = UUID()
+    let month: String
+    let monthNumber: Int
+    let activityBreakdown: [MonthlyActivityTypeDataPoint]
+    let totalHours: Double
+}
+
+/// Monthly activity type data point for individual activity breakdowns within months
+struct MonthlyActivityTypeDataPoint: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+}

@@ -348,6 +348,22 @@ final class ChartDataPreparer: ObservableObject {
         return aggregateYearlyActivityTypeTotals(from: yearlySessions)
     }
     
+    /// Prepare monthly activity type data for current year only
+    /// 
+    /// USE CASE: MonthlyActivityTypeGroupedBarChartView
+    /// OUTPUT: Array of MonthlyActivityTypeChartData with month names, activity breakdowns, and percentages
+    /// PERFORMANCE: Filters sessions to current year only for optimal performance
+    /// FILTERING: Only includes active (non-archived) activity types
+    /// 
+    /// - Returns: MonthlyActivityTypeChartData array sorted by month number (ascending)
+    func monthlyActivityTypeTotals() -> [MonthlyActivityTypeChartData] {
+        let yearlySessions = viewModel.sessions.filter { session in
+            return currentYearInterval.contains(session.startDate)
+        }
+        return aggregateMonthlyActivityTypeTotals(from: yearlySessions)
+    }
+    
+    
     /// Aggregates yearly activity type totals with optimized lookups
     /// 
     /// PERFORMANCE: Pre-builds activity type lookup dictionary for O(1) access
@@ -392,6 +408,84 @@ final class ChartDataPreparer: ObservableObject {
                 percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
             )
         }.sorted { $0.totalHours > $1.totalHours }
+    }
+    
+    /// Aggregates monthly activity type totals with optimized lookups
+    /// 
+    /// PERFORMANCE: Pre-builds activity type lookup dictionary for O(1) access
+    /// MAINTENANCE: Reuses existing activity type system for consistency
+    /// FILTERING: Only includes active (non-archived) activity types
+    /// 
+    /// - Parameter sessions: Filtered sessions for current year
+    /// - Returns: Array of MonthlyActivityTypeChartData sorted by month number
+    private func aggregateMonthlyActivityTypeTotals(from sessions: [SessionRecord]) -> [MonthlyActivityTypeChartData] {
+        // Pre-build activity type lookup dictionary for O(1) access, filtering out archived activity types
+        let activityTypeManager = ActivityTypeManager.shared
+        let activeActivityTypes = activityTypeManager.getActiveActivityTypes()
+        let activityLookup = Dictionary(uniqueKeysWithValues: 
+            activeActivityTypes.map { ($0.id, $0) }
+        )
+        
+        // Group sessions by month
+        var monthlyData: [Int: [SessionRecord]] = [:]
+        
+        for session in sessions {
+            let monthNumber = calendar.component(.month, from: session.startDate)
+            monthlyData[monthNumber, default: []].append(session)
+        }
+        
+        // Process each month
+        var result: [MonthlyActivityTypeChartData] = []
+        
+        for monthNumber in 1...12 {
+            let monthSessions = monthlyData[monthNumber] ?? []
+            
+            // Aggregate activity totals for this month
+            var activityTotals: [String: Double] = [:]
+            
+            for session in monthSessions {
+                let activityID = session.activityTypeID ?? "uncategorized"
+                
+                // Only include sessions for active activity types
+                guard activityLookup[activityID] != nil else { continue }
+                
+                // Calculate duration from startDate and endDate
+                let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
+                // Ensure duration is positive
+                let hours = max(0, Double(durationMinutes) / 60.0)
+                activityTotals[activityID, default: 0] += hours
+            }
+            
+            let monthTotalHours = activityTotals.values.reduce(0, +)
+            
+            // Create activity breakdown for this month
+            let activityBreakdown: [MonthlyActivityTypeDataPoint] = activityTotals.compactMap { (activityID: String, hours: Double) in
+                // Skip activity types with zero hours
+                guard hours > 0 else { return nil }
+                let activityType = activityLookup[activityID] ??
+                                  activityTypeManager.getUncategorizedActivityType()
+                return MonthlyActivityTypeDataPoint(
+                    activityName: activityType.name,
+                    emoji: activityType.emoji,
+                    totalHours: hours,
+                    percentage: monthTotalHours > 0 ? (hours / monthTotalHours * 100) : 0
+                )
+            }.sorted { $0.totalHours > $1.totalHours }
+            
+            // Get month name
+            let monthName = DateFormatter().monthSymbols[monthNumber - 1]
+            
+            let monthData = MonthlyActivityTypeChartData(
+                month: monthName,
+                monthNumber: monthNumber,
+                activityBreakdown: activityBreakdown,
+                totalHours: monthTotalHours
+            )
+            
+            result.append(monthData)
+        }
+        
+        return result
     }
     
     // Accessors for convenience in views

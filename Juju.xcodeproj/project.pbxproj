@@ -48,6 +48,7 @@
 		66B148822EA8EA4B00E9BB4A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148452EA8EA4B00E9BB4A /* Theme.swift */; };
 		66B148912EA8F01D00E9BB4A /* NotesModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148342EA8EA4B00E9BB4A /* NotesModalView.swift */; };
 		66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */; };
+		66B1A3FD2EF6FFDA0001B5C0 /* MonthlyActivityTypeGroupedBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B1A3FC2EF6FFDA0001B5C0 /* MonthlyActivityTypeGroupedBarChartView.swift */; };
 		66C452FB2EB4133200DE7FE6 /* TooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C452FA2EB4133200DE7FE6 /* TooltipView.swift */; };
 		66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D02EEED25E00D06502 /* ProjectManager.swift */; };
 		66D9D0D32EEED4C500D06502 /* DataValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D9D0D22EEED4C500D06502 /* DataValidator.swift */; };
@@ -114,6 +115,7 @@
 		66B148452EA8EA4B00E9BB4A /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		66B148882EA8EA6000E9BB4A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSColor+SwiftUI.swift"; sourceTree = "<group>"; };
+		66B1A3FC2EF6FFDA0001B5C0 /* MonthlyActivityTypeGroupedBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MonthlyActivityTypeGroupedBarChartView.swift; sourceTree = "<group>"; };
 		66C452FA2EB4133200DE7FE6 /* TooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TooltipView.swift; sourceTree = "<group>"; };
 		66D9D0D02EEED25E00D06502 /* ProjectManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectManager.swift; sourceTree = "<group>"; };
 		66D9D0D22EEED4C500D06502 /* DataValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataValidator.swift; sourceTree = "<group>"; };
@@ -393,6 +395,7 @@
 		66F448322EEC9130008FA5DD /* Yearly */ = {
 			isa = PBXGroup;
 			children = (
+				66B1A3FC2EF6FFDA0001B5C0 /* MonthlyActivityTypeGroupedBarChartView.swift */,
 				667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */,
 				667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */,
 				66D9D0D82EEEEE5100D06502 /* MonthlyActivityBreakdownChartView.swift */,
@@ -510,6 +513,7 @@
 				66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */,
 				66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */,
 				66B148932EA8F4A300E9BB4A /* NSColor+SwiftUI.swift in Sources */,
+				66B1A3FD2EF6FFDA0001B5C0 /* MonthlyActivityTypeGroupedBarChartView.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66F448362EEC9131008FA5DD /* SessionCalendarChartView.swift in Sources */,
 				66A51B1F2EF03779007E2343 /* BottomFilterBar.swift in Sources */,

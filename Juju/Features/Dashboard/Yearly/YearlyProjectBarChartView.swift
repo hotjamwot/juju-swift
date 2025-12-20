@@ -34,7 +34,12 @@ struct YearlyProjectBarChartView: View {
                     let visibleData = Array(data.prefix(maxVisibleProjects))
                     let hiddenData = Array(data.dropFirst(maxVisibleProjects))
                     
-                    VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+                    // Calculate dynamic height per item to utilize full frame height
+                    let totalSpacing = CGFloat(visibleData.count - 1) * 12
+                    let availableHeight = geometry.size.height - totalSpacing
+                    let itemHeight = max(28, availableHeight / CGFloat(visibleData.count))
+                    
+                    VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(visibleData.enumerated()), id: \.offset) { index, projectData in
                             HStack(spacing: Theme.spacingMedium) {
                                 // Project label with emoji (left aligned, smaller font)
@@ -52,11 +57,11 @@ struct YearlyProjectBarChartView: View {
                                 // Progress bar (standalone, no background)
                                 Rectangle()
                                     .fill(projectData.colorSwiftUI)
-                                    .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 10)
-                                    .cornerRadius(5)
+                                    .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 6)
+                                    .cornerRadius(3)
                                     .scaleEffect(hoveredIndex == index ? CGSize(width: 1.05, height: 1.2) : CGSize(width: 1, height: 1))
                                     .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
-                                    .shadow(color: projectData.colorSwiftUI.opacity(0.3), radius: 3, x: 0, y: 2)
+                                    .shadow(color: projectData.colorSwiftUI.opacity(0.4), radius: 8, x: 0, y: 2)
                                     .onHover { hovering in
                                         hoveredIndex = hovering ? index : nil
                                     }
@@ -71,6 +76,7 @@ struct YearlyProjectBarChartView: View {
                                     .foregroundColor(Theme.Colors.textSecondary)
                                     .frame(width: 40, alignment: .trailing) 
                             }
+                            .frame(height: itemHeight)
                         }
                     }
                     
@@ -92,10 +98,11 @@ struct YearlyProjectBarChartView: View {
                                 }
                                 .frame(maxWidth: geometry.size.width * 0.45) 
                                 .padding(.bottom, 10) 
+                                }
                             }
+                            .frame(height: itemHeight)
                         }
                     }
-                }
                 .padding(.vertical, Theme.spacingExtraSmall)
             }
         }

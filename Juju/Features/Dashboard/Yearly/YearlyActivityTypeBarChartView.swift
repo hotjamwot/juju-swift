@@ -35,7 +35,12 @@ struct YearlyActivityTypeBarChartView: View {
                     let visibleData = Array(data.prefix(maxVisibleActivityTypes))
                     let hiddenData = Array(data.dropFirst(maxVisibleActivityTypes))
                     
-                    VStack(alignment: .leading, spacing: Theme.spacingMedium) {
+                    // Calculate dynamic height per item to utilize full frame height
+                    let totalSpacing = CGFloat(visibleData.count - 1) * 12
+                    let availableHeight = geometry.size.height - totalSpacing
+                    let itemHeight = max(28, availableHeight / CGFloat(visibleData.count))
+                    
+                    VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(visibleData.enumerated()), id: \.offset) { index, activityData in
                             HStack(spacing: Theme.spacingMedium) {
                                 // Activity label with emoji (left aligned, smaller font)
@@ -53,11 +58,11 @@ struct YearlyActivityTypeBarChartView: View {
                                 // Progress bar using consistent accent color (no individual colors per activity type)
                                 Rectangle()
                                     .fill(Theme.Colors.accentColor) // Use consistent accent color for all bars
-                                    .frame(width: chartWidth * CGFloat(activityData.totalHours / maxHours), height: 10)
-                                    .cornerRadius(5)
+                                    .frame(width: chartWidth * CGFloat(activityData.totalHours / maxHours), height: 6)
+                                    .cornerRadius(3)
                                     .scaleEffect(hoveredIndex == index ? CGSize(width: 1.05, height: 1.2) : CGSize(width: 1, height: 1))
                                     .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
-                                    .shadow(color: Theme.Colors.accentColor.opacity(0.3), radius: 3, x: 0, y: 2)
+                                    .shadow(color: Theme.Colors.accentColor.opacity(0.4), radius: 8, x: 0, y: 2)
                                     .onHover { hovering in
                                         hoveredIndex = hovering ? index : nil
                                     }
@@ -72,6 +77,7 @@ struct YearlyActivityTypeBarChartView: View {
                                     .foregroundColor(Theme.Colors.textSecondary)
                                     .frame(width: 40, alignment: .trailing)
                             }
+                            .frame(height: itemHeight)
                         }
                     }
                     
@@ -93,10 +99,11 @@ struct YearlyActivityTypeBarChartView: View {
                                 }
                                 .frame(maxWidth: geometry.size.width * 0.45) // Limited to 45% width only
                                 .padding(.bottom, 10)
+                                }
                             }
+                            .frame(height: itemHeight)
                         }
                     }
-                }
                 .padding(.vertical, Theme.spacingExtraSmall)
             }
         }
