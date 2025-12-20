@@ -471,14 +471,9 @@ struct SessionsRowView: View {
                             }
                         } else {
                             // Empty space when no phase - make it clickable to add a phase
-                            HStack(spacing: 4) {
-                                Image(systemName: "play.circle")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
-                                Text("Phase")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                            }
+                            Image(systemName: "play.circle")
+                                .font(.system(size: 10))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -654,15 +649,6 @@ struct SessionsRowView: View {
                     Image(systemName: "trash")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Theme.Colors.error)
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Theme.Colors.error.opacity(0.1))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Theme.Colors.error.opacity(0.3), lineWidth: 1)
-                                )
-                        )
                 }
                 .buttonStyle(PlainButtonStyle())
                 .opacity(isHovering ? 1.0 : 0.0)

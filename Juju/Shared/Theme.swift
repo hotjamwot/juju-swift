@@ -2,6 +2,22 @@ import SwiftUI
 import AppKit
 
 /// All colours, fonts, spacing, etc. lives here – no magic strings elsewhere.
+///
+/// DESIGN RULES:
+/// - Minimalist aesthetic: clean, uncluttered interface with generous whitespace
+/// - Japanese-inspired wabi-sabi: subtle imperfections, natural flow, calming
+/// - Dark theme consistency: deep background (#121212), soft surface (#1C1C1E)
+/// - Typography hierarchy: rounded headers, clean body text, compact captions
+/// - Spacing rhythm: 8pt/16pt/24pt system creates visual breathing room
+/// - Rounded corners: 18pt for cards, 10pt for rows, 5pt for bars (soft edges)
+/// - Charts: minimalist with subtle grid lines, working hours shading, clear data
+/// - Lists: compact 44pt rows with subtle hover states, emoji integration
+/// - Color philosophy: project colors for data, accent (#E100FF) for actions
+/// - Divider subtlety: 10% opacity for backgrounds, 20% for interactions
+/// - Animation philosophy: smooth 0.2s transitions, no jarring movements
+/// - Emoji integration: consistent sizing (16pt charts, 14pt lists) for personality
+/// - Responsive design: fluid layouts that adapt gracefully to screen size
+/// - Visual hierarchy: use opacity and spacing over heavy borders and shadows
 public struct Theme {
 
     // MARK: Colors

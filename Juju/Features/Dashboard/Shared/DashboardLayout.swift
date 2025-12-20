@@ -147,13 +147,13 @@ struct DashboardLayout: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .padding(Theme.DashboardLayout.chartPadding)
-            .background(Theme.Colors.surface.opacity(0.5))
+            .background(Theme.Colors.surface.opacity(0.3)) // Reduced opacity for cleaner look
             .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.DashboardLayout.chartCornerRadius)
                     .stroke(Theme.Colors.divider, lineWidth: Theme.DashboardLayout.chartBorderWidth)
             )
-            .shadow(color: Theme.Colors.divider.opacity(0.2), radius: 8, x: 0, y: 2)
+            // Removed shadow for cleaner, flatter aesthetic
         }
     }
 }

@@ -47,7 +47,7 @@ struct ActiveSessionStatusView: View {
         .padding(.vertical, Theme.DashboardLayout.chartPadding / 3) // Further reduced vertical padding
         .background(
             LinearGradient(
-                colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.8)],
+                colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.6)],
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -55,7 +55,7 @@ struct ActiveSessionStatusView: View {
         .cornerRadius(Theme.Design.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .stroke(Theme.Colors.divider.opacity(0.5), lineWidth: 1)
+                .stroke(Theme.Colors.divider.opacity(0.3), lineWidth: 1) // Reduced opacity for subtlety
         )
     }
     
