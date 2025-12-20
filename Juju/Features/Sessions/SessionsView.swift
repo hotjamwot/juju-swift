@@ -198,6 +198,7 @@ public struct SessionsView: View {
     @State private var overlaySession: SessionRecord?
     @State private var isEditingNotes = false
     @State private var editedNotes: String = ""
+    @FocusState private var isTextFieldFocused: Bool
     
     // Filter persistence: store the last applied filter state
     @State private var lastAppliedFilter: SessionsDateFilter = .thisWeek
@@ -304,36 +305,9 @@ public struct SessionsView: View {
     }
     
     private func handleNotesChanged(_ session: SessionRecord, _ newNotes: String) {
-        // Update the session notes
-        let sessionID = session.id
-        let sessionProjectName = session.projectName
-        let sessionMood = session.mood ?? 0
-        let sessionActivityTypeID = session.activityTypeID
-        let sessionProjectPhaseID = session.projectPhaseID
-        let sessionMilestoneText = session.milestoneText
-        
-        // Format date and time from startDate and endDate
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let sessionDate = dateFormatter.string(from: session.startDate)
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        let sessionStartTime = timeFormatter.string(from: session.startDate)
-        let sessionEndTime = timeFormatter.string(from: session.endDate)
-        
-        let success = sessionManager.updateSessionFull(
-            id: sessionID,
-            date: sessionDate,
-            startTime: sessionStartTime,
-            endTime: sessionEndTime,
-            projectName: sessionProjectName,
-            notes: newNotes,
-            mood: sessionMood,
-            activityTypeID: sessionActivityTypeID,
-            projectPhaseID: sessionProjectPhaseID,
-            milestoneText: sessionMilestoneText
-        )
+        // Update only the session notes using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = sessionManager.updateSession(id: session.id, field: "notes", value: newNotes)
         
         if success {
             // Trigger refresh to update the UI
@@ -374,16 +348,16 @@ public struct SessionsView: View {
     @ViewBuilder
     private var noteOverlay: some View {
         if showingNoteOverlay, let session = overlaySession {
-            noteOverlayContent(for: session)
+            contextualNoteOverlay(for: session)
         }
     }
     
     @ViewBuilder
-    private func noteOverlayContent(for session: SessionRecord) -> some View {
+    private func contextualNoteOverlay(for session: SessionRecord) -> some View {
         GeometryReader { geometry in
             ZStack {
-                // Background dimming that covers entire screen
-                Color.black.opacity(0.2)
+                // Subtle background dimming - only dim the area outside the session row
+                Color.black.opacity(0.1)
                     .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -394,33 +368,40 @@ public struct SessionsView: View {
                         }
                     }
                 
-                // Note overlay content - centered on screen
+                // Contextual notes overlay positioned relative to session row
                 VStack(spacing: 0) {
                     if isEditingNotes {
-                        noteEditorView(session: session)
+                        contextualNoteEditorView(session: session)
                     } else {
-                        noteDisplayView(session: session)
+                        contextualNoteDisplayView(session: session)
                     }
                 }
-                .padding(.horizontal, Theme.Row.contentPadding)
-                .padding(.vertical, Theme.Row.contentPadding)
+                .padding(.horizontal, Theme.spacingMedium)
+                .padding(.vertical, Theme.spacingMedium)
+                .background(Theme.Colors.surface)
+                .cornerRadius(Theme.Design.cornerRadius)
+                .shadow(color: Theme.Colors.divider.opacity(0.3), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                )
                 .transition(.asymmetric(
-                    insertion: AnyTransition.move(edge: .bottom).combined(with: .opacity),
-                    removal: AnyTransition.move(edge: .bottom).combined(with: .opacity)
+                    insertion: AnyTransition.move(edge: .trailing).combined(with: .opacity),
+                    removal: AnyTransition.move(edge: .trailing).combined(with: .opacity)
                 ))
                 .animation(.easeInOut(duration: 0.25), value: isEditingNotes)
+                .animation(.easeInOut(duration: 0.25), value: showingNoteOverlay)
             }
-            .frame(maxWidth: 700) // Limit width for better readability
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .zIndex(100) // Ensure overlay appears above all other content
     }
     
     @ViewBuilder
-    private func noteEditorView(session: SessionRecord) -> some View {
+    private func contextualNoteEditorView(session: SessionRecord) -> some View {
         VStack(spacing: Theme.spacingMedium) {
             VStack(spacing: Theme.spacingSmall) {
-                // Text editor
+                // Text editor with improved styling
                 TextEditor(text: $editedNotes)
                     .font(Theme.Fonts.body)
                     .frame(minHeight: 120, maxHeight: 200)
@@ -432,8 +413,9 @@ public struct SessionsView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
+                    .focused($isTextFieldFocused)
                 
-                // Action buttons
+                // Action buttons with better styling
                 HStack(spacing: Theme.spacingSmall) {
                     Spacer()
                     
@@ -449,32 +431,13 @@ public struct SessionsView: View {
                         }
                     }
                     .buttonStyle(SecondaryButtonStyle())
+                    .keyboardShortcut(.escape, modifiers: [])
                     
                     Button("Save") {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            // Format date and time from startDate and endDate
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateFormat = "yyyy-MM-dd"
-                            let sessionDate = dateFormatter.string(from: session.startDate)
-                            
-                            let timeFormatter = DateFormatter()
-                            timeFormatter.dateFormat = "HH:mm:ss"
-                            let sessionStartTime = timeFormatter.string(from: session.startDate)
-                            let sessionEndTime = timeFormatter.string(from: session.endDate)
-                            
-                            // Update the session notes
-                            let success = sessionManager.updateSessionFull(
-                                id: session.id,
-                                date: sessionDate,
-                                startTime: sessionStartTime,
-                                endTime: sessionEndTime,
-                                projectName: session.projectName,
-                                notes: editedNotes,
-                                mood: session.mood ?? 0,
-                                activityTypeID: session.activityTypeID,
-                                projectPhaseID: session.projectPhaseID,
-                                milestoneText: session.milestoneText
-                            )
+                            // Update only the session notes using the single-field update method
+                            // This avoids any date/time parsing issues that could cause midnight duration bugs
+                            let success = sessionManager.updateSession(id: session.id, field: "notes", value: editedNotes)
                             
                             if success {
                                 // Trigger refresh to update the UI
@@ -492,27 +455,37 @@ public struct SessionsView: View {
                         }
                     }
                     .buttonStyle(PrimaryButtonStyle())
+                    .keyboardShortcut(.return, modifiers: .command)
                     .disabled(editedNotes == session.notes) // Disable if no changes
                     .opacity(editedNotes == session.notes ? 0.5 : 1.0)
                 }
             }
         }
         .padding(Theme.spacingMedium)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Row.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
     }
     
     @ViewBuilder
-    private func noteDisplayView(session: SessionRecord) -> some View {
+    private func contextualNoteDisplayView(session: SessionRecord) -> some View {
         VStack(spacing: Theme.spacingMedium) {
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Text("Notes")
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
+                HStack {
+                    Text("Notes")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    
+                    Spacer()
+                    
+                    // Session context info
+                    HStack(spacing: 8) {
+                        Text(session.projectName)
+                            .font(Theme.Fonts.caption.weight(.medium))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                }
                 
                 Text(session.notes.isEmpty ? "No notes yet. Click to add notes." : session.notes)
                     .font(Theme.Fonts.body)
@@ -535,12 +508,6 @@ public struct SessionsView: View {
             }
         }
         .padding(Theme.spacingMedium)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Row.cornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
     }
     
 
@@ -862,6 +829,7 @@ public struct SessionsView: View {
         }
         toDelete = nil
     }
+    
     
     // MARK: - Filter Handling
     
