@@ -265,8 +265,72 @@ public struct SessionsView: View {
     
     /// Count of sessions based on current filter state (accurate count for filtered sessions)
     private var currentSessionCount: Int {
-        let filteredSessions = getFullyFilteredSessions()
-        return filteredSessions.count
+        // Start with all sessions instead of just current week
+        let initialSessions = sessionManager.allSessions
+        
+        // Apply project filter if not "All"
+        let filteredByProject = applyProjectFilter(to: initialSessions)
+        
+        // Apply activity type filter if not "All"
+        let filteredByActivityType = applyActivityTypeFilter(to: filteredByProject)
+        
+        // Apply date filtering based on selected filter
+        let filteredByDate = applyDateFilter(to: filteredByActivityType)
+        
+        // Sort by start date time (most recent first)
+        let sortedSessions = sortSessionsByDate(filteredByDate)
+        
+        return sortedSessions.count
+    }
+    
+    /// Apply date filtering to sessions
+    private func applyDateFilter(to sessions: [SessionRecord]) -> [SessionRecord] {
+        switch filterState.selectedDateFilter {
+        case .today:
+            let today = Calendar.current.startOfDay(for: Date())
+            return sessions.filter { session in
+                let start = session.startDate
+                return Calendar.current.isDate(start, inSameDayAs: today)
+            }
+        case .thisWeek:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { return sessions }
+            return sessions.filter { session in
+                let start = session.startDate
+                return start >= weekRange.start && start <= weekRange.end
+            }
+        case .thisMonth:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let monthRange = calendar.dateInterval(of: .month, for: today) else { return sessions }
+            return sessions.filter { session in
+                let start = session.startDate
+                return start >= monthRange.start && start <= monthRange.end
+            }
+        case .thisYear:
+            let calendar = Calendar.current
+            let today = Date()
+            guard let yearRange = calendar.dateInterval(of: .year, for: today) else { return sessions }
+            return sessions.filter { session in
+                let start = session.startDate
+                return start >= yearRange.start && start <= yearRange.end
+            }
+        case .allTime:
+            // No date filtering - use all sessions
+            return sessions
+        case .custom:
+            if let customRange = filterState.customDateRange {
+                return sessions.filter { session in
+                    let start = session.startDate
+                    return start >= customRange.startDate && start <= customRange.endDate
+                }
+            }
+            return sessions
+        case .clear:
+            // No additional filtering - use all sessions
+            return sessions
+        }
     }
     
     /// Update session count when sessions change

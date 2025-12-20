@@ -18,13 +18,7 @@ struct FilterToggleButton: View {
                 
                 Button(action: onToggle) {
                     HStack(spacing: Theme.spacingSmall) {
-                        // Upward chevron
-                        Image(systemName: "chevron.up")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(isHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
-                            .animation(.easeInOut(duration: 0.2), value: isHovering)
-                        
-                        // Session count text (wider layout)
+                        // Session count text
                         Text("\(filteredSessionsCount) sessions")
                             .font(.caption.weight(.medium))
                             .foregroundColor(isHovering ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
@@ -34,6 +28,12 @@ struct FilterToggleButton: View {
                                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
                                     .fill(isHovering ? Theme.Colors.accentColor.opacity(0.1) : Theme.Colors.divider.opacity(0.2))
                             )
+                            .animation(.easeInOut(duration: 0.2), value: isHovering)
+                        
+                        // Upward chevron
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(isHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                             .animation(.easeInOut(duration: 0.2), value: isHovering)
                     }
                     .padding(.horizontal, Theme.spacingMedium)
