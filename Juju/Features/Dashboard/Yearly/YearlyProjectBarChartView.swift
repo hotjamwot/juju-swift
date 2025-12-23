@@ -61,7 +61,6 @@ struct YearlyProjectBarChartView: View {
                                     .cornerRadius(3)
                                     .scaleEffect(hoveredIndex == index ? CGSize(width: 1.05, height: 1.2) : CGSize(width: 1, height: 1))
                                     .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
-                                    .shadow(color: projectData.colorSwiftUI.opacity(0.4), radius: 8, x: 0, y: 2)
                                     .onHover { hovering in
                                         hoveredIndex = hovering ? index : nil
                                     }

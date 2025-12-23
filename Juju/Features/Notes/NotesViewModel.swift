@@ -50,6 +50,25 @@ class NotesViewModel: ObservableObject {
         return sortedActivityTypes
     }
     
+    /// Get the most recent activity type used for the current project
+    private var mostRecentActivityTypeForProject: ActivityType? {
+        guard let projectID = currentProjectID else { return nil }
+        
+        // Find the most recent session for this project
+        let recentSessions = SessionManager.shared.allSessions
+            .filter { $0.projectID == projectID }
+            .sorted { $0.startDate > $1.startDate }
+        
+        guard let mostRecentSession = recentSessions.first,
+              let activityTypeID = mostRecentSession.activityTypeID else {
+            return nil
+        }
+        
+        // Find the activity type by ID
+        return ActivityTypeManager.shared.getActiveActivityTypes()
+            .first { $0.id == activityTypeID }
+    }
+    
     private var completion: ((String, Int?, String?, String?, String?) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText
     private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
@@ -109,9 +128,14 @@ class NotesViewModel: ObservableObject {
     
     private func setSmartDefaults() {
         // Set smart defaults based on last used for this project
-        // For now, default to first activity type if available
-        if selectedActivityTypeID == nil && !activityTypes.isEmpty {
-            selectedActivityTypeID = activityTypes.first?.id
+        // First, try to use the most recent activity type for this project
+        if selectedActivityTypeID == nil {
+            if let mostRecentActivityType = mostRecentActivityTypeForProject {
+                selectedActivityTypeID = mostRecentActivityType.id
+            } else if !activityTypes.isEmpty {
+                // Fall back to first activity type if no recent history
+                selectedActivityTypeID = activityTypes.first?.id
+            }
         }
         
         // Phase defaults to first phase if available

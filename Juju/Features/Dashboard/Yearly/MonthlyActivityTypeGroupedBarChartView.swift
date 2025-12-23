@@ -77,7 +77,6 @@ struct MonthlyActivityTypeGroupedBarChartView: View {
                                                 .fill(Theme.Colors.accentColor)
                                                 .frame(width: max(6, width), height: 6)
                                                 .cornerRadius(3)
-                                                .shadow(color: Theme.Colors.accentColor.opacity(0.4), radius: 8, x: 0, y: 2) // Added glow effect
                                             
                                             Text(activity.emoji)
                                                 .font(.system(size: 21, design: .rounded)) // 1.5x larger (14 * 1.5 = 21)
