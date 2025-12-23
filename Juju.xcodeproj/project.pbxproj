@@ -14,7 +14,6 @@
 		665909692EE47957007D1303 /* ActivityTypeSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909682EE47957007D1303 /* ActivityTypeSidebarEditView.swift */; };
 		6659096B2EE4796C007D1303 /* ProjectSidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */; };
 		665909702EE4798F007D1303 /* SidebarEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659096E2EE4798F007D1303 /* SidebarEditView.swift */; };
-		665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909712EE48F89007D1303 /* EmojiColorPickerView.swift */; };
 		666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C394F2EAFB54700B408B8 /* ButtonTheme.swift */; };
 		667F765E2EF17EDA00C04ADA /* YearlyProjectBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */; };
 		667F76602EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */; };
@@ -78,7 +77,6 @@
 		665909682EE47957007D1303 /* ActivityTypeSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypeSidebarEditView.swift; sourceTree = "<group>"; };
 		6659096A2EE4796C007D1303 /* ProjectSidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectSidebarEditView.swift; sourceTree = "<group>"; };
 		6659096E2EE4798F007D1303 /* SidebarEditView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarEditView.swift; sourceTree = "<group>"; };
-		665909712EE48F89007D1303 /* EmojiColorPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiColorPickerView.swift; sourceTree = "<group>"; };
 		666C394F2EAFB54700B408B8 /* ButtonTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonTheme.swift; sourceTree = "<group>"; };
 		667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyProjectBarChartView.swift; sourceTree = "<group>"; };
 		667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyActivityTypeBarChartView.swift; sourceTree = "<group>"; };
@@ -322,7 +320,6 @@
 		66B148442EA8EA4B00E9BB4A /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				665909712EE48F89007D1303 /* EmojiColorPickerView.swift */,
 				666C394F2EAFB54700B408B8 /* ButtonTheme.swift */,
 				66B148922EA8F4A300E9BB4A /* NSColor+SwiftUI.swift */,
 			);
@@ -539,7 +536,6 @@
 				66F448372EEC9131008FA5DD /* WeeklyActivityBubbleChartView.swift in Sources */,
 				66A30B0F2EEB001200C03DE4 /* InlineSelectionPopover.swift in Sources */,
 				663A91C12ECD19E500A7771E /* SimplePreviewHelpers.swift in Sources */,
-				665909722EE48F89007D1303 /* EmojiColorPickerView.swift in Sources */,
 				6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */,
 				66D9D0D52EEED4F500D06502 /* ErrorHandler.swift in Sources */,
 				66F4483C2EEC9131008FA5DD /* YearlyDashboardView.swift in Sources */,

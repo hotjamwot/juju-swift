@@ -16,8 +16,6 @@ struct ProjectSidebarEditView: View {
     // Form validation
     @State private var hasChanges = false
     @State private var isSaving = false
-    @State private var showingEmojiPicker = false
-    @State private var showingColorPicker = false
     
     init(project: Project) {
         self._project = State(initialValue: project)
@@ -78,37 +76,25 @@ struct ProjectSidebarEditView: View {
             
             // Emoji and Color on same row
             HStack(spacing: Theme.spacingLarge) {
-                // Emoji selection
-                Button(action: {
-                    showingEmojiPicker = true
-                }) {
-                    Text(tempEmoji)
-                        .font(.title2)
-                }
-                .buttonStyle(.plain)
-                .sheet(isPresented: $showingEmojiPicker) {
-                    EmojiPickerView(selectedEmoji: $tempEmoji)
-                }
+                // Emoji selection - Native Mac emoji picker
+                TextField("", text: $tempEmoji)
+                    .textFieldStyle(.plain)
+                    .font(.title2)
+                    .frame(width: 32, height: 32)
+                    .multilineTextAlignment(.center)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
                 
                 Spacer()
                 
-                // Color selection
-                Button(action: {
-                    showingColorPicker = true
-                }) {
-                    Circle()
-                        .fill(tempColor)
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Circle()
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $showingColorPicker) {
-                    ColorPicker("Choose Color", selection: $tempColor)
-                        .padding()
-                }
+                // Color selection - Direct native color picker
+                ColorPicker("", selection: $tempColor)
+                    .labelsHidden()
+                    .frame(width: 24, height: 24)
             }
             
             // Description

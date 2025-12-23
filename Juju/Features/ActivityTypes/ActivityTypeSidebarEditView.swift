@@ -14,7 +14,6 @@ struct ActivityTypeSidebarEditView: View {
     // Form validation
     @State private var hasChanges = false
     @State private var isSaving = false
-    @State private var showingEmojiPicker = false
     
     init(activityType: ActivityType) {
         self._activityType = State(initialValue: activityType)
@@ -75,21 +74,17 @@ struct ActivityTypeSidebarEditView: View {
                     .font(.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                 Spacer()
-                Button(action: {
-                    showingEmojiPicker = true
-                }) {
-                    HStack {
-                        Text(tempEmoji)
-                            .font(.title2)
-                        Text("Change")
-                            .font(.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .sheet(isPresented: $showingEmojiPicker) {
-                    EmojiPickerView(selectedEmoji: $tempEmoji)
-                }
+                TextField("", text: $tempEmoji)
+                    .textFieldStyle(.plain)
+                    .font(.title2)
+                    .frame(width: 32, height: 32)
+                    .multilineTextAlignment(.center)
+                    .background(Theme.Colors.background)
+                    .cornerRadius(Theme.Design.cornerRadius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
             }
         }
         .padding(Theme.spacingMedium)
