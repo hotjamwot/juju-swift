@@ -10,6 +10,33 @@
 
 import Foundation
 
+/// DataValidator.swift
+/// 
+/// **Purpose**: Centralized validation system for all data operations to prevent
+/// data corruption and ensure referential integrity across the application
+/// 
+/// **Key Responsibilities**:
+/// - Session record validation before persistence
+/// - Project validation with duplicate checking and format validation
+/// - Referential integrity validation across all data models
+/// - Automatic repair of common data issues
+/// - Quick validation methods for common checks
+/// 
+/// **Dependencies**:
+/// - ProjectManager: For project validation and lookup
+/// - SessionManager: For session validation and data access
+/// - ActivityTypeManager: For activity type validation
+/// - SessionMigrationManager: For automatic data repair
+/// 
+/// **AI Notes**:
+/// - Singleton pattern for centralized validation access
+/// - Comprehensive error reporting with specific reasons
+/// - Supports automatic repair of orphaned sessions and missing projects
+/// - Validates hex color format for projects
+/// - Preserves historical data by allowing references to archived entities
+/// - Provides quick validation methods for performance-critical operations
+/// - Integrates with migration system for data consistency
+
 // MARK: - DataValidator Singleton
 class DataValidator {
     static let shared = DataValidator()
@@ -38,9 +65,50 @@ class DataValidator {
     
     // MARK: - Session Validation
     
-    /// Validate a session record before persistence
-    /// - Parameter session: The session to validate
-    /// - Returns: ValidationResult indicating if the session is valid
+    /// Validate a session record before persistence with comprehensive data integrity checks
+    ///
+    /// **AI Context**: This method performs comprehensive validation of session data to ensure
+    /// data integrity and prevent corruption. It's called before any session is saved to storage
+    /// and provides detailed error messages for debugging.
+    ///
+    /// **Business Rules**:
+    /// - Session ID must be non-empty (primary key requirement)
+    /// - End time must be after start time (temporal consistency)
+    /// - Project references must exist (referential integrity)
+    /// - Phase references must belong to the specified project
+    /// - Activity type references must exist
+    ///
+    /// **Historical Data Preservation**:
+    /// - Allows sessions to reference archived projects (preserves historical data)
+    /// - Allows sessions to reference archived activity types (preserves historical data)
+    /// - Only validates that referenced entities existed at some point
+    ///
+    /// **Validation Flow**:
+    /// 1. Validate required fields (ID, date consistency)
+    /// 2. Validate project reference if provided
+    /// 3. Validate phase reference if provided (must belong to project)
+    /// 4. Validate activity type reference if provided
+    /// 5. Return validation result with specific error reasons
+    ///
+    /// **Error Handling**:
+    /// - Returns specific error reasons for each validation failure
+    /// - Fails fast on first validation error
+    /// - Provides actionable error messages for debugging
+    /// - Never crashes on invalid data
+    ///
+    /// **Performance Considerations**:
+    /// - Loads projects and activity types once per validation
+    /// - Uses efficient contains() checks for lookups
+    /// - Minimal memory overhead for validation
+    ///
+    /// **Edge Cases**:
+    /// - Empty projectID is allowed (legacy session support)
+    /// - Empty activityTypeID is allowed (optional field)
+    /// - Archived entities are considered valid references
+    /// - Phase validation only occurs if phaseID is provided
+    ///
+    /// - Parameter session: The SessionRecord to validate
+    /// - Returns: ValidationResult (.valid or .invalid with specific reason)
     func validateSession(_ session: SessionRecord) -> ValidationResult {
         // Check required fields
         guard !session.id.isEmpty else {

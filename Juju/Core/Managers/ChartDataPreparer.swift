@@ -1,6 +1,31 @@
 import Foundation
 import SwiftUI
 
+/// ChartDataPreparer.swift
+/// 
+/// **Purpose**: Prepares and aggregates session data for dashboard visualizations
+/// including weekly, monthly, and yearly charts with activity type and project breakdowns
+/// 
+/// **Key Responsibilities**:
+/// - Data aggregation for dashboard charts (activity types, projects, time periods)
+/// - Session filtering by time intervals (weekly, yearly)
+/// - Chart data model preparation for UI components
+/// - Integration with ActivityTypeManager for activity categorization
+/// 
+/// **Dependencies**:
+/// - SessionManager: For session data access
+/// - ProjectManager: For project information and colors
+/// - ActivityTypeManager: For activity type categorization
+/// - ChartDataModels: For chart data structures
+/// 
+/// **AI Notes**:
+/// - Uses @MainActor for UI-bound operations
+/// - Implements weekly interval calculation (Monday-based weeks)
+/// - Aggregates data by hours with proper time conversion
+/// - Filters archived projects from yearly charts
+/// - Provides both totals and percentage breakdowns
+/// - Uses emoji-based categorization for visual consistency
+
 // MARK: - Chart View Model
 struct ChartViewModel {
     var sessions: [SessionRecord] = []
@@ -65,6 +90,40 @@ final class ChartDataPreparer: ObservableObject {
     
     // MARK: - Accessors
     
+    /// Calculate activity type totals for the current week
+    ///
+    /// **AI Context**: This method aggregates session data to show how time was distributed
+    /// across different activity types during the current week. It's used for weekly dashboard
+    /// visualizations and provides both absolute hours and percentage breakdowns.
+    ///
+    /// **Business Rules**:
+    /// - Only includes sessions within the current week interval
+    /// - Aggregates by activity type ID (supports uncategorized sessions)
+    /// - Converts session minutes to hours for display
+    /// - Calculates percentages relative to total weekly hours
+    ///
+    /// **Data Flow**:
+    /// 1. Filter sessions to current week using date interval
+    /// 2. Group sessions by activity type ID
+    /// 3. Sum duration minutes for each activity type
+    /// 4. Convert minutes to hours
+    /// 5. Calculate percentage of total weekly hours
+    /// 6. Sort by total hours (descending)
+    ///
+    /// **Performance Characteristics**:
+    /// - O(n) complexity for session filtering and aggregation
+    /// - Uses dictionary for efficient grouping by activity type
+    /// - Minimal memory overhead with direct aggregation
+    ///
+    /// **Edge Cases**:
+    /// - Empty session list returns empty array
+    /// - Zero total hours results in 0% for all activities
+    /// - Uncategorized sessions grouped under "uncategorized" ID
+    /// - Missing activity type names fall back to "Uncategorized"
+    ///
+    /// **Integration**: Uses ActivityTypeManager for activity name/emoji lookup
+    ///
+    /// - Returns: Array of ActivityChartData objects sorted by total hours (descending)
     func weeklyActivityTotals() -> [ActivityChartData] {
         aggregateActivityTotals(from: viewModel.sessions.filter { currentWeekInterval.contains($0.startDate) })
     }

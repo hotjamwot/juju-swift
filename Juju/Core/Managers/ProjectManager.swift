@@ -1,6 +1,33 @@
 import Foundation
 import SwiftUI
 
+/// ProjectManager.swift
+/// 
+/// **Purpose**: Manages all project-related operations including CRUD operations,
+/// statistics caching, phase management, and session association
+/// 
+/// **Key Responsibilities**:
+/// - Project lifecycle management (create, read, update, delete)
+/// - Project and phase archiving/unarchiving
+/// - Statistics caching for performance optimization
+/// - Session-to-project association management
+/// - Data migration and validation
+/// 
+/// **Dependencies**:
+/// - SessionManager: For session statistics and associations
+/// - DataValidator: For project data validation
+/// - ErrorHandler: For error handling and logging
+/// - ProjectStatisticsCache: For performance optimization
+/// 
+/// **AI Notes**:
+/// - Uses JSON file storage in Application Support directory
+/// - Implements caching with 5-minute expiration for loaded projects
+/// - Handles legacy data migration automatically
+/// - Manages project phases with archiving support
+/// - Provides thread-safe statistics caching with 30-second expiration
+/// - Always use projectID as primary key, not project name
+/// - Supports project archiving without data loss
+
 extension Notification.Name {
     static let projectsDidChange = Notification.Name("projectsDidChange")
     static let sessionDidEnd = Notification.Name("sessionDidEnd")
@@ -162,6 +189,48 @@ class ProjectManager {
         self.projectsFile = jujuPath?.appendingPathComponent("projects.json")
     }
     
+    /// Load all projects from JSON file with caching and automatic migration support
+    ///
+    /// **AI Context**: This is the primary method for loading project data from persistent storage.
+    /// It implements intelligent caching to avoid repeated disk access and handles automatic
+    /// migration of legacy project formats to the current schema.
+    ///
+    /// **Business Rules**:
+    /// - Uses 5-minute cache to minimize disk I/O operations
+    /// - Automatically creates missing directories if needed
+    /// - Handles corrupted or invalid JSON files by creating default projects
+    /// - Performs schema migration for legacy projects without archived fields
+    /// - Always returns a valid array (never nil)
+    ///
+    /// **Data Flow**:
+    /// 1. Check in-memory cache first (5-minute expiration)
+    /// 2. If cache miss, ensure projects directory exists
+    /// 3. Load JSON file from disk
+    /// 4. Detect if migration is needed (legacy schema detection)
+    /// 5. Apply migration if required, otherwise use loaded data
+    /// 6. Cache the result and return
+    ///
+    /// **Migration Logic**:
+    /// - Detects projects with phases that have invalid archived field values
+    /// - Automatically migrates to new schema with proper archived field defaults
+    /// - Preserves all existing project data during migration
+    /// - Rewrites file only if migration was actually performed
+    ///
+    /// **Error Handling**:
+    /// - Catches JSON parsing errors and file access issues
+    /// - Automatically recreates corrupted files with default projects
+    /// - Logs detailed error information for debugging
+    /// - Never crashes the application due to data corruption
+    ///
+    /// **Performance Optimizations**:
+    /// - 5-minute in-memory caching to reduce disk access
+    /// - Lazy directory creation (only when needed)
+    /// - Efficient migration detection using contains() checks
+    /// - Minimal memory usage with direct JSON parsing
+    ///
+    /// **Thread Safety**: Method is not thread-safe, should be called from main thread
+    ///
+    /// - Returns: Array of Project objects, never empty (defaults provided if loading fails)
     func loadProjects() -> [Project] {
         // Check cache first (cache for 5 minutes to avoid excessive disk access)
         if let cached = cachedProjects, 
@@ -265,7 +334,49 @@ class ProjectManager {
     
     // MARK: - Project Archiving Management
     
-    /// Archive or unarchive a project
+    /// Archive or unarchive a project without data loss
+    ///
+    /// **AI Context**: This method provides safe project archiving that preserves all associated
+    /// data while hiding the project from active views. It's the preferred way to manage
+    /// completed or inactive projects without losing historical session data.
+    ///
+    /// **Business Rules**:
+    /// - Archiving preserves all project data and associated sessions
+    /// - Archived projects are excluded from active project lists
+    /// - Archived projects can be unarchived to restore full functionality
+    /// - Project archiving is reversible (no data deletion)
+    ///
+    /// **Data Flow**:
+    /// 1. Load current projects from storage
+    /// 2. Find project by ID in loaded projects
+    /// 3. Update archived status on project object
+    /// 4. Save updated projects back to storage
+    /// 5. Clear cache to ensure fresh data on next load
+    ///
+    /// **Performance Characteristics**:
+    /// - O(n) lookup for project by ID
+    /// - Full project list rewrite to storage (for consistency)
+    /// - Cache invalidation triggers reload on next access
+    ///
+    /// **Integration Points**:
+    /// - Automatically clears project cache after save
+    /// - Posts .projectsDidChange notification for UI updates
+    /// - Works with getActiveProjects() and getArchivedProjects() filters
+    ///
+    /// **Edge Cases**:
+    /// - If projectID not found, method silently returns (no error)
+    /// - Archiving does not affect sessions (they remain associated)
+    /// - Archived projects still appear in historical data and reports
+    /// - Project statistics continue to be calculated for archived projects
+    ///
+    /// **Use Cases**:
+    /// - Completing a project and moving it out of active view
+    /// - Temporarily hiding projects during cleanup
+    /// - Organizing projects by status without data loss
+    ///
+    /// - Parameters:
+    ///   - archived: Boolean indicating whether to archive (true) or unarchive (false)
+    ///   - projectID: Unique identifier of the project to modify
     func setProjectArchived(_ archived: Bool, for projectID: String) {
         var projects = loadProjects()
         if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {

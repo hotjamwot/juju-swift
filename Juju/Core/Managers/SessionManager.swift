@@ -1,5 +1,31 @@
 import Foundation
 
+/// SessionManager.swift
+/// 
+/// **Purpose**: Central coordinator for all session-related operations including
+/// start/end tracking, data persistence, and UI state management
+/// 
+/// **Key Responsibilities**:
+/// - Session lifecycle management (start, end, update, delete)
+/// - CSV file operations with year-based organization
+/// - Data validation and migration
+/// - UI state coordination and notification broadcasting
+/// 
+/// **Dependencies**:
+/// - SessionFileManager: Handles low-level file operations
+/// - SessionCSVManager: Manages CSV formatting and year-based routing
+/// - SessionDataParser: Parses CSV data into SessionRecord objects
+/// - ProjectManager: Validates project associations
+/// 
+/// **AI Notes**:
+/// - This is the primary interface for all session operations
+/// - Always use projectID, not projectName for new sessions
+/// - Handles automatic migration of legacy data formats
+/// - Posts notifications for UI updates via NotificationCenter
+/// - Uses @MainActor for UI-bound operations
+/// - Manages active session state and duration tracking
+/// - Implements year-based CSV file organization for performance
+
 // MARK: - Simplified Session Manager
 class SessionManager: ObservableObject {
     static let shared = SessionManager()
@@ -116,6 +142,34 @@ class SessionManager: ObservableObject {
     
     // MARK: - Session State Management
     
+    /// Start a new active session with the specified project
+    ///
+    /// **AI Context**: This method initiates a new active session that tracks time until ended.
+    /// It's the primary entry point for time tracking functionality and manages the global
+    /// active session state. Only one session can be active at a time.
+    ///
+    /// **Business Rules**:
+    /// - Cannot start a new session if one is already active
+    /// - Requires either projectName or projectID (projectID takes precedence)
+    /// - Clears any existing activity type and phase selections
+    /// - Sets the start time to the current moment
+    ///
+    /// **Edge Cases**:
+    /// - If projectName is provided but projectID is nil, projectName is used for display
+    /// - If projectID is provided, it's used for data persistence (projectName becomes legacy)
+    /// - Method silently returns if session is already active (no error thrown)
+    ///
+    /// **State Changes**:
+    /// - Sets isSessionActive to true
+    /// - Updates currentProjectName and currentProjectID
+    /// - Clears currentActivityTypeID and currentProjectPhaseID
+    /// - Sets sessionStartTime to current date/time
+    ///
+    /// **Notifications**: Posts .sessionDidStart notification for UI updates
+    ///
+    /// - Parameters:
+    ///   - projectName: Display name for the project (legacy support)
+    ///   - projectID: Unique identifier for the project (preferred for new sessions)
     func startSession(for projectName: String, projectID: String? = nil) {
         guard !isSessionActive else {
             return
@@ -132,6 +186,49 @@ class SessionManager: ObservableObject {
         NotificationCenter.default.post(name: .sessionDidStart, object: nil)
     }
     
+    /// End the currently active session and persist it to storage
+    ///
+    /// **AI Context**: This method finalizes the active session by calculating duration,
+    /// creating a complete session record, and saving it to the appropriate CSV file.
+    /// It's the counterpart to startSession() and handles the complete session lifecycle.
+    ///
+    /// **Business Rules**:
+    /// - Can only end a session if one is currently active
+    /// - Requires a valid projectID (projectName is legacy and not used for persistence)
+    /// - Automatically calculates session duration from start to end time
+    /// - Uses year-based CSV file organization for performance
+    ///
+    /// **Edge Cases**:
+    /// - If no session is active, calls completion(false) and returns early
+    /// - If projectID is missing, calls completion(false) and returns early
+    /// - Duration calculation uses current time as end time
+    /// - All optional fields (mood, activity type, phase, milestone) can be nil
+    ///
+    /// **State Changes**:
+    /// - Sets isSessionActive to false
+    /// - Clears all current session state (project, activity type, phase, start time)
+    /// - Updates lastUpdated timestamp to trigger UI refresh
+    /// - Persists session data to year-specific CSV file
+    ///
+    /// **Data Flow**:
+    /// 1. Validate active session exists
+    /// 2. Calculate duration and create SessionData object
+    /// 3. Save to CSV with file locking for thread safety
+    /// 4. Reset session state on success
+    /// 5. Post notifications for UI updates
+    ///
+    /// **Error Handling**: Uses completion handler for async error reporting
+    /// - Returns false if no active session or missing projectID
+    /// - Returns false if CSV save operation fails
+    /// - Success/failure communicated via completion callback
+    ///
+    /// - Parameters:
+    ///   - notes: Optional session notes (defaults to empty string)
+    ///   - mood: Optional mood rating 0-10 (defaults to nil)
+    ///   - activityTypeID: Optional activity type identifier (defaults to nil)
+    ///   - projectPhaseID: Optional project phase identifier (defaults to nil)
+    ///   - milestoneText: Optional milestone description (defaults to nil)
+    ///   - completion: Callback executed when operation completes (true = success, false = failure)
     func endSession(
         notes: String = "",
         mood: Int? = nil,
@@ -207,6 +304,42 @@ class SessionManager: ObservableObject {
     
     // MARK: - Session Data Operations
     
+    /// Load all sessions from all available years with automatic migration support
+    ///
+    /// **AI Context**: This is the primary method for loading complete session data.
+    /// It handles both modern year-based CSV files and legacy single-file formats,
+    /// automatically migrating data when needed. Uses concurrent loading for performance.
+    ///
+    /// **Business Rules**:
+    /// - Loads sessions from all available years in parallel for performance
+    /// - Automatically detects and migrates legacy data formats
+    /// - Validates CSV format and rewrites files if needed
+    /// - Sorts sessions by start date (newest first) for consistent ordering
+    ///
+    /// **Data Flow**:
+    /// 1. Get list of available years from file system
+    /// 2. If no years found, check for legacy single file
+    /// 3. Load sessions from each year concurrently using TaskGroup
+    /// 4. Parse CSV content with format detection (legacy vs modern)
+    /// 5. Auto-rewrite files if format needs updating
+    /// 6. Combine and sort all sessions by date
+    /// 7. Update UI state and notify observers
+    ///
+    /// **Performance Optimizations**:
+    /// - Concurrent loading across multiple years
+    /// - Automatic format detection to avoid unnecessary parsing
+    /// - File rewriting only when format changes are detected
+    /// - MainActor usage for UI updates to prevent threading issues
+    ///
+    /// **Error Handling**:
+    /// - Gracefully handles missing files or directories
+    /// - Continues loading other years if one year fails
+    /// - Returns empty array if no sessions can be loaded
+    /// - Logs errors but doesn't crash the application
+    ///
+    /// **Notifications**: Posts "sessionsDidLoad" notification with session count
+    ///
+    /// - Returns: Array of all loaded SessionRecord objects, sorted by start date (newest first)
     func loadAllSessions() async -> [SessionRecord] {
         let availableYears = csvManager.getAvailableYears()
         
@@ -333,6 +466,48 @@ class SessionManager: ObservableObject {
         }
     }
     
+    /// Update a specific field in an existing session record
+    ///
+    /// **AI Context**: This is a lightweight update method for modifying individual session fields
+    /// without requiring the full session data. It's optimized for simple updates like notes or mood.
+    ///
+    /// **Business Rules**:
+    /// - Only supports updating "notes" and "mood" fields
+    /// - Creates a new SessionRecord instance with updated values
+    /// - Automatically persists changes to storage
+    /// - Triggers UI updates via notifications
+    ///
+    /// **Supported Fields**:
+    /// - "notes": Updates session notes (string value)
+    /// - "mood": Updates mood rating (integer 0-10, must be valid integer string)
+    ///
+    /// **Data Flow**:
+    /// 1. Find session by ID in current session list
+    /// 2. Create updated SessionRecord with new field value
+    /// 3. Replace session in memory
+    /// 4. Persist all sessions to storage
+    /// 5. Update timestamp and notify observers
+    ///
+    /// **Performance Characteristics**:
+    /// - O(n) lookup for session by ID
+    /// - Full session list rewrite to storage (for consistency)
+    /// - Minimal memory overhead (creates one new SessionRecord)
+    ///
+    /// **Error Handling**:
+    /// - Returns false if session ID not found
+    /// - Returns false for unsupported field names
+    /// - Returns false if mood value is not a valid integer
+    /// - Silent failure (no exceptions thrown)
+    ///
+    /// **Thread Safety**: Method is not thread-safe, should be called from main thread
+    ///
+    /// **Notifications**: Posts .sessionDidEnd notification with session ID for UI updates
+    ///
+    /// - Parameters:
+    ///   - id: Session identifier to update
+    ///   - field: Field name to update ("notes" or "mood")
+    ///   - value: New value as string (for mood, must be valid integer)
+    /// - Returns: True if update successful, false otherwise
     func updateSession(id: String, field: String, value: String) -> Bool {
         guard let session = allSessions.first(where: { $0.id == id }) else { return false }
         var updated = session
@@ -487,18 +662,59 @@ class SessionManager: ObservableObject {
     
     /// Combine a date with a time string to create a full Date object
     /// This method handles the date/time combination logic that was previously in SessionDataParser
+    ///
+    /// **AI Context**: This method is critical for session time tracking as it combines
+    /// a calendar date with a time string to create precise Date objects for session
+    /// start/end times. It handles both HH:mm and HH:mm:ss formats for backward compatibility.
+    ///
+    /// **Algorithm Steps**:
+    /// 1. Pad time string to ensure consistent HH:mm:ss format
+    /// 2. Parse time string into Date object using standard formatter
+    /// 3. Extract time components (hour, minute, second) from parsed time
+    /// 4. Extract date components (year, month, day) from provided date
+    /// 5. Combine components into new DateComponents object
+    /// 6. Create final Date object from combined components
+    ///
+    /// **Edge Cases Handled**:
+    /// - Time strings in HH:mm format (automatically padded to HH:mm:ss)
+    /// - Invalid time strings (returns original date as fallback)
+    /// - Calendar edge cases (leap years, daylight saving time, etc.)
+    ///
+    /// **Performance Notes**:
+    /// - Uses DateFormatter for consistent time parsing
+    /// - Leverages Calendar API for safe date component manipulation
+    /// - Minimal memory allocation with direct component extraction
+    ///
+    /// - Parameters:
+    ///   - date: The calendar date (year, month, day components)
+    ///   - timeString: Time in "HH:mm" or "HH:mm:ss" format
+    /// - Returns: Combined Date object, or original date if parsing fails
     private func combineDateWithTimeString(_ date: Date, timeString: String) -> Date {
+        // Create time formatter for parsing time strings
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
+        
+        // Pad time string to ensure consistent format (HH:mm:ss)
+        // This handles backward compatibility with HH:mm format
         let paddedTimeString = timeString.count == 5 ? timeString + ":00" : timeString
         
+        // Parse the padded time string into a Date object
+        // This gives us a Date with the time components we need
         guard let timeDate = timeFormatter.date(from: paddedTimeString) else {
+            // If parsing fails, return the original date as a safe fallback
             return date
         }
         
+        // Extract time components (hour, minute, second) from the parsed time
+        // These will be used to replace the time portion of our target date
         let timeComponents = Calendar.current.dateComponents([.hour, .minute, .second], from: timeDate)
+        
+        // Extract date components (year, month, day) from the provided date
+        // These will be preserved in our final combined date
         let dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: date)
         
+        // Create new DateComponents object with combined date and time
+        // This safely merges the date portion from 'date' with time portion from 'timeString'
         var combined = DateComponents()
         combined.year = dateComponents.year
         combined.month = dateComponents.month
@@ -507,6 +723,8 @@ class SessionManager: ObservableObject {
         combined.minute = timeComponents.minute
         combined.second = timeComponents.second
         
+        // Use Calendar API to safely create final Date object
+        // This handles all calendar edge cases (leap years, DST, etc.)
         return Calendar.current.date(from: combined) ?? date
     }
     
