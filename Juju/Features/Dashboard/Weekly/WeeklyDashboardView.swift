@@ -98,12 +98,13 @@ struct WeeklyDashboardView: View {
                     await projectsViewModel.loadProjects()
                     isLoading = true
                     
-                    // Load all sessions for dashboard charts (will be filtered to weekly in prepareWeeklyData)
-                    await sessionManager.loadAllSessions()
+                    // Use optimized query-based loading for weekly sessions only
+                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
+                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
                     
                     // Prepare WEEKLY data for initial display (optimized for performance)
                     chartDataPreparer.prepareWeeklyData(
-                        sessions: sessionManager.allSessions,
+                        sessions: weeklySessions,
                         projects: projectsViewModel.projects
                     )
                     

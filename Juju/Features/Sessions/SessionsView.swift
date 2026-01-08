@@ -735,8 +735,15 @@ public struct SessionsView: View {
             }
         }
         .onAppear {
-            // Initialize with current week filter
+            // Initialize with current week filter and apply it immediately
             filterState.selectedDateFilter = .thisWeek
+            // Apply the default filter to load weekly sessions
+            Task {
+                await applyFiltersPreservingState()
+                await MainActor.run {
+                    updateSessionCount()
+                }
+            }
         }
         .onChange(of: activityTypesViewModel.activityTypes) { _ in
             handleActivityTypesChange()

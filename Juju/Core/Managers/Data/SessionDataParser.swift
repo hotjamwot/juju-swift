@@ -67,10 +67,10 @@ class SessionDataParser {
                     // Check if we have the legacy format with projectName field
                     if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
                         // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        projectID = cleanField(safeFields[4])
+                        projectID = cleanField(safeFields[4]) // project_id is at index 4
                     } else {
                         // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        projectID = cleanField(safeFields[3])
+                        projectID = cleanField(safeFields[3]) // project_id is at index 3
                     }
                 } else {
                     projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
@@ -87,18 +87,18 @@ class SessionDataParser {
                 if hasNewFields {
                     if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
                         // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        activityTypeID = cleanField(safeFields[5]).nilIfEmpty
-                        projectPhaseID = cleanField(safeFields[6]).nilIfEmpty
-                        milestoneText = cleanField(safeFields[7]).nilIfEmpty
-                        notes = cleanField(safeFields[8])
-                        mood = parseMood(safeFields[9])
+                        activityTypeID = cleanField(safeFields[5]).nilIfEmpty // activity_type_id is at index 5
+                        projectPhaseID = cleanField(safeFields[6]).nilIfEmpty // project_phase_id is at index 6
+                        milestoneText = cleanField(safeFields[7]).nilIfEmpty // milestone_text is at index 7
+                        notes = cleanField(safeFields[8]) // notes is at index 8
+                        mood = parseMood(safeFields[9]) // mood is at index 9
                     } else {
                         // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        activityTypeID = cleanField(safeFields[4]).nilIfEmpty
-                        projectPhaseID = cleanField(safeFields[5]).nilIfEmpty
-                        milestoneText = cleanField(safeFields[6]).nilIfEmpty
-                        notes = cleanField(safeFields[7])
-                        mood = parseMood(safeFields[8])
+                        activityTypeID = cleanField(safeFields[4]).nilIfEmpty // activity_type_id is at index 4
+                        projectPhaseID = cleanField(safeFields[5]).nilIfEmpty // project_phase_id is at index 5
+                        milestoneText = cleanField(safeFields[6]).nilIfEmpty // milestone_text is at index 6
+                        notes = cleanField(safeFields[7]) // notes is at index 7
+                        mood = parseMood(safeFields[8]) // mood is at index 8
                     }
                 } else {
                     activityTypeID = nil
@@ -201,25 +201,50 @@ class SessionDataParser {
                 let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
                 
                 let projectID: String
-                if hasNewFields && fieldCount > 4 {
-                    projectID = cleanField(fields[4])
+                if hasNewFields {
+                    // Check if we have the legacy format with projectName field
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(fields[4]) // project_id is at index 4
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(fields[3]) // project_id is at index 3
+                    }
                 } else {
                     projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : "")
                 }
                 
                 guard !projectID.isEmpty else { continue }
                 
-                let activityTypeID = (hasNewFields && fieldCount > 5) ? cleanField(fields[5]).nilIfEmpty : nil
-                let projectPhaseID = (hasNewFields && fieldCount > 6) ? cleanField(fields[6]).nilIfEmpty : nil
-                let milestoneText = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                let activityTypeID: String?
+                let projectPhaseID: String?
+                let milestoneText: String?
+                let notes: String
+                let mood: Int?
                 
-                let notesIndex = hasNewFields ? 8 : 4
-                let moodIndex = hasNewFields ? 9 : 5
-                let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
-                let mood: Int? = {
-                    guard moodIndex < fieldCount else { return nil }
-                    return parseMood(fields[moodIndex])
-                }()
+                if hasNewFields {
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(fields[5]).nilIfEmpty // activity_type_id is at index 5
+                        projectPhaseID = cleanField(fields[6]).nilIfEmpty // project_phase_id is at index 6
+                        milestoneText = cleanField(fields[7]).nilIfEmpty // milestone_text is at index 7
+                        notes = cleanField(fields[8]) // notes is at index 8
+                        mood = parseMood(fields[9]) // mood is at index 9
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(fields[4]).nilIfEmpty // activity_type_id is at index 4
+                        projectPhaseID = cleanField(fields[5]).nilIfEmpty // project_phase_id is at index 5
+                        milestoneText = cleanField(fields[6]).nilIfEmpty // milestone_text is at index 6
+                        notes = cleanField(fields[7]) // notes is at index 7
+                        mood = parseMood(fields[8]) // mood is at index 8
+                    }
+                } else {
+                    activityTypeID = nil
+                    projectPhaseID = nil
+                    milestoneText = nil
+                    notes = cleanField(fieldCount > 4 ? fields[4] : "")
+                    mood = parseMood(fieldCount > 5 ? fields[5] : "")
+                }
                 
                 let record = SessionRecord(
                     id: id,
@@ -337,18 +362,49 @@ class SessionDataParser {
                 
                 let projectID: String
                 if hasNewFields {
-                    projectID = cleanField(safeFields[4])
+                    // Check if we have the legacy format with projectName field
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(safeFields[4]) // project_id is at index 4
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(safeFields[3]) // project_id is at index 3
+                    }
                 } else {
                     projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
                 }
                 
                 guard !projectID.isEmpty else { continue }
                 
-                let activityTypeID = hasNewFields ? cleanField(safeFields[5]).nilIfEmpty : nil
-                let projectPhaseID = hasNewFields ? cleanField(safeFields[6]).nilIfEmpty : nil
-                let milestoneText = hasNewFields ? cleanField(safeFields[7]).nilIfEmpty : nil
-                let notes = cleanField(hasNewFields ? safeFields[8] : safeFields[4])
-                let mood = parseMood(hasNewFields ? safeFields[9] : safeFields[5])
+                let activityTypeID: String?
+                let projectPhaseID: String?
+                let milestoneText: String?
+                let notes: String
+                let mood: Int?
+                
+                if hasNewFields {
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(safeFields[5]).nilIfEmpty // activity_type_id is at index 5
+                        projectPhaseID = cleanField(safeFields[6]).nilIfEmpty // project_phase_id is at index 6
+                        milestoneText = cleanField(safeFields[7]).nilIfEmpty // milestone_text is at index 7
+                        notes = cleanField(safeFields[8]) // notes is at index 8
+                        mood = parseMood(safeFields[9]) // mood is at index 9
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(safeFields[4]).nilIfEmpty // activity_type_id is at index 4
+                        projectPhaseID = cleanField(safeFields[5]).nilIfEmpty // project_phase_id is at index 5
+                        milestoneText = cleanField(safeFields[6]).nilIfEmpty // milestone_text is at index 6
+                        notes = cleanField(safeFields[7]) // notes is at index 7
+                        mood = parseMood(safeFields[8]) // mood is at index 8
+                    }
+                } else {
+                    activityTypeID = nil
+                    projectPhaseID = nil
+                    milestoneText = nil
+                    notes = cleanField(safeFields.count > 4 ? safeFields[4] : "")
+                    mood = parseMood(safeFields.count > 5 ? safeFields[5] : "")
+                }
                 
                 let record = SessionRecord(
                     id: id,
@@ -557,7 +613,7 @@ class SessionDataParser {
     // MARK: - Session Record to CSV Conversion
     
     func convertSessionsToCSV(_ sessions: [SessionRecord]) -> String {
-        let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+        let header = "id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
         let rows = sessions.map { s in
             let projectID = csvEscape(s.projectID)
             let activityTypeID = s.activityTypeID.map { csvEscape($0) } ?? ""
@@ -571,8 +627,9 @@ class SessionDataParser {
             let startDateStr = dateFormatter.string(from: s.startDate)
             let endDateStr = dateFormatter.string(from: s.endDate)
             
-            // Correct field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-            return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
+            // Correct field order: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+            // Note: project field is kept for backward compatibility but should be empty
+            return "\(s.id),\(startDateStr),\(endDateStr),,\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"
     }
@@ -704,22 +761,50 @@ class SessionDataParser {
                 let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
                 
                 let projectID: String
-                if hasNewFields && fieldCount > 4 {
-                    projectID = cleanField(fields[4])
+                if hasNewFields {
+                    // Check if we have the legacy format with projectName field
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(fields[4]) // project_id is at index 4
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(fields[3]) // project_id is at index 3
+                    }
                 } else {
                     projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : "")
                 }
                 
                 guard !projectID.isEmpty else { continue }
                 
-                let activityTypeID = (hasNewFields && fieldCount > 5) ? cleanField(fields[5]).nilIfEmpty : nil
-                let projectPhaseID = (hasNewFields && fieldCount > 6) ? cleanField(fields[6]).nilIfEmpty : nil
-                let milestoneText = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                let activityTypeID: String?
+                let projectPhaseID: String?
+                let milestoneText: String?
+                let notes: String
+                let mood: Int?
                 
-                let notesIndex = hasNewFields ? 8 : 4
-                let moodIndex = hasNewFields ? 9 : 5
-                let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
-                let mood = (moodIndex < fieldCount) ? parseMood(fields[moodIndex]) : nil
+                if hasNewFields {
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(fields[5]).nilIfEmpty // activity_type_id is at index 5
+                        projectPhaseID = cleanField(fields[6]).nilIfEmpty // project_phase_id is at index 6
+                        milestoneText = cleanField(fields[7]).nilIfEmpty // milestone_text is at index 7
+                        notes = cleanField(fields[8]) // notes is at index 8
+                        mood = parseMood(fields[9]) // mood is at index 9
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(fields[4]).nilIfEmpty // activity_type_id is at index 4
+                        projectPhaseID = cleanField(fields[5]).nilIfEmpty // project_phase_id is at index 5
+                        milestoneText = cleanField(fields[6]).nilIfEmpty // milestone_text is at index 6
+                        notes = cleanField(fields[7]) // notes is at index 7
+                        mood = parseMood(fields[8]) // mood is at index 8
+                    }
+                } else {
+                    activityTypeID = nil
+                    projectPhaseID = nil
+                    milestoneText = nil
+                    notes = cleanField(fieldCount > 4 ? fields[4] : "")
+                    mood = parseMood(fieldCount > 5 ? fields[5] : "")
+                }
                 
                 session = SessionRecord(
                     id: id,

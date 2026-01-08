@@ -26,9 +26,7 @@ struct YearlyDashboardView: View {
         return year
     }
     
-    // MARK: - Component Views
-    // Note: Removed old layout helper functions since we're using the new grid system
-    
+    // MARK: - Component Views    
     // MARK - Body
     var body: some View {
         GeometryReader { geometry in
@@ -72,12 +70,6 @@ struct YearlyDashboardView: View {
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 .padding(.bottom, Theme.DashboardLayout.dashboardPadding)
                 .background(Theme.Colors.background)
-                
-                // Floating navigation button (back to weekly dashboard)
-                // BackNavigationButton()
-                //     .position(x: 16, y: geometry.size.height / 2)
-                //     .zIndex(2)
-                
             }
         }
         .onAppear {
@@ -140,9 +132,13 @@ struct YearlyDashboardView: View {
     private func loadData() {
         Task {
             await projectsViewModel.loadProjects()
-            await sessionManager.loadAllSessions()
+            
+            // Use optimized query-based loading for yearly sessions only
+            let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
+            let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
+            
             chartDataPreparer.prepareAllTimeData(
-                sessions: sessionManager.allSessions,
+                sessions: yearlySessions,
                 projects: projectsViewModel.projects
             )
         }
