@@ -220,65 +220,66 @@ public struct SessionsView: View {
     // MARK: - Computed Properties
     
     /// The source of truth for all filtering and sorting.
+    /// 
+    /// **AI Context**: This method provides the main filtering pipeline for sessions,
+    /// applying all active filters in sequence and returning the final filtered results.
+    /// It's the central point where all filter logic comes together.
+    ///
+    /// **Business Rules**:
+    /// - Starts with current week sessions as the base
+    /// - Applies project filter if not "All"
+    /// - Applies activity type filter if not "All"
+    /// - Sorts by start date (newest first) for consistent ordering
+    /// - Returns filtered and sorted session array
+    ///
+    /// **Data Flow**:
+    /// 1. Get current week sessions as starting point
+    /// 2. Apply project filtering using Array+SessionExtensions
+    /// 3. Apply activity type filtering using Array+SessionExtensions
+    /// 4. Sort sessions by date using Array+SessionExtensions
+    /// 5. Return final filtered and sorted array
+    ///
+    /// **Performance Notes**:
+    /// - Uses optimized Array+SessionExtensions methods
+    /// - Single pass through data for each filter type
+    /// - Minimal memory allocation with method chaining
+    ///
+    /// **Integration**: Leverages Array+SessionExtensions for all filtering operations
+    ///
+    /// - Returns: Filtered and sorted array of SessionRecord objects
     private func getFullyFilteredSessions() -> [SessionRecord] {
         // Start with current week sessions
         let initialSessions = getCurrentWeekSessions()
         
-        // Apply project filter if not "All"
-        let filteredByProject = applyProjectFilter(to: initialSessions)
+        // Apply project filter using new helper method
+        let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
         
-        // Apply activity type filter if not "All"
-        let filteredByActivityType = applyActivityTypeFilter(to: filteredByProject)
+        // Apply activity type filter using new helper method
+        let filteredByActivityType = filteredByProject.filteredByActivityType(filterState.activityTypeFilter)
         
-        // Sort by start date time (most recent first)
-        let sortedSessions = sortSessionsByDate(filteredByActivityType)
+        // Sort by start date using new helper method
+        let sortedSessions = filteredByActivityType.sortedByStartDate()
         
         return sortedSessions
     }
     
-    /// Apply project filter to sessions
-    private func applyProjectFilter(to sessions: [SessionRecord]) -> [SessionRecord] {
-        guard filterState.projectFilter != "All" else {
-            return sessions
-        }
-        
-        // Filter by project ID instead of project name
-        return sessions.filter { $0.projectID == filterState.projectFilter }
-    }
-    
-    /// Apply activity type filter to sessions
-    private func applyActivityTypeFilter(to sessions: [SessionRecord]) -> [SessionRecord] {
-        guard filterState.activityTypeFilter != "All" else {
-            return sessions
-        }
-        
-        // Filter by activity type ID
-        return sessions.filter { $0.activityTypeID == filterState.activityTypeFilter }
-    }
-    
-    /// Sort sessions by start date time (most recent first)
-    private func sortSessionsByDate(_ sessions: [SessionRecord]) -> [SessionRecord] {
-        return sessions.sorted { session1, session2 in
-            return session1.startDate > session2.startDate
-        }
-    }
-    
     /// Count of sessions based on current filter state (accurate count for filtered sessions)
     private var currentSessionCount: Int {
-        // Start with all sessions instead of just current week
-        let initialSessions = sessionManager.allSessions
+        // Use the same filtering logic as getFullyFilteredSessions() to ensure consistency
+        // Start with current week sessions (matching what's displayed)
+        let initialSessions = getCurrentWeekSessions()
         
         // Apply project filter if not "All"
-        let filteredByProject = applyProjectFilter(to: initialSessions)
+        let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
         
         // Apply activity type filter if not "All"
-        let filteredByActivityType = applyActivityTypeFilter(to: filteredByProject)
+        let filteredByActivityType = filteredByProject.filteredByActivityType(filterState.activityTypeFilter)
         
         // Apply date filtering based on selected filter
         let filteredByDate = applyDateFilter(to: filteredByActivityType)
         
         // Sort by start date time (most recent first)
-        let sortedSessions = sortSessionsByDate(filteredByDate)
+        let sortedSessions = filteredByDate.sortedByStartDate()
         
         return sortedSessions.count
     }
@@ -870,7 +871,7 @@ public struct SessionsView: View {
         })
         
         return sortedGroups.map { group in
-            let sortedSessions = sortSessionsByDate(group.value)
+            let sortedSessions = group.value.sortedByStartDate()
             return GroupedSession(date: group.key, sessions: sortedSessions)
         }
     }
