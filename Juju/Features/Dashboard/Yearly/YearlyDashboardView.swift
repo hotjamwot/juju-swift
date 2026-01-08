@@ -14,7 +14,7 @@ struct YearlyDashboardView: View {
     @ObservedObject var chartDataPreparer: ChartDataPreparer
     @ObservedObject var sessionManager: SessionManager
     @ObservedObject var projectsViewModel: ProjectsViewModel
-    @ObservedObject var editorialEngine: EditorialEngine
+    @ObservedObject var narrativeEngine: NarrativeEngine
     
     
     // MARK: - Date Intervals
@@ -84,19 +84,25 @@ struct YearlyDashboardView: View {
             loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            // Update chart data when session starts
+            // Update chart data when session starts - use optimized yearly loading
             Task {
+                let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
+                let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
+                
                 chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            // Update chart data when session ends
+            // Update chart data when session ends - use optimized yearly loading
             Task {
+                let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
+                let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
+                
                 chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
             }
@@ -178,7 +184,7 @@ struct BackNavigationButton: View {
         chartDataPreparer: ChartDataPreparer(),
         sessionManager: SessionManager.shared,
         projectsViewModel: ProjectsViewModel.shared,
-        editorialEngine: EditorialEngine()
+        narrativeEngine: NarrativeEngine()
     )
     .environmentObject(SidebarStateManager())
     .frame(width: 1200, height: 700) // Dashboard preview size

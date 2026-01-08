@@ -1,520 +1,166 @@
 import Foundation
 import SwiftUI
 
-// MARK:
-
-/// The data model that the ChartDataPreparer populates and works with.
+// MARK: - Chart View Model
 struct ChartViewModel {
     var sessions: [SessionRecord] = []
     var projects: [Project] = []
 }
 
-
-/// Responsible for parsing and aggregating raw session data into reusable time-series or categorical structures.
-/// 
-/// CURRENT SCOPE: Weekly dashboard and all-time analysis only
-/// 
-/// ARCHITECTURE NOTE: This class has been cleaned up to remove yearly chart logic
-/// that was never implemented. When yearly charts are needed in the future:
-/// 1. Create separate ChartDataPreparerYearly.swift file
-/// 2. Keep yearly logic isolated from weekly logic  
-/// 3. Use efficient aggregation methods
-/// 4. Implement appropriate caching for yearly data
-/// 
-/// PERFORMANCE: Focus on weekly dashboard performance. Avoid complex caching systems
-/// unless absolutely necessary for performance.
-/// 
-/// MAINTENANCE: Keep only methods used by current features. Remove unused code immediately.
 @MainActor
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
     
-    // MARK: - Public Entry Point
+    private let calendar = Calendar.current
     
-    /// Prepare all-time data for comprehensive analysis
-    /// 
-    /// USE CASE: Used for all-time analysis and future yearly dashboard implementation
-    /// PERFORMANCE: No filtering applied - uses all sessions for maximum flexibility
-    /// MAINTENANCE: Keep this method simple - it's the foundation for all other data preparation
-    /// 
-    /// - Parameters:
-    ///   - sessions: All session records to be analyzed
-    ///   - projects: All projects to be included in analysis
     func prepareAllTimeData(sessions: [SessionRecord], projects: [Project]) {
         viewModel.sessions = sessions
         viewModel.projects = projects
-        
-        print("[ChartDataPreparer] Prepared all-time data")
     }
     
-    /// Prepare weekly-only data for optimized weekly dashboard performance
-    /// 
-    /// USE CASE: Weekly dashboard charts (activity bubbles, session calendar)
-    /// PERFORMANCE: Filters sessions to current week only for optimal performance
-    /// ARCHITECTURE: This is the primary method used by the weekly dashboard
-    /// 
-    /// - Parameters:
-    ///   - sessions: All session records (will be filtered to current week)
-    ///   - projects: All projects to be included in analysis
     func prepareWeeklyData(sessions: [SessionRecord], projects: [Project]) {
-        // Filter sessions to current week only using startDate
-        let weeklySessions = sessions.filter { session in
-            return currentWeekInterval.contains(session.startDate)
-        }
-        
-        viewModel.sessions = weeklySessions
+        viewModel.sessions = sessions.filter { currentWeekInterval.contains($0.startDate) }
         viewModel.projects = projects
-        
-        print("[ChartDataPreparer] Prepared weekly data (\(weeklySessions.count) sessions)")
     }
-    
-    // MARK: - Core Accessors
-    
-    private let calendar = Calendar.current
     
     // MARK: - Aggregations
     
-    /// Sums total hours per activity type (for activity bubble charts) with optimized lookups.
     private func aggregateActivityTotals(from sessions: [SessionRecord]) -> [ActivityChartData] {
-        // Pre-build activity type lookup dictionary for O(1) access
         let activityTypeManager = ActivityTypeManager.shared
-        let activityLookup = Dictionary(uniqueKeysWithValues: 
-            activityTypeManager.getAllActivityTypes().map { ($0.id, $0) }
-        )
+        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getAllActivityTypes().map { ($0.id, $0) })
         
         var totals: [String: Double] = [:]
-        
         for session in sessions {
-            let activityID = session.activityTypeID ?? "uncategorized"
-            // Calculate duration from startDate and endDate
-            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
-            // Ensure duration is positive
-            let hours = max(0, Double(durationMinutes) / 60.0)
-            totals[activityID, default: 0] += hours
+            let id = session.activityTypeID ?? "uncategorized"
+            totals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         
-        let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (activityID: String, hours: Double) in
-            // Skip activities with zero hours
+        let total = totals.values.reduce(0, +)
+        return totals.compactMap { (id, hours) in
             guard hours > 0 else { return nil }
-            let activityType = activityLookup[activityID] ??
-                              activityTypeManager.getUncategorizedActivityType()
-            return ActivityChartData(
-                activityName: activityType.name,
-                emoji: activityType.emoji,
-                totalHours: hours,
-                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
-            )
+            let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
+            return ActivityChartData(activityName: activity.name, emoji: activity.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    // MARK: - Dashboard Aggregations
+    // MARK: - Week Helpers
     
-    private func parseTimeToHour(_ timeString: String) -> Double {
-        // Try parsing with seconds first using cached formatter
-        if let date = DateFormatter.cachedDateTime.date(from: timeString) {
-            let components = calendar.dateComponents([.hour, .minute], from: date)
-            return Double(components.hour ?? 0) + Double(components.minute ?? 0) / 60.0
-        }
-        
-        // Try parsing without seconds using cached formatter
-        if let date = DateFormatter.cachedHHmm.date(from: timeString) {
-            let components = calendar.dateComponents([.hour, .minute], from: date)
-            return Double(components.hour ?? 0) + Double(components.minute ?? 0) / 60.0
-        }
-        
-        // Fallback to manual parsing
-        let parts = timeString.components(separatedBy: ":")
-        if parts.count >= 2 {
-            let hour = Int(parts[0]) ?? 0
-            let minute = Int(parts[1]) ?? 0
-            return Double(hour) + Double(minute) / 60.0
-        }
-        
-        return 0.0
-    }
-
-    // MARK: - Dashboard Aggregations – week‑boundary fix
-
     private var currentWeekInterval: DateInterval {
         let today = Date()
         let weekday = calendar.component(.weekday, from: today)
-        // Adjust for Monday as the first day (2). Sunday is 1.
         let daysToSubtract = (weekday == 1) ? 6 : (weekday - 2)
-        
-        guard let startOfWeek = calendar.date(byAdding: .day, value: -daysToSubtract, to: today) else {
+        guard let start = calendar.date(byAdding: .day, value: -daysToSubtract, to: today) else {
             return DateInterval(start: today, end: today)
         }
-        let mondayStart = calendar.startOfDay(for: startOfWeek)
-        
-        guard let endOfWeek = calendar.date(byAdding: .day, value: 6, to: mondayStart),
-              let sundayEnd = calendar.date(byAdding: .day, value: 1, to: endOfWeek) else {
-            return DateInterval(start: mondayStart, end: mondayStart)
+        let startOfDay = calendar.startOfDay(for: start)
+        guard let end = calendar.date(byAdding: .day, value: 7, to: startOfDay) else {
+            return DateInterval(start: startOfDay, end: today)
         }
-        
-        return DateInterval(start: mondayStart, end: sundayEnd)
+        return DateInterval(start: startOfDay, end: end)
     }
-    
-    // MARK: - Yearly Date Intervals
     
     private var currentYearInterval: DateInterval {
-        let today = Date()
-        guard let year = calendar.dateInterval(of: .year, for: today) else {
-            return DateInterval(start: today, end: today)
-        }
-        return year
+        calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
     }
-
-
-    /// Current week activity totals for activity bubbles
-    /// 
-    /// USE CASE: WeeklyActivityBubbleChartView
-    /// OUTPUT: Array of ActivityChartData with activity names, emojis, and percentages
-    /// PERFORMANCE: Uses pre-filtered weekly sessions for optimal performance
-    /// 
-    /// - Returns: ActivityChartData array sorted by total hours (descending)
+    
+    // MARK: - Accessors
+    
     func weeklyActivityTotals() -> [ActivityChartData] {
-        let filteredSessions = viewModel.sessions.filter { session in
-            return currentWeekInterval.contains(session.startDate)
-        }
-        return aggregateActivityTotals(from: filteredSessions)
+        aggregateActivityTotals(from: viewModel.sessions.filter { currentWeekInterval.contains($0.startDate) })
     }
-
-    /// Current week sessions transformed for calendar chart (WeeklySession format)
-    /// 
-    /// USE CASE: SessionCalendarChartView
-    /// OUTPUT: Array of WeeklySession with parsed time data and visual elements
-    /// TRANSFORMATION: Converts SessionRecord to WeeklySession with:
-    ///   - Day of week (Monday-Sunday)
-    ///   - Start/end hours as Double
-    ///   - Project color and emoji
-    ///   - Activity emoji
-    /// 
-    /// SPECIAL HANDLING: Sessions that cross midnight are split into two segments:
-    ///   - First segment: from start time to 23:59:59 on the same day
-    ///   - Second segment: from 00:00:00 to end time on the next day
-    /// 
-    /// - Returns: WeeklySession array for calendar visualization
+    
     func currentWeekSessionsForCalendar() -> [WeeklySession] {
-        let weekSessions = viewModel.sessions.filter { session in
-            return currentWeekInterval.contains(session.startDate)
-        }
+        let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.map { ($0.id, $0) })
         
-        var weeklySessions: [WeeklySession] = []
+        // Filter sessions to only current week sessions
+        let currentWeekSessions = viewModel.sessions.filter { currentWeekInterval.contains($0.startDate) }
         
-        for session in weekSessions {
-            // Extract hour and minute from startDate
-            let startComponents = calendar.dateComponents([.hour, .minute], from: session.startDate)
-            let startHour = Double(startComponents.hour ?? 0) + Double(startComponents.minute ?? 0) / 60.0
+        return currentWeekSessions.compactMap { session -> WeeklySession? in
+            let startComp = calendar.dateComponents([.hour, .minute], from: session.startDate)
+            let endComp = calendar.dateComponents([.hour, .minute], from: session.endDate)
+            let startHour = Double(startComp.hour ?? 0) + Double(startComp.minute ?? 0) / 60.0
+            let endHour = Double(endComp.hour ?? 0) + Double(endComp.minute ?? 0) / 60.0
             
-            // Extract hour and minute from endDate
-            let endComponents = calendar.dateComponents([.hour, .minute], from: session.endDate)
-            let endHour = Double(endComponents.hour ?? 0) + Double(endComponents.minute ?? 0) / 60.0
+            guard endHour > startHour else { return nil }
             
-            // Get day names for start and end dates
-            let weekdayFormatter = DateFormatter()
-            weekdayFormatter.dateFormat = "EEEE"
-            let startDay = weekdayFormatter.string(from: session.startDate)
-            let endDay = weekdayFormatter.string(from: session.endDate)
+            let dayFormatter = DateFormatter()
+            dayFormatter.dateFormat = "EEEE"
+            let day = dayFormatter.string(from: session.startDate)
             
-            let project = viewModel.projects.first(where: { $0.name == session.projectName })
+            let project = projectLookup[session.projectID]
             let projectColor = project?.color ?? "#999999"
             let projectEmoji = project?.emoji ?? "📁"
             
-            // Get activity emoji with fallback to project emoji
-            let activityEmoji = session.getActivityTypeDisplay().emoji
+            let activityTypeManager = ActivityTypeManager.shared
+            let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "") ?? activityTypeManager.getUncategorizedActivityType()
             
-            // Check if session crosses midnight (end time is earlier than start time)
-            if endHour < startHour && startDay != endDay {
-                // Session crosses midnight - split into two segments
-                
-                // First segment: from start time to end of day (23:59)
-                let firstSegment = WeeklySession(
-                    day: startDay,
-                    startHour: startHour,
-                    endHour: 23.99, // Nearly 24:00 to show full rectangle to end of day
-                    projectName: session.projectName,
-                    projectColor: projectColor,
-                    projectEmoji: projectEmoji,
-                    activityEmoji: activityEmoji
-                )
-                weeklySessions.append(firstSegment)
-                
-                // Second segment: from start of next day (00:00) to end time
-                let secondSegment = WeeklySession(
-                    day: endDay,
-                    startHour: 0.0,
-                    endHour: endHour,
-                    projectName: session.projectName,
-                    projectColor: projectColor,
-                    projectEmoji: projectEmoji,
-                    activityEmoji: activityEmoji
-                )
-                weeklySessions.append(secondSegment)
-            } else if endHour > startHour {
-                // Normal session that doesn't cross midnight
-                let weeklySession = WeeklySession(
-                    day: startDay,
-                    startHour: startHour,
-                    endHour: endHour,
-                    projectName: session.projectName,
-                    projectColor: projectColor,
-                    projectEmoji: projectEmoji,
-                    activityEmoji: activityEmoji
-                )
-                weeklySessions.append(weeklySession)
-            }
-            // If endHour == startHour, skip the session (zero duration)
+            return WeeklySession(day: day, startHour: startHour, endHour: endHour, projectName: project?.name ?? session.projectID, projectColor: projectColor, projectEmoji: projectEmoji, activityEmoji: activity.emoji)
         }
-        
-        return weeklySessions
     }
-
-
-    // MARK: - Yearly Project Data
     
-    /// Prepare yearly project data for current year only
-    /// 
-    /// USE CASE: YearlyProjectBarChartView
-    /// OUTPUT: Array of YearlyProjectChartData with project names, emojis, colors, and percentages
-    /// PERFORMANCE: Filters sessions to current year only for optimal performance
-    /// 
-    /// - Returns: YearlyProjectChartData array sorted by total hours (descending)
     func yearlyProjectTotals() -> [YearlyProjectChartData] {
-        let yearlySessions = viewModel.sessions.filter { session in
-            return currentYearInterval.contains(session.startDate)
-        }
-        return aggregateYearlyProjectTotals(from: yearlySessions)
-    }
-    
-    /// Aggregates yearly project totals with optimized lookups
-    /// 
-    /// PERFORMANCE: Pre-builds project lookup dictionary for O(1) access
-    /// MAINTENANCE: Reuses existing project color system for consistency
-    /// FILTERING: Only includes active projects (archived: false)
-    /// 
-    /// - Parameter sessions: Filtered sessions for current year
-    /// - Returns: Array of YearlyProjectChartData sorted by total hours
-    private func aggregateYearlyProjectTotals(from sessions: [SessionRecord]) -> [YearlyProjectChartData] {
-        // Pre-build project lookup dictionary for O(1) access, filtering out archived projects
-        let activeProjects = viewModel.projects.filter { !$0.archived }
-        let projectLookup = Dictionary(uniqueKeysWithValues: 
-            activeProjects.map { ($0.name, $0) }
-        )
+        let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.filter { !$0.archived }.map { ($0.id, $0) })
+        let activeProjectIDs = Set(projectLookup.keys)
         
         var totals: [String: Double] = [:]
-        
-        for session in sessions {
-            // Only include sessions for active projects
-            guard projectLookup[session.projectName] != nil else { continue }
-            
-            // Calculate duration from startDate and endDate
-            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
-            // Ensure duration is positive
-            let hours = max(0, Double(durationMinutes) / 60.0)
-            totals[session.projectName, default: 0] += hours
+        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
+            guard activeProjectIDs.contains(session.projectID) else { continue }
+            totals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
         }
         
-        let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (projectName: String, hours: Double) in
-            // Skip projects with zero hours
-            guard hours > 0 else { return nil }
-            let project = projectLookup[projectName] ??
-                         Project(name: projectName, color: "#999999", emoji: "📁")
-            return YearlyProjectChartData(
-                projectName: projectName,
-                color: project.color,
-                emoji: project.emoji,
-                totalHours: hours,
-                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
-            )
+        let total = totals.values.reduce(0, +)
+        return totals.compactMap { (projectID, hours) in
+            guard hours > 0, let project = projectLookup[projectID] else { return nil }
+            return YearlyProjectChartData(projectName: project.name, color: project.color, emoji: project.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    // MARK: - Yearly Activity Types Data
-    
-    /// Prepare yearly activity type data for current year only
-    /// 
-    /// USE CASE: YearlyActivityTypeBarChartView
-    /// OUTPUT: Array of YearlyActivityTypeChartData with activity names, emojis, and percentages
-    /// PERFORMANCE: Filters sessions to current year only for optimal performance
-    /// FILTERING: Only includes active (non-archived) activity types
-    /// 
-    /// - Returns: YearlyActivityTypeChartData array sorted by total hours (descending)
     func yearlyActivityTypeTotals() -> [YearlyActivityTypeChartData] {
-        let yearlySessions = viewModel.sessions.filter { session in
-            return currentYearInterval.contains(session.startDate)
-        }
-        return aggregateYearlyActivityTypeTotals(from: yearlySessions)
-    }
-    
-    /// Prepare monthly activity type data for current year only
-    /// 
-    /// USE CASE: MonthlyActivityTypeGroupedBarChartView
-    /// OUTPUT: Array of MonthlyActivityTypeChartData with month names, activity breakdowns, and percentages
-    /// PERFORMANCE: Filters sessions to current year only for optimal performance
-    /// FILTERING: Only includes active (non-archived) activity types
-    /// 
-    /// - Returns: MonthlyActivityTypeChartData array sorted by month number (ascending)
-    func monthlyActivityTypeTotals() -> [MonthlyActivityTypeChartData] {
-        let yearlySessions = viewModel.sessions.filter { session in
-            return currentYearInterval.contains(session.startDate)
-        }
-        return aggregateMonthlyActivityTypeTotals(from: yearlySessions)
-    }
-    
-    
-    /// Aggregates yearly activity type totals with optimized lookups
-    /// 
-    /// PERFORMANCE: Pre-builds activity type lookup dictionary for O(1) access
-    /// MAINTENANCE: Reuses existing activity type system for consistency
-    /// FILTERING: Only includes active (non-archived) activity types
-    /// 
-    /// - Parameter sessions: Filtered sessions for current year
-    /// - Returns: Array of YearlyActivityTypeChartData sorted by total hours
-    private func aggregateYearlyActivityTypeTotals(from sessions: [SessionRecord]) -> [YearlyActivityTypeChartData] {
-        // Pre-build activity type lookup dictionary for O(1) access, filtering out archived activity types
         let activityTypeManager = ActivityTypeManager.shared
-        let activeActivityTypes = activityTypeManager.getActiveActivityTypes()
-        let activityLookup = Dictionary(uniqueKeysWithValues: 
-            activeActivityTypes.map { ($0.id, $0) }
-        )
+        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
         var totals: [String: Double] = [:]
-        
-        for session in sessions {
-            let activityID = session.activityTypeID ?? "uncategorized"
-            
-            // Only include sessions for active activity types
-            guard activityLookup[activityID] != nil else { continue }
-            
-            // Calculate duration from startDate and endDate
-            let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
-            // Ensure duration is positive
-            let hours = max(0, Double(durationMinutes) / 60.0)
-            totals[activityID, default: 0] += hours
+        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
+            let id = session.activityTypeID ?? "uncategorized"
+            totals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         
-        let totalHours = totals.values.reduce(0, +)
-        return totals.compactMap { (activityID: String, hours: Double) in
-            // Skip activity types with zero hours
+        let total = totals.values.reduce(0, +)
+        return totals.compactMap { (id, hours) in
             guard hours > 0 else { return nil }
-            let activityType = activityLookup[activityID] ??
-                              activityTypeManager.getUncategorizedActivityType()
-            return YearlyActivityTypeChartData(
-                activityName: activityType.name,
-                emoji: activityType.emoji,
-                totalHours: hours,
-                percentage: totalHours > 0 ? (hours / totalHours * 100) : 0
-            )
+            let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
+            return YearlyActivityTypeChartData(activityName: activity.name, emoji: activity.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    /// Aggregates monthly activity type totals with optimized lookups
-    /// 
-    /// PERFORMANCE: Pre-builds activity type lookup dictionary for O(1) access
-    /// MAINTENANCE: Reuses existing activity type system for consistency
-    /// FILTERING: Only includes active (non-archived) activity types
-    /// 
-    /// - Parameter sessions: Filtered sessions for current year
-    /// - Returns: Array of MonthlyActivityTypeChartData sorted by month number
-    private func aggregateMonthlyActivityTypeTotals(from sessions: [SessionRecord]) -> [MonthlyActivityTypeChartData] {
-        // Pre-build activity type lookup dictionary for O(1) access, filtering out archived activity types
+    func monthlyActivityTypeTotals() -> [MonthlyActivityTypeChartData] {
         let activityTypeManager = ActivityTypeManager.shared
-        let activeActivityTypes = activityTypeManager.getActiveActivityTypes()
-        let activityLookup = Dictionary(uniqueKeysWithValues: 
-            activeActivityTypes.map { ($0.id, $0) }
-        )
+        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
-        // Group sessions by month
         var monthlyData: [Int: [SessionRecord]] = [:]
-        
-        for session in sessions {
-            let monthNumber = calendar.component(.month, from: session.startDate)
-            monthlyData[monthNumber, default: []].append(session)
+        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
+            let month = calendar.component(.month, from: session.startDate)
+            monthlyData[month, default: []].append(session)
         }
         
-        // Process each month
-        var result: [MonthlyActivityTypeChartData] = []
-        
-        for monthNumber in 1...12 {
-            let monthSessions = monthlyData[monthNumber] ?? []
-            
-            // Aggregate activity totals for this month
+        let monthNames = DateFormatter().monthSymbols ?? []
+        return (1...12).compactMap { monthNum -> MonthlyActivityTypeChartData? in
+            guard monthNum >= 1 && monthNum <= monthNames.count else { return nil }
+            let sessions = monthlyData[monthNum] ?? []
             var activityTotals: [String: Double] = [:]
-            
-            for session in monthSessions {
-                let activityID = session.activityTypeID ?? "uncategorized"
-                
-                // Only include sessions for active activity types
-                guard activityLookup[activityID] != nil else { continue }
-                
-                // Calculate duration from startDate and endDate
-                let durationMinutes = max(0, Int(session.endDate.timeIntervalSince(session.startDate) / 60))
-                // Ensure duration is positive
-                let hours = max(0, Double(durationMinutes) / 60.0)
-                activityTotals[activityID, default: 0] += hours
+            for session in sessions {
+                let id = session.activityTypeID ?? "uncategorized"
+                activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
             }
             
-            let monthTotalHours = activityTotals.values.reduce(0, +)
-            
-            // Create activity breakdown for this month
-            let activityBreakdown: [MonthlyActivityTypeDataPoint] = activityTotals.compactMap { (activityID: String, hours: Double) in
-                // Skip activity types with zero hours
+            let total = activityTotals.values.reduce(0, +)
+            let breakdown = activityTotals.compactMap { (id, hours) -> MonthlyActivityTypeDataPoint? in
                 guard hours > 0 else { return nil }
-                let activityType = activityLookup[activityID] ??
-                                  activityTypeManager.getUncategorizedActivityType()
-                return MonthlyActivityTypeDataPoint(
-                    activityName: activityType.name,
-                    emoji: activityType.emoji,
-                    totalHours: hours,
-                    percentage: monthTotalHours > 0 ? (hours / monthTotalHours * 100) : 0
-                )
+                let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
+                return MonthlyActivityTypeDataPoint(activityName: activity.name, emoji: activity.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
             }.sorted { $0.totalHours > $1.totalHours }
             
-            // Get month name
-            let monthName = DateFormatter().monthSymbols[monthNumber - 1]
-            
-            let monthData = MonthlyActivityTypeChartData(
-                month: monthName,
-                monthNumber: monthNumber,
-                activityBreakdown: activityBreakdown,
-                totalHours: monthTotalHours
-            )
-            
-            result.append(monthData)
+            return MonthlyActivityTypeChartData(month: monthNames[monthNum - 1], monthNumber: monthNum, activityBreakdown: breakdown, totalHours: total)
         }
-        
-        return result
     }
-    
-    // Accessors for convenience in views
-    var projects: [Project] { viewModel.projects }
-    var sessions: [SessionRecord] { viewModel.sessions }
-    
-} 
-
-
-// MARK: - DateFormatter Helper
-extension DateFormatter {
-    static let cachedYYYYMMDD: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
-    
-    static let cachedHHmm: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
-    
-    static let cachedDateTime: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }

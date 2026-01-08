@@ -36,7 +36,7 @@
 - ✅ **Timestamp-Based**: Uses `startDate` and `endDate` (Date objects) as single source of truth
 - ✅ **Migration Complete**: No longer uses computed properties - uses full Date objects
 - ✅ **ProjectID Required**: New sessions require projectID parameter
-- ✅ **Automatic Duration**: Duration calculated on-demand using DurationCalculator
+- ✅ **Automatic Duration**: Duration calculated on-demand using `session.durationMinutes` computed property
 
 #### SessionRecord Struct
 

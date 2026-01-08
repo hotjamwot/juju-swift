@@ -22,7 +22,6 @@ class SessionDataParser {
             return ([], false)
         }
         
-        // Detect format based on header
         let headerFields = parseCSVLineOptimized(headerLine)
         let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
         let hasStartDate = headerFields.contains("start_date")
@@ -33,81 +32,87 @@ class SessionDataParser {
         var needsRewrite = false
         
         for (index, line) in dataLines.enumerated() {
-            let rowIndex = index + 1  // +1 to skip header
-            
             let fields = parseCSVLineOptimized(line)
-            
-            // Ensure we have at least the expected number of fields
             var safeFields = fields
             
-            // Pad with empty strings if we have fewer fields than expected
             if safeFields.count < expectedColumnCount {
                 safeFields += Array(repeating: "", count: expectedColumnCount - safeFields.count)
             }
-            // DO NOT truncate if we have more fields than expected - this was causing data loss
-            // Keep all fields to preserve data integrity
             
             var id: String
             if hasIdColumn {
                 id = cleanField(safeFields[0])
             } else {
-                // No ID column, generate one
                 id = UUID().uuidString
                 needsRewrite = true
-                safeFields.insert(id, at: 0)
-                // After inserting ID, we need to ensure we still have the right count
-                if safeFields.count > expectedColumnCount + 1 {
-                    safeFields = Array(safeFields.prefix(expectedColumnCount + 1))
-                }
             }
             
-            // Ensure all required fields exist after potential ID insertion
             while safeFields.count < expectedColumnCount {
                 safeFields.append("")
             }
             
-            // Handle new migrated format with start_date and end_date
+            // Handle new format with start_date and end_date
             if hasStartDate {
                 let startDateStr = cleanField(safeFields[1])
                 let endDateStr = cleanField(safeFields[2])
                 
-                guard !startDateStr.isEmpty && !endDateStr.isEmpty else {
+                guard !startDateStr.isEmpty && !endDateStr.isEmpty,
+                      let (startDate, _) = parseDate(startDateStr),
+                      let endDate = parseDate(endDateStr)?.date else {
                     continue
                 }
                 
-                guard let (startDate, _) = parseDate(startDateStr) else {
-                    continue
+                let projectID: String
+                if hasNewFields {
+                    // Check if we have the legacy format with projectName field
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(safeFields[4])
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        projectID = cleanField(safeFields[3])
+                    }
+                } else {
+                    projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
                 }
                 
-                guard let endDate = parseDate(endDateStr)?.date else {
-                    continue
+                guard !projectID.isEmpty else { continue }
+                
+                let activityTypeID: String?
+                let projectPhaseID: String?
+                let milestoneText: String?
+                let notes: String
+                let mood: Int?
+                
+                if hasNewFields {
+                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(safeFields[5]).nilIfEmpty
+                        projectPhaseID = cleanField(safeFields[6]).nilIfEmpty
+                        milestoneText = cleanField(safeFields[7]).nilIfEmpty
+                        notes = cleanField(safeFields[8])
+                        mood = parseMood(safeFields[9])
+                    } else {
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        activityTypeID = cleanField(safeFields[4]).nilIfEmpty
+                        projectPhaseID = cleanField(safeFields[5]).nilIfEmpty
+                        milestoneText = cleanField(safeFields[6]).nilIfEmpty
+                        notes = cleanField(safeFields[7])
+                        mood = parseMood(safeFields[8])
+                    }
+                } else {
+                    activityTypeID = nil
+                    projectPhaseID = nil
+                    milestoneText = nil
+                    notes = cleanField(safeFields.count > 4 ? safeFields[4] : "")
+                    mood = parseMood(safeFields.count > 5 ? safeFields[5] : "")
                 }
                 
-                // Extract fields based on new format
-                // Note: projectName is kept for backward compatibility, projectID is source of truth
-                let projectName = safeFields.count > 3 ? (safeFields[3].isEmpty ? "" : cleanField(safeFields[3])) : ""
-                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? nil : cleanField(safeFields[4])) : nil
-                let activityTypeID = hasNewFields && safeFields.count > 5 ? (safeFields[5].isEmpty ? nil : cleanField(safeFields[5])) : nil
-                let projectPhaseID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
-                let milestoneText = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
-                let notesIndex = hasNewFields ? 8 : 4
-                let moodIndex = hasNewFields ? 9 : 5
-                let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
-                let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
-                
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
-                
-                // Calculate duration from start and end dates
-                let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
-                
-                // Create session record with all fields using new Date-based initializer
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -117,42 +122,37 @@ class SessionDataParser {
                 
                 sessions.append(record)
             } else {
-                // Handle old format with separate date, start_time, end_time
+                // Handle old format
                 let dateStr = cleanField(safeFields[1])
                 guard !dateStr.isEmpty, let (date, _) = parseDate(dateStr) else {
                     continue
                 }
                 
-                // Extract fields based on format
-                let projectName = safeFields.count > 5 ? cleanField(safeFields[5]) : ""
-                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
-                let activityTypeID = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
-                let projectPhaseID = hasNewFields && safeFields.count > 8 ? (safeFields[8].isEmpty ? nil : cleanField(safeFields[8])) : nil
-                let milestoneText = hasNewFields && safeFields.count > 9 ? (safeFields[9].isEmpty ? nil : cleanField(safeFields[9])) : nil
-                let notesIndex = hasNewFields ? 10 : 6
-                let moodIndex = hasNewFields ? 11 : 7
-                let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
-                let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                let projectID: String
+                if hasNewFields {
+                    projectID = cleanField(safeFields[6])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: cleanField(safeFields[5]))
+                }
                 
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
+                guard !projectID.isEmpty else { continue }
                 
-                // For legacy format, we need to parse start and end times to create proper Date objects
                 let startTime = cleanField(safeFields[2])
                 let endTime = cleanField(safeFields[3])
-                let durationMinutes = Int(cleanField(safeFields[4])) ?? 0
-                
-                // Parse start and end times to create full Date objects
                 let startDate = combineDateWithTimeString(date, timeString: startTime)
                 let endDate = combineDateWithTimeString(date, timeString: endTime)
                 
-                // Create session record with all fields using new Date-based initializer
+                let activityTypeID = hasNewFields ? cleanField(safeFields[7]).nilIfEmpty : nil
+                let projectPhaseID = hasNewFields ? cleanField(safeFields[8]).nilIfEmpty : nil
+                let milestoneText = hasNewFields ? cleanField(safeFields[9]).nilIfEmpty : nil
+                let notes = cleanField(hasNewFields ? safeFields[10] : safeFields[6])
+                let mood = parseMood(hasNewFields ? safeFields[11] : safeFields[7])
+                
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -174,7 +174,6 @@ class SessionDataParser {
             return []
         }
         
-        // Detect format based on header
         let headerFields = parseCSVLineOptimized(headerLine)
         let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
         let hasStartDate = headerFields.contains("start_date")
@@ -186,7 +185,6 @@ class SessionDataParser {
             let fields = parseCSVLineOptimized(line)
             let fieldCount = fields.count
             
-            // Handle new migrated format with start_date and end_date
             if hasStartDate {
                 let startDateIndex = hasIdColumn ? 1 : 0
                 let endDateIndex = hasIdColumn ? 2 : 1
@@ -201,35 +199,33 @@ class SessionDataParser {
                 }
                 
                 let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
-                let projIndex = hasIdColumn ? 3 : 2
-                let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
                 
-                // Extract new fields if available
-                let projectID = hasNewFields && fieldCount > 4 && fields.count > 4 ? (fields[4].isEmpty ? nil : cleanField(fields[4])) : nil
-                let activityTypeID = hasNewFields && fieldCount > 5 && fields.count > 5 ? (fields[5].isEmpty ? nil : cleanField(fields[5])) : nil
-                let projectPhaseID = hasNewFields && fieldCount > 6 && fields.count > 6 ? (fields[6].isEmpty ? nil : cleanField(fields[6])) : nil
-                let milestoneText = hasNewFields && fieldCount > 7 && fields.count > 7 ? (fields[7].isEmpty ? nil : cleanField(fields[7])) : nil
-
+                let projectID: String
+                if hasNewFields && fieldCount > 4 {
+                    projectID = cleanField(fields[4])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : "")
+                }
+                
+                guard !projectID.isEmpty else { continue }
+                
+                let activityTypeID = (hasNewFields && fieldCount > 5) ? cleanField(fields[5]).nilIfEmpty : nil
+                let projectPhaseID = (hasNewFields && fieldCount > 6) ? cleanField(fields[6]).nilIfEmpty : nil
+                let milestoneText = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                
                 let notesIndex = hasNewFields ? 8 : 4
                 let moodIndex = hasNewFields ? 9 : 5
-                
                 let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
-                let moodStr = (moodIndex < fieldCount) ? fields[moodIndex] : ""
-                let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
+                let mood: Int? = {
+                    guard moodIndex < fieldCount else { return nil }
+                    return parseMood(fields[moodIndex])
+                }()
                 
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
-                
-                // Calculate duration from start and end dates
-                let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
-                
-                // Create session record with all fields using new Date-based initializer
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -239,7 +235,6 @@ class SessionDataParser {
                 
                 sessions.append(record)
             } else {
-                // Handle old format with separate date, start_time, end_time
                 let dateIndex = hasIdColumn ? 1 : 0
                 let dateStr = (dateIndex < fieldCount) ? cleanField(fields[dateIndex]) : ""
                 
@@ -249,43 +244,35 @@ class SessionDataParser {
                 }
                 
                 let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
-                let startIndex = hasIdColumn ? 2 : 1
-                let endIndex = hasIdColumn ? 3 : 2
-                let durIndex = hasIdColumn ? 4 : 3
-                let projIndex = hasIdColumn ? 5 : 4
                 
-                let startTime = (startIndex < fieldCount) ? cleanField(fields[startIndex]) : ""
-                let endTime = (endIndex < fieldCount) ? cleanField(fields[endIndex]) : ""
-                let durationStr = (durIndex < fieldCount) ? cleanField(fields[durIndex]) : "0"
-                let projectName = (projIndex < fieldCount) ? cleanField(fields[projIndex]) : ""
+                let projectID: String
+                if hasNewFields && fieldCount > 6 {
+                    projectID = cleanField(fields[6])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 5) ? cleanField(fields[5]) : "")
+                }
                 
-                // Extract new fields if available
-                let projectID = hasNewFields && fieldCount > 6 ? (fields[6].isEmpty ? nil : cleanField(fields[6])) : nil
-                let activityTypeID = hasNewFields && fieldCount > 7 ? (fields[7].isEmpty ? nil : cleanField(fields[7])) : nil
-                let projectPhaseID = hasNewFields && fieldCount > 8 ? (fields[8].isEmpty ? nil : cleanField(fields[8])) : nil
-                let milestoneText = hasNewFields && fieldCount > 9 ? (fields[9].isEmpty ? nil : cleanField(fields[9])) : nil
+                guard !projectID.isEmpty else { continue }
+                
+                let activityTypeID = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                let projectPhaseID = (hasNewFields && fieldCount > 8) ? cleanField(fields[8]).nilIfEmpty : nil
+                let milestoneText = (hasNewFields && fieldCount > 9) ? cleanField(fields[9]).nilIfEmpty : nil
+                
                 let notesIndex = hasNewFields ? 10 : 6
                 let moodIndex = hasNewFields ? 11 : 7
-                
                 let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
-                let moodStr = (moodIndex < fieldCount) ? fields[moodIndex] : ""
-                let mood = moodStr.isEmpty ? nil : Int(cleanField(moodStr))
-                let durationMinutes = Int(durationStr) ?? 0
+                let mood = (moodIndex < fieldCount) ? parseMood(fields[moodIndex]) : nil
                 
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
-                
-                // For legacy format, parse start and end times to create proper Date objects
+                let startTime = (hasIdColumn && fieldCount > 2) ? cleanField(fields[2]) : ""
+                let endTime = (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : ""
                 let startDate = combineDateWithTimeString(date, timeString: startTime)
                 let endDate = combineDateWithTimeString(date, timeString: endTime)
                 
-                // Create session record with all fields using new Date-based initializer
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -300,8 +287,6 @@ class SessionDataParser {
         return sessions
     }
     
-    /// Parse sessions from CSV content, filtering only those within the current week
-    /// This is an optimized version that only processes sessions within the specified week interval
     func parseSessionsFromCSVForCurrentWeek(_ csvContent: String, hasIdColumn: Bool, weekInterval: DateInterval) -> ([SessionRecord], Bool) {
         let lines = parseCSVContentWithProperQuoting(csvContent)
         
@@ -309,7 +294,6 @@ class SessionDataParser {
             return ([], false)
         }
         
-        // Detect format based on header
         let headerFields = parseCSVLineOptimized(headerLine)
         let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
         let hasStartDate = headerFields.contains("start_date")
@@ -320,40 +304,25 @@ class SessionDataParser {
         var needsRewrite = false
         
         for (index, line) in dataLines.enumerated() {
-            let rowIndex = index + 1  // +1 to skip header
-            
             let fields = parseCSVLineOptimized(line)
-            
-            // Ensure we have at least the expected number of fields
             var safeFields = fields
             
-            // Pad with empty strings if we have fewer fields than expected
             if safeFields.count < expectedColumnCount {
                 safeFields += Array(repeating: "", count: expectedColumnCount - safeFields.count)
             }
-            // DO NOT truncate if we have more fields than expected - this was causing data loss
-            // Keep all fields to preserve data integrity
             
             var id: String
             if hasIdColumn {
                 id = cleanField(safeFields[0])
             } else {
-                // No ID column, generate one
                 id = UUID().uuidString
                 needsRewrite = true
-                safeFields.insert(id, at: 0)
-                // After inserting ID, we need to ensure we still have the right count
-                if safeFields.count > expectedColumnCount + 1 {
-                    safeFields = Array(safeFields.prefix(expectedColumnCount + 1))
-                }
             }
             
-            // Ensure all required fields exist after potential ID insertion
             while safeFields.count < expectedColumnCount {
                 safeFields.append("")
             }
             
-            // Handle new migrated format with start_date and end_date
             if hasStartDate {
                 let startDateStr = cleanField(safeFields[1])
                 let endDateStr = cleanField(safeFields[2])
@@ -364,35 +333,28 @@ class SessionDataParser {
                     continue
                 }
                 
-                // Quick filter: only process sessions within the current week
-                guard weekInterval.contains(startDate) else {
-                    continue
+                guard weekInterval.contains(startDate) else { continue }
+                
+                let projectID: String
+                if hasNewFields {
+                    projectID = cleanField(safeFields[4])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
                 }
                 
-                // Extract fields based on new format
-                let projectName = safeFields.count > 3 ? (safeFields[3].isEmpty ? "" : cleanField(safeFields[3])) : ""
-                let projectID = hasNewFields && safeFields.count > 4 ? (safeFields[4].isEmpty ? nil : cleanField(safeFields[4])) : nil
-                let activityTypeID = hasNewFields && safeFields.count > 5 ? (safeFields[5].isEmpty ? nil : cleanField(safeFields[5])) : nil
-                let projectPhaseID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
-                let milestoneText = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
-                let notesIndex = hasNewFields ? 8 : 4
-                let moodIndex = hasNewFields ? 9 : 5
-                let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
-                let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                guard !projectID.isEmpty else { continue }
                 
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
+                let activityTypeID = hasNewFields ? cleanField(safeFields[5]).nilIfEmpty : nil
+                let projectPhaseID = hasNewFields ? cleanField(safeFields[6]).nilIfEmpty : nil
+                let milestoneText = hasNewFields ? cleanField(safeFields[7]).nilIfEmpty : nil
+                let notes = cleanField(hasNewFields ? safeFields[8] : safeFields[4])
+                let mood = parseMood(hasNewFields ? safeFields[9] : safeFields[5])
                 
-                // Calculate duration from start and end dates
-                let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
-                
-                // Create session record with all fields using new Date-based initializer
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -402,44 +364,40 @@ class SessionDataParser {
                 
                 sessions.append(record)
             } else {
-                // Handle old format with separate date, start_time, end_time
                 let dateStr = cleanField(safeFields[1])
                 guard !dateStr.isEmpty, let (date, _) = parseDate(dateStr) else {
                     continue
                 }
                 
-                // Quick filter: only process sessions within the current week
                 guard date >= weekInterval.start && date <= weekInterval.end else {
                     continue
                 }
                 
-                // Extract fields based on format
-                let projectName = safeFields.count > 5 ? cleanField(safeFields[5]) : ""
-                let projectID = hasNewFields && safeFields.count > 6 ? (safeFields[6].isEmpty ? nil : cleanField(safeFields[6])) : nil
-                let activityTypeID = hasNewFields && safeFields.count > 7 ? (safeFields[7].isEmpty ? nil : cleanField(safeFields[7])) : nil
-                let projectPhaseID = hasNewFields && safeFields.count > 8 ? (safeFields[8].isEmpty ? nil : cleanField(safeFields[8])) : nil
-                let milestoneText = hasNewFields && safeFields.count > 9 ? (safeFields[9].isEmpty ? nil : cleanField(safeFields[9])) : nil
-                let notesIndex = hasNewFields ? 10 : 6
-                let moodIndex = hasNewFields ? 11 : 7
-                let notes = safeFields.count > notesIndex ? cleanField(safeFields[notesIndex]) : ""
-                let mood = safeFields.count > moodIndex ? (safeFields[moodIndex].isEmpty ? nil : Int(cleanField(safeFields[moodIndex]))) : nil
+                let projectID: String
+                if hasNewFields {
+                    projectID = cleanField(safeFields[6])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: cleanField(safeFields[5]))
+                }
                 
-                // Resolve project ID from project name if projectID is missing
-                let resolvedProjectID = resolveProjectID(from: projectID, projectName: projectName)
+                guard !projectID.isEmpty else { continue }
                 
-                // For legacy format, parse start and end times to create proper Date objects
                 let startTime = cleanField(safeFields[2])
                 let endTime = cleanField(safeFields[3])
                 let startDate = combineDateWithTimeString(date, timeString: startTime)
                 let endDate = combineDateWithTimeString(date, timeString: endTime)
                 
-                // Create session record with all fields using new Date-based initializer
+                let activityTypeID = hasNewFields ? cleanField(safeFields[7]).nilIfEmpty : nil
+                let projectPhaseID = hasNewFields ? cleanField(safeFields[8]).nilIfEmpty : nil
+                let milestoneText = hasNewFields ? cleanField(safeFields[9]).nilIfEmpty : nil
+                let notes = cleanField(hasNewFields ? safeFields[10] : safeFields[6])
+                let mood = parseMood(hasNewFields ? safeFields[11] : safeFields[7])
+                
                 let record = SessionRecord(
                     id: id,
                     startDate: startDate,
                     endDate: endDate,
-                    projectName: projectName,
-                    projectID: resolvedProjectID,
+                    projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
                     milestoneText: milestoneText,
@@ -456,30 +414,20 @@ class SessionDataParser {
     
     // MARK: - Project ID Resolution
     
-    /// Resolve project ID from project name when projectID is missing or empty
-    /// This prevents sessions from getting "unknown" project IDs during CSV parsing
-    private func resolveProjectID(from projectID: String?, projectName: String) -> String {
-        // If we already have a valid projectID, use it
-        if let projectID = projectID, !projectID.isEmpty {
-            return projectID
+    private func resolveProjectID(fromProjectName projectName: String) -> String {
+        guard !projectName.isEmpty else { return "unknown" }
+        
+        let projectManager = ProjectManager.shared
+        let projects = projectManager.loadProjects()
+        
+        if let project = projects.first(where: { $0.name.lowercased() == projectName.lowercased() }) {
+            return project.id
         }
         
-        // If we have a project name but no projectID, try to resolve it
-        if !projectName.isEmpty {
-            let projectManager = ProjectManager.shared
-            let projects = projectManager.loadProjects()
-            
-            // Find the project by name (case-insensitive)
-            if let project = projects.first(where: { $0.name.lowercased() == projectName.lowercased() }) {
-                return project.id
-            }
-        }
-        
-        // Fallback: return "unknown" for sessions that can't be resolved
         return "unknown"
     }
     
-    // MARK: - CSV Parsing Optimizations
+    // MARK: - CSV Parsing
     
     func parseCSVLineOptimized(_ line: String) -> [String] {
         var fields: [String] = []
@@ -491,19 +439,14 @@ class SessionDataParser {
             let char = line[i]
             
             if char == "\"" {
-                // Check if this is an escaped quote (two consecutive quotes)
                 let nextIndex = line.index(after: i)
                 if inQuotes && nextIndex < line.endIndex && line[nextIndex] == "\"" {
-                    // This is an escaped quote - add one quote to current field
                     currentField.append("\"")
-                    // Skip the second quote
                     i = nextIndex
                 } else {
-                    // This is a field quote - toggle inQuotes
                     inQuotes.toggle()
                 }
             } else if char == "," && !inQuotes {
-                // Only split on commas when NOT inside quotes
                 fields.append(currentField.trimmingCharacters(in: .whitespacesAndNewlines))
                 currentField = ""
             } else {
@@ -514,30 +457,21 @@ class SessionDataParser {
         }
         
         fields.append(currentField.trimmingCharacters(in: .whitespacesAndNewlines))
-        
         return fields
     }
     
     private func cleanField(_ field: String) -> String {
-        return field.trimmingCharacters(in: CharacterSet(charactersIn: "\"")).trimmingCharacters(in: .whitespacesAndNewlines)
+        field.trimmingCharacters(in: CharacterSet(charactersIn: "\"")).trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Parse a date string that could be either "yyyy-MM-dd" or "yyyy-MM-dd HH:mm:ss" format
-    /// Returns the date and the extracted date part as a string
     private func parseDate(_ dateStr: String) -> (date: Date, datePart: String)? {
         let cleaned = cleanField(dateStr)
-        if cleaned.isEmpty {
-            return nil
-        }
+        if cleaned.isEmpty { return nil }
         
-        // Try datetime format first (with time)
         if let dateTime = dateTimeFormatter.date(from: cleaned) {
-            // Extract just the date part
-            let datePart = String(cleaned.prefix(10)) // "yyyy-MM-dd"
-            return (dateTime, datePart)
+            return (dateTime, String(cleaned.prefix(10)))
         }
         
-        // Try date-only format
         if let date = dateFormatter.date(from: cleaned) {
             return (date, cleaned)
         }
@@ -545,58 +479,37 @@ class SessionDataParser {
         return nil
     }
     
-    /// Combine a Date object with a time string to create a full Date object
-    /// - Parameters:
-    ///   - date: The date component (Date object)
-    ///   - timeString: Time string in format "HH:mm:ss" or "HH:mm"
-    /// - Returns: Full Date object combining date and time
     private func combineDateWithTimeString(_ date: Date, timeString: String) -> Date {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
-        
-        // Pad time string if needed
         let paddedTimeString = timeString.count == 5 ? timeString + ":00" : timeString
         
         guard let timeDate = timeFormatter.date(from: paddedTimeString) else {
-            // Fallback to original date if time parsing fails
             return date
         }
         
-        // Extract time components
         let timeComponents = Calendar.current.dateComponents([.hour, .minute, .second], from: timeDate)
-        let hour = timeComponents.hour ?? 0
-        let minute = timeComponents.minute ?? 0
-        let second = timeComponents.second ?? 0
-        
-        // Extract date components
         let dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: date)
         
-        // Combine date and time
-        var combinedComponents = DateComponents()
-        combinedComponents.year = dateComponents.year
-        combinedComponents.month = dateComponents.month
-        combinedComponents.day = dateComponents.day
-        combinedComponents.hour = hour
-        combinedComponents.minute = minute
-        combinedComponents.second = second
+        var combined = DateComponents()
+        combined.year = dateComponents.year
+        combined.month = dateComponents.month
+        combined.day = dateComponents.day
+        combined.hour = timeComponents.hour
+        combined.minute = timeComponents.minute
+        combined.second = timeComponents.second
         
-        return Calendar.current.date(from: combinedComponents) ?? date
+        return Calendar.current.date(from: combined) ?? date
     }
     
-    /// Format a Date object as HH:mm:ss string
     private func formatTime(_ date: Date) -> String {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
         return timeFormatter.string(from: date)
     }
     
-    /// Parse CSV content properly, handling quoted fields that contain line breaks
-    /// Uses proper Swift string indexing to avoid parsing errors
     private func parseCSVContentWithProperQuoting(_ content: String) -> [String] {
-        // First, split by line endings (handles \n, \r\n, and \r)
         let rawLines = content.components(separatedBy: .newlines)
-        
-        // Now we need to handle quoted fields that contain line breaks
         var lines: [String] = []
         var currentLine = ""
         var inQuotes = false
@@ -609,14 +522,11 @@ class SessionDataParser {
                 let char = line[i]
                 
                 if char == "\"" {
-                    // Check if this is an escaped quote (two consecutive quotes)
                     let nextIndex = line.index(after: i)
                     if inQuotes && nextIndex < line.endIndex && line[nextIndex] == "\"" {
-                        // This is an escaped quote - just continue, it's part of the content
                         currentLine.append(char)
                         i = nextIndex
                     } else {
-                        // This is a field quote - toggle inQuotes
                         inQuotes.toggle()
                         currentLine.append(char)
                     }
@@ -627,11 +537,9 @@ class SessionDataParser {
                 i = line.index(after: i)
             }
             
-            // If we're still in quotes, this line continues on the next line
             if inQuotes {
                 currentLine.append("\n")
             } else {
-                // Line is complete
                 if !currentLine.isEmpty {
                     lines.append(currentLine)
                 }
@@ -639,7 +547,6 @@ class SessionDataParser {
             }
         }
         
-        // Add any remaining content
         if !currentLine.isEmpty {
             lines.append(currentLine)
         }
@@ -650,105 +557,247 @@ class SessionDataParser {
     // MARK: - Session Record to CSV Conversion
     
     func convertSessionsToCSV(_ sessions: [SessionRecord]) -> String {
-        let header = "id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+        let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
         let rows = sessions.map { s in
-            let project = csvEscape(s.projectName)
-            let projectID = s.projectID.map { csvEscape($0) } ?? ""
+            let projectID = csvEscape(s.projectID)
             let activityTypeID = s.activityTypeID.map { csvEscape($0) } ?? ""
             let projectPhaseID = s.projectPhaseID.map { csvEscape($0) } ?? ""
             let milestoneText = s.milestoneText.map { csvEscape($0) } ?? ""
             let notes = csvEscape(s.notes)
             let moodStr = s.mood.map(String.init) ?? ""
-            // Use the full startDate and endDate from the SessionRecord (which are Date objects)
-            let startDateFormatter = DateFormatter()
-            startDateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let endDateFormatter = DateFormatter()
-            endDateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
             
-            let startDateStr = startDateFormatter.string(from: s.startDate)
-            let endDateStr = endDateFormatter.string(from: s.endDate)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let startDateStr = dateFormatter.string(from: s.startDate)
+            let endDateStr = dateFormatter.string(from: s.endDate)
             
-            return "\(s.id),\(startDateStr),\(endDateStr),\(project),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
+            // Correct field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+            return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"
     }
     
     func convertSessionsToCSVForExport(_ sessions: [SessionRecord], format: String) -> String {
         switch format {
-        case "csv":
-            return exportToCSVFormat(sessions)
-        case "txt":
-            return exportToTXTFormat(sessions)
-        case "md":
-            return exportToMarkdownFormat(sessions)
-        default:
-            return ""
+        case "csv": return exportToCSVFormat(sessions)
+        case "txt": return exportToTXTFormat(sessions)
+        case "md": return exportToMarkdownFormat(sessions)
+        default: return ""
         }
     }
     
     private func exportToCSVFormat(_ sessions: [SessionRecord]) -> String {
         var csv = "date,project,duration_minutes,start_time,end_time,notes,mood\n"
+        let projectManager = ProjectManager.shared
+        let projects = projectManager.loadProjects()
+        
         for session in sessions {
-            let duration = "\(DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate))"
+            let duration = "\(session.durationMinutes)"
             let start = formatTime(session.startDate)
             let end = formatTime(session.endDate)
             let mood = session.mood.map(String.init) ?? ""
-            // Extract date from startDate
+            let projectName = projects.first { $0.id == session.projectID }?.name ?? session.projectID
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dateStr = dateFormatter.string(from: session.startDate)
-            csv += "\"\(dateStr)\",\"\(csvEscapeForExport(session.projectName))\",\(duration),\"\(start)\",\"\(end)\",\"\(csvEscapeForExport(session.notes))\",\(mood)\n"
+            csv += "\"\(dateStr)\",\"\(csvEscapeForExport(projectName))\",\(duration),\"\(start)\",\"\(end)\",\"\(csvEscapeForExport(session.notes))\",\(mood)\n"
         }
         return csv
     }
     
     private func exportToTXTFormat(_ sessions: [SessionRecord]) -> String {
+        let projectManager = ProjectManager.shared
+        let projects = projectManager.loadProjects()
+        
         var txt = ""
-        sessions.forEach { session in
+        for session in sessions {
             let start = formatTime(session.startDate)
             let end = formatTime(session.endDate)
-            let duration = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
-            // Extract date from startDate
+            let projectName = projects.first { $0.id == session.projectID }?.name ?? session.projectID
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dateStr = dateFormatter.string(from: session.startDate)
-            txt += "Date: \(dateStr)\nProject: \(session.projectName)\nDuration: \(duration) minutes\nStart: \(String(start.prefix(5)))\nEnd: \(String(end.prefix(5)))\nNotes: \(session.notes)\nMood: \(session.mood?.description ?? "N/A")\n\n"
+            txt += "Date: \(dateStr)\nProject: \(projectName)\nDuration: \(session.durationMinutes) minutes\nStart: \(String(start.prefix(5)))\nEnd: \(String(end.prefix(5)))\nNotes: \(session.notes)\nMood: \(session.mood?.description ?? "N/A")\n\n"
         }
         return txt
     }
     
     private func exportToMarkdownFormat(_ sessions: [SessionRecord]) -> String {
+        let projectManager = ProjectManager.shared
+        let projects = projectManager.loadProjects()
+        
         var md = "# Juju Sessions\n\n"
         md += "| Date | Project | Duration | Start | End | Notes | Mood |\n|------|---------|----------|-------|-----|-------|------|\n"
         for session in sessions {
-            let duration = "\(DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)) min"
+            let duration = "\(session.durationMinutes) min"
             let start = formatTime(session.startDate)
             let end = formatTime(session.endDate)
             let notesEsc = session.notes.replacingOccurrences(of: "|", with: "\\|")
             let mood = session.mood.map(String.init) ?? ""
-            // Extract date from startDate
+            let projectName = projects.first { $0.id == session.projectID }?.name ?? session.projectID
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dateStr = dateFormatter.string(from: session.startDate)
-            md += "| \(dateStr) | \(session.projectName) | \(duration) | \(String(start.prefix(5))) | \(String(end.prefix(5))) | \(notesEsc) | \(mood) |\n"
+            md += "| \(dateStr) | \(projectName) | \(duration) | \(String(start.prefix(5))) | \(String(end.prefix(5))) | \(notesEsc) | \(mood) |\n"
         }
         return md
     }
     
     // MARK: - Utility Functions
     
-    private func ensureSeconds(_ time: String) -> String {
-        time.count == 5 ? time + ":00" : time
-    }
-    
     private func csvEscape(_ string: String) -> String {
         let escapedQuotes = string.replacingOccurrences(of: "\"", with: "\"\"")
-        // Keep line breaks but ensure they're properly escaped in CSV format
-        // CSV standard allows line breaks inside quoted fields
         return "\"" + escapedQuotes + "\""
     }
     
     private func csvEscapeForExport(_ string: String) -> String {
         string.replacingOccurrences(of: "\"", with: "\"\"")
     }
+    
+    private func parseMood(_ value: String) -> Int? {
+        let cleaned = cleanField(value)
+        guard !cleaned.isEmpty else { return nil }
+        return Int(cleaned)
+    }
+    
+    // MARK: - Query-Based Loading
+    
+    /// Parse sessions from CSV content using a SessionQuery for efficient filtering
+    func parseSessionsFromCSVWithQuery(_ csvContent: String, query: SessionQuery) -> [SessionRecord] {
+        let lines = parseCSVContentWithProperQuoting(csvContent)
+        
+        guard let headerLine = lines.first, !headerLine.isEmpty else {
+            return []
+        }
+        
+        let headerFields = parseCSVLineOptimized(headerLine)
+        let hasNewFields = headerFields.contains("project_id") || headerFields.contains("activity_type_id")
+        let hasStartDate = headerFields.contains("start_date")
+        let hasIdColumn = headerFields.contains("id")
+        
+        let dataLines = lines.dropFirst().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        var sessions: [SessionRecord] = []
+        
+        for line in dataLines {
+            let fields = parseCSVLineOptimized(line)
+            let fieldCount = fields.count
+            
+            // Early exit if we don't have enough fields
+            if fieldCount < 4 { continue }
+            
+            // Parse session data based on format
+            let session: SessionRecord?
+            
+            if hasStartDate {
+                // New format with start_date and end_date
+                let startDateIndex = hasIdColumn ? 1 : 0
+                let endDateIndex = hasIdColumn ? 2 : 1
+                let startDateStr = (startDateIndex < fieldCount) ? cleanField(fields[startDateIndex]) : ""
+                let endDateStr = (endDateIndex < fieldCount) ? cleanField(fields[endDateIndex]) : ""
+                
+                guard !startDateStr.isEmpty && !endDateStr.isEmpty,
+                      let (startDate, _) = parseDate(startDateStr),
+                      let endDate = parseDate(endDateStr)?.date else {
+                    continue
+                }
+                
+                let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
+                
+                let projectID: String
+                if hasNewFields && fieldCount > 4 {
+                    projectID = cleanField(fields[4])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : "")
+                }
+                
+                guard !projectID.isEmpty else { continue }
+                
+                let activityTypeID = (hasNewFields && fieldCount > 5) ? cleanField(fields[5]).nilIfEmpty : nil
+                let projectPhaseID = (hasNewFields && fieldCount > 6) ? cleanField(fields[6]).nilIfEmpty : nil
+                let milestoneText = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                
+                let notesIndex = hasNewFields ? 8 : 4
+                let moodIndex = hasNewFields ? 9 : 5
+                let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
+                let mood = (moodIndex < fieldCount) ? parseMood(fields[moodIndex]) : nil
+                
+                session = SessionRecord(
+                    id: id,
+                    startDate: startDate,
+                    endDate: endDate,
+                    projectID: projectID,
+                    activityTypeID: activityTypeID,
+                    projectPhaseID: projectPhaseID,
+                    milestoneText: milestoneText,
+                    notes: notes,
+                    mood: mood
+                )
+            } else {
+                // Old format with date, start_time, end_time
+                let dateIndex = hasIdColumn ? 1 : 0
+                let dateStr = (dateIndex < fieldCount) ? cleanField(fields[dateIndex]) : ""
+                
+                guard !dateStr.isEmpty, let (date, _) = parseDate(dateStr) else {
+                    continue
+                }
+                
+                let id = hasIdColumn ? ((0 < fieldCount) ? cleanField(fields[0]) : UUID().uuidString) : UUID().uuidString
+                
+                let projectID: String
+                if hasNewFields && fieldCount > 6 {
+                    projectID = cleanField(fields[6])
+                } else {
+                    projectID = resolveProjectID(fromProjectName: (hasIdColumn && fieldCount > 5) ? cleanField(fields[5]) : "")
+                }
+                
+                guard !projectID.isEmpty else { continue }
+                
+                let activityTypeID = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
+                let projectPhaseID = (hasNewFields && fieldCount > 8) ? cleanField(fields[8]).nilIfEmpty : nil
+                let milestoneText = (hasNewFields && fieldCount > 9) ? cleanField(fields[9]).nilIfEmpty : nil
+                
+                let notesIndex = hasNewFields ? 10 : 6
+                let moodIndex = hasNewFields ? 11 : 7
+                let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
+                let mood = (moodIndex < fieldCount) ? parseMood(fields[moodIndex]) : nil
+                
+                let startTime = (hasIdColumn && fieldCount > 2) ? cleanField(fields[2]) : ""
+                let endTime = (hasIdColumn && fieldCount > 3) ? cleanField(fields[3]) : ""
+                let startDate = combineDateWithTimeString(date, timeString: startTime)
+                let endDate = combineDateWithTimeString(date, timeString: endTime)
+                
+                session = SessionRecord(
+                    id: id,
+                    startDate: startDate,
+                    endDate: endDate,
+                    projectID: projectID,
+                    activityTypeID: activityTypeID,
+                    projectPhaseID: projectPhaseID,
+                    milestoneText: milestoneText,
+                    notes: notes,
+                    mood: mood
+                )
+            }
+            
+            // Apply query filtering
+            if let session = session, query.matches(session) {
+                sessions.append(session)
+            }
+        }
+        
+        // Apply pagination
+        return query.applyPagination(to: sessions)
+    }
 }
+
+// MARK: - String Extension
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
+    
+    var isEmptyOrWhitespace: Bool {
+        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+    

@@ -3,7 +3,7 @@ import SwiftUI
 /// Weekly Editorial View - Standalone component for the editorial narrative
 /// Displays the weekly summary with total hours, focus activity, and milestones
 struct WeeklyEditorialView: View {
-    @StateObject var editorialEngine: EditorialEngine
+    @StateObject var narrativeEngine: NarrativeEngine
     @State private var headlineText: String = "Loading your creative story..."
 
     // MARK: - Project Capsule Component
@@ -28,7 +28,7 @@ struct WeeklyEditorialView: View {
     // MARK: - Milestone List Component
     private var milestoneList: some View {
         VStack(alignment: .center, spacing: Theme.spacingSmall) {
-            if editorialEngine.currentWeekMilestones.isEmpty {
+            if narrativeEngine.currentWeekMilestones.isEmpty {
                 Text("No milestones this week")
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -37,7 +37,7 @@ struct WeeklyEditorialView: View {
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
-                ForEach(editorialEngine.currentWeekMilestones) { milestone in
+                ForEach(narrativeEngine.currentWeekMilestones) { milestone in
                     HStack(alignment: .center, spacing: Theme.spacingSmall) {
                         projectCapsule(
                             for: milestone.projectName,
@@ -96,7 +96,7 @@ struct WeeklyEditorialView: View {
                 Text("This week you logged")
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(Theme.Colors.textPrimary)
-                Text(editorialEngine.currentHeadline?.formattedHours ?? "0h 0m")
+                Text(narrativeEngine.currentHeadline?.formattedHours ?? "0h 0m")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(
                         LinearGradient(
@@ -113,7 +113,7 @@ struct WeeklyEditorialView: View {
                 Text("You did a lot of")
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(Theme.Colors.textPrimary)
-                if let topActivity = editorialEngine.currentHeadline?.topActivity {
+                if let topActivity = narrativeEngine.currentHeadline?.topActivity {
                     HStack(spacing: Theme.spacingExtraSmall) {
                         Text(topActivity.emoji)
                             .font(.system(size: 18, weight: .medium, design: .rounded))
@@ -143,11 +143,11 @@ struct WeeklyEditorialView: View {
         }
         .onAppear {
             // Generate initial headline
-            editorialEngine.generateWeeklyHeadline()
-            headlineText = editorialEngine.getCurrentHeadlineText()
+            narrativeEngine.generateWeeklyHeadline()
+            headlineText = narrativeEngine.getCurrentHeadlineText()
         }
-        .onChange(of: editorialEngine.currentHeadline) { _ in
-            headlineText = editorialEngine.getCurrentHeadlineText()
+        .onChange(of: narrativeEngine.currentHeadline) { _ in
+            headlineText = narrativeEngine.getCurrentHeadlineText()
         }
     }
 }
@@ -161,15 +161,15 @@ struct WeeklyEditorialView: View {
 }
 
 struct WeeklyEditorialView_PreviewsContent: View {
-    @StateObject var editorialEngine = EditorialEngine()
+    @StateObject var narrativeEngine = NarrativeEngine()
     
     var body: some View {
         WeeklyEditorialView(
-            editorialEngine: editorialEngine
+            narrativeEngine: narrativeEngine
         )
         .onAppear {
             // Generate initial headline for preview
-            editorialEngine.generateWeeklyHeadline()
+            narrativeEngine.generateWeeklyHeadline()
         }
     }
 }

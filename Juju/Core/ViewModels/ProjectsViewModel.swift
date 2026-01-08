@@ -164,13 +164,19 @@ init() {
         // In a full implementation, this would show a dialog to let the user choose
         let migrationTarget = otherProjects.first!
         
+        // Create date formatters
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
         // Migrate all sessions to the target project
         for session in projectSessions {
             let success = sessionManager.updateSessionFull(
                 id: session.id,
-                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
-                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
-                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                date: dateFormatter.string(from: session.startDate),
+                startTime: timeFormatter.string(from: session.startDate),
+                endTime: timeFormatter.string(from: session.endDate),
                 projectName: migrationTarget.name,
                 notes: session.notes,
                 mood: session.mood,
@@ -206,13 +212,19 @@ init() {
         // Get sessions for this project
         let projectSessions = allSessions.filter { $0.projectID == project.id }
         
+        // Create date formatters
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
         // Migrate all sessions to the target project
         for session in projectSessions {
             let success = sessionManager.updateSessionFull(
                 id: session.id,
-                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
-                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
-                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                date: dateFormatter.string(from: session.startDate),
+                startTime: timeFormatter.string(from: session.startDate),
+                endTime: timeFormatter.string(from: session.endDate),
                 projectName: targetProject.name,
                 notes: session.notes,
                 mood: session.mood,
@@ -274,13 +286,19 @@ init() {
         // In a full implementation, this would show a dialog to let the user choose
         let migrationTarget = otherProjects.first!
         
+        // Create date formatters
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
         // Migrate all sessions to the target project
         for session in projectSessions {
             let success = sessionManager.updateSessionFull(
                 id: session.id,
-                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
-                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
-                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
+                date: dateFormatter.string(from: session.startDate),
+                startTime: timeFormatter.string(from: session.startDate),
+                endTime: timeFormatter.string(from: session.endDate),
                 projectName: migrationTarget.name,
                 notes: session.notes,
                 mood: session.mood,

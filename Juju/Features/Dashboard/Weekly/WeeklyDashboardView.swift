@@ -15,7 +15,7 @@ struct WeeklyDashboardView: View {
     @ObservedObject var chartDataPreparer: ChartDataPreparer
     @ObservedObject var sessionManager: SessionManager
     @ObservedObject var projectsViewModel: ProjectsViewModel
-    @ObservedObject var editorialEngine: EditorialEngine
+    @ObservedObject var narrativeEngine: NarrativeEngine
     
     // MARK: - Loading state
     @State private var isLoading = false
@@ -50,7 +50,7 @@ struct WeeklyDashboardView: View {
                     DashboardLayout.weekly(
                         topLeft: {
                             WeeklyEditorialView(
-                                editorialEngine: editorialEngine
+                                narrativeEngine: narrativeEngine
                             )
                         },
                         topRight: {
@@ -99,11 +99,7 @@ struct WeeklyDashboardView: View {
                     isLoading = true
                     
                     // Load all sessions for dashboard charts (will be filtered to weekly in prepareWeeklyData)
-                    await MainActor.run {
-                        Task {
-                            await sessionManager.loadAllSessions()
-                        }
-                    }
+                    await sessionManager.loadAllSessions()
                     
                     // Prepare WEEKLY data for initial display (optimized for performance)
                     chartDataPreparer.prepareWeeklyData(
@@ -112,7 +108,7 @@ struct WeeklyDashboardView: View {
                     )
                     
                     // Generate initial editorial headline
-                    editorialEngine.generateWeeklyHeadline()
+                    narrativeEngine.generateWeeklyHeadline()
                     
                     isLoading = false
                 }
@@ -120,29 +116,29 @@ struct WeeklyDashboardView: View {
             // Event-driven reload when session starts
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
                 Task {
-                    await MainActor.run {
-                        chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
-                            projects: projectsViewModel.projects
-                        )
-                        editorialEngine.generateWeeklyHeadline()
-                    }
+                    // Use optimized query-based loading for weekly sessions
+                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
+                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
+                    
+                    chartDataPreparer.prepareWeeklyData(
+                        sessions: weeklySessions,
+                        projects: projectsViewModel.projects
+                    )
+                    narrativeEngine.generateWeeklyHeadline()
                 }
             }
             // Event-driven reload when session ends
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
                 Task {
-                    await MainActor.run {
-                        // Load current week sessions for weekly dashboard performance
-                        Task {
-                            await sessionManager.loadCurrentWeekSessions()
-                        }
-                        chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
-                            projects: projectsViewModel.projects
-                        )
-                        editorialEngine.generateWeeklyHeadline()
-                    }
+                    // Use optimized query-based loading for weekly sessions
+                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
+                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
+                    
+                    chartDataPreparer.prepareWeeklyData(
+                        sessions: weeklySessions,
+                        projects: projectsViewModel.projects
+                    )
+                    narrativeEngine.generateWeeklyHeadline()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
@@ -152,7 +148,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
-                        editorialEngine.generateWeeklyHeadline()
+                        narrativeEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -165,7 +161,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
-                        editorialEngine.generateWeeklyHeadline()
+                        narrativeEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -178,7 +174,7 @@ struct WeeklyDashboardView: View {
                             sessions: sessionManager.allSessions,
                             projects: projectsViewModel.projects
                         )
-                        editorialEngine.generateWeeklyHeadline()
+                        narrativeEngine.generateWeeklyHeadline()
                     }
                 }
             }
@@ -227,9 +223,8 @@ struct WeeklyDashboardView_Previews: PreviewProvider {
             chartDataPreparer: ChartDataPreparer(),
             sessionManager: SessionManager.shared,
             projectsViewModel: ProjectsViewModel.shared,
-            editorialEngine: EditorialEngine()
+            narrativeEngine: NarrativeEngine()
         )
             .frame(width: 1200, height: 1200)
-            .preferredColorScheme(.dark)
     }
 }

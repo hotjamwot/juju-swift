@@ -3,6 +3,7 @@ import SwiftUI
 struct ActiveSessionStatusView: View {
     @ObservedObject var sessionManager: SessionManager
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
+    private let activityTypeManager = ActivityTypeManager.shared
     
     var body: some View {
         HStack(spacing: Theme.DashboardLayout.chartGap) {
@@ -26,10 +27,11 @@ struct ActiveSessionStatusView: View {
             // Project Emoji and Name (centered)
             HStack(spacing: Theme.DashboardLayout.chartPadding) {
                 let project = getProjectForSession()
-                Text(project?.emoji ?? sessionManager.activeSession?.getActivityTypeDisplay().emoji ?? "⚡")
+                let activity = getActivityForSession()
+                Text(activity?.emoji ?? "⚡")
                     .font(.system(size: 16, weight: .bold))
                 
-                Text(sessionManager.activeSession?.projectName ?? "Unknown Project")
+                Text(project?.name ?? "Unknown Project")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(Theme.Colors.textPrimary)
                     .lineLimit(1)
@@ -60,11 +62,14 @@ struct ActiveSessionStatusView: View {
     }
     
     private func getProjectForSession() -> Project? {
+        guard let activeSession = sessionManager.activeSession else { return nil }
+        return projectsViewModel.projects.first { $0.id == activeSession.projectID }
+    }
+    
+    private func getActivityForSession() -> ActivityType? {
         guard let activeSession = sessionManager.activeSession,
-              let projectID = activeSession.projectID else {
-            return nil
-        }
-        return projectsViewModel.projects.first { $0.id == projectID }
+              let activityTypeID = activeSession.activityTypeID else { return nil }
+        return activityTypeManager.getActivityType(id: activityTypeID)
     }
 }
 
@@ -76,8 +81,8 @@ struct LiveTimerView: View {
     
     init(session: SessionRecord) {
         self.session = session
-        // Calculate initial duration using DurationCalculator
-        let durationMinutes = DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+        // Calculate initial duration using session.durationMinutes
+        let durationMinutes = session.durationMinutes
         self._liveDurationSeconds = State(initialValue: durationMinutes * 60)
     }
     

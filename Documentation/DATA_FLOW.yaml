@@ -63,9 +63,9 @@ nodes:
     function: Aggregate Weekly Dashboard Data
     description: Processes raw session data into weekly dashboard-ready formats. Filters to current week only for optimal performance
   - id: B2_Editorial_Engine
-    component: EditorialEngine
+    component: NarrativeEngine
     function: Generate Narrative Headlines
-    description: Creates dynamic editorial content for dashboard. Enhanced with future analytics capabilities
+    description: Creates dynamic editorial content for dashboard using projectID lookups and session.durationMinutes
   - id: B3_Dashboard_Navigator
     component: DashboardRootView
     function: Navigate Between Dashboard Views

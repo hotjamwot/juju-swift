@@ -56,36 +56,40 @@ class DataValidator {
         }
         
         // Validate project reference (if provided)
-        if let projectID = session.projectID, !projectID.isEmpty {
-            let projectManager = ProjectManager.shared
-            let projects = projectManager.loadProjects()
-            
-            // Allow sessions to reference archived projects (preserves historical data)
-            // Only reject if the project doesn't exist at all
-            guard projects.contains(where: { $0.id == projectID }) else {
-                return .invalid(reason: "Session references non-existent project: \(projectID)")
+        guard !session.projectID.isEmpty else {
+            return .valid
+        }
+        
+        let projectManager = ProjectManager.shared
+        let projects = projectManager.loadProjects()
+        
+        // Allow sessions to reference archived projects (preserves historical data)
+        // Only reject if the project doesn't exist at all
+        guard projects.contains(where: { $0.id == session.projectID }) else {
+            return .invalid(reason: "Session references non-existent project: \(session.projectID)")
+        }
+        
+        // If projectPhaseID is provided, validate it belongs to the project
+        if let phaseID = session.projectPhaseID, !phaseID.isEmpty {
+            guard let project = projects.first(where: { $0.id == session.projectID }) else {
+                return .invalid(reason: "Could not find project for phase validation")
             }
             
-            // If projectPhaseID is provided, validate it belongs to the project
-            if let phaseID = session.projectPhaseID, !phaseID.isEmpty {
-                guard let project = projects.first(where: { $0.id == projectID }) else {
-                    return .invalid(reason: "Could not find project for phase validation")
-                }
-                
-                let activePhases = project.phases.filter { !$0.archived }
-                guard activePhases.contains(where: { $0.id == phaseID }) else {
-                    return .invalid(reason: "Session references phase that doesn't belong to project: \(phaseID)")
-                }
+            let activePhases = project.phases.filter { !$0.archived }
+            guard activePhases.contains(where: { $0.id == phaseID }) else {
+                return .invalid(reason: "Session references phase that doesn't belong to project: \(phaseID)")
             }
         }
         
         // Validate activity type reference (if provided)
         // Note: Sessions can reference archived activity types - this preserves historical data
-        if let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty {
-            let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
-            guard activityTypes.contains(where: { $0.id == activityTypeID }) else {
-                return .invalid(reason: "Session references non-existent activity type: \(activityTypeID)")
-            }
+        guard let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty else {
+            return .valid
+        }
+        
+        let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
+        guard activityTypes.contains(where: { $0.id == session.activityTypeID }) else {
+            return .invalid(reason: "Session references non-existent activity type: \(session.activityTypeID)")
         }
         
         return .valid
@@ -119,12 +123,12 @@ class DataValidator {
         let projectManager = ProjectManager.shared
         let existingProjects = projectManager.loadProjects()
         
-        let existingProject = existingProjects.first { existingProject in
+        let duplicateProject = existingProjects.first { existingProject in
             existingProject.id != project.id && // Don't compare with itself
             existingProject.name.lowercased() == project.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         }
         
-        if let duplicateProject = existingProject {
+        if let duplicateProject {
             return .invalid(reason: "A project with the name '\(project.name)' already exists (ID: \(duplicateProject.id))")
         }
         
@@ -166,10 +170,10 @@ class DataValidator {
         
         // Check for orphaned sessions (sessions with invalid project references)
         let orphanedSessions = sessions.filter { session in
-            if let projectID = session.projectID, !projectID.isEmpty {
-                return !projects.contains { $0.id == projectID }
+            guard !session.projectID.isEmpty else {
+                return false // Sessions without projectID are legacy and allowed
             }
-            return false // Sessions without projectID are legacy and allowed
+            return !projects.contains { $0.id == session.projectID }
         }
         
         if !orphanedSessions.isEmpty {
@@ -179,10 +183,10 @@ class DataValidator {
         
         // Check for sessions with invalid activity type references
         let invalidActivityTypeSessions = sessions.filter { session in
-            if let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty {
-                return !activityTypes.contains { $0.id == activityTypeID }
+            guard let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty else {
+                return false
             }
-            return false
+            return !activityTypes.contains { $0.id == activityTypeID }
         }
         
         if !invalidActivityTypeSessions.isEmpty {
@@ -273,29 +277,35 @@ class DataValidator {
         let projects = projectManager.loadProjects()
         
         let sessionsToUpdate = sessionManager.allSessions.filter { session in
-            if let projectID = session.projectID, !projectID.isEmpty {
-                return !projects.contains { $0.id == projectID }
+            guard !session.projectID.isEmpty else {
+                return false
             }
-            return false
+            return !projects.contains { $0.id == session.projectID }
         }
         
         // Create projects for orphaned sessions
         for session in sessionsToUpdate {
-            guard !session.projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            guard !session.projectID.isEmpty else {
+                continue
+            }
+            
+            // Look up project name from the project ID (if it exists in a migrated/legacy state)
+            // For orphaned sessions, we may not find a matching project
+            guard let projectName = projectManager.getProjectName(from: session.projectID) else {
                 continue
             }
             
             // Check if project already exists with this name
-            if let existingProject = projects.first(where: { $0.name.lowercased() == session.projectName.lowercased() }) {
+            if let existingProject = projects.first(where: { $0.name.lowercased() == projectName.lowercased() }) {
                 // Update session to use existing project
                 let success = sessionManager.updateSession(id: session.id, field: "project_id", value: existingProject.id)
                 if success {
-                    repairs.append("Updated session \(session.id) to use existing project '\(session.projectName)' (ID: \(existingProject.id))")
+                    repairs.append("Updated session \(session.id) to use existing project '\(projectName)' (ID: \(existingProject.id))")
                 }
             } else {
                 // Create new project for the session
                 let newProject = Project(
-                    name: session.projectName,
+                    name: projectName,
                     color: "#808080", // Grey color for auto-created projects
                     about: "Auto-created from session data",
                     order: 0,
@@ -308,7 +318,7 @@ class DataValidator {
                 // Update session to use new project
                 let success = sessionManager.updateSession(id: session.id, field: "project_id", value: newProject.id)
                 if success {
-                    repairs.append("Created new project '\(session.projectName)' (ID: \(newProject.id)) and updated session \(session.id)")
+                    repairs.append("Created new project '\(projectName)' (ID: \(newProject.id)) and updated session \(session.id)")
                 }
             }
         }
@@ -321,8 +331,8 @@ class DataValidator {
     /// Quick check if a project ID is valid
     /// - Parameter projectID: The project ID to check
     /// - Returns: True if the project ID is valid and not archived
-    func isValidProjectID(_ projectID: String?) -> Bool {
-        guard let projectID = projectID, !projectID.isEmpty else {
+    func isValidProjectID(_ projectID: String) -> Bool {
+        guard !projectID.isEmpty else {
             return false
         }
         
@@ -334,8 +344,8 @@ class DataValidator {
     /// Quick check if an activity type ID is valid
     /// - Parameter activityTypeID: The activity type ID to check
     /// - Returns: True if the activity type ID exists (including archived)
-    func isValidActivityTypeID(_ activityTypeID: String?) -> Bool {
-        guard let activityTypeID = activityTypeID, !activityTypeID.isEmpty else {
+    func isValidActivityTypeID(_ activityTypeID: String) -> Bool {
+        guard !activityTypeID.isEmpty else {
             return false
         }
         
@@ -348,9 +358,8 @@ class DataValidator {
     ///   - phaseID: The phase ID to check
     ///   - projectID: The project ID to validate against
     /// - Returns: True if the phase belongs to the project and is not archived
-    func isValidPhaseForProject(_ phaseID: String?, projectID: String?) -> Bool {
-        guard let phaseID = phaseID, !phaseID.isEmpty,
-              let projectID = projectID, !projectID.isEmpty else {
+    func isValidPhaseForProject(_ phaseID: String, projectID: String) -> Bool {
+        guard !phaseID.isEmpty, !projectID.isEmpty else {
             return false
         }
         

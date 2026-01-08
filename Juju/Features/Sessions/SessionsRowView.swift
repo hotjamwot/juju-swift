@@ -205,7 +205,7 @@ struct SessionsRowView: View {
                             .font(.system(size: 12))
                         
                         // Project name
-                        Text(currentSession.projectName)
+                        Text(projectName)
                             .font(Theme.Fonts.body.weight(.semibold))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
@@ -249,44 +249,7 @@ struct SessionsRowView: View {
                 HStack(spacing: Theme.Row.compactSpacing) {
                     // Start and End Time (fixed width) - now clickable with hover effects
                     HStack(spacing: 2) {
-                        // Date picker (compact clock icon button)
-                        Button(action: {
-                            showingDatePicker = true
-                        }) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .onHover { hovering in
-                            isDateHovering = hovering
-                        }
-                        .popover(isPresented: $showingDatePicker) {
-                            DatePickerPopover(
-                                title: "Edit Date",
-                                dateString: formatDate(currentSession.startDate),
-                                onDateChanged: { newDate in
-                                    updateSessionDate(newDate)
-                                },
-                                onDismiss: {
-                                    showingDatePicker = false
-                                }
-                            )
-                            .padding()
-                        }
-                        .background(
-                            Theme.Colors.divider.opacity(0.2)
-                                .opacity(isDateHovering ? 0.4 : 0.2)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 999)
-                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                .opacity(isDateHovering ? 1.0 : 0.0)
-                        )
-                        .clipShape(Circle())
-                        .contentShape(Rectangle()) // Make entire area tappable
-                        .frame(width: 28, height: 28)
-                        // Start Time
+                        // Start Time with combined date/time picker
                         Button(action: {
                             showingStartTimePicker = true
                         }) {
@@ -299,11 +262,11 @@ struct SessionsRowView: View {
                             isStartTimeHovering = hovering
                         }
                         .popover(isPresented: $showingStartTimePicker) {
-                            TimePickerPopover(
-                                title: "Edit Start Time",
-                                timeString: formatTime(currentSession.startDate),
-                                onTimeChanged: { newStartTime in
-                                    updateSessionStartTime(newStartTime)
+                            DateTimePickerPopover(
+                                title: "Edit Start Time & Date",
+                                date: currentSession.startDate,
+                                onDateTimeChanged: { newDateTime in
+                                    updateSessionStartDateTime(newDateTime)
                                 },
                                 onDismiss: {
                                     showingStartTimePicker = false
@@ -327,7 +290,7 @@ struct SessionsRowView: View {
                             .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
                         
-                        // End Time
+                        // End Time with combined date/time picker
                         Button(action: {
                             showingEndTimePicker = true
                         }) {
@@ -340,11 +303,11 @@ struct SessionsRowView: View {
                             isEndTimeHovering = hovering
                         }
                         .popover(isPresented: $showingEndTimePicker) {
-                            TimePickerPopover(
-                                title: "Edit End Time",
-                                timeString: formatTime(currentSession.endDate),
-                                onTimeChanged: { newEndTime in
-                                    updateSessionEndTime(newEndTime)
+                            DateTimePickerPopover(
+                                title: "Edit End Time & Date",
+                                date: currentSession.endDate,
+                                onDateTimeChanged: { newDateTime in
+                                    updateSessionEndDateTime(newDateTime)
                                 },
                                 onDismiss: {
                                     showingEndTimePicker = false
@@ -486,8 +449,8 @@ struct SessionsRowView: View {
                     .popover(isPresented: $showingPhasePopover) {
                         // Always get the current project to ensure we show the correct phases
                         // Include projectDataVersion as a dependency to force refresh when project data changes
-                        if let projectID = currentSession.projectID,
-                           let project = projects.first(where: { $0.id == projectID }) {
+                        if !currentSession.projectID.isEmpty,
+                           let project = projects.first(where: { $0.id == currentSession.projectID }) {
                             PhaseSelectionPopover(
                                 project: project,
                                 currentPhaseID: currentSession.projectPhaseID,
@@ -697,12 +660,17 @@ struct SessionsRowView: View {
     
     // MARK: - Computed Properties
     
+    /// Get project name from projectID (looks up project name in projects array)
+    private var projectName: String {
+        projects.first { $0.id == currentSession.projectID }?.name ?? currentSession.projectID
+    }
+    
     private var projectColor: Color {
-        projects.first { $0.name == currentSession.projectName }?.swiftUIColor ?? Theme.Colors.accentColor
+        projects.first { $0.id == currentSession.projectID }?.swiftUIColor ?? Theme.Colors.accentColor
     }
     
     private var projectEmoji: String {
-        projects.first { $0.name == currentSession.projectName }?.emoji ?? "📁"
+        projects.first { $0.id == currentSession.projectID }?.emoji ?? "📁"
     }
     
     /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
@@ -732,13 +700,13 @@ struct SessionsRowView: View {
         
         // If no phaseID is set, return nil to show the placeholder state
         guard let projectPhaseID = currentSession.projectPhaseID,
-              let projectID = currentSession.projectID else {
+              !currentSession.projectID.isEmpty else {
             return nil
         }
         
         // Use the projects array passed from SessionsView instead of loading directly
         // This ensures we're using the same data source that's being managed by ProjectsViewModel
-        guard let project = projects.first(where: { $0.id == projectID }) else {
+        guard let project = projects.first(where: { $0.id == currentSession.projectID }) else {
             return nil
         }
         
@@ -766,33 +734,7 @@ struct SessionsRowView: View {
         return formatter.string(from: date)
     }
     
-    private func formatTimeFromDateString(_ dateString: String) -> String {
-        // Extract time from date string by creating a Date object and formatting it
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        guard let date = formatter.date(from: dateString) else {
-            return dateString
-        }
-        
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
     
-    private func formatTime(_ timeString: String) -> String {
-        let components = timeString.components(separatedBy: ":")
-        guard components.count >= 2,
-              let hour = Int(components[0]),
-              let minute = Int(components[1]) else {
-            return timeString
-        }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        formatter.timeStyle = .short
-        
-        let date = Calendar.current.date(from: DateComponents(hour: hour, minute: minute)) ?? Date()
-        return formatter.string(from: date)
-    }
     
     // Overload for Date objects
     private func formatTime(_ date: Date) -> String {
@@ -852,7 +794,7 @@ struct SessionsRowView: View {
     /// 5. Triggers a UI refresh by calling the callback
     /// 6. Forces an immediate refresh of the session observer to update the UI
     private func updateSessionProject(_ project: Project) {
-        print("🔄 Updating session \(session.id) project from '\(currentSession.projectName)' to '\(project.name)' (ID: \(project.id))")
+        print("🔄 Updating session \(session.id) project from '\(projectName)' to '\(project.name)' (ID: \(project.id))")
         
         // Determine the new phaseID
         var newPhaseID: String? = currentSession.projectPhaseID
@@ -877,7 +819,7 @@ struct SessionsRowView: View {
             date: formatDate(currentSession.startDate),
             startTime: formatTime(currentSession.startDate),
             endTime: formatTime(currentSession.endDate),
-            projectName: project.name,
+            projectName: project.name, // Use the new project's name
             notes: currentSession.notes,
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
@@ -941,7 +883,7 @@ struct SessionsRowView: View {
             date: formatDate(currentSession.startDate),
             startTime: formatTime(currentSession.startDate),
             endTime: formatTime(currentSession.endDate),
-            projectName: currentSession.projectName,
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
             notes: currentSession.notes,
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
@@ -983,7 +925,7 @@ struct SessionsRowView: View {
             date: formatDate(currentSession.startDate),
             startTime: formatTime(currentSession.startDate),
             endTime: formatTime(currentSession.endDate),
-            projectName: currentSession.projectName,
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
             notes: currentSession.notes,
             mood: currentSession.mood,
             activityTypeID: activityType.id,
@@ -1028,66 +970,72 @@ struct SessionsRowView: View {
         }
     }
     
-    // MARK: - Start Time Selection Handler
+    // MARK: - Combined Date/Time Selection Handlers
     
-    /// Update session with new start time
-    /// This method handles the start time change workflow:
-    /// 1. Updates the session with the new start time
+    /// Update session with new start date and time
+    /// This method handles the combined date/time change workflow:
+    /// 1. Updates the session with the new start date and time
     /// 2. Immediately updates the session in the data store
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
-    private func updateSessionStartTime(_ newStartTime: String) {
-        // Update only the start time field using the single-field update method
-        // This avoids any date/time parsing issues that could cause midnight duration bugs
-        let success = SessionManager.shared.updateSession(id: session.id, field: "startTime", value: newStartTime)
+    private func updateSessionStartDateTime(_ newDateTime: Date) {
+        // Format the new date and time for the update method
+        let newDate = formatDate(newDateTime)
+        let newTime = formatTime(newDateTime)
+        
+        // Update the session with new start date and time using the full update method
+        // This ensures all fields are properly updated and validated
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: newDate,
+            startTime: newTime,
+            endTime: formatTime(currentSession.endDate),
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: currentSession.projectPhaseID,
+            milestoneText: currentSession.milestoneText,
+            projectID: currentSession.projectID
+        )
         
         if success {
+            print("✅ Successfully updated session \(session.id) with new start date and time")
             // Force immediate refresh of the session observer to update the UI
             // Use the same robust synchronization approach as other updates
             refreshSessionData()
-            
-            // Notify parent that project has changed so it can refresh the view
-            onProjectChanged?()
         }
     }
     
-    // MARK: - End Time Selection Handler
-    
-    /// Update session with new end time
-    /// This method handles the end time change workflow:
-    /// 1. Updates the session with the new end time
+    /// Update session with new end date and time
+    /// This method handles the combined date/time change workflow:
+    /// 1. Updates the session with the new end date and time
     /// 2. Immediately updates the session in the data store
     /// 3. Triggers a UI refresh by calling the callback
     /// 4. Forces an immediate refresh of the session observer to update the UI
-    private func updateSessionEndTime(_ newEndTime: String) {
-        // Update only the end time field using the single-field update method
-        // This avoids any date/time parsing issues that could cause midnight duration bugs
-        let success = SessionManager.shared.updateSession(id: session.id, field: "endTime", value: newEndTime)
+    private func updateSessionEndDateTime(_ newDateTime: Date) {
+        // Format the new date and time for the update method
+        let newDate = formatDate(newDateTime)
+        let newTime = formatTime(newDateTime)
+        
+        // Update the session with new end date and time using the full update method
+        // This ensures all fields are properly updated and validated
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: newDate,
+            startTime: formatTime(currentSession.startDate),
+            endTime: newTime,
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: currentSession.projectPhaseID,
+            milestoneText: currentSession.milestoneText,
+            projectID: currentSession.projectID
+        )
         
         if success {
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as other updates
-            refreshSessionData()
-            
-            // Notify parent that project has changed so it can refresh the view
-            onProjectChanged?()
-        }
-    }
-    
-    // MARK: - Date Selection Handler
-    
-    /// Update session with new date
-    /// This method handles the date change workflow:
-    /// 1. Updates the session with the new date
-    /// 2. Immediately updates the session in the data store
-    /// 3. Triggers a UI refresh by calling the callback
-    /// 4. Forces an immediate refresh of the session observer to update the UI
-    private func updateSessionDate(_ newDate: String) {
-        // Update only the date field using the single-field update method
-        // This avoids any date/time parsing issues that could cause midnight duration bugs
-        let success = SessionManager.shared.updateSession(id: session.id, field: "date", value: newDate)
-        
-        if success {
+            print("✅ Successfully updated session \(session.id) with new end date and time")
             // Force immediate refresh of the session observer to update the UI
             // Use the same robust synchronization approach as other updates
             refreshSessionData()
@@ -1113,7 +1061,7 @@ struct SessionsRowView: View {
             date: formatDate(currentSession.startDate),
             startTime: formatTime(currentSession.startDate),
             endTime: formatTime(currentSession.endDate),
-            projectName: currentSession.projectName,
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
             notes: currentSession.notes,
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
@@ -1133,6 +1081,111 @@ struct SessionsRowView: View {
         } else {
             print("❌ Failed to update session \(session.id) with new milestone")
         }
+    }
+}
+
+// MARK: - Combined Date/Time Picker Popover
+/// Compact popover that combines date and time selection in one interface
+/// Provides a more streamlined experience for editing session times
+struct DateTimePickerPopover: View {
+    let title: String
+    let date: Date
+    let onDateTimeChanged: (Date) -> Void
+    let onDismiss: () -> Void
+    
+    @State private var selectedDate: Date
+    @State private var selectedTime: Date
+    
+    init(title: String, date: Date, onDateTimeChanged: @escaping (Date) -> Void, onDismiss: @escaping () -> Void) {
+        self.title = title
+        self.date = date
+        self.onDateTimeChanged = onDateTimeChanged
+        self.onDismiss = onDismiss
+        // Initialize with current date/time
+        _selectedDate = State(initialValue: Calendar.current.startOfDay(for: date))
+        _selectedTime = State(initialValue: date)
+    }
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Title
+            Text(title)
+                .font(Theme.Fonts.body.weight(.semibold))
+                .foregroundColor(Theme.Colors.textPrimary)
+            
+            // Date picker (compact)
+            DatePicker(
+                "Date",
+                selection: $selectedDate,
+                displayedComponents: .date
+            )
+            .datePickerStyle(CompactDatePickerStyle())
+            .labelsHidden()
+            
+            // Time picker (compact)
+            DatePicker(
+                "Time",
+                selection: $selectedTime,
+                displayedComponents: .hourAndMinute
+            )
+            .datePickerStyle(CompactDatePickerStyle())
+            .labelsHidden()
+            
+            // Combined display
+            Text(formatCombinedDateTime())
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+                .padding(.top, 4)
+            
+            // Action buttons
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    onDismiss()
+                }
+                .buttonStyle(.secondary)
+                
+                Spacer()
+                
+                Button("Update") {
+                    // Combine date and time into a single Date
+                    let combinedDate = combineDateWithTime(selectedDate, selectedTime)
+                    onDateTimeChanged(combinedDate)
+                    onDismiss()
+                }
+                .buttonStyle(.primary)
+            }
+            .padding(.top, 8)
+        }
+        .padding(16)
+        .frame(width: 280)
+    }
+    
+    private func formatCombinedDateTime() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEEE, MMM d, yyyy"
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
+        return "\(dateFormatter.string(from: selectedDate)) at \(timeFormatter.string(from: selectedTime))"
+    }
+    
+    private func combineDateWithTime(_ date: Date, _ time: Date) -> Date {
+        let calendar = Calendar.current
+        
+        // Extract components from both date and time
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
+        
+        // Combine them
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        
+        return calendar.date(from: combinedComponents) ?? date
     }
 }
 
@@ -1160,15 +1213,18 @@ struct TimePickerPopover: View {
 @available(macOS 12.0, *)
 struct SessionsRowView_Previews: PreviewProvider {
     static var previews: some View {
+        // Parse the date strings to Date objects for the new SessionRecord initializer
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let startDate = dateFormatter.date(from: "2024-01-15 09:00:00") ?? Date()
+        let endDate = dateFormatter.date(from: "2024-01-15 10:30:00") ?? Date()
+        
         // Use live data from shared instances for preview
-        SessionsRowView(
+        return SessionsRowView(
             session: SessionRecord(
                 id: "1",
-                date: "2024-01-15",
-                startTime: "09:00:00",
-                endTime: "10:30:00",
-                durationMinutes: 90,
-                projectName: "Project Alpha",
+                startDate: startDate,
+                endDate: endDate,
                 projectID: "1",
                 activityTypeID: "writing",
                 projectPhaseID: "phase-1",

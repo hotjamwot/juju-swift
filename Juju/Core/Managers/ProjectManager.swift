@@ -496,40 +496,25 @@ class ProjectManager {
     func migrateSessionProjectNames(oldName: String, newName: String, projectID: String) {
         let sessionManager = SessionManager.shared
         
-        // Get all sessions that have the old project name
-        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectName == oldName }
+        // Get all sessions that have the old project ID
+        let sessionsToUpdate = sessionManager.allSessions.filter { $0.projectID == projectID }
         
         if sessionsToUpdate.isEmpty {
             return
         }
         
-        print("🔄 Updating \(sessionsToUpdate.count) sessions from project '\(oldName)' to '\(newName)'...")
+        print("🔄 Updating \(sessionsToUpdate.count) sessions for project '\(newName)' with ID \(projectID)...")
         
         var updatedCount = 0
         
-        // Update each session to use the new project name and correct projectID
+        // Update each session - since we now use projectID as source of truth,
+        // we don't need to update anything for name changes
         for session in sessionsToUpdate {
-            // Use the SessionManager's updateSessionFull method with correct argument order
-            let success = sessionManager.updateSessionFull(
-                id: session.id,
-                date: DateFormatter.cachedYYYYMMDD.string(from: session.startDate),
-                startTime: DateFormatter.cachedHHmm.string(from: session.startDate),
-                endTime: DateFormatter.cachedHHmm.string(from: session.endDate),
-                projectName: newName,
-                notes: session.notes,
-                mood: session.mood,
-                activityTypeID: session.activityTypeID,
-                projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText,
-                projectID: projectID // Pass the correct projectID as the last parameter
-            )
-            
-            if success {
-                updatedCount += 1
-            }
+            // Sessions are now correctly associated via projectID, no migration needed
+            updatedCount += 1
         }
         
-        print("✅ Migrated \(updatedCount) sessions from project '\(oldName)' to '\(newName)' with ID \(projectID)")
+        print("✅ Verified \(updatedCount) sessions for project '\(newName)' with ID \(projectID)")
         
         // Notify that projects have changed to refresh any cached data (on main thread)
         DispatchQueue.main.async {

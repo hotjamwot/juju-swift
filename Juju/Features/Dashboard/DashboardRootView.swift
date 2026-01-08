@@ -14,7 +14,7 @@ struct DashboardRootView: View {
     @StateObject private var yearlyDashboardState = ChartDataPreparer()
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
-    @StateObject private var editorialEngine = EditorialEngine()
+    @StateObject private var narrativeEngine = NarrativeEngine()
     
     var body: some View {
         ZStack {
@@ -33,22 +33,22 @@ struct DashboardRootView: View {
                                 // ScrollView with both dashboards
                                 ScrollView(.horizontal) {
                                     HStack(spacing: 0) {
-                                        // Weekly Dashboard
+// Weekly Dashboard
                                         WeeklyDashboardView(
                                             chartDataPreparer: weeklyDashboardState,
                                             sessionManager: sessionManager,
                                             projectsViewModel: projectsViewModel,
-                                            editorialEngine: editorialEngine
+                                            narrativeEngine: narrativeEngine
                                         )
                                         .id(DashboardViewType.weekly)
                                         .containerRelativeFrame(.horizontal)
                                         
-                                        // Yearly Dashboard
+// Yearly Dashboard
                                         YearlyDashboardView(
                                             chartDataPreparer: yearlyDashboardState,
                                             sessionManager: sessionManager,
                                             projectsViewModel: projectsViewModel,
-                                            editorialEngine: editorialEngine
+                                            narrativeEngine: narrativeEngine
                                         )
                                         .id(DashboardViewType.yearly)
                                         .containerRelativeFrame(.horizontal)

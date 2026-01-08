@@ -57,6 +57,7 @@ All data is user-owned and lives at: ~/Library/Application Support/juju/
   - **Format**: Modern Date-based CSV with `start_date` and `end_date` columns
   - **Status**: ✅ Migration complete - computed properties removed, using full Date objects
   - **Parser**: SessionDataParser handles both legacy and new formats with automatic format detection
+  - **Error Handling**: ✅ Fixed - All 6 optional string unwrapping errors resolved in SessionDataParser
 - **Projects**: projects.json in the same folder
 - **Activity Types**: activityTypes.json in the same folder
 

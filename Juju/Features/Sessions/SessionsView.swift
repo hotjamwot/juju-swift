@@ -68,7 +68,7 @@ struct GroupedSession: Identifiable {
     /// Calculate total duration for all sessions in this group
     var totalDurationMinutes: Int {
         return sessions.reduce(0, { result, session in
-            result + DurationCalculator.calculateDuration(start: session.startDate, end: session.endDate)
+            result + session.durationMinutes
         })
     }
     
@@ -541,7 +541,7 @@ public struct SessionsView: View {
                     
                     // Session context info
                     HStack(spacing: 8) {
-                        Text(session.projectName)
+                        Text(session.getProjectName(from: projectsViewModel.projects))
                             .font(Theme.Fonts.caption.weight(.medium))
                             .foregroundColor(Theme.Colors.textSecondary)
                             .padding(.horizontal, 8)
@@ -738,24 +738,6 @@ public struct SessionsView: View {
             // Initialize with current week filter
             filterState.selectedDateFilter = .thisWeek
         }
-        .onChange(of: sessionManager.lastUpdated) { _ in
-            // Only handle session updates that don't require filter refresh
-            // This prevents automatic filter refresh when sessions are edited inline
-            // Filters will only refresh when user clicks "Confirm" button
-            Task {
-                // Update chart data when sessions change, but don't refresh filters
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                // Refresh projects data to ensure phases are up to date
-                await projectsViewModel.loadProjects()
-                // Update session count when sessions change
-                await MainActor.run {
-                    updateSessionCount()
-                }
-            }
-        }
         .onChange(of: activityTypesViewModel.activityTypes) { _ in
             handleActivityTypesChange()
         }
@@ -769,11 +751,11 @@ public struct SessionsView: View {
             handleProjectsChange()
         }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
-            Button("Delete session for \"\(session.projectName)\"", role: .destructive) {
+            Button("Delete session for \"\(session.getProjectName(from: projectsViewModel.projects))\"", role: .destructive) {
                 deleteSession(session)
             }
         } message: { session in
-            Text("Are you sure you want to delete this session for \"\(session.projectName)\"? This action cannot be undone.")
+            Text("Are you sure you want to delete this session for \"\(session.getProjectName(from: projectsViewModel.projects))\"? This action cannot be undone.")
         }
     }
     
