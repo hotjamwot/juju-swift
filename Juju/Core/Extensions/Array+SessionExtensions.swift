@@ -21,6 +21,36 @@ import Foundation
 /// - Uses efficient algorithms for large session datasets
 /// - Returns new arrays (non-mutating) for functional programming style
 
+// MARK: - GroupedSession for Array Extensions
+/// Grouped session data structure for array-based operations
+/// This is a separate version for use in extensions to avoid circular dependencies
+struct ArrayGroupedSession: Identifiable {
+    let id      = UUID()
+    let date    : Date
+    let sessions: [SessionRecord]
+    
+    /// Calculate total duration for all sessions in this group
+    var totalDurationMinutes: Int {
+        return sessions.reduce(0, { result, session in
+            result + session.durationMinutes
+        })
+    }
+    
+    /// Format duration as "1h 30m" or similar
+    var formattedDuration: String {
+        let hours = totalDurationMinutes / 60
+        let minutes = totalDurationMinutes % 60
+        
+        if hours > 0 && minutes > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+}
+
 extension Array where Element == SessionRecord {
     /// Filter sessions by project ID
     ///
@@ -252,8 +282,8 @@ extension Array where Element == SessionRecord {
     /// - Single session creates single group
     /// - Sessions with same start date are grouped together
     ///
-    /// - Returns: Array of GroupedSession objects sorted by date (newest first)
-    func groupedByDate() -> [GroupedSession] {
+    /// - Returns: Array of ArrayGroupedSession objects sorted by date (newest first)
+    func groupedByDate() -> [ArrayGroupedSession] {
         let grouped = Dictionary(grouping: self) { session -> Date in
             let start = session.startDate
             return Calendar.current.startOfDay(for: start)
@@ -265,7 +295,7 @@ extension Array where Element == SessionRecord {
         
         return sortedGroups.map { group in
             let sortedSessions = group.value.sortedByStartDate()
-            return GroupedSession(date: group.key, sessions: sortedSessions)
+            return ArrayGroupedSession(date: group.key, sessions: sortedSessions)
         }
     }
     

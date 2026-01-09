@@ -529,13 +529,11 @@ class SessionManager: ObservableObject {
         return false
     }
     
-    /// Update a complete session record with comprehensive validation and data integrity checks
+    /// Update a complete session record with validation and data integrity checks
     ///
-    /// **AI Context**: This method handles the complete session update workflow including:
-    /// - Project ID resolution and validation
-    /// - Date/time parsing with midnight session handling
-    /// - Automatic phase clearing for incompatible projects
-    /// - Data persistence with notification broadcasting
+    /// **AI Context**: This method handles complete session updates with project resolution,
+    /// date/time parsing, and midnight session handling. Uses Date+SessionExtensions
+    /// for consistent date manipulation.
     ///
     /// **Business Rules**:
     /// - Project ID is required for new sessions (projectName is legacy support)
@@ -547,19 +545,6 @@ class SessionManager: ObservableObject {
     /// - Legacy sessions without projectID fall back to projectName lookup
     /// - Invalid date/time strings cause update failure
     /// - Incompatible phase/project combinations clear phaseID
-    ///
-    /// **State Changes**:
-    /// - Updates session in allSessions array
-    /// - Saves changes to persistent storage
-    /// - Updates lastUpdated timestamp
-    /// - Posts .sessionDidEnd notification for UI updates
-    ///
-    /// **Performance Notes**:
-    /// - O(n) lookup for session by ID
-    /// - O(n) save operation for all sessions (for consistency)
-    /// - Minimal memory allocation with direct session creation
-    ///
-    /// **Error Handling**: Returns false for any validation failure or persistence error
     ///
     /// - Parameters:
     ///   - id: Session identifier
@@ -575,68 +560,34 @@ class SessionManager: ObservableObject {
     ///   - projectID: Project identifier (required for new sessions)
     /// - Returns: True if update successful, false otherwise
     func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
-        // 1. Validate input parameters and find existing session
-        guard let validatedSession = validateAndUpdateSessionParameters(id: id, date: date, startTime: startTime, endTime: endTime, projectName: projectName, notes: notes, mood: mood, activityTypeID: activityTypeID, projectPhaseID: projectPhaseID, milestoneText: milestoneText, projectID: projectID) else {
-            return false
-        }
-        
-        // 2. Update session in persistence layer
-        guard updateSessionInPersistence(validatedSession) else {
-            return false
-        }
-        
-        // 3. Update cached statistics
-        updateProjectStatistics(validatedSession)
-        
-        // 4. Broadcast notifications
-        broadcastSessionUpdateNotification(validatedSession)
-        
-        return true
-    }
-    
-    /// Validate and resolve session parameters with comprehensive error handling
-    ///
-    /// **AI Context**: This method handles all parameter validation and resolution logic
-    /// including project ID lookup, date/time parsing, and phase compatibility checking.
-    /// It's the first step in the session update workflow.
-    ///
-    /// **Business Rules**:
-    /// - Validates session ID exists in current session list
-    /// - Resolves project ID from either projectID parameter or projectName lookup
-    /// - Parses date and time strings into Date objects
-    /// - Handles midnight session edge cases automatically
-    /// - Validates that resolved project ID is not empty
-    ///
-    /// **Edge Cases Handled**:
-    /// - Legacy sessions without projectID fall back to projectName lookup
-    /// - Invalid date/time strings cause validation failure
-    /// - Midnight sessions (end time before start time) are adjusted automatically
-    /// - Missing project resolution returns nil (validation failure)
-    ///
-    /// **Performance Notes**:
-    /// - O(n) lookup for session by ID
-    /// - O(n) lookup for project by name (if needed)
-    /// - Minimal memory allocation with direct date parsing
-    ///
-    /// **Error Handling**: Returns nil for any validation failure
-    ///
-    /// - Parameters: All session parameters from updateSessionFull
-    /// - Returns: Validated SessionRecord if all validation passes, nil otherwise
-    private func validateAndUpdateSessionParameters(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, projectID: String?) -> SessionRecord? {
         // Find existing session to update
-        guard let session = allSessions.first(where: { $0.id == id }) else { return nil }
+        guard let session = allSessions.first(where: { $0.id == id }) else { return false }
         
-        // Resolve project ID (new logic using helper method)
-        guard let resolvedProjectID = resolveProjectID(for: projectName, projectID: projectID) else { return nil }
+        // Resolve project ID (direct parameter takes precedence over projectName lookup)
+        let resolvedProjectID: String
+        if let pid = projectID, !pid.isEmpty {
+            resolvedProjectID = pid
+        } else {
+            // Look up project by name
+            let projects = ProjectManager.shared.loadProjects()
+            if let foundProject = projects.first(where: { $0.name == projectName }) {
+                resolvedProjectID = foundProject.id
+            } else {
+                return false // Project not found
+            }
+        }
         
-        // Parse and combine date/time components (new logic using helper method)
-        guard let dateComponents = parseSessionDateComponents(date: date, startTime: startTime, endTime: endTime) else { return nil }
+        // Parse and combine date/time components using Date+SessionExtensions
+        guard let parsedDate = Date.parseSessionDate(date) else { return false }
+        let startDate = parsedDate.combined(withTimeString: startTime)
+        let endDate = parsedDate.combined(withTimeString: endTime)
+        let finalEndDate = startDate.adjustedForMidnightIfNeeded(endTime: endDate)
         
-        // Create updated session record with resolved values
-        return SessionRecord(
+        // Create updated session record
+        let updatedSession = SessionRecord(
             id: session.id,
-            startDate: dateComponents.startDate,
-            endDate: dateComponents.endDate,
+            startDate: startDate,
+            endDate: finalEndDate,
             projectID: resolvedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,
             projectPhaseID: projectPhaseID,
@@ -644,178 +595,18 @@ class SessionManager: ObservableObject {
             notes: notes,
             mood: mood
         )
-    }
-    
-    /// Resolve project ID from either direct parameter or projectName lookup
-    ///
-    /// **AI Context**: This method handles the project resolution logic that was previously
-    /// embedded in updateSessionFull. It provides a clean separation of concerns and
-    /// makes the project resolution logic reusable.
-    ///
-    /// **Business Rules**:
-    /// - If projectID parameter is provided and not empty, use it directly
-    /// - Otherwise, look up project by projectName and return its ID
-    /// - If projectName lookup fails, fall back to existing session's projectID
-    /// - Return nil if no valid project ID can be resolved
-    ///
-    /// **Edge Cases Handled**:
-    /// - Empty projectID parameter triggers projectName lookup
-    /// - Non-existent projectName falls back to existing session project
-    /// - Nil projectID parameter triggers projectName lookup
-    ///
-    /// **Performance Notes**:
-    /// - O(n) lookup for project by name if needed
-    /// - Minimal memory allocation with direct string comparison
-    ///
-    /// **Error Handling**: Returns nil if no valid project ID can be resolved
-    ///
-    /// - Parameters:
-    ///   - projectName: Project name for lookup (legacy support)
-    ///   - projectID: Direct project ID parameter (preferred)
-    /// - Returns: Resolved project ID if successful, nil otherwise
-    private func resolveProjectID(for projectName: String, projectID: String?) -> String? {
-        // If projectID is provided and not empty, use it directly
-        if let pid = projectID, !pid.isEmpty {
-            return pid
-        }
         
-        // Otherwise, look up project by name
-        let projects = ProjectManager.shared.loadProjects()
-        if let foundProject = projects.first(where: { $0.name == projectName }) {
-            return foundProject.id
-        }
-        
-        // Fall back to existing session's projectID (for legacy sessions)
-        return nil
-    }
-    
-    /// Parse date and time strings into Date objects with midnight session handling
-    ///
-    /// **AI Context**: This method handles the date/time parsing logic that was previously
-    /// embedded in updateSessionFull. It uses the new Date+SessionExtensions for
-    /// consistent date manipulation and automatically handles midnight sessions.
-    ///
-    /// **Business Rules**:
-    /// - Parses date string in "yyyy-MM-dd" format
-    /// - Combines date with start and end time strings
-    /// - Automatically adjusts end time if session spans midnight
-    /// - Returns startDate and endDate as a tuple
-    ///
-    /// **Algorithm Steps**:
-    /// 1. Parse date string using Date.parseSessionDate()
-    /// 2. Combine date with start time using Date.combined(withTimeString:)
-    /// 3. Combine date with end time using Date.combined(withTimeString:)
-    /// 4. Adjust end time if it's before start time (midnight session)
-    /// 5. Return both dates as a tuple
-    ///
-    /// **Edge Cases Handled**:
-    /// - Invalid date strings return nil
-    /// - Invalid time strings return nil
-    /// - Midnight sessions are automatically adjusted
-    /// - Calendar edge cases handled by Calendar API
-    ///
-    /// **Performance Notes**:
-    /// - Uses optimized Date+SessionExtensions methods
-    /// - Single Calendar operation for midnight adjustment
-    /// - Minimal memory allocation with direct date manipulation
-    ///
-    /// **Error Handling**: Returns nil for any parsing failure
-    ///
-    /// - Parameters:
-    ///   - date: Date string in "yyyy-MM-dd" format
-    ///   - startTime: Start time string in "HH:mm" or "HH:mm:ss" format
-    ///   - endTime: End time string in "HH:mm" or "HH:mm:ss" format
-    /// - Returns: Tuple of (startDate, endDate) if parsing successful, nil otherwise
-    private func parseSessionDateComponents(date: String, startTime: String, endTime: String) -> (startDate: Date, endDate: Date)? {
-        // Parse the date string using new helper method
-        guard let parsedDate = Date.parseSessionDate(date) else { return nil }
-        
-        // Combine date with time strings using new helper methods
-        let startDate = parsedDate.combined(withTimeString: startTime)
-        let endDate = parsedDate.combined(withTimeString: endTime)
-        
-        // Handle midnight sessions using new helper method
-        let finalEndDate = startDate.adjustedForMidnightIfNeeded(endTime: endDate)
-        
-        return (startDate, finalEndDate)
-    }
-    
-    /// Update session in the persistence layer with proper error handling
-    ///
-    /// **AI Context**: This method handles the actual data persistence operation that was
-    /// previously embedded in updateSessionFull. It updates the session in memory,
-    /// saves to storage, and updates the lastUpdated timestamp.
-    ///
-    /// **Business Rules**:
-    /// - Finds session by ID in allSessions array
-    /// - Replaces session with updated version
-    /// - Saves all sessions to persistent storage
-    /// - Updates lastUpdated timestamp for UI refresh
-    ///
-    /// **Performance Notes**:
-    /// - O(n) lookup for session by ID
-    /// - O(n) save operation for all sessions (for consistency)
-    /// - Minimal memory allocation with direct array manipulation
-    ///
-    /// **Error Handling**: Returns false if session not found or save operation fails
-    ///
-    /// - Parameters:
-    ///   - updated: The updated SessionRecord to persist
-    /// - Returns: True if persistence successful, false otherwise
-    private func updateSessionInPersistence(_ updated: SessionRecord) -> Bool {
-        guard let idx = allSessions.firstIndex(where: { $0.id == updated.id }) else { return false }
-        
-        allSessions[idx] = updated
+        // Update session in memory and persistence
+        guard let idx = allSessions.firstIndex(where: { $0.id == id }) else { return false }
+        allSessions[idx] = updatedSession
         saveAllSessions(allSessions)
         lastUpdated = Date()
         
-        return true
-    }
-    
-    /// Update project statistics cache after session modification
-    ///
-    /// **AI Context**: This method updates the project statistics cache to reflect
-    /// changes made to session data. It ensures that dashboard views and other
-    /// components that depend on project statistics show accurate data.
-    ///
-    /// **Business Rules**:
-    /// - Triggers project statistics recalculation
-    /// - Updates cached statistics for all projects
-    /// - Called after any session modification
-    ///
-    /// **Performance Notes**:
-    /// - Delegates to ProjectManager for actual calculation
-    /// - Minimal overhead for cache update
-    ///
-    /// **Error Handling**: Silent failure (statistics update is not critical for session update)
-    ///
-    /// - Parameters:
-    ///   - updatedSession: The session that was just updated
-    private func updateProjectStatistics(_ updatedSession: SessionRecord) {
+        // Update project statistics and broadcast notifications
         ProjectManager.shared.updateAllProjectStatistics()
-    }
-    
-    /// Broadcast session update notification for UI refresh
-    ///
-    /// **AI Context**: This method posts a notification to inform UI components
-    /// that a session has been updated. This triggers UI refreshes in views
-    /// that display session data or depend on session information.
-    ///
-    /// **Business Rules**:
-    /// - Posts .sessionDidEnd notification (consistent with other session operations)
-    /// - Includes session ID in notification userInfo for targeted updates
-    /// - Ensures UI components can refresh their data
-    ///
-    /// **Performance Notes**:
-    /// - NotificationCenter posting is highly optimized
-    /// - Minimal overhead for notification dispatch
-    ///
-    /// **Error Handling**: Silent failure (notification is not critical for session update)
-    ///
-    /// - Parameters:
-    ///   - updatedSession: The session that was just updated
-    private func broadcastSessionUpdateNotification(_ updatedSession: SessionRecord) {
-        NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": updatedSession.id])
+        NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
+        
+        return true
     }
     
     func deleteSession(id: String) -> Bool {
@@ -896,74 +687,7 @@ class SessionManager: ObservableObject {
     }
     
     // MARK: - Utility Functions
-    
-    /// Combine a date with a time string to create a full Date object
-    /// This method handles the date/time combination logic that was previously in SessionDataParser
-    ///
-    /// **AI Context**: This method is critical for session time tracking as it combines
-    /// a calendar date with a time string to create precise Date objects for session
-    /// start/end times. It handles both HH:mm and HH:mm:ss formats for backward compatibility.
-    ///
-    /// **Algorithm Steps**:
-    /// 1. Pad time string to ensure consistent HH:mm:ss format
-    /// 2. Parse time string into Date object using standard formatter
-    /// 3. Extract time components (hour, minute, second) from parsed time
-    /// 4. Extract date components (year, month, day) from provided date
-    /// 5. Combine components into new DateComponents object
-    /// 6. Create final Date object from combined components
-    ///
-    /// **Edge Cases Handled**:
-    /// - Time strings in HH:mm format (automatically padded to HH:mm:ss)
-    /// - Invalid time strings (returns original date as fallback)
-    /// - Calendar edge cases (leap years, daylight saving time, etc.)
-    ///
-    /// **Performance Notes**:
-    /// - Uses DateFormatter for consistent time parsing
-    /// - Leverages Calendar API for safe date component manipulation
-    /// - Minimal memory allocation with direct component extraction
-    ///
-    /// - Parameters:
-    ///   - date: The calendar date (year, month, day components)
-    ///   - timeString: Time in "HH:mm" or "HH:mm:ss" format
-    /// - Returns: Combined Date object, or original date if parsing fails
-    private func combineDateWithTimeString(_ date: Date, timeString: String) -> Date {
-        // Create time formatter for parsing time strings
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        
-        // Pad time string to ensure consistent format (HH:mm:ss)
-        // This handles backward compatibility with HH:mm format
-        let paddedTimeString = timeString.count == 5 ? timeString + ":00" : timeString
-        
-        // Parse the padded time string into a Date object
-        // This gives us a Date with the time components we need
-        guard let timeDate = timeFormatter.date(from: paddedTimeString) else {
-            // If parsing fails, return the original date as a safe fallback
-            return date
-        }
-        
-        // Extract time components (hour, minute, second) from the parsed time
-        // These will be used to replace the time portion of our target date
-        let timeComponents = Calendar.current.dateComponents([.hour, .minute, .second], from: timeDate)
-        
-        // Extract date components (year, month, day) from the provided date
-        // These will be preserved in our final combined date
-        let dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: date)
-        
-        // Create new DateComponents object with combined date and time
-        // This safely merges the date portion from 'date' with time portion from 'timeString'
-        var combined = DateComponents()
-        combined.year = dateComponents.year
-        combined.month = dateComponents.month
-        combined.day = dateComponents.day
-        combined.hour = timeComponents.hour
-        combined.minute = timeComponents.minute
-        combined.second = timeComponents.second
-        
-        // Use Calendar API to safely create final Date object
-        // This handles all calendar edge cases (leap years, DST, etc.)
-        return Calendar.current.date(from: combined) ?? date
-    }
+    // Note: Date/time combination logic now uses Date+SessionExtensions for consistency
     
     // MARK: - Data Validation and Repair
     
@@ -994,3 +718,4 @@ class SessionManager: ObservableObject {
         NotificationCenter.default.removeObserver(self)
     }
 }
+    ///

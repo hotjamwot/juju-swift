@@ -7,7 +7,6 @@ class MenuManager {
     private weak var appDelegate: AppDelegate?
     private var sessionManager = SessionManager.shared
     private var updateTimer: Timer?
-    private var notesManager = NotesManager.shared
     private weak var endSessionMenuItem: NSMenuItem?
     
     init(appDelegate: AppDelegate) {
@@ -20,7 +19,6 @@ class MenuManager {
             name: .projectsDidChange,
             object: nil
         )
-        
     }
     
     deinit {
@@ -142,7 +140,7 @@ class MenuManager {
         // Show the new SwiftUI-based modal
         Task { @MainActor in
             await MainActor.run {
-                self.notesManager.presentNotes(
+                NotesManager.shared.presentNotes(
                     projectID: projectID,
                     projectName: projectName,
                     projects: self.projects

@@ -1,9 +1,6 @@
 import SwiftUI
 import Foundation
 
-// Import the filter types that are defined in FilterExportTypes
-// These are needed for the filter state management
-
 // MARK: - Ordinal Helper
 private extension Int {
     var ordinalSuffix: String {
@@ -152,7 +149,7 @@ public struct SessionsView: View {
                 
                 // Session rows (always visible now - no expansion needed)
                 VStack(spacing: Theme.spacingSmall) {
-                            ForEach(group.sessions) { session in
+                    ForEach(group.sessions) { session in
                         SessionsRowView(
                             session: session,
                             projects: projects,
@@ -219,8 +216,8 @@ public struct SessionsView: View {
 
     // MARK: - Computed Properties
     
-    /// The source of truth for all filtering and sorting.
-    /// 
+    /// Apply all filters to sessions with consistent logic
+    ///
     /// **AI Context**: This method provides the main filtering pipeline for sessions,
     /// applying all active filters in sequence and returning the final filtered results.
     /// It's the central point where all filter logic comes together.
@@ -229,15 +226,9 @@ public struct SessionsView: View {
     /// - Starts with current week sessions as the base
     /// - Applies project filter if not "All"
     /// - Applies activity type filter if not "All"
+    /// - Applies date filtering based on selected filter
     /// - Sorts by start date (newest first) for consistent ordering
     /// - Returns filtered and sorted session array
-    ///
-    /// **Data Flow**:
-    /// 1. Get current week sessions as starting point
-    /// 2. Apply project filtering using Array+SessionExtensions
-    /// 3. Apply activity type filtering using Array+SessionExtensions
-    /// 4. Sort sessions by date using Array+SessionExtensions
-    /// 5. Return final filtered and sorted array
     ///
     /// **Performance Notes**:
     /// - Uses optimized Array+SessionExtensions methods
@@ -247,41 +238,28 @@ public struct SessionsView: View {
     /// **Integration**: Leverages Array+SessionExtensions for all filtering operations
     ///
     /// - Returns: Filtered and sorted array of SessionRecord objects
-    private func getFullyFilteredSessions() -> [SessionRecord] {
+    private func getFilteredSessions() -> [SessionRecord] {
         // Start with current week sessions
         let initialSessions = getCurrentWeekSessions()
         
-        // Apply project filter using new helper method
+        // Apply project filter using Array+SessionExtensions
         let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
         
-        // Apply activity type filter using new helper method
-        let filteredByActivityType = filteredByProject.filteredByActivityType(filterState.activityTypeFilter)
-        
-        // Sort by start date using new helper method
-        let sortedSessions = filteredByActivityType.sortedByStartDate()
-        
-        return sortedSessions
-    }
-    
-    /// Count of sessions based on current filter state (accurate count for filtered sessions)
-    private var currentSessionCount: Int {
-        // Use the same filtering logic as getFullyFilteredSessions() to ensure consistency
-        // Start with current week sessions (matching what's displayed)
-        let initialSessions = getCurrentWeekSessions()
-        
-        // Apply project filter if not "All"
-        let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
-        
-        // Apply activity type filter if not "All"
+        // Apply activity type filter using Array+SessionExtensions
         let filteredByActivityType = filteredByProject.filteredByActivityType(filterState.activityTypeFilter)
         
         // Apply date filtering based on selected filter
         let filteredByDate = applyDateFilter(to: filteredByActivityType)
         
-        // Sort by start date time (most recent first)
+        // Sort by start date using Array+SessionExtensions
         let sortedSessions = filteredByDate.sortedByStartDate()
         
-        return sortedSessions.count
+        return sortedSessions
+    }
+    
+    /// Count of sessions based on current filter state
+    private var currentSessionCount: Int {
+        return getFilteredSessions().count
     }
     
     /// Apply date filtering to sessions
@@ -913,73 +891,6 @@ public struct SessionsView: View {
     }
     
     
-    private func applyFilters() {
-        // Apply filters and update the session list
-        Task {
-            // Start with all sessions instead of just current week
-            var filteredSessions = sessionManager.allSessions
-            
-            // Apply project filtering first (by project ID now)
-            if filterState.projectFilter != "All" {
-                filteredSessions = filteredSessions.filter { $0.projectID == filterState.projectFilter }
-            }
-            
-            // Apply activity type filtering
-            if filterState.activityTypeFilter != "All" {
-                filteredSessions = filteredSessions.filter { $0.activityTypeID == filterState.activityTypeFilter }
-            }
-            
-            // Apply date filtering based on selected filter
-            switch filterState.selectedDateFilter {
-            case .today:
-                let today = Calendar.current.startOfDay(for: Date())
-                filteredSessions = filteredSessions.filter { session in
-                    let start = session.startDate
-                    return Calendar.current.isDate(start, inSameDayAs: today)
-                }
-            case .thisWeek:
-                let calendar = Calendar.current
-                let today = Date()
-                guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
-                filteredSessions = filteredSessions.filter { session in
-                    let start = session.startDate
-                    return start >= weekRange.start && start <= weekRange.end
-                }
-            case .thisMonth:
-                let calendar = Calendar.current
-                let today = Date()
-                guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
-                filteredSessions = filteredSessions.filter { session in
-                    let start = session.startDate
-                    return start >= monthRange.start && start <= monthRange.end
-                }
-            case .thisYear:
-                let calendar = Calendar.current
-                let today = Date()
-                guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
-                filteredSessions = filteredSessions.filter { session in
-                    let start = session.startDate
-                    return start >= yearRange.start && start <= yearRange.end
-                }
-            case .allTime:
-                // No date filtering - use all sessions
-                break
-            case .custom:
-                if let customRange = filterState.customDateRange {
-                    filteredSessions = filteredSessions.filter { session in
-                        let start = session.startDate
-                        return start >= customRange.startDate && start <= customRange.endDate
-                    }
-                }
-            case .clear:
-                // No additional filtering - use all sessions
-                break
-            }
-            
-            // Update the grouped sessions with filtered results
-            currentWeekSessions = groupSessionsByDate(filteredSessions)
-        }
-    }
     
     /// Apply current filters while preserving filter state (used for auto-refresh)
     private func applyFiltersPreservingState() async {
@@ -1047,19 +958,7 @@ public struct SessionsView: View {
         // Update the grouped sessions with filtered results
         currentWeekSessions = groupSessionsByDate(filteredSessions)
     }
-
-    // MARK: - Nested Filter Button Component
-    struct SessionFilterButton: View {
-        let title: String
-        let isSelected: Bool
-        let action: () -> Void
-        
-        var body: some View {
-            Button(title, action: action)
-                .buttonStyle(FilterButtonStyle(isSelected: isSelected))
-        }
-        }
-    }
+}
 
 // MARK: - Preview
 #if DEBUG

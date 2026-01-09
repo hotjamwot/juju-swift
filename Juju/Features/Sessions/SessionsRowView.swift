@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 // MARK: - PulseBarView (Integrated into SessionsRowView)
 /// Visual time-of-day pulse bar for sessions

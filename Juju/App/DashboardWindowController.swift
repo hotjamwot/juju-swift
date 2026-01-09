@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import Charts
 
 class DashboardWindowController: NSWindowController, NSWindowDelegate {
 

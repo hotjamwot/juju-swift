@@ -182,7 +182,7 @@ enum JujuError: Error, LocalizedError {
         let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .medium)
         
         return """
-        =¨ Juju Error Report
+        = Juju Error Report
         Time: \(timestamp)
         Error: \(errorDescription ?? "Unknown error")
         Suggestion: \(recoverySuggestion ?? "No suggestion available")

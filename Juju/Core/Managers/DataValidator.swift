@@ -313,38 +313,14 @@ class DataValidator {
     func autoRepairIssues() -> [String] {
         var repairs: [String] = []
         
-        // Check if we need to run project ID migration
-        let sessionManager = SessionManager.shared
-        let sessionsWithoutProjectID = sessionManager.allSessions.filter { $0.projectID == nil }
-        
-        if !sessionsWithoutProjectID.isEmpty {
-            print("🔄 Found \(sessionsWithoutProjectID.count) sessions without projectID - triggering migration")
-            
-            // Import SessionMigrationManager to access migration functionality
-            // We need to access the jujuPath from SessionManager
-            // Since SessionManager is a singleton, we can access it directly
-            guard let jujuPath = sessionManager.jujuPathForMigration else {
-                print("❌ Could not access jujuPath for migration")
-                return repairs
-            }
-            
-            let sessionFileManager = SessionFileManager()
-            let migrationManager = SessionMigrationManager(sessionFileManager: sessionFileManager, jujuPath: jujuPath)
-            
-            // Run project ID migration
-            Task {
-                await migrationManager.migrateSessionProjectIDs()
-                print("✅ Project ID migration completed")
-            }
-            
-            repairs.append("Triggered project ID migration for \(sessionsWithoutProjectID.count) sessions")
-        }
+        // Note: Project ID migration logic removed as projectID is now non-optional
+        // All sessions should have a projectID by design
         
         // Find sessions with invalid project references
         let projectManager = ProjectManager.shared
         let projects = projectManager.loadProjects()
         
-        let sessionsToUpdate = sessionManager.allSessions.filter { session in
+        let sessionsToUpdate = SessionManager.shared.allSessions.filter { session in
             guard !session.projectID.isEmpty else {
                 return false
             }
@@ -366,7 +342,7 @@ class DataValidator {
             // Check if project already exists with this name
             if let existingProject = projects.first(where: { $0.name.lowercased() == projectName.lowercased() }) {
                 // Update session to use existing project
-                let success = sessionManager.updateSession(id: session.id, field: "project_id", value: existingProject.id)
+                let success = SessionManager.shared.updateSession(id: session.id, field: "project_id", value: existingProject.id)
                 if success {
                     repairs.append("Updated session \(session.id) to use existing project '\(projectName)' (ID: \(existingProject.id))")
                 }
@@ -384,7 +360,7 @@ class DataValidator {
                 projectManager.addProject(newProject)
                 
                 // Update session to use new project
-                let success = sessionManager.updateSession(id: session.id, field: "project_id", value: newProject.id)
+                let success = SessionManager.shared.updateSession(id: session.id, field: "project_id", value: newProject.id)
                 if success {
                     repairs.append("Created new project '\(projectName)' (ID: \(newProject.id)) and updated session \(session.id)")
                 }
