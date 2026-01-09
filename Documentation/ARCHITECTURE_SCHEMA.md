@@ -474,4 +474,49 @@ This architecture schema defines all core business entities for the Juju time-tr
 
 - **Color Extension** - Hex color conversion
 
+### **Helper Extensions:**
+
+#### **Date+SessionExtensions**
+**Purpose**: Session-specific date manipulation utilities for consistent date/time operations
+**Key Methods**:
+- `parseSessionDate(_:)` - Parse date strings in "yyyy-MM-dd" format
+- `combined(withTimeString:)` - Combine dates with time strings
+- `adjustedForMidnightIfNeeded(endTime:)` - Handle midnight sessions
+- `formattedForSession()` - Format dates for storage
+- `formattedForSessionDateTime()` - Format date/time for storage
+
+#### **SessionRecord+Filtering**
+**Purpose**: Session-specific filtering and validation utilities
+**Key Methods**:
+- `isInInterval(_:)` - Check if session falls within date interval
+- `isForProject(_:)` - Filter sessions by project ID
+- `hasActivityType(_:)` - Filter sessions by activity type
+- `isInCurrentWeek/Month/Year` - Convenience properties for common date checks
+- `overlaps(with:)` - Detect time conflicts between sessions
+- `durationMinutes` - Safe duration calculation
+
+#### **Array+SessionExtensions**
+**Purpose**: Session array manipulation utilities
+**Key Methods**:
+- `filteredByProject(_:)` - Filter sessions by project ID
+- `filteredByActivityType(_:)` - Filter sessions by activity type
+- `filteredByDateInterval(_:)` - Filter sessions by date range
+- `filteredByDateFilter(_:)` - Filter sessions by common time periods
+- `sortedByStartDate()` - Sort sessions chronologically
+- `groupedByDate()` - Group sessions by date for display
+- `totalDurationMinutes()` - Calculate total duration
+- `uniqueProjectIDs()` - Extract unique project IDs
+
+#### **View+DashboardExtensions**
+**Purpose**: Dashboard-specific view composition utilities
+**Key Methods**:
+- `dashboardPadding()` - Apply consistent dashboard padding
+- `chartPadding()` - Apply consistent chart padding
+- `loadingOverlay(isLoading:message:)` - Create loading overlays
+- `chartContainer()` - Style chart components
+- `dashboardCard()` - Style dashboard cards
+- `dashboardContainer()` - Create responsive dashboard layouts
+- `withHeader(title:subtitle:)` - Add standardized headers
+- `section(title:)` - Create styled sections
+
 All components in the application must use these exact type definitions to ensure consistency and maintainability.

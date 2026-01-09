@@ -12,6 +12,27 @@ import Foundation
 import SwiftUI
 
 // MARK: - ErrorHandler Singleton
+/// Enhanced error handling system with comprehensive logging and AI-friendly error reporting
+///
+/// **AI Context**: This class provides centralized error handling with detailed logging,
+/// structured error information, and recovery strategies. It's designed to help AI assistants
+/// understand error patterns and provide better debugging assistance.
+///
+/// **Key Features**:
+/// - Structured error logging with severity levels
+/// - Comprehensive debug logging for complex operations
+/// - Automatic error recovery with retry mechanisms
+/// - Detailed error reports for debugging
+/// - Integration with JujuError for context-rich error messages
+///
+/// **Usage Pattern**:
+/// ```swift
+/// // BEFORE: Basic error handling
+/// print("Error: \(error.localizedDescription)")
+///
+/// // AFTER: Enhanced error handling with context
+/// ErrorHandler.shared.handleError(error, context: "SessionManager.startSession", severity: .error)
+/// ```
 class ErrorHandler {
     static let shared = ErrorHandler()
     
@@ -270,6 +291,186 @@ class ErrorHandler {
         
         // For now, we'll just print the error
         // fatalError("Fatal error: \(errorInfo.error.localizedDescription)")
+    }
+    
+    // MARK: - Debug Logging Methods
+    
+    /// Log debug information for complex operations
+    /// **AI Context**: This method provides structured debug logging for complex operations
+    /// to help AI assistants understand execution flow and identify potential issues
+    /// - Parameters:
+    ///   - operation: The operation being performed
+    ///   - context: Additional context about the operation
+    ///   - data: Optional data to log (will be converted to string)
+    func logDebug(_ operation: String, context: String? = nil, data: Any? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let contextInfo = context.map { " (\($0))" } ?? ""
+        let dataInfo = data.map { " | Data: \($0)" } ?? ""
+        
+        print("🔍 [\(timestamp)] DEBUG: \(operation)\(contextInfo)\(dataInfo)")
+    }
+    
+    /// Log performance metrics for operations
+    /// **AI Context**: This method logs timing information to help identify performance bottlenecks
+    /// - Parameters:
+    ///   - operation: The operation being timed
+    ///   - duration: Duration in milliseconds
+    ///   - context: Additional context about the operation
+    func logPerformance(_ operation: String, duration: TimeInterval, context: String? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let contextInfo = context.map { " (\($0))" } ?? ""
+        let performanceLevel: String
+        
+        if duration < 100 {
+            performanceLevel = "✅ Fast"
+        } else if duration < 1000 {
+            performanceLevel = "⚠️ Moderate"
+        } else {
+            performanceLevel = "❌ Slow"
+        }
+        
+        print("⏱️ [\(timestamp)] PERFORMANCE: \(operation)\(contextInfo) - \(duration)ms (\(performanceLevel))")
+    }
+    
+    /// Log state changes for debugging
+    /// **AI Context**: This method logs state transitions to help track application state
+    /// - Parameters:
+    ///   - state: The state being changed
+    ///   - fromValue: Previous state value
+    ///   - toValue: New state value
+    ///   - context: Additional context about the state change
+    func logStateChange(_ state: String, fromValue: Any?, toValue: Any?, context: String? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let contextInfo = context.map { " (\($0))" } ?? ""
+        let fromInfo = fromValue.map { "from '\($0)'" } ?? "nil"
+        let toInfo = toValue.map { "to '\($0)'" } ?? "nil"
+        
+        print("🔄 [\(timestamp)] STATE: \(state)\(contextInfo) - \(fromInfo) → \(toInfo)")
+    }
+    
+    /// Log data validation results
+    /// **AI Context**: This method logs validation results to help track data quality
+    /// - Parameters:
+    ///   - entity: The entity being validated
+    ///   - isValid: Whether validation passed
+    ///   - details: Additional validation details
+    func logValidation(_ entity: String, isValid: Bool, details: String? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let status = isValid ? "✅ Valid" : "❌ Invalid"
+        let detailsInfo = details.map { " | Details: \($0)" } ?? ""
+        
+        print("📋 [\(timestamp)] VALIDATION: \(entity) - \(status)\(detailsInfo)")
+    }
+    
+    /// Log file operations with detailed information
+    /// **AI Context**: This method provides detailed logging for file operations
+    /// - Parameters:
+    ///   - operation: The file operation (read, write, delete, etc.)
+    ///   - filePath: The file path involved
+    ///   - success: Whether the operation succeeded
+    ///   - size: File size in bytes (optional)
+    ///   - duration: Operation duration in milliseconds (optional)
+    func logFileOperation(_ operation: String, filePath: String, success: Bool, size: Int? = nil, duration: TimeInterval? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let status = success ? "✅ Success" : "❌ Failed"
+        let sizeInfo = size.map { " | Size: \($0) bytes" } ?? ""
+        let durationInfo = duration.map { " | Duration: \($0)ms" } ?? ""
+        
+        print("📁 [\(timestamp)] FILE: \(operation) '\(filePath)' - \(status)\(sizeInfo)\(durationInfo)")
+    }
+    
+    /// Log session lifecycle events
+    /// **AI Context**: This method logs session state changes for debugging session management
+    /// - Parameters:
+    ///   - event: The session event (start, end, update, etc.)
+    ///   - sessionID: The session identifier
+    ///   - details: Additional session details
+    func logSessionEvent(_ event: String, sessionID: String, details: String? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let detailsInfo = details.map { " | \($0)" } ?? ""
+        
+        print("⏱️ [\(timestamp)] SESSION: \(event) (ID: \(sessionID))\(detailsInfo)")
+    }
+    
+    /// Log project management events
+    /// **AI Context**: This method logs project state changes for debugging project management
+    /// - Parameters:
+    ///   - event: The project event (create, update, archive, etc.)
+    ///   - projectID: The project identifier
+    ///   - projectName: The project name
+    ///   - details: Additional project details
+    func logProjectEvent(_ event: String, projectID: String, projectName: String, details: String? = nil) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let detailsInfo = details.map { " | \($0)" } ?? ""
+        
+        print("📁 [\(timestamp)] PROJECT: \(event) '\(projectName)' (ID: \(projectID))\(detailsInfo)")
+    }
+    
+    // MARK: - Enhanced Error Handling with JujuError
+    
+    /// Handle JujuError with enhanced context and logging
+    /// **AI Context**: This method provides specialized handling for JujuError types
+    /// with detailed logging and context preservation
+    /// - Parameters:
+    ///   - jujuError: The JujuError to handle
+    ///   - context: Additional context about where the error occurred
+    ///   - severity: Severity level of the error
+    func handleJujuError(_ jujuError: JujuError, context: String, severity: ErrorSeverity = .error) {
+        // Log detailed error information
+        print("🚨 [\(Date())] JUJU ERROR DETECTED")
+        print("Context: \(context)")
+        print("Severity: \(severity)")
+        print("Error Details:")
+        print(jujuError.detailedErrorReport)
+        
+        // Handle with standard error handling
+        handleError(jujuError, context: context, severity: severity)
+    }
+    
+    /// Handle operation with automatic error conversion and logging
+    /// **AI Context**: This method wraps operations and automatically converts errors
+    /// to JujuError format with context preservation
+    /// - Parameters:
+    ///   - operation: The operation name
+    ///   - context: The operation context
+    ///   - entity: The entity being operated on
+    ///   - operationBlock: The operation to perform
+    func handleOperation<T>(
+        _ operation: String,
+        context: String,
+        entity: String? = nil,
+        _ operationBlock: () throws -> T
+    ) throws -> T {
+        let startTime = Date()
+        
+        logDebug("Starting \(operation)", context: context)
+        
+        do {
+            let result = try operationBlock()
+            let duration = Date().timeIntervalSince(startTime) * 1000
+            logPerformance("\(operation) completed", duration: duration, context: context)
+            return result
+        } catch {
+            let duration = Date().timeIntervalSince(startTime) * 1000
+            
+            // Convert to JujuError if needed
+            let jujuError: JujuError
+            if let existingJujuError = error as? JujuError {
+                jujuError = existingJujuError
+            } else {
+                // Create a generic JujuError from the caught error
+                jujuError = .dataError(
+                    operation: operation,
+                    entity: entity ?? "unknown",
+                    reason: error.localizedDescription,
+                    context: context
+                )
+            }
+            
+            logPerformance("\(operation) failed", duration: duration, context: context)
+            handleJujuError(jujuError, context: context, severity: .error)
+            throw jujuError
+        }
     }
     
     // MARK: - Convenience Methods

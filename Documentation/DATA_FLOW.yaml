@@ -361,3 +361,35 @@ edges:
   - source: F4_Sessions_View
     target: D1_ActivityType_Loader
     data_packet: ActivityType
+
+  # Helper Extensions Flow
+  - source: A1_Session_Recorder
+    target: Date+SessionExtensions
+    data_packet: Date
+  - source: Date+SessionExtensions
+    target: A1_Session_Recorder
+    data_packet: Date
+  - source: B1_Data_Aggregator
+    target: Array+SessionExtensions
+    data_packet: [SessionRecord]
+  - source: Array+SessionExtensions
+    target: B1_Data_Aggregator
+    data_packet: [SessionRecord]
+  - source: F4_Sessions_View
+    target: Array+SessionExtensions
+    data_packet: [SessionRecord]
+  - source: Array+SessionExtensions
+    target: F4_Sessions_View
+    data_packet: [SessionRecord]
+  - source: WeeklyDashboardView
+    target: View+DashboardExtensions
+    data_packet: View
+  - source: View+DashboardExtensions
+    target: WeeklyDashboardView
+    data_packet: View
+  - source: YearlyDashboardView
+    target: View+DashboardExtensions
+    data_packet: View
+  - source: View+DashboardExtensions
+    target: YearlyDashboardView
+    data_packet: View

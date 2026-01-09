@@ -19,3 +19,4 @@ Packages/
 
 # Other
 *.log
+.clineignore
