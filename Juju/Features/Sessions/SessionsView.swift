@@ -341,10 +341,81 @@ public struct SessionsView: View {
     }
     
     // MARK: - Session Action Handlers
-    
+
     private func handleDeleteSession(_ sessionToDelete: SessionRecord) {
         toDelete = sessionToDelete
         showingDeleteAlert = true
+    }
+
+    /// Handle session update notifications to refresh specific session rows
+    private func handleSessionUpdateNotification(_ notification: Notification) {
+        // Check if this notification contains a sessionID
+        guard let sessionID = notification.userInfo?["sessionID"] as? String else {
+            return
+        }
+
+        print("🔔 Received session update notification for session ID: \(sessionID)")
+
+        // Find the updated session in the session manager
+        guard let updatedSession = sessionManager.allSessions.first(where: { $0.id == sessionID }) else {
+            print("⚠️ Updated session \(sessionID) not found in session manager")
+            return
+        }
+
+        // Check if this session should be visible with current filters
+        // This ensures we only update sessions that are actually visible in the UI
+        let filteredSessions = getFilteredSessions()
+        let isSessionVisible = filteredSessions.contains(where: { $0.id == updatedSession.id })
+
+        if isSessionVisible {
+            print("👀 Session \(updatedSession.id) is visible in current filtered view - updating UI")
+            // Update the specific session in our currentWeekSessions array
+            refreshSpecificSession(updatedSession)
+        } else {
+            print("🔍 Session \(updatedSession.id) is not visible in current filtered view - skipping UI update")
+            // Session is filtered out, so we don't need to update the UI
+            // The user can't see this session anyway, so no UI refresh needed
+        }
+    }
+
+    /// Refresh a specific session in the UI without affecting filters
+    private func refreshSpecificSession(_ updatedSession: SessionRecord) {
+        print("🔄 Refreshing session \(updatedSession.id) in UI")
+
+        // Create a new array with the updated session
+        var updatedSessions = currentWeekSessions
+
+        // Find the group that contains this session
+        for groupIndex in updatedSessions.indices {
+            var group = updatedSessions[groupIndex]
+
+            // Create a mutable copy of the sessions array
+            var mutableSessions = group.sessions
+
+            // Check if this group contains our session
+            if let sessionIndex = mutableSessions.firstIndex(where: { $0.id == updatedSession.id }) {
+                // Replace the old session with the updated one
+                mutableSessions[sessionIndex] = updatedSession
+
+                // Create a new group with the updated sessions
+                let updatedGroup = GroupedSession(date: group.date, sessions: mutableSessions)
+
+                // Update the group in our array
+                updatedSessions[groupIndex] = updatedGroup
+
+                print("✅ Successfully updated session \(updatedSession.id) in group \(group.date)")
+
+                // Update the state to trigger UI refresh
+                DispatchQueue.main.async {
+                    self.currentWeekSessions = updatedSessions
+                    self.lastRefreshTime = Date() // Force refresh timestamp
+                }
+
+                return
+            }
+        }
+
+        print("ℹ️ Session \(updatedSession.id) not found in current week sessions - may be filtered out")
     }
     
     private func handleNotesChanged(_ session: SessionRecord, _ newNotes: String) {
@@ -372,12 +443,14 @@ public struct SessionsView: View {
     
     private func handleProjectChanged() {
         print("🔄 Project changed callback triggered in SessionsView")
-        // Do NOT automatically refresh sessions when project is changed
-        // Only refresh when user clicks "Confirm" button
+        // This callback is triggered when a session is edited, not just when project changes
+        // We need to refresh the session data to show the latest changes
+
+        // Get the session ID from the notification (if available)
+        // Since this is called from SessionsRowView, we need a different approach
+        // Let's reload the sessions to ensure we have the latest data
         Task {
-            await projectsViewModel.loadProjects()
-            // Removed: await self.loadCurrentWeekSessions()
-            // Sessions will be refreshed when user clicks "Confirm" button
+            await loadCurrentWeekSessions()
         }
     }
     
@@ -739,6 +812,9 @@ public struct SessionsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             handleProjectsChange()
         }
+        // Removed the sessionDidEnd notification handler to prevent bouncing
+        // The SessionsRowView handles its own updates via SessionObserver
+        // This prevents the parent view from recreating the row while it's updating itself
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
             Button("Delete session for \"\(session.getProjectName(from: projectsViewModel.projects))\"", role: .destructive) {
                 deleteSession(session)
