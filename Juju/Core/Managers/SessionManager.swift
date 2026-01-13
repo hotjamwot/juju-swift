@@ -520,10 +520,30 @@ class SessionManager: ObservableObject {
         default: return false
         }
         if let idx = allSessions.firstIndex(where: { $0.id == id }) {
+            // Update the session in memory on the main thread first
             allSessions[idx] = updated
-            saveAllSessions(allSessions)
             lastUpdated = Date()
             NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
+
+            // Save the updated session to file in background
+            // Capture the updated session value to avoid capture issues
+            let updatedSessionToSave = updated
+            Task {
+                // Get all sessions from current year and replace the updated session
+                let allSessionsInYear = await loadCurrentYearSessions()
+                if let yearIdx = allSessionsInYear.firstIndex(where: { $0.id == id }) {
+                    // Replace the old session with the updated one
+                    var sessionsToSave = allSessionsInYear
+                    sessionsToSave[yearIdx] = updatedSessionToSave
+                    saveAllSessions(sessionsToSave)
+                } else {
+                    // If session not found in year data, save all current sessions
+                    saveAllSessions(allSessions)
+                }
+                await MainActor.run {
+                    self.lastUpdated = Date()
+                }
+            }
             return true
         }
         return false
@@ -562,7 +582,7 @@ class SessionManager: ObservableObject {
     func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
         // Find existing session to update
         guard let session = allSessions.first(where: { $0.id == id }) else { return false }
-        
+
         // Resolve project ID (direct parameter takes precedence over projectName lookup)
         let resolvedProjectID: String
         if let pid = projectID, !pid.isEmpty {
@@ -576,13 +596,13 @@ class SessionManager: ObservableObject {
                 return false // Project not found
             }
         }
-        
+
         // Parse and combine date/time components using Date+SessionExtensions
         guard let parsedDate = Date.parseSessionDate(date) else { return false }
         let startDate = parsedDate.combined(withTimeString: startTime)
         let endDate = parsedDate.combined(withTimeString: endTime)
         let finalEndDate = startDate.adjustedForMidnightIfNeeded(endTime: endDate)
-        
+
         // Create updated session record
         let updatedSession = SessionRecord(
             id: session.id,
@@ -595,17 +615,38 @@ class SessionManager: ObservableObject {
             notes: notes,
             mood: mood
         )
-        
+
         // Update session in memory and persistence
         guard let idx = allSessions.firstIndex(where: { $0.id == id }) else { return false }
+
+        // Update the session in memory on the main thread first
         allSessions[idx] = updatedSession
-        saveAllSessions(allSessions)
         lastUpdated = Date()
-        
-        // Update project statistics and broadcast notifications
-        ProjectManager.shared.updateAllProjectStatistics()
         NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
-        
+
+        // Save the updated session to file in background
+        // Capture the updated session value to avoid capture issues
+        let updatedSessionToSave = updatedSession
+        Task {
+            // Get all sessions from current year and replace the updated session
+            let allSessionsInYear = await loadCurrentYearSessions()
+            if let yearIdx = allSessionsInYear.firstIndex(where: { $0.id == id }) {
+                // Replace the old session with the updated one
+                var sessionsToSave = allSessionsInYear
+                sessionsToSave[yearIdx] = updatedSessionToSave
+                saveAllSessions(sessionsToSave)
+            } else {
+                // If session not found in year data, save all current sessions
+                saveAllSessions(allSessions)
+            }
+            await MainActor.run {
+                self.lastUpdated = Date()
+                // Update project statistics and broadcast notifications
+                ProjectManager.shared.updateAllProjectStatistics()
+                NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
+            }
+        }
+
         return true
     }
     
