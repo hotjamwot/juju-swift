@@ -5,13 +5,39 @@ actor SessionFileManager {
     private let fileQueue = DispatchQueue(label: "com.juju.sessionfile", qos: .userInitiated, attributes: .concurrent)
     private let fileManager = FileManager.default
     
+    /// Write content to file using atomic operation with backup for safety
     func writeToFile(_ content: String, to url: URL) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             fileQueue.async(flags: .barrier) {
                 do {
-                    try content.write(to: url, atomically: true, encoding: .utf8)
+                    // Create backup of existing file if it exists
+                    let backupURL = url.appendingPathExtension("backup")
+                    if self.fileManager.fileExists(atPath: url.path) {
+                        try? self.fileManager.copyItem(at: url, to: backupURL)
+                    }
+
+                    // Write to temporary file first
+                    let tempURL = url.appendingPathExtension("tmp")
+                    try content.write(to: tempURL, atomically: true, encoding: .utf8)
+
+                    // Atomic replace: remove original and rename temp file
+                    if self.fileManager.fileExists(atPath: url.path) {
+                        try self.fileManager.removeItem(at: url)
+                    }
+                    try self.fileManager.moveItem(at: tempURL, to: url)
+
+                    // Clean up old backup
+                    if self.fileManager.fileExists(atPath: backupURL.path) {
+                        try? self.fileManager.removeItem(at: backupURL)
+                    }
+
                     continuation.resume(returning: ())
                 } catch {
+                    // If write fails, try to restore from backup
+                    let backupURL = url.appendingPathExtension("backup")
+                    if self.fileManager.fileExists(atPath: backupURL.path) {
+                        try? self.fileManager.copyItem(at: backupURL, to: url)
+                    }
                     continuation.resume(throwing: error)
                 }
             }

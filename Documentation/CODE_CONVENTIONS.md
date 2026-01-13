@@ -1,128 +1,66 @@
-# Code Conventions for Juju
+# Code Conventions
 
-## 📋 Naming Conventions
+## 📋 Naming
 
-### Classes and Structs
-- Use PascalCase: `SessionManager`, `ChartDataPreparer`
-- Be descriptive: `ProjectStatisticsCache` not `Cache`
-- Follow domain language: `SessionRecord`, `ActivityType`
+### Types
+PascalCase: `SessionManager`, descriptive: `ProjectStatisticsCache`, domain terms: `SessionRecord`
 
 ### Methods
-- Use verb-noun: `loadSessions()`, `updateSessionFull()`
-- Be specific: `parseSessionsFromCSVWithQuery()` not `parseData()`
-- Use clear prefixes: `isSessionActive`, `hasIdColumn`
+Verb-noun: `loadSessions()`, specific: `parseSessionsFromCSVWithQuery()`, clear prefixes: `isSessionActive`
 
 ### Variables
-- Use camelCase: `sessionStartTime`, `projectColor`
-- Be descriptive: `currentWeekInterval` not `interval`
-- Use domain terms: `projectID`, `activityTypeID`
+camelCase: `sessionStartTime`, descriptive: `currentWeekInterval`, domain terms: `projectID`
 
-### Constants and Enums
-- Use PascalCase for enum cases: `SessionStatus.active`
-- Use UPPER_CASE for constants: `MAX_SESSION_DURATION`
-- Group related constants in structs: `Theme.Colors.primary`
+### Constants/Enums
+PascalCase enum cases: `SessionStatus.active`, UPPER_CASE constants: `MAX_SESSION_DURATION`, group in structs: `Theme.Colors.primary`
 
 ---
 
 ## 📁 File Organization
 
-### Directory Structure
+### Structure
 ```
 Juju/
-├── Core/           # Business logic, models, managers
-├── Features/       # Feature-specific UI and view models
-├── Shared/         # Cross-cutting concerns
-└── App/           # App lifecycle
+├── Core/     # Business logic
+├── Features/ # Feature UI
+├── Shared/   # Cross-cutting
+└── App/      # App lifecycle
 ```
 
-### File Naming
-- Use descriptive names: `SessionsRowView.swift` not `RowView.swift`
-- Group related files: All dashboard files in `Features/Dashboard/`
-- Use consistent suffixes: `View`, `Manager`, `ViewModel`
+### Naming
+Descriptive: `SessionsRowView.swift`, group related: `Features/Dashboard/`, consistent suffixes: `View`, `Manager`, `ViewModel`
 
-### File Structure
+### File Template
 ```swift
-// 1. Imports
-import Foundation
-import SwiftUI
-
-// 2. File Purpose Header
-/// [File Name]
-/// 
-/// **Purpose**: Clear description of what this file contains
-/// **Dependencies**: List of key dependencies and why they're needed
-/// **Usage**: How this file is typically used in the codebase
-/// **AI Notes**: Specific guidance for AI assistants working with this file
-
-// 3. Type Definitions (structs, classes, enums)
-// 4. Extensions
-// 5. Helper Functions
+// Imports: Foundation, SwiftUI
+// File Purpose Header: Purpose, Dependencies, Usage, AI Notes
+// Type Definitions: structs, classes, enums
+// Extensions
+// Helper Functions
 ```
 
 ---
 
-## 📝 Documentation Standards
+## 📝 Docs
 
-### Method Documentation
+### Method
+
 ```swift
-/// Brief description of what the method does
-///
-/// **AI Context**: Explain why this method exists and when to use it
-/// **Business Rules**: Document any constraints or requirements
-/// **Edge Cases**: Note any special handling needed
-///
-/// - Parameters: Describe each parameter
-/// - Returns: Describe return value
-/// - Throws: Document any errors thrown
-func methodName() -> ReturnType {
-    // Implementation
-}
+/// Description
+/// - Parameters: ...
+/// - Returns: ...
+/// - Throws: ...
+func methodName() -> ReturnType { /* Implementation */ }
 ```
 
-### File Headers
+### File Header
+
 ```swift
 /// SessionManager.swift
-/// 
-/// **Purpose**: Central coordinator for all session-related operations including
-/// start/end tracking, data persistence, and UI state management
-/// 
-/// **Key Responsibilities**:
-/// - Session lifecycle management (start, end, update, delete)
-/// - CSV file operations with year-based organization
-/// - Data validation and migration
-/// - UI state coordination and notification broadcasting
-/// 
-/// **Dependencies**:
-/// - SessionFileManager: Handles low-level file operations
-/// - SessionCSVManager: Manages CSV formatting and year-based routing
-/// - SessionDataParser: Parses CSV data into SessionRecord objects
-/// - ProjectManager: Validates project associations
-/// 
-/// **AI Notes**:
-/// - This is the primary interface for all session operations
-/// - Always use projectID, not projectName for new sessions
-/// - Handles automatic migration of legacy data formats
-/// - Posts notifications for UI updates via NotificationCenter
-/// - Uses @MainActor for UI-bound operations
-```
-
-### Inline Comments
-```swift
-// Use inline comments to explain complex logic
-// or business rules that aren't immediately obvious
-
-// AI Context: This guard statement ensures we don't process
-// sessions that are already marked as completed
-guard !session.isCompleted else {
-    return false
-}
-
-// Business Rule: Sessions must have a minimum duration of 1 minute
-// to be considered valid for tracking
-let duration = endTime.timeIntervalSince(startTime)
-guard duration >= 60 else {
-    return false
-}
+/// Purpose: Session operations
+/// Responsibilities: lifecycle, CSV, validation, UI
+/// Dependencies: file, CSV, data parser, project manager
+/// AI Notes: projectID, migration, notifications, @MainActor
 ```
 
 ---

@@ -42,7 +42,14 @@ class SessionCSVManager {
     /// Write content to a year-based file (creates file with header if needed)
     func writeToYearFile(_ content: String, for year: Int) async throws {
         let fileURL = getDataFileURL(for: year)
-        try await fileManager.writeToFile(content, to: fileURL)
+
+        // Check if content already includes header (for complete file writes)
+        let contentHasHeader = content.contains("id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood")
+
+        // If content doesn't have header, add it (this handles complete file writes from saveAllSessions)
+        let finalContent = contentHasHeader ? content : "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n" + content
+
+        try await fileManager.writeToFile(finalContent, to: fileURL)
     }
     
     /// Append content to a year-based file (checks for header first)

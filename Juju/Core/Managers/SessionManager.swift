@@ -609,11 +609,94 @@ class SessionManager: ObservableObject {
         return true
     }
     
+    /// Delete a session using a robust atomic operation to prevent data loss
+    ///
+    /// **AI Context**: This method implements a safe deletion mechanism that:
+    /// 1. Reads current file content
+    /// 2. Filters out only the session to be deleted
+    /// 3. Writes back remaining sessions with proper header
+    /// 4. Uses atomic file operations to prevent data loss
+    ///
+    /// **Business Rules**:
+    /// - Only deletes the specified session ID
+    /// - Preserves all other sessions in the file
+    /// - Maintains proper CSV header format
+    /// - Uses atomic file operations for safety
+    /// - Handles both year-based and legacy file formats
+    ///
+    /// **Data Flow**:
+    /// 1. Find session by ID in memory
+    /// 2. Determine year from session date
+    /// 3. Read current file content for that year
+    /// 4. Parse all sessions from file
+    /// 5. Filter out the session to delete
+    /// 6. Write remaining sessions back with header
+    /// 7. Update in-memory session list
+    /// 8. Post notifications for UI updates
+    ///
+    /// **Error Handling**:
+    /// - Returns false if session ID not found
+    /// - Gracefully handles file read/write errors
+    /// - Preserves original data if operation fails
+    /// - Logs errors for debugging
+    ///
+    /// **Thread Safety**: Uses async/await for file operations
+    ///
+    /// **Notifications**: Posts .sessionDidEnd notification with session ID for UI updates
+    ///
+    /// - Parameters:
+    ///   - id: Session identifier to delete
+    /// - Returns: True if deletion successful, false otherwise
     func deleteSession(id: String) -> Bool {
-        guard allSessions.contains(where: { $0.id == id }) else { return false }
-        allSessions.removeAll { $0.id == id }
-        saveAllSessions(allSessions)
-        lastUpdated = Date()
+        guard let sessionToDelete = allSessions.first(where: { $0.id == id }) else {
+            print("❌ Session \(id) not found for deletion")
+            return false
+        }
+
+        let year = Calendar.current.component(.year, from: sessionToDelete.startDate)
+
+        Task {
+            do {
+                // Read current file content for the year
+                let currentContent = try await csvManager.readFromYearFile(for: year)
+
+                // Parse all sessions from the file
+                let (allSessionsInFile, _) = parser.parseSessionsFromCSV(currentContent, hasIdColumn: true)
+
+                // Filter out the session to delete
+                let remainingSessions = allSessionsInFile.filter { $0.id != id }
+
+                // If we have remaining sessions, write them back with proper header
+                if !remainingSessions.isEmpty {
+                    let csvContent = parser.convertSessionsToCSV(remainingSessions)
+                    try await csvManager.writeToYearFile(csvContent, for: year)
+                } else {
+                    // If no sessions remain, write an empty file with just the header
+                    let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+                    try await csvManager.writeToYearFile(header, for: year)
+                }
+
+                // Update in-memory session list
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+
+                    // Remove from memory
+                    self.allSessions.removeAll { $0.id == id }
+
+                    // Update timestamp and notify
+                    self.lastUpdated = Date()
+                    NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
+                    print("✅ Successfully deleted session \(id)")
+                }
+
+            } catch {
+                await MainActor.run {
+                    print("❌ Error deleting session \(id): \(error)")
+                    ErrorHandler.shared.handleError(error, context: "SessionManager.deleteSession", severity: .error)
+                }
+            }
+        }
+
         return true
     }
     

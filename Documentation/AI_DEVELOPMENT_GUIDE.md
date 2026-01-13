@@ -23,377 +23,344 @@
 
 ## 🎯 When Adding New Features
 
-### 1. Follow MVVM Pattern
-```swift
-// ✅ DO: Create ViewModel for new feature
-class NewFeatureViewModel: ObservableObject {
-    @Published var data: [DataType] = []
-    
-    func loadData() async {
-        // Business logic coordination
-    }
-}
+### 1. Follow MVVM
 
-// ❌ DON'T: Put business logic in views
-struct NewFeatureView: View {
-    // Only presentation logic here
+Create ViewModel, avoid logic in Views.
+
+```swift
+class NewFeatureViewModel: ObservableObject {
+    @Published var data: [DataType] = []   
+    func loadData() async { /* Business logic */ }
 }
 ```
 
-### 2. Use Existing Managers
-- **Session data**: Always use SessionManager, never access CSV files directly
-- **Project data**: Always use ProjectManager, never access JSON files directly
-- **Validation**: Use DataValidator for all data integrity checks
-- **Notifications**: Post appropriate NSNotificationCenter events
+### 2. Use Managers
 
-### 3. Maintain Data Consistency
-- **Always use projectID** for new sessions (projectName is legacy)
-- **Validate before storage** with DataValidator
-- **Handle notifications** for UI updates
-- **Follow existing patterns** for error handling
+- Session data: SessionManager
+- Project data: ProjectManager
+- Validation: DataValidator
+- Notifications: NSNotificationCenter
+
+### 3. Data Consistency
+
+- Use projectID (projectName is legacy)
+- Validate with DataValidator
+- Handle notifications
+- Follow existing patterns
 
 ---
 
-## 🛠️ When Modifying Data Models
+## 🛠️ Modifying Data Models
 
-### 1. Update Documentation
-- Update ARCHITECTURE.md with new data types
-- Update DATA_FLOW.yaml for new data_packet types
-- Maintain backward compatibility with existing data formats
+### 1. Update Docs
+
+- ARCHITECTURE.md: new data types
+- DATA_FLOW.yaml: new data_packet types
+- Maintain backward compatibility
 
 ### 2. Add Validation
+
 ```swift
-// Add validation rules to DataValidator
-func validateNewModel(_ model: NewModel) -> ValidationResult {
-    // Validation logic
-}
+func validateNewModel(_ model: NewModel) -> ValidationResult { /* Validation logic */ }
 ```
 
 ### 3. Handle Migration
-- Support legacy data formats during transition
-- Use automatic migration patterns from existing code
-- Test with both new and legacy data
+
+- Support legacy data
+- Use existing migration patterns
+- Test with new/legacy data
 
 ---
 
-## 📊 When Working with Sessions
+## 📊 Working with Sessions
 
 ### 1. Use SessionManager
+
 ```swift
-// ✅ DO: Use SessionManager for all session operations
 SessionManager.shared.startSession(for: "Project Name", projectID: "project-id")
 SessionManager.shared.endSession(notes: "Session notes", mood: 8)
-
-// ❌ DON'T: Access CSV files directly
 ```
 
 ### 2. Handle Project IDs
-```swift
-// ✅ DO: Always use projectID for new sessions
-SessionManager.shared.startSession(for: "Project Name", projectID: "project-uuid")
 
-// Legacy support (project name only)
-SessionManager.shared.startSession(for: "Legacy Project Name")
+```swift
+SessionManager.shared.startSession(for: "Project Name", projectID: "project-uuid")
+// Legacy support: SessionManager.shared.startSession(for: "Legacy Project Name")
 ```
 
 ### 3. Post Notifications
+
 ```swift
-// Always post notifications for data changes
 NotificationCenter.default.post(name: .sessionDidEnd, object: nil)
 ```
 
+### 🗑️ Deleting Sessions
+```swift
+// Safe deletion - only removes specified session, preserves others
+SessionManager.shared.deleteSession(id: "session-id-to-delete")
+
 ---
 
-## 🎨 When Modifying UI Components
+## 🎨 Modifying UI
 
-### 1. Follow Theme Guidelines
+### 1. Follow Theme
+
 ```swift
-// ✅ DO: Use Theme constants
 .padding(.horizontal, Theme.spacingMedium)
 .background(Theme.Colors.surface)
 .font(Theme.Fonts.body)
-
-// ✅ DO: Use consolidated extensions from Theme.swift
 .dashboardPadding()
 .chartPadding()
 .loadingOverlay(isLoading: isLoading)
 ```
 
 ### 2. State Management
-```swift
-// ✅ DO: Use @StateObject for expensive view model initialization
-@StateObject private var viewModel = NewFeatureViewModel()
 
-// ✅ DO: Use @State for simple UI state
+```swift
+@StateObject private var viewModel = NewFeatureViewModel()
 @State private var isEditing = false
 ```
 
 ### 3. Accessibility
-- Implement proper accessibility labels
-- Test with both light and dark mode themes
-- Use consistent spacing and typography
+
+- Implement labels
+- Test light/dark mode
+- Use consistent spacing/typography
 
 ---
 
-## 🔄 When Adding Business Logic
+## 🔄 Adding Logic
 
-### 1. Place Logic in Managers
+### 1. Place in Managers
+
 ```swift
-// ✅ DO: Place business logic in appropriate Manager
 class SessionManager {
-    func calculateSessionMetrics() -> SessionMetrics {
-        // Business logic here
-    }
+    func calculateSessionMetrics() -> SessionMetrics { /* Business logic */ }
 }
-
-// ❌ DON'T: Put business logic in Views or ViewModels
 ```
 
-### 2. Use @MainActor for UI Operations
+### 2. Use @MainActor
+
 ```swift
-// ✅ DO: Use @MainActor for UI-bound operations
 @MainActor
 class DashboardViewModel: ObservableObject {
-    @Published var sessions: [SessionRecord] = []
-    
-    func updateSessions() {
-        // This runs on main thread automatically
-        sessions = SessionManager.shared.allSessions
-    }
+    @Published var sessions: [SessionRecord] = []   
+    func updateSessions() { sessions = SessionManager.shared.allSessions }
 }
 ```
 
-### 3. Implement Proper Validation
-```swift
-// ✅ DO: Validate before operations
-guard DataValidator.shared.validateSession(session).isValid else {
-    return false
-}
+### 3. Implement Validation
 
-// ✅ DO: Handle errors explicitly
-do {
-    let result = try someOperation()
-} catch {
-    ErrorHandler.shared.handleError(error, context: "ClassName.methodName")
-}
+```swift
+guard DataValidator.shared.validateSession(session).isValid else { return false }
+do { let result = try someOperation() } catch { ErrorHandler.shared.handleError(error, context: "ClassName.methodName") }
 ```
 
 ---
 
-## 🚨 Error Handling Patterns
+## 🚨 Error Handling
 
-### 1. Use JujuError Enum
+### 1. Use JujuError
+
 ```swift
-// ✅ DO: Use specific JujuError types
 enum JujuError: Error {
     case invalidSessionData(String)
     case fileOperationFailed(String)
     case dataMigrationFailed(String)
 }
-
-// When throwing errors, provide context
 throw JujuError.invalidSessionData("Session \(id) has invalid start time")
 ```
 
-### 2. Handle Errors with ErrorHandler
-```swift
-// ✅ DO: Use ErrorHandler for consistent error handling
-ErrorHandler.shared.handleError(error, context: "SessionManager.startSession", severity: .error)
+### 2. Use ErrorHandler
 
-// ✅ DO: Log debug information
+```swift
+ErrorHandler.shared.handleError(error, context: "SessionManager.startSession", severity: .error)
 ErrorHandler.shared.logDebug("Starting operation", context: "ClassName.methodName")
 ErrorHandler.shared.logPerformance("operation completed", duration: 150.0, context: "ClassName.methodName")
 ```
 
-### 3. Provide Recovery Suggestions
+### 3. Provide Suggestions
+
 ```swift
-// ✅ DO: Always include actionable error messages
 case .fileError(let operation, let filePath, let reason, _):
     return "Check file permissions for '\(filePath)' and try again."
 ```
 
 ---
 
-## ⚡ Performance Best Practices
+## ⚡ Performance
 
 ### 1. Data Loading
-```swift
-// ✅ DO: Use query-based loading for large datasets
-let query = SessionQuery(
-    startDate: Calendar.current.date(byAdding: .month, value: -6, to: Date()),
-    endDate: Date(),
-    limit: 1000
-)
-let sessions = try await SessionManager.shared.loadSessions(query: query)
 
-// ✅ DO: Implement caching for expensive calculations
+```swift
+let query = SessionQuery(startDate: Calendar.current.date(byAdding: .month, value: -6, to: Date()), endDate: Date(), limit: 1000)
+let sessions = try await SessionManager.shared.loadSessions(query: query)
 let cachedResult = ProjectStatisticsCache.shared.getStatistics(for: projectID)
 ```
 
 ### 2. UI Performance
-```swift
-// ✅ DO: Use @StateObject for expensive view model initialization
-@StateObject private var viewModel = ExpensiveViewModel()
 
-// ✅ DO: Implement proper view lifecycle management
-.onAppear {
-    Task {
-        await viewModel.loadData()
-    }
-}
+```swift
+@StateObject private var viewModel = ExpensiveViewModel()
+.onAppear { Task { await viewModel.loadData() } }
 ```
 
-### 3. Background Operations
+### 3. Background
+
 ```swift
-// ✅ DO: Use async/await for file operations
 func loadDataInBackground() async {
     await Task.detached {
         let data = try await SessionManager.shared.loadAllSessions()
-        await MainActor.run {
-            // Update UI with loaded data
-        }
+        await MainActor.run { /* Update UI */ }
     }
 }
 ```
 
 ---
 
-## 🧪 Testing Guidelines
+## 🧪 Testing
 
 ### 1. Unit Tests
+
 ```swift
 class SessionManagerTests: XCTestCase {
     var sessionManager: SessionManager!
     var mockFileManager: MockSessionFileManager!
-    
-    override func setUp() {
-        super.setUp()
-        mockFileManager = MockSessionFileManager()
-        sessionManager = SessionManager(fileManager: mockFileManager)
-    }
-    
+    override func setUp() { super.setUp(); mockFileManager = MockSessionFileManager(); sessionManager = SessionManager(fileManager: mockFileManager) }
     func testStartSession_ValidProject_CreatesSession() async throws {
-        // Given
-        let projectID = "test-project"
-        mockFileManager.mockProjects = [Project(id: projectID, name: "Test Project")]
-        
-        // When
+        let projectID = "test-project"; mockFileManager.mockProjects = [Project(id: projectID, name: "Test Project")]
         let result = try await sessionManager.startSession(projectID: projectID)
-        
-        // Then
-        XCTAssertTrue(result)
-        XCTAssertEqual(mockFileManager.savedSessions.count, 1)
-        XCTAssertEqual(mockFileManager.savedSessions.first?.projectID, projectID)
+        XCTAssertTrue(result); XCTAssertEqual(mockFileManager.savedSessions.count, 1); XCTAssertEqual(mockFileManager.savedSessions.first?.projectID, projectID)
     }
 }
 ```
 
 ### 2. Mock Objects
+
 ```swift
 class MockSessionFileManager: SessionFileManagerProtocol {
     var mockSessions: [SessionRecord] = []
     var savedSessions: [SessionRecord] = []
     var deletedSessionIDs: [String] = []
-    
-    func loadSessions() throws -> [SessionRecord] {
-        return mockSessions
-    }
-    
-    func saveSession(_ session: SessionRecord) throws {
-        savedSessions.append(session)
-    }
-    
-    func deleteSession(_ sessionID: String) throws {
-        deletedSessionIDs.append(sessionID)
-    }
+    func loadSessions() throws -> [SessionRecord] { return mockSessions }
+    func saveSession(_ session: SessionRecord) throws { savedSessions.append(session) }
+    func deleteSession(_ sessionID: String) throws { deletedSessionIDs.append(sessionID) }
 }
 ```
 
 ### 3. Integration Tests
-- Test complete workflows from UI to persistence
-- Verify notification patterns work correctly
-- Test with both new and legacy data formats
-- Validate dashboard data aggregation accuracy
+
+- Test UI to persistence
+- Verify notifications
+- Test new/legacy data
+- Validate dashboard data
 
 ---
 
-## 🎯 Common AI Tasks
+## 🎯 AI Tasks
 
-### Adding a New Feature
-1. **Analyze existing architecture** and identify appropriate manager
-2. **Design data models** following existing patterns
-3. **Implement manager methods** with proper validation
-4. **Create view models** for UI state management
-5. **Build UI components** following Theme.swift
-6. **Add comprehensive documentation**
-7. **Update architecture documentation files**
-8. **Test with both new and existing data**
+### Add Feature
 
-### Fixing Bugs
-1. **Reproduce the issue** with specific steps
-2. **Identify the root cause** in the appropriate layer
-3. **Check existing error handling patterns**
-4. **Implement fix** following existing patterns
-5. **Add or update tests** to prevent regression
-6. **Verify fix works** with both new and legacy data
+1. Analyze architecture
+2. Design data models
+3. Implement manager methods
+4. Create view models
+5. Build UI
+6. Document
+7. Update architecture
+8. Test
 
-### Performance Optimization
-1. **Use SessionQuery** for filtered data loading
-2. **Implement caching** for expensive calculations
-3. **Use @MainActor** for UI updates only
-4. **Batch file operations** when possible
-5. **Implement lazy loading** for large datasets
+### Fix Bug
+
+1. Reproduce
+2. Identify root cause
+3. Check error handling
+4. Implement fix
+5. Add/update tests
+6. Verify
+
+### Optimize
+
+1. Profile
+2. Use SessionQuery
+3. Implement caching
+4. Use @MainActor
+5. Batch operations
+6. Lazy load
 
 ---
 
-## 🚨 Common Pitfalls to Avoid
+## 🚨 Avoid
 
-1. **Direct File Access**: Never access CSV/JSON files directly - always use managers
-2. **Business Logic in Views**: Keep views focused on presentation only
-3. **Missing Notifications**: Always post notifications for data changes
-4. **Inconsistent Error Handling**: Use consistent error patterns throughout
-5. **Hardcoded Values**: Use Theme.swift for colors, spacing, and constants
-6. **Blocking UI Operations**: Use async/await for file operations
-7. **Ignoring Legacy Data**: Always support backward compatibility
+1. Direct File Access
+2. Logic in Views
+3. Missing Notifications
+4. Inconsistent Errors
+5. Hardcoded Values
+6. Blocking UI
+7. Ignoring Legacy Data
 
 ---
 
 ## 📚 Resources
 
-- **Architecture**: See ARCHITECTURE.md for complete system overview and data models
-- **Data Flow**: See DATA_FLOW.yaml for component relationships
-- **UI Patterns**: Follow examples in Features/ directories
-- **Error Handling**: Use ErrorHandler.shared for consistent patterns
-- **Code Conventions**: See CODE_CONVENTIONS.md for essential coding standards
+- ARCHITECTURE.md: System overview
+- DATA_FLOW.yaml: Component relationships
+- Features/: UI patterns
+- ErrorHandler.shared: Error patterns
+- CODE_CONVENTIONS.md: Coding standards
 
 ---
 
-## 🔄 Development Workflow
+## 🔄 Workflow
 
-### For New Features:
-1. Analyze existing architecture and identify appropriate manager
-2. Design data models following existing patterns
-3. Implement manager methods with proper validation
-4. Create view models for UI state management
-5. Build UI components following Theme.swift
-6. Add comprehensive documentation
-7. Update architecture documentation files
-8. Test with both new and existing data
+### New Feature
 
-### For Bug Fixes:
-1. Reproduce the issue with specific steps
-2. Identify the root cause in the appropriate layer
-3. Check existing error handling patterns
-4. Implement fix following existing patterns
-5. Add or update tests to prevent regression
-6. Verify fix works with both new and legacy data
+1. Analyze architecture
+2. Design data models
+3. Implement manager methods
+4. Create view models
+5. Build UI
+6. Document
+7. Update architecture
+8. Test
 
-### For Performance Issues:
-1. Profile the application to identify bottlenecks
-2. Use query-based loading for large datasets
-3. Implement caching for expensive calculations
-4. Optimize UI rendering with proper state management
-5. Use background operations for file I/O
-6. Test performance improvements with realistic data
+### Bug Fix
 
-This guide provides essential information for AI assistants working with the Juju codebase while maintaining code quality and architectural consistency.
+1. Reproduce
+2. Identify root cause
+3. Check error handling
+4. Implement fix
+5. Add/update tests
+6. Verify
+
+### Performance
+
+1. Profile
+2. Use SessionQuery
+3. Implement caching
+4. Optimize UI
+5. Use background operations
+6. Test
+
+This guide helps AI assistants work with Juju while maintaining code quality.
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.<environment_details>
+# Visual Studio Code Visible Files
+Juju/Core/Models/JujuError.swift
+
+# Visual Studio Code Open Tabs
+Documentation/DATA_FLOW.yaml
+Refactor Plans/AI_Friendly_Codebase_Improvement_Plan.md
+Juju/Core/Models/JujuError.swift
+Juju/Features/Sessions/SessionsView.swift
+
+# Current Time
+13/01/2026, 9:03:29 pm (Asia/Bangkok, UTC+7:00)
+
+# Context Window Usage
+110,087 / 1,048.576K tokens used (10%)
+
+# Current Mode
+ACT MODE
