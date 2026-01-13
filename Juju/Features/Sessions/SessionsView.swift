@@ -699,17 +699,20 @@ public struct SessionsView: View {
             await loadCurrentWeekSessions()
             
             // Load projects and activity types in background with delays to avoid blocking
-            DispatchQueue.global(qos: .background).async {
+            // Use Task.detached to avoid blocking UI, but ensure UI updates happen on main thread
+            Task.detached {
                 // Small delay to let sessions load first
-                Thread.sleep(forTimeInterval: 0.05)
+                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
                 
-                Task {
-                    await projectsViewModel.loadProjects()
+                await MainActor.run {
+                    Task {
+                        await projectsViewModel.loadProjects()
                     
-                    // Another small delay before loading activity types
-                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
+                        // Another small delay before loading activity types
+                        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
                     
-                    await activityTypesViewModel.loadActivityTypes()
+                        await activityTypesViewModel.loadActivityTypes()
+                    }
                 }
             }
         }

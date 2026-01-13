@@ -62,19 +62,13 @@ class SessionDataParser {
                     continue
                 }
                 
-                let projectID: String
-                if hasNewFields {
-                    // Check if we have the legacy format with projectName field
-                    if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
-                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        projectID = cleanField(safeFields[4]) // project_id is at index 4
-                    } else {
-                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-                        projectID = cleanField(safeFields[3]) // project_id is at index 3
-                    }
-                } else {
-                    projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
-                }
+            let projectID: String
+            if hasNewFields {
+                // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                projectID = cleanField(safeFields[3]) // project_id is at index 3
+            } else {
+                projectID = resolveProjectID(fromProjectName: cleanField(safeFields[3]))
+            }
                 
                 guard !projectID.isEmpty else { continue }
                 
@@ -613,7 +607,7 @@ class SessionDataParser {
     // MARK: - Session Record to CSV Conversion
     
     func convertSessionsToCSV(_ sessions: [SessionRecord]) -> String {
-        let header = "id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+        let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
         let rows = sessions.map { s in
             let projectID = csvEscape(s.projectID)
             let activityTypeID = s.activityTypeID.map { csvEscape($0) } ?? ""
@@ -627,9 +621,8 @@ class SessionDataParser {
             let startDateStr = dateFormatter.string(from: s.startDate)
             let endDateStr = dateFormatter.string(from: s.endDate)
             
-            // Correct field order: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-            // Note: project field is kept for backward compatibility but should be empty
-            return "\(s.id),\(startDateStr),\(endDateStr),,\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
+            // New field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+            return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"
     }

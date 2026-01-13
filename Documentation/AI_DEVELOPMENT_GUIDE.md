@@ -1,24 +1,23 @@
 # AI Development Guide for Juju
 
-## 🤖 Quick Start for AI Assistants
+## 🤖 Quick Start
 
-**Codebase Context:**
-- **Architecture**: MVVM + Managers pattern with SwiftUI views
-- **Data Flow**: UI → ViewModels → Managers → File I/O
-- **Storage**: Local CSV/JSON files (no cloud dependencies)
-- **Threading**: @MainActor for UI, async/await for background operations
+**Architecture**: MVVM + Managers + SwiftUI
+**Data Flow**: UI → ViewModels → Managers → File I/O
+**Storage**: Local CSV/JSON files
+**Threading**: @MainActor for UI, async/await for background
 
-**Key Files:**
-- **SessionManager**: Central coordinator for session operations
-- **ProjectManager**: Handles project lifecycle and statistics
-- **ChartDataPreparer**: Aggregates data for dashboard visualizations
-- **Theme.swift**: App theming and UI utilities (includes consolidated extensions)
+**Key Files**:
+- SessionManager: Session operations
+- ProjectManager: Project lifecycle
+- ChartDataPreparer: Dashboard data
+- Theme.swift: UI utilities
 
-**Quick Navigation:**
+**Navigation**:
 - [Common AI Tasks](#common-ai-tasks)
-- [Error Handling Patterns](#error-handling-patterns)
-- [Performance Best Practices](#performance-best-practices)
-- [Testing Guidelines](#testing-guidelines)
+- [Error Handling](#error-handling-patterns)
+- [Performance](#performance-best-practices)
+- [Testing](#testing-guidelines)
 
 ---
 

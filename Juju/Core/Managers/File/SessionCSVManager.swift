@@ -56,7 +56,7 @@ class SessionCSVManager {
         if !exists || !hasHeader {
             // Need to write header + content
             // Use the new field structure that matches SessionDataParser.convertSessionsToCSV()
-            let header = "id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+            let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
             let contentWithHeader = hasHeader ? content : header + content
             try await fileManager.writeToFile(contentWithHeader, to: fileURL)
         } else {

@@ -1,210 +1,194 @@
-# Juju Application Critical Data Flow Map
-# 
-# 🤖 How to Use This Documentation
-#
-# For AI Assistants and Developers:
-# - Data Flow Reference: Use this file to understand how data moves through the system
-# - Component Dependencies: See which components depend on each other and how
-# - Processing Steps: Understand the sequence of data transformations
-# - Cross-Reference: See ARCHITECTURE.md for architectural patterns and data type definitions
-#
-# Key Relationships:
-# - This file shows the DATA FLOW through the architecture defined in ARCHITECTURE.md
-# - All data_packet types are defined in ARCHITECTURE.md
-# - Component names map to actual Swift classes defined in the codebase
-#
-# When making changes:
-# 1. Update this file to reflect new data flows
-# 2. Update ARCHITECTURE.md for new architectural patterns and data types
-# 3. Update AI_DEVELOPMENT_GUIDE.md for new development patterns
+# Juju Data Flow Map
+# AI/Dev reference for component dependencies and data movement
+# See ARCHITECTURE.md for data types and patterns
 
-flowName: Juju Application Critical Data Flow Map
-description: Defines the sequence of processing steps (nodes) and the transfer of major data objects (data_packet) via edges. This map is the source of truth for all business logic dependencies.
+flowName: Juju Data Flow
+description: Processing steps and data object transfers between components
 
 nodes:
   # Session Management Flow
   - id: A1_Session_Recorder
     component: SessionManager
     function: Capture Session Duration
-    description: Records start/stop times and calculates session duration using full Date objects. Now supports projectID parameter for new sessions. Duration calculated on-demand using DurationCalculator. **UPDATED: No longer uses computed properties - uses startDate/endDate directly**
+    description: Records session start/stop times using Date objects with projectID support
   - id: A2_Session_State_Manager
     component: SessionStateManager
     function: Manage Session State
-    description: Handles session state management, start/end operations, and session data creation with unified DurationCalculator
+    description: Handles session state and data creation
   - id: A3_CSV_Operations
     component: SessionCSVManager
     function: CSV Operations
-    description: Handles CSV formatting, year-based file routing, and header management for timestamp-based sessions
+    description: Handles CSV formatting and year-based file routing
   - id: A4_File_Operations
     component: SessionFileManager
     function: File I/O Operations
-    description: Thread-safe file operations (read, write, append) with proper quoting support
+    description: Thread-safe file operations with proper quoting
   - id: A5_Persistence_Writer
     component: SessionPersistenceManager
     function: Persist Session Data
-    description: Coordinates session persistence through CSV and File managers. Uses timestamp-based SessionRecord with computed duration. Posts notifications when sessions are loaded to trigger UI updates
+    description: Coordinates session persistence and posts notifications
   - id: A6_Session_Cache_Updater
     component: ProjectStatisticsCache
     function: Update Project Statistics
-    description: Updates cached project statistics after session changes. Supports projectID-based lookups with automatic duration calculation
+    description: Updates cached project statistics with projectID lookups
   - id: A7_Data_Validator
     component: DataValidator
     function: Validate Session Data
-    description: Validates timestamp-based sessions before persistence and triggers automatic migration if needed
+    description: Validates sessions and triggers migration if needed
   - id: A8_Session_Data_Parser
     component: SessionDataParser
     function: Parse CSV Session Data
-    description: Parses CSV session data with comprehensive debug logging. Handles both old and new CSV formats with automatic format detection. Filters data lines and creates SessionRecord objects. **UPDATED: Fixed all 6 optional string unwrapping errors - production ready**
+    description: Parses CSV data with format detection and creates SessionRecord objects
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
     component: ChartDataPreparer
     function: Aggregate Weekly Dashboard Data
-    description: Processes raw session data into weekly dashboard-ready formats. Filters to current week only for optimal performance
+    description: Processes session data into weekly dashboard formats
   - id: B2_Editorial_Engine
     component: NarrativeEngine
     function: Generate Narrative Headlines
-    description: Creates dynamic editorial content for dashboard using projectID lookups and session.durationMinutes
+    description: Creates dashboard editorial content using projectID lookups
   - id: B3_Dashboard_Navigator
     component: DashboardRootView
     function: Navigate Between Dashboard Views
-    description: Handles switching between weekly and yearly dashboard views
+    description: Handles dashboard view switching
 
   # Project Management Flow
   - id: C1_Project_Loader
     component: ProjectManager
     function: Load Projects from JSON
-    description: Reads and deserializes project data from JSON files. Supports project phases and cached statistics
+    description: Reads project data from JSON files
   - id: C2_Project_Saver
     component: ProjectManager
     function: Save Projects to JSON
-    description: Serializes and writes project data to JSON files
+    description: Writes project data to JSON files
   - id: C3_Project_Name_Resolver
     component: ProjectManager
     function: Resolve Project Names from IDs
-    description: Resolves project names from projectID for display. Includes getProjectName(from:) method
+    description: Resolves project names from projectID
   - id: C4_Project_Statistics_Cache
     component: ProjectStatisticsCache
     function: Cache Project Statistics
-    description: Caches project statistics (total duration, last session date) for performance optimization
+    description: Caches project statistics for performance
 
   # Activity Type Management Flow
   - id: D1_ActivityType_Loader
     component: ActivityTypeManager
     function: Load Activity Types from JSON
-    description: Reads and deserializes activity type data from JSON files
+    description: Reads activity type data from JSON files
   - id: D2_ActivityType_Saver
     component: ActivityTypeManager
     function: Save Activity Types to JSON
-    description: Serializes and writes activity type data to JSON files
+    description: Writes activity type data to JSON files
 
   # UI Session Recording Flow
   - id: U1_Menu_Bar_Interface
     component: MenuManager
     function: Session Recording via Menu Bar
-    description: Menu bar interface uses projectID for session creation
+    description: Menu bar session recording interface
   - id: U2_Dashboard_Display
     component: ActiveSessionStatusView
     function: Display Active Session Status
-    description: Dashboard resolves project names from projectID
+    description: Dashboard active session display
   - id: U3_Session_Editing
     component: SessionsRowView
     function: Edit Session Details
-    description: Session editing uses projectID internally
+    description: Session editing interface
 
   # Inline Session Editing Flow
   - id: I1_Project_Editor
     component: SessionsRowView
     function: Edit Project Assignment
-    description: Inline project selection with automatic phase validation and clearing
+    description: Inline project selection
   - id: I2_Phase_Editor
     component: SessionsRowView
     function: Edit Project Phase
-    description: Inline phase selection with project compatibility validation
+    description: Inline phase selection
   - id: I3_ActivityType_Editor
     component: SessionsRowView
     function: Edit Activity Type
-    description: Inline activity type selection with fallback to "Uncategorized"
+    description: Inline activity type selection
   - id: I4_Milestone_Editor
     component: SessionsRowView
     function: Edit Milestone Text
-    description: Inline milestone text editing with star icon display
+    description: Inline milestone editing
   - id: I5_Mood_Editor
     component: SessionsRowView
     function: Edit Mood Rating
-    description: Inline mood selection with emoji display (1-10 scale)
+    description: Inline mood selection
   - id: I6_Time_Editor
     component: SessionsRowView
     function: Edit Start/End Times
-    description: Inline time picker for start and end times with midnight session handling
+    description: Inline time editing
   - id: I7_Date_Editor
     component: SessionsRowView
     function: Edit Session Date
-    description: Inline date picker with automatic midnight session adjustment
+    description: Inline date editing
   - id: I8_Notes_Editor
     component: SessionsRowView
     function: Edit Session Notes
-    description: Inline notes editing with overlay modal for longer text
+    description: Inline notes editing
 
   # Project Selection Flow
   - id: P1_Project_Selection
     component: InlineSelectionPopover
     function: Generic Project Selection
-    description: ID-based project selection with SelectionItem protocol
+    description: Project selection interface
 
   # Data Integrity and Management Flow
   - id: E1_Data_Validator
     component: DataValidator
     function: Validate Data Integrity
-    description: Validates sessions, projects, and activity types before persistence
+    description: Validates data before persistence
   - id: E2_Cache_Manager
     component: CacheManager
     function: Manage Cache Invalidation
-    description: Handles cache invalidation and warming strategies
+    description: Handles cache management
   - id: E3_Data_Migrator
     component: DataMigrationManager
     function: Migrate Legacy Data
-    description: Handles migration of legacy sessions to new schema
+    description: Migrates legacy sessions
   - id: E4_Error_Handler
     component: ErrorHandler
     function: Handle Data Errors
-    description: Manages error recovery and user notifications
+    description: Manages error recovery
   - id: E5_Midnight_Session_Fixer
     component: SessionRecord.fixMidnightCrossingSession
     function: Fix Midnight-Crossing Sessions
-    description: Automatically fixes sessions that cross midnight by adjusting end time when end time is between midnight and 4 AM, ensuring proper duration calculation for sessions spanning across days
+    description: Fixes midnight-crossing sessions
 
   # Session Data Processing Flow
   - id: S1_Session_Parser
     component: SessionDataParser
     function: Parse Session CSV Data
-    description: Parses CSV session data and applies midnight-crossing fixes to all loaded sessions
+    description: Parses CSV session data
   - id: S2_Session_Model_Creation
     component: SessionRecord
     function: Create Session Models
-    description: Creates SessionRecord models with proper date/time calculations including midnight fix
+    description: Creates SessionRecord models
   - id: S3_Midnight_Fix_Application
     component: SessionRecord.fixMidnightCrossingSession
     function: Apply Midnight Fix to Sessions
-    description: Automatically applies midnight-crossing fix during session parsing to ensure proper duration calculation
+    description: Applies midnight fix
 
   # Filter Bar and Session Filtering Flow
   - id: F1_Filter_Toggle_Button
     component: FilterToggleButton
     function: Toggle Filter Bar Visibility
-    description: Displays session count and toggles filter bar. Shows current session count for current week
+    description: Toggles filter bar visibility
   - id: F2_Bottom_Filter_Bar
     component: BottomFilterBar
     function: Filter Session Data
-    description: Provides filtering by project, activity type, and date range. Displays session count for filtered results
+    description: Filters session data
   - id: F3_Filter_Export_State
     component: FilterExportState
     function: Manage Filter State
-    description: ObservableObject managing filter state (project, activity type, date filters, custom date ranges)
+    description: Manages filter state
   - id: F4_Sessions_View
     component: SessionsView
     function: Display Filtered Sessions
-    description: Main sessions view that applies filters and displays grouped session data
+    description: Displays filtered sessions
 
 edges:
   # Session Flow
@@ -392,3 +376,4 @@ edges:
   - source: View+DashboardExtensions
     target: YearlyDashboardView
     data_packet: View
+  - source: Array+SessionExtensions
