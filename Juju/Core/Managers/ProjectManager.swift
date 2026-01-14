@@ -42,6 +42,7 @@ class ProjectStatisticsCache {
     
     private var totalDurationCache: [String: Double] = [:] // projectID -> total hours
     private var lastSessionDateCache: [String: Date?] = [:]
+    private var currentPhaseIDCache: [String: String?] = [:] // projectID -> phaseID
     private var lastCacheTime: Date?
     private let cacheExpiryTime: TimeInterval = 30 // Cache expires after 30 seconds
     
@@ -106,6 +107,21 @@ class ProjectStatisticsCache {
         }
     }
     
+    func getCurrentPhaseID(for projectID: String) -> String? {
+        // Check if cache is still valid
+        guard let lastTime = lastCacheTime,
+              Date().timeIntervalSince(lastTime) < cacheExpiryTime else {
+            // Cache expired, invalidate and return nil (will trigger recomputation)
+            invalidateCache()
+            return nil
+        }
+        
+        // Thread-safe access to cache
+        return cacheQueue.sync {
+            return currentPhaseIDCache[projectID] ?? nil
+        }
+    }
+    
     func setTotalDuration(_ duration: Double, for projectID: String) {
         // Validate the duration value before caching
         guard !duration.isNaN && !duration.isInfinite else {
@@ -141,11 +157,20 @@ class ProjectStatisticsCache {
         }
     }
     
+    func setCurrentPhaseID(_ phaseID: String?, for projectID: String) {
+        // Thread-safe cache update
+        cacheQueue.async(flags: .barrier) {
+            self.currentPhaseIDCache[projectID] = phaseID
+            self.lastCacheTime = Date()
+        }
+    }
+    
     func invalidateCache() {
         // Thread-safe cache invalidation
         cacheQueue.async(flags: .barrier) {
             self.totalDurationCache.removeAll()
             self.lastSessionDateCache.removeAll()
+            self.currentPhaseIDCache.removeAll()
             self.lastCacheTime = nil
         }
     }
@@ -167,6 +192,8 @@ class ProjectStatisticsCache {
                     // Use thread-safe cache methods
                     self.setTotalDuration(totalDuration, for: project.id)
                     self.setLastSessionDate(lastDate, for: project.id)
+                    // Initialize current phase cache as nil to be computed on demand
+                    self.setCurrentPhaseID(nil, for: project.id)
                 }
             }
         }

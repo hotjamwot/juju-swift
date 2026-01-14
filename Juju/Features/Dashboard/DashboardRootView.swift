@@ -111,6 +111,15 @@ struct DashboardRootView: View {
         }
         // Keyboard shortcuts for navigation
         .onAppear {
+            // Priority 1: Ensure SessionManager has the full dataset loaded first.
+            // This prevents race conditions where dashboard views might load partial
+            // data (e.g., weekly only) into sessionManager.allSessions before the
+            // full yearly data is loaded, leading to data loss if edits occur.
+            Task {
+                await sessionManager.loadAllSessions()
+            }
+            
+            // Now that the full data is loaded, proceed with other setup.
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.modifierFlags.contains(.command) {
                     switch event.keyCode {

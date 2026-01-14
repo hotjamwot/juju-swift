@@ -76,11 +76,12 @@ struct YearlyDashboardView: View {
             loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            // Update chart data when session starts - use optimized yearly loading
+            // Update chart data when session starts
             Task {
-                let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
-                let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
-                
+                // Filter sessions for the current year from the already loaded allSessions
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
                 chartDataPreparer.prepareAllTimeData(
                     sessions: yearlySessions,
                     projects: projectsViewModel.projects
@@ -88,11 +89,12 @@ struct YearlyDashboardView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            // Update chart data when session ends - use optimized yearly loading
+            // Update chart data when session ends
             Task {
-                let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
-                let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
-                
+                // Filter sessions for the current year from the already loaded allSessions
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
                 chartDataPreparer.prepareAllTimeData(
                     sessions: yearlySessions,
                     projects: projectsViewModel.projects
@@ -111,8 +113,12 @@ struct YearlyDashboardView: View {
         .onChange(of: sessionManager.allSessions.count) { _ in
             // Update chart data when session data changes
             Task {
+                // Filter sessions for the current year from the already loaded allSessions
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
                 chartDataPreparer.prepareAllTimeData(
-                    sessions: sessionManager.allSessions,
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
             }
@@ -133,9 +139,14 @@ struct YearlyDashboardView: View {
         Task {
             await projectsViewModel.loadProjects()
             
-            // Use optimized query-based loading for yearly sessions only
-            let yearInterval = Calendar.current.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
-            let yearlySessions = await sessionManager.loadSessions(in: yearInterval)
+            // Rely on the fact that DashboardRootView has already called
+            // sessionManager.loadAllSessions() to populate allSessions.
+            // We now filter from this complete dataset.
+            
+            // Filter sessions for the current year from the already loaded allSessions
+            let yearlySessions = sessionManager.allSessions.filter { session in
+                currentYearInterval.contains(session.startDate)
+            }
             
             chartDataPreparer.prepareAllTimeData(
                 sessions: yearlySessions,

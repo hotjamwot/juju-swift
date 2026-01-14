@@ -98,13 +98,14 @@ struct WeeklyDashboardView: View {
                     await projectsViewModel.loadProjects()
                     isLoading = true
                     
-                    // Use optimized query-based loading for weekly sessions only
-                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
+                    // Rely on the fact that DashboardRootView has already called
+                    // sessionManager.loadAllSessions() to populate allSessions.
+                    // We now filter from this complete dataset.
                     
-                    // Prepare WEEKLY data for initial display (optimized for performance)
+                    // Filter sessions for the current week from the already loaded allSessions
+                    // The ChartDataPreparer's currentWeekInterval is used internally for this filtering.
                     chartDataPreparer.prepareWeeklyData(
-                        sessions: weeklySessions,
+                        sessions: sessionManager.allSessions, // Pass all sessions
                         projects: projectsViewModel.projects
                     )
                     
@@ -117,12 +118,8 @@ struct WeeklyDashboardView: View {
             // Event-driven reload when session starts
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
                 Task {
-                    // Use optimized query-based loading for weekly sessions
-                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
-                    
                     chartDataPreparer.prepareWeeklyData(
-                        sessions: weeklySessions,
+                        sessions: sessionManager.allSessions, // Pass all sessions
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -131,12 +128,8 @@ struct WeeklyDashboardView: View {
             // Event-driven reload when session ends
             .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
                 Task {
-                    // Use optimized query-based loading for weekly sessions
-                    let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-                    let weeklySessions = await sessionManager.loadSessions(in: weekInterval)
-                    
                     chartDataPreparer.prepareWeeklyData(
-                        sessions: weeklySessions,
+                        sessions: sessionManager.allSessions, // Pass all sessions
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -146,7 +139,7 @@ struct WeeklyDashboardView: View {
                 Task {
                     await MainActor.run {
                         chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
+                            sessions: sessionManager.allSessions, // Pass all sessions
                             projects: projectsViewModel.projects
                         )
                         narrativeEngine.generateWeeklyHeadline()
@@ -159,7 +152,7 @@ struct WeeklyDashboardView: View {
                 Task {
                     await MainActor.run {
                         chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
+                            sessions: sessionManager.allSessions, // Pass all sessions
                             projects: projectsViewModel.projects
                         )
                         narrativeEngine.generateWeeklyHeadline()
@@ -172,7 +165,7 @@ struct WeeklyDashboardView: View {
                 Task {
                     await MainActor.run {
                         chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
+                            sessions: sessionManager.allSessions, // Pass all sessions
                             projects: projectsViewModel.projects
                         )
                         narrativeEngine.generateWeeklyHeadline()

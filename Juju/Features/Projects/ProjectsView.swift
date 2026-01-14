@@ -254,19 +254,9 @@ struct ProjectRowView: View {
     @State private var isHovering = false
     @State private var isExpanded = false
     
-    // Get current phase from most recent session
+    // Get current phase from project model (cached)
     private var currentPhase: Phase? {
-        let sessionManager = SessionManager.shared
-        let sessions = sessionManager.allSessions
-            .filter { $0.projectID == project.id }
-            .sorted { $0.startDate > $1.startDate }
-        
-        guard let mostRecentSession = sessions.first,
-              let phaseID = mostRecentSession.projectPhaseID else {
-            return nil
-        }
-        
-        return project.phases.first { $0.id == phaseID && !$0.archived }
+        project.currentPhase
     }
     
     var body: some View {

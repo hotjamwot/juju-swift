@@ -64,6 +64,38 @@ struct Project: Codable, Identifiable, Hashable {
         return date
     }
     
+    var currentPhase: Phase? {
+        // Try to get from cache first
+        if let cachedPhaseID = ProjectStatisticsCache.shared.getCurrentPhaseID(for: id),
+           let phase = phases.first(where: { $0.id == cachedPhaseID && !$0.archived }) {
+            return phase
+        }
+        
+        // If not in cache or cache expired, compute and cache it
+        let sessionManager = SessionManager.shared
+        let projectSessions = sessionManager.allSessions.filter { $0.projectID == id }
+        
+        var mostRecentSession: SessionRecord?
+        var mostRecentDate: Date = Date.distantPast
+        
+        for session in projectSessions {
+            if session.startDate > mostRecentDate {
+                mostRecentDate = session.startDate
+                mostRecentSession = session
+            }
+        }
+        
+        guard let sessionToUse = mostRecentSession,
+              let phaseID = sessionToUse.projectPhaseID else {
+            ProjectStatisticsCache.shared.setCurrentPhaseID(nil, for: id)
+            return nil
+        }
+        
+        let phase = phases.first { $0.id == phaseID && !$0.archived }
+        ProjectStatisticsCache.shared.setCurrentPhaseID(phaseID, for: id)
+        return phase
+    }
+    
     // MARK: - Background Session Counting
     
     /// Update session statistics asynchronously in the background
