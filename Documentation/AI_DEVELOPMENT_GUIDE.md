@@ -61,7 +61,7 @@ class NewFeatureViewModel: ObservableObject {
 ### 2. Add Validation
 
 ```swift
-func validateNewModel(_ model: NewModel) -> ValidationResult { /* Validation logic */ }
+func validateNewModel(_ model: NewFeatureModel) -> ValidationResult { /* Validation logic */ }
 ```
 
 ### 3. Handle Migration
@@ -98,6 +98,38 @@ NotificationCenter.default.post(name: .sessionDidEnd, object: nil)
 ```swift
 // Safe deletion - only removes specified session, preserves others
 SessionManager.shared.deleteSession(id: "session-id-to-delete")
+```
+
+### 4. Dashboard Data Loading
+
+When working with dashboard data, ensure that `DashboardRootView` (or a similar orchestrator) performs the initial full data load before specific dashboard views attempt to render.
+
+```swift
+// In DashboardRootView.swift (or similar orchestrator)
+.onAppear {
+    Task {
+        await sessionManager.loadAllSessions() // Populate allSessions first
+        // Subsequent views will now consume this populated data
+    }
+}
+```
+
+Individual dashboard views (e.g., `WeeklyDashboardView`, `YearlyDashboardView`) should then consume `sessionManager.allSessions` and pass it to their `ChartDataPreparer` instances. The `ChartDataPreparer` will handle filtering this complete dataset for the specific view.
+
+```swift
+// In a Dashboard View (e.g., WeeklyDashboardView)
+.onAppear {
+    Task {
+        await projectsViewModel.loadProjects()
+        // Pass ALL sessions to ChartDataPreparer; it will filter internally
+        chartDataPreparer.prepareWeeklyData(
+            sessions: sessionManager.allSessions, // All sessions are now loaded
+            projects: projectsViewModel.projects
+        )
+        narrativeEngine.generateWeeklyHeadline()
+    }
+}
+```
 
 ---
 
@@ -253,7 +285,7 @@ class MockSessionFileManager: SessionFileManagerProtocol {
 - Test UI to persistence
 - Verify notifications
 - Test new/legacy data
-- Validate dashboard data
+- Validate dashboard data (ensure correct data is loaded and displayed, especially for yearly dashboards)
 
 ---
 
@@ -299,6 +331,7 @@ class MockSessionFileManager: SessionFileManagerProtocol {
 5. Hardcoded Values
 6. Blocking UI
 7. Ignoring Legacy Data
+8. Race Conditions in Data Loading: Ensure a single source of truth (e.g., `DashboardRootView`) populates shared data (e.g., `sessionManager.allSessions`) before dependent views consume it.
 
 ---
 
@@ -344,23 +377,3 @@ class MockSessionFileManager: SessionFileManagerProtocol {
 6. Test
 
 This guide helps AI assistants work with Juju while maintaining code quality.
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.<environment_details>
-# Visual Studio Code Visible Files
-Juju/Core/Models/JujuError.swift
-
-# Visual Studio Code Open Tabs
-Documentation/DATA_FLOW.yaml
-Refactor Plans/AI_Friendly_Codebase_Improvement_Plan.md
-Juju/Core/Models/JujuError.swift
-Juju/Features/Sessions/SessionsView.swift
-
-# Current Time
-13/01/2026, 9:03:29 pm (Asia/Bangkok, UTC+7:00)
-
-# Context Window Usage
-110,087 / 1,048.576K tokens used (10%)
-
-# Current Mode
-ACT MODE

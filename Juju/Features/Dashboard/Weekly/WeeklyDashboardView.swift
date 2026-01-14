@@ -20,22 +20,10 @@ struct WeeklyDashboardView: View {
     // MARK: - Loading state
     @State private var isLoading = false
     
-    // MARK: - Responsive layout helpers
-    // Note: Removed old layout helper functions since we're using the new grid system
-    
-    // MARK: - Component Views
-    // Note: Removed thisYearSection, weeklyStackedBarChart, and stackedAreaChart
-    // These are now moved to YearlyDashboardView for better separation of concerns
-
     // MARK - Body
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Floating navigation button (always visible in center-right, even closer to edge)
-                // NavigationButton()
-                //     .position(x: geometry.size.width - 26, y: geometry.size.height / 2)
-                //     .zIndex(2)
-                
                 // Main content with tidy, balanced layout
                 VStack(spacing: 0) {
                     // Active Session Bar (always visible at top)

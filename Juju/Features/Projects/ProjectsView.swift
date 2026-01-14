@@ -34,7 +34,7 @@ struct ProjectsView: View {
                 
                 if !hasAnyProjects {
                     Text("No Projects Yet")
-                        .foregroundColor(Theme.Colors.surface)
+                        .foregroundColor(Theme.Colors.textSecondary)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingSmall) {

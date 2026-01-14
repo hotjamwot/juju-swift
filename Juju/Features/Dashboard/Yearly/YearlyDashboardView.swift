@@ -168,23 +168,6 @@ struct YearlyDashboardView: View {
     }
 }
 
-// MARK: - Back Navigation Button Component
-
-/// Floating navigation button for navigating back to weekly dashboard
-/// This button is embedded directly in YearlyDashboardView for better encapsulation
-struct BackNavigationButton: View {
-    var body: some View {
-        Button(action: {
-            // Navigate back to weekly dashboard
-            NotificationCenter.default.post(name: .switchToWeeklyView, object: nil)
-        }) {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 16, weight: .semibold))
-        }
-        .buttonStyle(.navigation) // Use shared NavigationButtonStyle
-        .help("Back to Weekly Dashboard")
-    }
-}
 
 #Preview {
     YearlyDashboardView(

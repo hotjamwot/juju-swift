@@ -380,11 +380,21 @@ init(hex: String)
 6. **UI Refresh**: Views update in response to notifications
 
 ### Dashboard Data Flow
-1. **Data Loading**: ChartDataPreparer loads all sessions
-2. **Filtering**: Filters to current week only for performance
-3. **Aggregation**: Aggregates by activity type and project
-4. **Caching**: Uses cached statistics for performance
-5. **Display**: Charts display aggregated data
+1. **Initial Data Load (Orchestrated by `DashboardRootView`)**:
+   - `DashboardRootView` calls `sessionManager.loadAllSessions()` to populate `sessionManager.allSessions` with the complete dataset.
+   - This ensures all dashboard views start with a consistent, comprehensive session history.
+2. **Dashboard-Specific Data Preparation**:
+   - When a dashboard view (e.g., `WeeklyDashboardView` or `YearlyDashboardView`) appears, it receives the already-populated `sessionManager.allSessions`.
+   - It then calls `ChartDataPreparer.prepareWeeklyData()` or `ChartDataPreparer.prepareAllTimeData()`, passing the *complete* `sessionManager.allSessions`.
+3. **Internal Filtering and Aggregation**:
+   - `ChartDataPreparer` filters the received *complete* session list based on the dashboard's requirements (e.g., current week for `prepareWeeklyData`, current year for `prepareAllTimeData` when used by `YearlyDashboardView`).
+   - Aggregates the filtered sessions by activity type, project, etc., for chart display.
+4. **Caching (ProjectStatisticsCache)**:
+   - Project-level statistics are cached by `ProjectStatisticsCache` for performance, which `ChartDataPreparer` might utilize.
+5. **Display**:
+   - Charts within the respective dashboard view (`WeeklyDashboardView`, `YearlyDashboardView`) display the aggregated data provided by `ChartDataPreparer`.
+
+This flow ensures that `sessionManager.allSessions` serves as the single source of truth for all session data, preventing race conditions where a dashboard view might populate this shared state with incomplete, view-specific data.
 
 ### Project Management Flow
 1. **UI Input**: User creates/edits project
@@ -509,9 +519,11 @@ MenuManager → SessionManager → SessionFileManager → CSV Files
 
 #### Dashboard Data Flow
 ```
-SessionManager → ChartDataPreparer → Dashboard Views → UI
-     ↓              ↓                    ↓
-  Raw Sessions → Aggregated Data → Visualizations → User Interface
+DashboardRootView → SessionManager (loadAllSessions) → [SessionRecord] (allSessions)
+       ↓                     ↓                           ↓
+  Dashboard Views → ChartDataPreparer (filter/aggregate) → Chart Data
+       ↓                     ↓                           ↓
+  UI Display → Views (consume chart data) → User Interface
 ```
 
 #### Project Management Flow
@@ -613,18 +625,19 @@ Juju/
 - DataValidator ensures referential integrity between sessions and projects
 
 **Dashboard → Data Integration:**
-- ChartDataPreparer aggregates data from SessionManager
-- Dashboard views subscribe to data changes via @Published properties
-- Real-time updates flow through ObservableObject pattern
+- `DashboardRootView` orchestrates initial data loading into `SessionManager`.
+- Individual dashboard views (`WeeklyDashboardView`, `YearlyDashboardView`) consume `sessionManager.allSessions` and pass it to their `ChartDataPreparer` instances.
+- `ChartDataPreparer` instances filter and aggregate data for their specific views.
+- Real-time updates flow through `@Published` properties and `NotificationCenter`.
 
 **UI → Business Logic Integration:**
-- Views use ViewModels for state management
-- ViewModels coordinate with Managers for business logic
-- Managers handle data persistence and validation
+- Views use ViewModels for state management.
+- ViewModels coordinate with Managers for business logic.
+- Managers handle data persistence and validation.
 
 **Error Handling Integration:**
-- ErrorHandler provides centralized error logging
-- DataValidator performs data integrity checks
-- Managers handle specific error scenarios with user feedback
+- ErrorHandler provides centralized error logging.
+- DataValidator performs data integrity checks.
+- Managers handle specific error scenarios with user feedback.
 
 This consolidated architecture documentation provides a complete reference for understanding the Juju codebase structure, data models, and component relationships.

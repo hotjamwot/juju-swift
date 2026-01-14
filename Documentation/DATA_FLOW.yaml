@@ -43,16 +43,24 @@ nodes:
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
     component: ChartDataPreparer
-    function: Aggregate Weekly Dashboard Data
-    description: Processes session data into weekly dashboard formats
+    function: Aggregate Dashboard Data
+    description: Processes session data into chart-ready formats for weekly and yearly dashboards. Filters data based on view requirements (current week/year).
   - id: B2_Editorial_Engine
     component: NarrativeEngine
     function: Generate Narrative Headlines
     description: Creates dashboard editorial content using projectID lookups
-  - id: B3_Dashboard_Navigator
+  - id: B3_Dashboard_Navigator_and_Data_Orchestrator
     component: DashboardRootView
-    function: Navigate Between Dashboard Views
-    description: Handles dashboard view switching
+    function: Navigate Views & Load Initial Data
+    description: Handles dashboard view switching and orchestrates initial loading of all session data into SessionManager.
+  - id: B4_Weekly_View_Controller
+    component: WeeklyDashboardView
+    function: Display Weekly Dashboard
+    description: Manages the display of the weekly dashboard, consuming data from ChartDataPreparer.
+  - id: B5_Yearly_View_Controller
+    component: YearlyDashboardView
+    function: Display Yearly Dashboard
+    description: Manages the display of the yearly dashboard, consuming data from ChartDataPreparer.
 
   # Project Management Flow
   - id: C1_Project_Loader
@@ -208,13 +216,41 @@ edges:
     target: A4_Session_Operations
     data_packet: SessionData
 
-  # Dashboard Flow
-  - source: A2_Persistence_Writer
-    target: B1_Data_Aggregator
-    data_packet: SessionRecord
+  # Dashboard Flow (Updated)
+  - source: A2_Persistence_Writer # Full data load notification or initial load
+    target: B3_Dashboard_Navigator_and_Data_Orchestrator
+    data_packet: SessionLoadNotification # Or direct [SessionRecord] if B3 directly calls loadAllSessions
+  - source: B3_Dashboard_Navigator_and_Data_Orchestrator
+    target: SessionManager # Implicit call to loadAllSessions
+    action: loadAllSessions
+  - source: SessionManager
+    target: B1_Data_Aggregator (Weekly Instance) # Through WeeklyDashboardView
+    data_packet: [SessionRecord] (allSessions)
+  - source: SessionManager
+    target: B1_Data_Aggregator (Yearly Instance) # Through YearlyDashboardView
+    data_packet: [SessionRecord] (allSessions)
   - source: B1_Data_Aggregator
     target: B2_Editorial_Engine
     data_packet: DashboardData
+  - source: C1_Project_Loader
+    target: B1_Data_Aggregator
+    data_packet: [Project]
+  - source: D1_ActivityType_Loader
+    target: B1_Data_Aggregator
+    data_packet: [ActivityType]
+  - source: B3_Dashboard_Navigator_and_Data_Orchestrator
+    target: B4_Weekly_View_Controller
+    data_packet: DashboardViewType (weekly)
+  - source: B3_Dashboard_Navigator_and_Data_Orchestrator
+    target: B5_Yearly_View_Controller
+    data_packet: DashboardViewType (yearly)
+  - source: B4_Weekly_View_Controller
+    target: B1_Data_Aggregator (Weekly Instance) # To prepare weekly data
+    data_packet: [SessionRecord] (allSessions) # Passes all, ChartDataPreparer filters
+  - source: B5_Yearly_View_Controller
+    target: B1_Data_Aggregator (Yearly Instance) # To prepare yearly data
+    data_packet: [SessionRecord] (allSessions) # Passes all, ChartDataPreparer filters
+
 
   # Project Flow
   - source: C1_Project_Loader
@@ -248,14 +284,6 @@ edges:
     target: U3_Session_Editing
     data_packet: Project
 
-  # Dashboard Navigation Flow
-  - source: B3_Dashboard_Navigator
-    target: B4_Yearly_Data_Aggregator
-    data_packet: DashboardViewType
-  - source: B4_Yearly_Data_Aggregator
-    target: YearlyDashboardView
-    data_packet: YearlyDashboardData
-
   # Data Migration Flow
   - source: E3_Data_Migrator
     target: A2_Persistence_Writer
@@ -270,7 +298,7 @@ edges:
     data_packet: CacheUpdate
   - source: E2_Cache_Manager
     target: B1_Data_Aggregator
-    data_packet: CachedData
+    data_packet: CachedData # This edge might need re-evaluation based on current ChartDataPreparer interaction with caches
 
   # Data Validation Flow
   - source: A1_Session_Recorder
@@ -364,16 +392,16 @@ edges:
   - source: Array+SessionExtensions
     target: F4_Sessions_View
     data_packet: [SessionRecord]
-  - source: WeeklyDashboardView
-    target: View+DashboardExtensions
+  - source: B4_Weekly_View_Controller
+    target: View+DashboardExtensions # Assuming this exists or is conceptual
     data_packet: View
   - source: View+DashboardExtensions
-    target: WeeklyDashboardView
+    target: B4_Weekly_View_Controller
     data_packet: View
-  - source: YearlyDashboardView
-    target: View+DashboardExtensions
+  - source: B5_Yearly_View_Controller
+    target: View+DashboardExtensions # Assuming this exists or is conceptual
     data_packet: View
   - source: View+DashboardExtensions
-    target: YearlyDashboardView
+    target: B5_Yearly_View_Controller
     data_packet: View
   - source: Array+SessionExtensions
