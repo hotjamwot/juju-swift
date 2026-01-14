@@ -525,21 +525,9 @@ class SessionManager: ObservableObject {
             lastUpdated = Date()
             NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
 
-            // Save the updated session to file in background
-            // Capture the updated session value to avoid capture issues
-            let updatedSessionToSave = updated
+            // Save the updated sessions to file in background using current memory state
             Task {
-                // Get all sessions from current year and replace the updated session
-                let allSessionsInYear = await loadCurrentYearSessions()
-                if let yearIdx = allSessionsInYear.firstIndex(where: { $0.id == id }) {
-                    // Replace the old session with the updated one
-                    var sessionsToSave = allSessionsInYear
-                    sessionsToSave[yearIdx] = updatedSessionToSave
-                    saveAllSessions(sessionsToSave)
-                } else {
-                    // If session not found in year data, save all current sessions
-                    saveAllSessions(allSessions)
-                }
+                saveAllSessions(allSessions)
                 await MainActor.run {
                     self.lastUpdated = Date()
                 }
@@ -624,26 +612,12 @@ class SessionManager: ObservableObject {
         lastUpdated = Date()
         NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
 
-        // Save the updated session to file in background
-        // Capture the updated session value to avoid capture issues
-        let updatedSessionToSave = updatedSession
+        // Save the updated sessions to file in background using current memory state
         Task {
-            // Get all sessions from current year and replace the updated session
-            let allSessionsInYear = await loadCurrentYearSessions()
-            if let yearIdx = allSessionsInYear.firstIndex(where: { $0.id == id }) {
-                // Replace the old session with the updated one
-                var sessionsToSave = allSessionsInYear
-                sessionsToSave[yearIdx] = updatedSessionToSave
-                saveAllSessions(sessionsToSave)
-            } else {
-                // If session not found in year data, save all current sessions
-                saveAllSessions(allSessions)
-            }
+            saveAllSessions(allSessions)
             await MainActor.run {
                 self.lastUpdated = Date()
-                // Update project statistics and broadcast notifications
                 ProjectManager.shared.updateAllProjectStatistics()
-                NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": id])
             }
         }
 

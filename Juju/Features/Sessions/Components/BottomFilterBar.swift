@@ -312,8 +312,6 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textSecondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Theme.Colors.divider.opacity(0.2))
-            .clipShape(Capsule())
     }
     
     // MARK: - Confirm Button
@@ -397,8 +395,6 @@ struct BottomFilterBar: View {
                     .foregroundColor(Theme.Colors.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Theme.Colors.divider.opacity(0.2))
-                    .clipShape(Capsule())
             }
             
             // Show validation for temporary dates

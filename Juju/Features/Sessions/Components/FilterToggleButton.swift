@@ -5,36 +5,30 @@ struct FilterToggleButton: View {
     @ObservedObject var filterState: FilterExportState
     let filteredSessionsCount: Int
     let onToggle: () -> Void
-    
-    // Hover state for animation
-    @State private var isHovering = false
-    
+
+    @State private var isButtonHovering = false
+
     var body: some View {
         VStack {
             Spacer()
-            
+
             HStack {
                 Spacer()
-                
+
                 Button(action: onToggle) {
                     HStack(spacing: Theme.spacingSmall) {
                         // Session count text
                         Text("\(filteredSessionsCount) sessions")
                             .font(.caption.weight(.medium))
-                            .foregroundColor(isHovering ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+                            .foregroundColor(Theme.Colors.textSecondary)
                             .padding(.horizontal, Theme.spacingSmall)
                             .padding(.vertical, Theme.spacingExtraSmall)
-                            .background(
-                                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                                    .fill(isHovering ? Theme.Colors.accentColor.opacity(0.1) : Theme.Colors.divider.opacity(0.2))
-                            )
-                            .animation(.easeInOut(duration: 0.2), value: isHovering)
-                        
-                        // Upward chevron
+                        // Removed background fill for consistency
+
+                        // Upward chevron with hover effect
                         Image(systemName: "chevron.up")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(isHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
-                            .animation(.easeInOut(duration: 0.2), value: isHovering)
+                            .foregroundColor(isButtonHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                     }
                     .padding(.horizontal, Theme.spacingMedium)
                     .padding(.vertical, Theme.spacingSmall)
@@ -44,16 +38,16 @@ struct FilterToggleButton: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                            .stroke(Theme.Colors.divider, lineWidth: isButtonHovering ? 1.5 : 1) // Thicker border on hover
                     )
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 1)
-                    .opacity(1.0)
-                    .animation(.easeInOut(duration: 0.2), value: isHovering)
+                    .scaleEffect(isButtonHovering ? 1.02 : 1.0) // Subtle scale on hover
+                    .animation(.easeInOut(duration: 0.2), value: isButtonHovering)
                 }
                 .help("Show filter bar")
                 .buttonStyle(.plain)
                 .onHover { hovering in
-                    isHovering = hovering
+                    isButtonHovering = hovering
                 }
             }
         }

@@ -223,7 +223,7 @@ public struct SessionsView: View {
     /// It's the central point where all filter logic comes together.
     ///
     /// **Business Rules**:
-    /// - Starts with current week sessions as the base
+    /// - Starts with all sessions as the base
     /// - Applies project filter if not "All"
     /// - Applies activity type filter if not "All"
     /// - Applies date filtering based on selected filter
@@ -239,8 +239,8 @@ public struct SessionsView: View {
     ///
     /// - Returns: Filtered and sorted array of SessionRecord objects
     private func getFilteredSessions() -> [SessionRecord] {
-        // Start with current week sessions
-        let initialSessions = getCurrentWeekSessions()
+        // Start with all sessions
+        let initialSessions = sessionManager.allSessions
         
         // Apply project filter using Array+SessionExtensions
         let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
@@ -259,7 +259,11 @@ public struct SessionsView: View {
     
     /// Count of sessions based on current filter state
     private var currentSessionCount: Int {
-        return getFilteredSessions().count
+        // For the filter badge, we want to show the count of sessions that match the current filters
+        // This should reflect what would be shown if the user applied the filters
+        let filtered = getFilteredSessions()
+        print("🔢 Current session count: \(filtered.count) sessions")
+        return filtered.count
     }
     
     /// Apply date filtering to sessions
@@ -338,6 +342,7 @@ public struct SessionsView: View {
                 onProjectChanged: handleProjectChanged
             )
         }
+        .id(lastRefreshTime) // Force refresh when lastRefreshTime changes
     }
     
     // MARK: - Session Action Handlers
@@ -356,25 +361,41 @@ public struct SessionsView: View {
 
         print("🔔 Received session update notification for session ID: \(sessionID)")
 
-        // Find the updated session in the session manager
-        guard let updatedSession = sessionManager.allSessions.first(where: { $0.id == sessionID }) else {
-            print("⚠️ Updated session \(sessionID) not found in session manager")
+        // Debounce multiple notifications for the same session
+        guard editingSessionID != sessionID else {
+            print("🔄 Skipping duplicate notification for session \(sessionID)")
             return
         }
 
-        // Check if this session should be visible with current filters
-        // This ensures we only update sessions that are actually visible in the UI
-        let filteredSessions = getFilteredSessions()
-        let isSessionVisible = filteredSessions.contains(where: { $0.id == updatedSession.id })
+        // Set the editing session ID to prevent duplicate processing
+        editingSessionID = sessionID
 
-        if isSessionVisible {
-            print("👀 Session \(updatedSession.id) is visible in current filtered view - updating UI")
-            // Update the specific session in our currentWeekSessions array
-            refreshSpecificSession(updatedSession)
-        } else {
-            print("🔍 Session \(updatedSession.id) is not visible in current filtered view - skipping UI update")
-            // Session is filtered out, so we don't need to update the UI
-            // The user can't see this session anyway, so no UI refresh needed
+        // Small delay to ensure the session manager has the latest data
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Find the updated session in the session manager
+            guard let updatedSession = self.sessionManager.allSessions.first(where: { $0.id == sessionID }) else {
+                print("⚠️ Updated session \(sessionID) not found in session manager")
+                self.editingSessionID = nil
+                return
+            }
+
+            // Check if this session should be visible with current filters
+            // This ensures we only update sessions that are actually visible in the UI
+            let filteredSessions = self.getFilteredSessions()
+            let isSessionVisible = filteredSessions.contains(where: { $0.id == updatedSession.id })
+
+            if isSessionVisible {
+                print("👀 Session \(updatedSession.id) is visible in current filtered view - updating UI")
+                // Update the specific session in our currentWeekSessions array
+                self.refreshSpecificSession(updatedSession)
+            } else {
+                print("🔍 Session \(updatedSession.id) is not visible in current filtered view - skipping UI update")
+                // Session is filtered out, so we don't need to update the UI
+                // The user can't see this session anyway, so no UI refresh needed
+            }
+
+            // Clear the editing session ID after processing
+            self.editingSessionID = nil
         }
     }
 
@@ -446,11 +467,11 @@ public struct SessionsView: View {
         // This callback is triggered when a session is edited, not just when project changes
         // We need to refresh the session data to show the latest changes
 
-        // Get the session ID from the notification (if available)
-        // Since this is called from SessionsRowView, we need a different approach
-        // Let's reload the sessions to ensure we have the latest data
-        Task {
-            await loadCurrentWeekSessions()
+        // Since we don't have the session ID here, we need to force a UI refresh
+        // by updating the lastRefreshTime, which will cause SwiftUI to re-evaluate
+        // the view and pick up the latest session data from SessionManager
+        DispatchQueue.main.async {
+            self.lastRefreshTime = Date()
         }
     }
     
@@ -472,7 +493,7 @@ public struct SessionsView: View {
     private func contextualNoteOverlay(for session: SessionRecord) -> some View {
         GeometryReader { geometry in
             ZStack {
-                // Subtle background dimming - only dim the area outside the session row
+                // Subtle background dimming - only dim the area outside the row
                 Color.black.opacity(0.1)
                     .ignoresSafeArea()
                     .onTapGesture {
@@ -484,7 +505,7 @@ public struct SessionsView: View {
                         }
                     }
                 
-                // Contextual notes overlay positioned relative to session row
+                // Contextual notes overlay
                 VStack(spacing: 0) {
                     if isEditingNotes {
                         contextualNoteEditorView(session: session)
@@ -626,8 +647,6 @@ public struct SessionsView: View {
         .padding(Theme.spacingMedium)
     }
     
-
-    
     // MARK: - Header View
     private var headerView: some View {
         HStack {
@@ -735,7 +754,6 @@ public struct SessionsView: View {
         }
     }
     
-    
     /// Note overlay that appears above all content
     @ViewBuilder
     private var noteOverlayLayer: some View {
@@ -756,34 +774,34 @@ public struct SessionsView: View {
     public var body: some View {
         mainView()
     }
-    
+
     @ViewBuilder
     private func mainView() -> some View {
         VStack(spacing: 0) {
             // Header
             headerView
-            
+
             // Content Area
             contentAreaView
         }
         .background(Theme.Colors.background)
-        .task { 
+        .task {
             // Load current week sessions first (essential for display)
             await loadCurrentWeekSessions()
-            
+
             // Load projects and activity types in background with delays to avoid blocking
             // Use Task.detached to avoid blocking UI, but ensure UI updates happen on main thread
             Task.detached {
                 // Small delay to let sessions load first
                 try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
-                
+
                 await MainActor.run {
                     Task {
                         await projectsViewModel.loadProjects()
-                    
+
                         // Another small delay before loading activity types
                         try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
-                    
+
                         await activityTypesViewModel.loadActivityTypes()
                     }
                 }
@@ -791,9 +809,12 @@ public struct SessionsView: View {
         }
         .onAppear {
             // Initialize with current week filter and apply it immediately
-            filterState.selectedDateFilter = .thisWeek
+            filterState.selectedDateFilter = .thisWeek // Ensure default is current week
             // Apply the default filter to load weekly sessions
             Task {
+                // First load the current week sessions
+                await loadCurrentWeekSessions()
+                // Then apply filters to ensure everything is properly initialized
                 await applyFiltersPreservingState()
                 await MainActor.run {
                     updateSessionCount()
@@ -809,12 +830,36 @@ public struct SessionsView: View {
         .onChange(of: filterState.shouldRefresh) { _, _ in
             handleManualRefresh()
         }
+        .onChange(of: filterState.selectedDateFilter) { _, _ in
+            // When date filter changes, update the session count
+            Task {
+                await MainActor.run {
+                    updateSessionCount()
+                }
+            }
+        }
+        .onChange(of: filterState.projectFilter) { _, _ in
+            // When project filter changes, update the session count
+            Task {
+                await MainActor.run {
+                    updateSessionCount()
+                }
+            }
+        }
+        .onChange(of: filterState.activityTypeFilter) { _, _ in
+            // When activity type filter changes, update the session count
+            Task {
+                await MainActor.run {
+                    updateSessionCount()
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             handleProjectsChange()
         }
-        // Removed the sessionDidEnd notification handler to prevent bouncing
-        // The SessionsRowView handles its own updates via SessionObserver
-        // This prevents the parent view from recreating the row while it's updating itself
+        .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { notification in
+            handleSessionUpdateNotification(notification)
+        }
         .confirmationDialog("Delete Session", isPresented: $showingDeleteAlert, presenting: toDelete) { session in
             Button("Delete session for \"\(session.getProjectName(from: projectsViewModel.projects))\"", role: .destructive) {
                 deleteSession(session)
@@ -868,7 +913,7 @@ public struct SessionsView: View {
     }
     
     // MARK: - Data Loading Functions
-    
+
     /// Load all sessions for default view
     private func loadAllSessions() async {
         isLoading = true
@@ -878,10 +923,11 @@ public struct SessionsView: View {
         updateSessionCount()
         isLoading = false
     }
-    
+
     /// Load only current week sessions for default view
     private func loadCurrentWeekSessions() async {
         isLoading = true
+        // Get current week sessions based on the current date filter
         let sessions = getCurrentWeekSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
         // Force session count update
@@ -1036,6 +1082,9 @@ public struct SessionsView: View {
         
         // Update the grouped sessions with filtered results
         currentWeekSessions = groupSessionsByDate(filteredSessions)
+        
+        // Force UI refresh by updating lastRefreshTime
+        lastRefreshTime = Date()
     }
 }
 
