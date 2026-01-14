@@ -240,16 +240,20 @@ public struct SessionsView: View {
     /// - Returns: Filtered and sorted array of SessionRecord objects
     private func getFilteredSessions() -> [SessionRecord] {
         // Start with all sessions
-        let initialSessions = sessionManager.allSessions
+        var sessions = sessionManager.allSessions
         
-        // Apply project filter using Array+SessionExtensions
-        let filteredByProject = initialSessions.filteredByProject(filterState.projectFilter)
+        // Apply project filter using Array+SessionExtensions if not "All"
+        if filterState.projectFilter != "All" {
+            sessions = sessions.filteredByProject(filterState.projectFilter)
+        }
         
-        // Apply activity type filter using Array+SessionExtensions
-        let filteredByActivityType = filteredByProject.filteredByActivityType(filterState.activityTypeFilter)
+        // Apply activity type filter using Array+SessionExtensions if not "All"
+        if filterState.activityTypeFilter != "All" {
+            sessions = sessions.filteredByActivityType(filterState.activityTypeFilter)
+        }
         
         // Apply date filtering based on selected filter
-        let filteredByDate = applyDateFilter(to: filteredByActivityType)
+        let filteredByDate = applyDateFilter(to: sessions)
         
         // Sort by start date using Array+SessionExtensions
         let sortedSessions = filteredByDate.sortedByStartDate()
@@ -1019,71 +1023,8 @@ public struct SessionsView: View {
     
     /// Apply current filters while preserving filter state (used for auto-refresh)
     private func applyFiltersPreservingState() async {
-        // Apply filters and update the session list
-        // Start with all sessions instead of just current week
-        var filteredSessions = sessionManager.allSessions
-        
-        // Apply project filtering first (by project ID now)
-        if filterState.projectFilter != "All" {
-            filteredSessions = filteredSessions.filter { $0.projectID == filterState.projectFilter }
-        }
-        
-        // Apply activity type filtering
-        if filterState.activityTypeFilter != "All" {
-            filteredSessions = filteredSessions.filter { $0.activityTypeID == filterState.activityTypeFilter }
-        }
-        
-        // Apply date filtering based on selected filter
-        switch filterState.selectedDateFilter {
-        case .today:
-            let today = Calendar.current.startOfDay(for: Date())
-            filteredSessions = filteredSessions.filter { session in
-                let start = session.startDate
-                return Calendar.current.isDate(start, inSameDayAs: today)
-            }
-        case .thisWeek:
-            let calendar = Calendar.current
-            let today = Date()
-            guard let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) else { break }
-            filteredSessions = filteredSessions.filter { session in
-                let start = session.startDate
-                return start >= weekRange.start && start <= weekRange.end
-            }
-        case .thisMonth:
-            let calendar = Calendar.current
-            let today = Date()
-            guard let monthRange = calendar.dateInterval(of: .month, for: today) else { break }
-            filteredSessions = filteredSessions.filter { session in
-                let start = session.startDate
-                return start >= monthRange.start && start <= monthRange.end
-            }
-        case .thisYear:
-            let calendar = Calendar.current
-            let today = Date()
-            guard let yearRange = calendar.dateInterval(of: .year, for: today) else { break }
-            filteredSessions = filteredSessions.filter { session in
-                let start = session.startDate
-                return start >= yearRange.start && start <= yearRange.end
-            }
-        case .allTime:
-            // No date filtering - use all sessions
-            break
-        case .custom:
-            if let customRange = filterState.customDateRange {
-                filteredSessions = filteredSessions.filter { session in
-                    let start = session.startDate
-                    return start >= customRange.startDate && start <= customRange.endDate
-                }
-            }
-        case .clear:
-            // No additional filtering - use all sessions
-            break
-        }
-        
-        // Update the grouped sessions with filtered results
+        let filteredSessions = getFilteredSessions()
         currentWeekSessions = groupSessionsByDate(filteredSessions)
-        
-        // Force UI refresh by updating lastRefreshTime
         lastRefreshTime = Date()
     }
 }
