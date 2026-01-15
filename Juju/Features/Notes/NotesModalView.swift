@@ -20,8 +20,10 @@ struct NotesModalView: View {
         .padding(Theme.spacingExtraLarge)
         .background(Theme.Colors.background)
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isActionTextFieldFocused = true // Focus the Action field
+            Task {
+                await MainActor.run {
+                    isActionTextFieldFocused = true // Focus the Action field
+                }
             }
         }
         .onKeyPress { keyPress in
@@ -128,6 +130,48 @@ struct NotesModalView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+
+                // 4. Action and Milestone (new compact layout)
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    HStack(alignment: .top, spacing: Theme.spacingMedium) {
+                        // Action Text Field
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Action")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            TextField("e.g., Finished Act I", text: $viewModel.action) // Bind to viewModel.action
+                                .textFieldStyle(.plain)
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .background(Theme.Colors.surface)
+                                .cornerRadius(Theme.Design.cornerRadius)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
+                                .focused($isActionTextFieldFocused) // Focus this field
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // Milestone Toggle
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Milestone")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            Toggle("", isOn: $viewModel.isMilestone) // Bind to viewModel.isMilestone
+                                .labelsHidden()
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .cornerRadius(Theme.Design.cornerRadius)
+                                .disabled(viewModel.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
                 
                 // 2. Notes (full width and large)
                 ZStack(alignment: .topLeading) {
@@ -197,53 +241,6 @@ struct NotesModalView: View {
                     }
                     .padding(.horizontal, Theme.spacingLarge)
                     .padding(.vertical, Theme.spacingMedium)
-                }
-                
-                // 4. Action and Milestone (new compact layout)
-                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                    HStack(alignment: .top, spacing: Theme.spacingMedium) {
-                        // Action Text Field
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Action")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            
-                            TextField("e.g., Finished Act I", text: $viewModel.action) // Bind to viewModel.action
-                                .textFieldStyle(.plain)
-                                .font(Theme.Fonts.body)
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .padding(.horizontal, Theme.spacingMedium)
-                                .padding(.vertical, Theme.spacingSmall)
-                                .background(Theme.Colors.surface)
-                                .cornerRadius(Theme.Design.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                                )
-                                .focused($isActionTextFieldFocused) // Focus this field
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        // Milestone Toggle
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Milestone")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                            
-                            Toggle("", isOn: $viewModel.isMilestone) // Bind to viewModel.isMilestone
-                                .labelsHidden()
-                                .padding(.horizontal, Theme.spacingMedium)
-                                .padding(.vertical, Theme.spacingSmall)
-                                .background(Theme.Colors.surface)
-                                .cornerRadius(Theme.Design.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                                )
-                                .disabled(viewModel.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
                 }
             }
             .padding(.horizontal, Theme.spacingExtraLarge)

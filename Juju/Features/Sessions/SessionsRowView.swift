@@ -140,11 +140,6 @@ struct SessionsRowView: View {
     @State private var selectedMood: Int?
     @State private var isMoodHovering = false
     
-    // Milestone selection state
-    @State private var showingMilestonePopover = false
-    @State private var milestoneText: String = ""
-    @State private var isMilestoneHovering = false
-    
     // Action selection state
     @State private var showingActionPopover = false
     @State private var actionText: String = ""
@@ -488,60 +483,6 @@ struct SessionsRowView: View {
                     .clipShape(Capsule())
                     .contentShape(Rectangle()) // Make entire area tappable
                     .frame(width: 100)
-                    
-                    // Milestone (flexible width)
-                    Button(action: {
-                        showingMilestonePopover = true
-                        milestoneText = currentSession.milestoneText ?? ""
-                    }) {
-                        if let milestone = currentSession.milestoneText, !milestone.isEmpty {
-                            HStack(spacing: 6) {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(projectColor.opacity(0.9))
-                                Text(milestone)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
-                        } else {
-                            // Grayed out star icon when no milestone (nil or empty string)
-                            Image(systemName: "star")
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .onHover { hovering in
-                        isMilestoneHovering = hovering
-                    }
-                    .popover(isPresented: $showingMilestonePopover) {
-                        MilestoneSelectionPopover(
-                            currentMilestone: currentSession.milestoneText,
-                            onMilestoneChanged: { milestone in
-                                updateSessionMilestone(milestone)
-                            },
-                            onDismiss: {
-                                showingMilestonePopover = false
-                            }
-                        )
-                        .padding()
-                    }
-                    .background(
-                        Theme.Colors.divider.opacity(0.2)
-                            .opacity(isMilestoneHovering ? 0.4 : 0.2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 999)
-                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isMilestoneHovering ? 1.0 : 0.0)
-                    )
-                    .clipShape(Capsule())
-                    .contentShape(Rectangle()) // Make entire area tappable
-                    .frame(minWidth: 160, maxWidth: 180)
                     
                     // Action (flexible width)
                     Button(action: {
@@ -1137,44 +1078,6 @@ struct SessionsRowView: View {
     }
     
     // MARK: - Milestone Selection Handler
-    
-    /// Update session with new milestone
-    /// This method handles the milestone change workflow:
-    /// 1. Updates the session with the new milestone text
-    /// 2. Immediately updates the session in the data store
-    /// 3. Triggers a UI refresh by calling the callback
-    /// 4. Forces an immediate refresh of the session observer to update the UI
-    private func updateSessionMilestone(_ milestone: String?) {
-        // Update the session with new milestone using the full update method
-        // This ensures all fields are properly updated and validated
-        let success = SessionManager.shared.updateSessionFull(
-            id: session.id,
-            date: formatDate(currentSession.startDate),
-            startTime: formatTime(currentSession.startDate),
-            endTime: formatTime(currentSession.endDate),
-            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
-            notes: currentSession.notes,
-            mood: currentSession.mood,
-            activityTypeID: currentSession.activityTypeID,
-            projectPhaseID: currentSession.projectPhaseID,
-            action: currentSession.action,
-            isMilestone: currentSession.isMilestone,
-            milestoneText: milestone,
-            projectID: currentSession.projectID
-        )
-        
-        if success {
-            print("✅ Successfully updated session \(session.id) with new milestone")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as other updates
-            refreshSessionData()
-            
-            // Notify parent that project has changed so it can refresh the view
-            onProjectChanged?()
-        } else {
-            print("❌ Failed to update session \(session.id) with new milestone")
-        }
-    }
     
     // MARK: - Action Selection Handler
     
