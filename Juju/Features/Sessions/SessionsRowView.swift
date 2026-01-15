@@ -145,6 +145,14 @@ struct SessionsRowView: View {
     @State private var milestoneText: String = ""
     @State private var isMilestoneHovering = false
     
+    // Action selection state
+    @State private var showingActionPopover = false
+    @State private var actionText: String = ""
+    @State private var isActionHovering = false
+    
+    // Milestone toggle state
+    @State private var sessionIsMilestone: Bool = false
+    
     // Time picker state for start time
     @State private var showingStartTimePicker = false
     @State private var isStartTimeHovering = false
@@ -184,6 +192,8 @@ struct SessionsRowView: View {
         self._editedNotes = State(initialValue: session.notes)
         self._sessionObserver = StateObject(wrappedValue: SessionObserver(sessionID: session.id))
         self._currentSession = State(initialValue: session)
+        self._actionText = State(initialValue: session.action ?? "")
+        self._sessionIsMilestone = State(initialValue: session.isMilestone)
     }
     
     var body: some View {
@@ -533,6 +543,69 @@ struct SessionsRowView: View {
                     .contentShape(Rectangle()) // Make entire area tappable
                     .frame(minWidth: 160, maxWidth: 180)
                     
+                    // Action (flexible width)
+                    Button(action: {
+                        showingActionPopover = true
+                        actionText = currentSession.action ?? ""
+                    }) {
+                        if let action = currentSession.action, !action.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "bolt.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(projectColor.opacity(0.9))
+                                Text(action)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                
+                                // Milestone indicator
+                                if currentSession.isMilestone {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(Color(hex: "#FFD700")) // Gold color for milestone
+                                }
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Theme.Colors.divider.opacity(0.2))
+                            .clipShape(Capsule())
+                        } else {
+                            // Grayed out bolt icon when no action (nil or empty string)
+                            Image(systemName: "bolt")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isActionHovering = hovering
+                    }
+                    .popover(isPresented: $showingActionPopover) {
+                        ActionSelectionPopover(
+                            currentAction: currentSession.action,
+                            currentIsMilestone: sessionIsMilestone,
+                            onSaveAction: { action, isMilestone in
+                                sessionIsMilestone = isMilestone
+                                updateSessionAction(action)
+                            },
+                            onDismiss: {
+                                showingActionPopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .background(
+                        Theme.Colors.divider.opacity(0.2)
+                            .opacity(isActionHovering ? 0.4 : 0.2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 999)
+                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                            .opacity(isActionHovering ? 1.0 : 0.0)
+                    )
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(minWidth: 160, maxWidth: 180)
+                    
                     // Notes (expanded flexible width - takes more space)
                     if !currentSession.notes.isEmpty {
                         Text(currentSession.notes)
@@ -825,6 +898,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
             projectPhaseID: newPhaseID,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: currentSession.milestoneText,
             projectID: project.id
         )
@@ -849,6 +924,13 @@ struct SessionsRowView: View {
     /// Refresh session data with robust synchronization
     /// This method ensures that the session data is properly updated before refreshing the UI
     private func refreshSessionData() {
+        // Reload the session from SessionManager to get updated values
+        if let updatedSession = SessionManager.shared.allSessions.first(where: { $0.id == session.id }) {
+            currentSession = updatedSession
+            // Also update the sessionIsMilestone state from the reloaded session
+            sessionIsMilestone = updatedSession.isMilestone
+        }
+        
         // First attempt: immediate refresh
         DispatchQueue.main.async {
             self.sessionObserver.refreshTrigger = UUID()
@@ -889,6 +971,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
             projectPhaseID: phase.id,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
@@ -931,6 +1015,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: activityType.id,
             projectPhaseID: currentSession.projectPhaseID,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
@@ -996,6 +1082,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
             projectPhaseID: currentSession.projectPhaseID,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
@@ -1031,6 +1119,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
             projectPhaseID: currentSession.projectPhaseID,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
@@ -1067,6 +1157,8 @@ struct SessionsRowView: View {
             mood: currentSession.mood,
             activityTypeID: currentSession.activityTypeID,
             projectPhaseID: currentSession.projectPhaseID,
+            action: currentSession.action,
+            isMilestone: currentSession.isMilestone,
             milestoneText: milestone,
             projectID: currentSession.projectID
         )
@@ -1083,9 +1175,48 @@ struct SessionsRowView: View {
             print("❌ Failed to update session \(session.id) with new milestone")
         }
     }
+    
+    // MARK: - Action Selection Handler
+    
+    /// Update session with new action and milestone state
+    /// This method handles the action and milestone change workflow:
+    /// 1. Updates the session with the new action text and milestone state
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionAction(_ action: String?) {
+        // Update the session with new action and milestone state using the full update method
+        // This ensures all fields are properly updated and validated
+        let success = SessionManager.shared.updateSessionFull(
+            id: session.id,
+            date: formatDate(currentSession.startDate),
+            startTime: formatTime(currentSession.startDate),
+            endTime: formatTime(currentSession.endDate),
+            projectName: currentSession.getProjectName(from: projects), // Use helper method to get project name
+            notes: currentSession.notes,
+            mood: currentSession.mood,
+            activityTypeID: currentSession.activityTypeID,
+            projectPhaseID: currentSession.projectPhaseID,
+            action: action,
+            isMilestone: sessionIsMilestone,
+            milestoneText: currentSession.milestoneText,
+            projectID: currentSession.projectID
+        )
+        
+        if success {
+            print("✅ Successfully updated session \(session.id) with new action and milestone state")
+            // Force immediate refresh of the session observer to update the UI
+            // The refreshSessionData() call will reload the session from the data store
+            // which will reflect the new milestone state
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new action and milestone state")
+        }
+    }
 }
-
-// MARK: - Combined Date/Time Picker Popover
 /// Compact popover that combines date and time selection in one interface
 /// Provides a more streamlined experience for editing session times
 struct DateTimePickerPopover: View {

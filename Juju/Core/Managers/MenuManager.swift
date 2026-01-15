@@ -144,22 +144,24 @@ class MenuManager {
                     projectID: projectID,
                     projectName: projectName,
                     projects: self.projects
-                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?) in
-                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Milestone: \(milestoneText ?? "nil")")
-                    // Only end the session if notes are provided (not empty)
-                    if let note = note, !note.isEmpty {
+                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, action: String, isMilestone: Bool) in
+                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Milestone: \(milestoneText ?? "nil") Action: \(action) IsMilestone: \(isMilestone)")
+                    // Only end the session if notes are provided (not empty) and action is provided
+                    if let note = note, !note.isEmpty, !action.isEmpty {
                         self?.sessionManager.endSession(
                             notes: note,
                             mood: mood,
                             activityTypeID: activityTypeID,
                             projectPhaseID: projectPhaseID,
-                            milestoneText: milestoneText
+                            milestoneText: milestoneText, // Deprecated, but pass for transition
+                            action: action,             // New parameter
+                            isMilestone: isMilestone   // New parameter
                         )
                         self?.appDelegate?.updateMenuBarIcon(isActive: false)
                         self?.refreshMenu()
                     } else {
-                        // Session was cancelled, restart the update timer and keep session active
-                        print("[MenuManager] Session cancelled, keeping session active")
+                        // Session was cancelled or action was missing, restart the update timer and keep session active
+                        print("[MenuManager] Session cancelled or action missing, keeping session active")
                         self?.startUpdateTimer()
                     }
                 }

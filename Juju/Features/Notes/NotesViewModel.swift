@@ -10,7 +10,11 @@ class NotesViewModel: ObservableObject {
     // New fields for Activity Type and Phase
     @Published var selectedActivityTypeID: String? = nil
     @Published var selectedProjectPhaseID: String? = nil
-    @Published var milestoneText: String = ""
+    @Published var milestoneText: String = "" // Deprecated, kept for now for smooth transition
+    
+    // New fields for Action and Milestone
+    @Published var action: String = ""
+    @Published var isMilestone: Bool = false
     
     // Project info (locked, pre-filled)
     var currentProjectID: String?
@@ -69,7 +73,7 @@ class NotesViewModel: ObservableObject {
             .first { $0.id == activityTypeID }
     }
     
-    private var completion: ((String, Int?, String?, String?, String?) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText
+    private var completion: ((String, Int?, String?, String?, String?, Bool) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText, isMilestone
     private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
     // MARK: - Presentation Management
@@ -78,7 +82,7 @@ class NotesViewModel: ObservableObject {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?) -> Void
+        completion: @escaping (String, Int?, String?, String?, String?, Bool) -> Void
     ) {
         self.currentProjectID = projectID
         self.currentProjectName = projectName
@@ -100,7 +104,9 @@ class NotesViewModel: ObservableObject {
     func resetContent() {
         notesText = ""
         mood = nil
-        milestoneText = ""
+        milestoneText = "" // Deprecated
+        action = ""
+        isMilestone = false
         // Don't reset activityTypeID and projectPhaseID - they may have smart defaults
     }
     
@@ -142,6 +148,9 @@ class NotesViewModel: ObservableObject {
         if selectedProjectPhaseID == nil && !availablePhases.isEmpty {
             selectedProjectPhaseID = availablePhases.first?.id
         }
+        
+        // TODO: Set smart defaults for action and isMilestone if historical data exists
+        // For now, they start empty/False
     }
     
     // MARK: - Phase Management
@@ -176,12 +185,15 @@ class NotesViewModel: ObservableObject {
     // MARK: - Actions
     
     func saveNotes() {
-        completion?(notesText, mood, selectedActivityTypeID, selectedProjectPhaseID, milestoneText.isEmpty ? nil : milestoneText)
+        // Pass the new action and isMilestone to the completion handler
+        // milestoneText is deprecated but kept for transition. It's nil if empty.
+        completion?(notesText, mood, selectedActivityTypeID, selectedProjectPhaseID, milestoneText.isEmpty ? nil : milestoneText, isMilestone)
         dismiss()
     }
     
     func cancelNotes() {
-        completion?("", nil, nil, nil, nil)
+        // Pass nil/default for the new fields
+        completion?("", nil, nil, nil, nil, false)
         dismiss()
     }
     
@@ -215,8 +227,8 @@ class NotesViewModel: ObservableObject {
     // MARK: - Validation
     
     var canSave: Bool {
-        // Activity Type is required, notes are required
-        selectedActivityTypeID != nil && !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        // Activity Type is required, notes are required, action is required
+        selectedActivityTypeID != nil && !notesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     // MARK: - Keyboard Shortcuts
@@ -248,6 +260,7 @@ extension NotesViewModel {
     static var preview: NotesViewModel {
         let viewModel = NotesViewModel()
         viewModel.notesText = "Sample notes for preview"
+        viewModel.action = "Sample action for preview" // Add a sample action for preview
         return viewModel
     }
 }

@@ -104,7 +104,7 @@ UI Components → ViewModels → Managers → File I/O
 
 **Purpose**: Represents a tracked work/time block. Codable for CSV persistence.
 
-**Key Features**: Timestamp-based using `startDate`/`endDate` Date objects, supports projectID, automatic duration calculation.
+**Key Features**: Timestamp-based using `startDate`/`endDate` Date objects, supports projectID, automatic duration calculation. Sessions can now be associated with an "Action" and marked as a "Milestone".
 
 #### SessionRecord Struct
 
@@ -117,15 +117,19 @@ UI Components → ViewModels → Managers → File I/O
 | `projectID` | String? | ⚠️ | Required for new sessions |
 | `activityTypeID` | String? | ❌ | Activity type identifier |
 | `projectPhaseID` | String? | ❌ | Project phase identifier |
-| `milestoneText` | String? | ❌ | Milestone text |
+| `action` | String? | ❌ | Session action or description. Replaces `milestoneText` for capturing the main achievement or task. |
+| `isMilestone` | Bool | ✅ | Whether the session is marked as a significant milestone or achievement. |
+| `milestoneText` | String? | ❌ | **DEPRECATED**: Use `action` and `isMilestone` instead. Retained for backward compatibility during data migration. |
 | `notes` | String | ✅ | Session notes |
 | `mood` | Int? | ❌ | Mood rating (0-10) |
+
+**UI Integration**: The "Action" and "Is Milestone" fields are captured in the `NotesModalView` via a dedicated text field and a toggle switch, respectively. These fields are then passed through `NotesViewModel` and `NotesManager` to be persisted with the session.
 
 #### SessionRecord Initializers
 
 **Modern (preferred):**
 ```swift
-init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectName: String, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, notes: String = "", mood: Int? = nil)
+init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool = false, milestoneText: String? = nil, notes: String = "", mood: Int? = nil)
 ```
 
 **Methods**: `overlaps(with interval: DateInterval) -> Bool` - checks date interval overlap
@@ -208,7 +212,10 @@ struct SessionData {
     let durationMinutes: Int
     let projectName: String
     let projectID: String
-    let activityTypeID, projectPhaseID, milestoneText: String?
+    let activityTypeID, projectPhaseID: String?
+    let milestoneText: String? // Deprecated
+    let action: String? // New field
+    let isMilestone: Bool // New field
     let notes: String
 }
 ```
@@ -303,7 +310,7 @@ struct PeriodSessionData {
     let totalHours: Double
     let topActivity: (name: String, emoji: String)
     let topProject: (name: String, emoji: String)
-    let milestones: [Milestone]
+    let milestones: [Milestone] // Note: Milestones here might need to consider the new isMilestone flag
     let averageDailyHours: Double
     let activityDistribution: [String: Double]
     let projectDistribution: [String: Double]
@@ -322,7 +329,7 @@ struct AnalyticsTrends {
     let totalHoursChange: Double
     let topActivityChange: (from: String, to: String, change: Double)
     let topProjectChange: (from: String, to: String, change: Double)
-    let milestoneCountChange: Int
+    let milestoneCountChange: Int // This should now count sessions where isMilestone is true
     let averageDailyHoursChange: Double
     let activityDistributionChanges: [String: Double]
     let projectDistributionChanges: [String: Double]
@@ -371,13 +378,15 @@ init(hex: String)
 
 ## 📈 Data Flow Patterns
 
-### Session Data Flow
-1. **UI Input**: User creates/edits session
-2. **Validation**: DataValidator validates session data
-3. **Storage**: SessionManager stores via SessionFileManager
-4. **Notification**: Posts `.sessionDidEnd` notification
-5. **Cache Update**: ProjectStatisticsCache updates cached values
-6. **UI Refresh**: Views update in response to notifications
+### Session Data Flow (Notes Modal)
+1. **UI Input**: User enters "Action" text and optionally marks "Is Milestone" in `NotesModalView`.
+2. **ViewModel**: `NotesViewModel` captures these values in its `@Published action` and `@Published isMilestone` properties.
+3. **Manager**: `NotesManager` presents the modal and receives the data via `NotesViewModel`'s completion handler when the user saves.
+4. **Session Persistence**: `MenuManager` calls `SessionManager.endSession()`, passing the `action` and `isMilestone` along with other session data.
+5. **Storage**: `SessionManager` saves the session to a CSV file, including the new `action` and `is_milestone` columns.
+6. **Notification**: `SessionManager` posts `.sessionDidEnd` notification.
+7. **Cache Update**: `ProjectStatisticsCache` may update its cached values if relevant.
+8. **UI Refresh**: Views (e.g., Sessions list, Dashboard) update in response to notifications or by observing `SessionManager.allSessions`.
 
 ### Dashboard Data Flow
 1. **Initial Data Load (Orchestrated by `DashboardRootView`)**:
@@ -388,7 +397,7 @@ init(hex: String)
    - It then calls `ChartDataPreparer.prepareWeeklyData()` or `ChartDataPreparer.prepareAllTimeData()`, passing the *complete* `sessionManager.allSessions`.
 3. **Internal Filtering and Aggregation**:
    - `ChartDataPreparer` filters the received *complete* session list based on the dashboard's requirements (e.g., current week for `prepareWeeklyData`, current year for `prepareAllTimeData` when used by `YearlyDashboardView`).
-   - Aggregates the filtered sessions by activity type, project, etc., for chart display.
+   - Aggregates the filtered sessions by activity type, project, etc., for chart display. The new `isMilestone` field can be used to filter or highlight milestone sessions in charts.
 4. **Caching (ProjectStatisticsCache)**:
    - Project-level statistics are cached by `ProjectStatisticsCache` for performance, which `ChartDataPreparer` might utilize.
 5. **Display**:
@@ -418,8 +427,10 @@ This flow ensures that `sessionManager.allSessions` serves as the single source 
 
 ### 2. **Backward Compatibility Strategy**
 - **SessionDataParser**: Automatically detects and converts legacy CSV formats
+- **Column Index Mapping**: Builds dynamic index map from CSV header, handles any column order
 - **Migration**: Transparent conversion during data loading
 - **Error Handling**: Graceful handling of corrupted or invalid data
+- **Flexible Parsing**: Supports CSV with `action` and `is_milestone` columns in any position
 
 ### 3. **Performance Optimization**
 - **Caching**: ProjectStatisticsCache with intelligent expiration
@@ -441,7 +452,14 @@ This flow ensures that `sessionManager.allSessions` serves as the single source 
 - **Project/Phase Validation**: Automatic phase clearing when project changes to incompatible project
 - **Data Consistency**: All inline edits maintain data integrity through centralized validation
 
-### 6. **Helper Extensions Architecture**
+### 6. **Action and Milestone Fields**
+- **Introduction**: Added `action: String?` and `isMilestone: Bool` to `SessionRecord` model.
+- **UI Capture**: Implemented in `NotesModalView` with a text field for "Action" and a toggle for "Is Milestone".
+- **Data Flow**: Values flow through `NotesViewModel` to `NotesManager`, then to `MenuManager`, and finally to `SessionManager` for persistence.
+- **Deprecation**: `milestoneText: String?` is deprecated. New code should use `action` and `isMilestone`. Backward compatibility is maintained during the transition.
+- **CSV Persistence**: Updated CSV format and parsers to include `action` and `is_milestone` columns.
+
+### 7. **Helper Extensions Architecture**
 - **Purpose**: Provide reusable, focused utilities for common operations
 - **Design Principles**: Single responsibility, non-destructive, chainable, safe
 - **Extension Categories**:

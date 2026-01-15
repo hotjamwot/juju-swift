@@ -8,6 +8,8 @@ public struct SessionRecord: Identifiable, Codable {
     public let projectID: String
     public let activityTypeID: String?
     public let projectPhaseID: String?
+    public let action: String?
+    public let isMilestone: Bool
     public let milestoneText: String?
     public let notes: String
     public let mood: Int?
@@ -19,6 +21,8 @@ public struct SessionRecord: Identifiable, Codable {
         projectID: String,
         activityTypeID: String? = nil,
         projectPhaseID: String? = nil,
+        action: String? = nil,
+        isMilestone: Bool = false,
         milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
@@ -29,6 +33,8 @@ public struct SessionRecord: Identifiable, Codable {
         self.projectID = projectID
         self.activityTypeID = activityTypeID
         self.projectPhaseID = projectPhaseID
+        self.action = action
+        self.isMilestone = isMilestone
         self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood
@@ -50,6 +56,8 @@ struct SessionData {
     let projectID: String
     let activityTypeID: String?
     let projectPhaseID: String?
+    let action: String?
+    let isMilestone: Bool
     let milestoneText: String?
     let notes: String
     let mood: Int?
@@ -64,6 +72,8 @@ struct SessionData {
         projectID: String,
         activityTypeID: String? = nil,
         projectPhaseID: String? = nil,
+        action: String? = nil,
+        isMilestone: Bool = false,
         milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
@@ -73,6 +83,8 @@ struct SessionData {
         self.projectID = projectID
         self.activityTypeID = activityTypeID
         self.projectPhaseID = projectPhaseID
+        self.action = action
+        self.isMilestone = isMilestone
         self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood
@@ -85,6 +97,8 @@ struct SessionData {
         projectID: String,
         activityTypeID: String? = nil,
         projectPhaseID: String? = nil,
+        action: String? = nil,
+        isMilestone: Bool = false,
         milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
@@ -94,6 +108,8 @@ struct SessionData {
         self.projectID = projectID
         self.activityTypeID = activityTypeID
         self.projectPhaseID = projectPhaseID
+        self.action = action
+        self.isMilestone = isMilestone
         self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood

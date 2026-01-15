@@ -57,6 +57,8 @@ class SessionManager: ObservableObject {
                 projectID: currentProjectID ?? "",
                 activityTypeID: currentActivityTypeID,
                 projectPhaseID: currentProjectPhaseID,
+                action: nil, // Active session doesn't have a final action yet
+                isMilestone: false, // Active session isn't a milestone until saved
                 milestoneText: nil,
                 notes: "",
                 mood: nil
@@ -202,7 +204,7 @@ class SessionManager: ObservableObject {
     /// - If no session is active, calls completion(false) and returns early
     /// - If projectID is missing, calls completion(false) and returns early
     /// - Duration calculation uses current time as end time
-    /// - All optional fields (mood, activity type, phase, milestone) can be nil
+    /// - All optional fields (mood, activity type, phase, milestone, action) can be nil
     ///
     /// **State Changes**:
     /// - Sets isSessionActive to false
@@ -227,14 +229,18 @@ class SessionManager: ObservableObject {
     ///   - mood: Optional mood rating 0-10 (defaults to nil)
     ///   - activityTypeID: Optional activity type identifier (defaults to nil)
     ///   - projectPhaseID: Optional project phase identifier (defaults to nil)
-    ///   - milestoneText: Optional milestone description (defaults to nil)
+    ///   - milestoneText: Optional milestone description (defaults to nil) - Deprecated
+    ///   - action: Optional session action (defaults to nil)
+    ///   - isMilestone: Boolean indicating if session is a milestone (defaults to false)
     ///   - completion: Callback executed when operation completes (true = success, false = failure)
     func endSession(
         notes: String = "",
         mood: Int? = nil,
         activityTypeID: String? = nil,
         projectPhaseID: String? = nil,
-        milestoneText: String? = nil,
+        milestoneText: String? = nil, // Deprecated
+        action: String? = nil, // New field, made optional to match other fields
+        isMilestone: Bool = false, // New field
         completion: ((Bool) -> Void)? = nil
     ) {
         guard isSessionActive, let projectName = currentProjectName, let startTime = sessionStartTime else {
@@ -243,8 +249,6 @@ class SessionManager: ObservableObject {
         }
         
         let endTime = Date()
-        let durationMs = endTime.timeIntervalSince(startTime)
-        let durationMinutes = Int(round(durationMs / 60))
         
         // Create session data with new fields
         guard let projectID = currentProjectID else {
@@ -252,18 +256,12 @@ class SessionManager: ObservableObject {
             return
         }
         
-        let sessionData = SessionData(
-            startTime: startTime,
-            endTime: endTime,
-            projectID: projectID,
-            activityTypeID: activityTypeID,
-            projectPhaseID: projectPhaseID,
-            milestoneText: milestoneText,
-            notes: notes
-        )
+        // Determine final action and isMilestone, prioritizing new fields
+        // with fallback for backward compatibility during deprecation.
+        let finalAction = action ?? milestoneText
+        let finalIsMilestone = isMilestone || (milestoneText != nil && action == nil)
         
-        // Save to CSV with file locking
-        saveSessionToCSV(sessionData, mood: mood) { [weak self] success in
+        saveSessionToCSV(startTime, endTime, projectID, activityTypeID, projectPhaseID, action: finalAction, isMilestone: finalIsMilestone, milestoneText: milestoneText, notes: notes, mood: mood) { [weak self] success in
             guard let self = self else { 
                 completion?(false)
                 return 
@@ -472,7 +470,7 @@ class SessionManager: ObservableObject {
     /// without requiring the full session data. It's optimized for simple updates like notes or mood.
     ///
     /// **Business Rules**:
-    /// - Only supports updating "notes" and "mood" fields
+    /// - Only supports updating "notes", "mood", "action", and "is_milestone" fields
     /// - Creates a new SessionRecord instance with updated values
     /// - Automatically persists changes to storage
     /// - Triggers UI updates via notifications
@@ -480,6 +478,8 @@ class SessionManager: ObservableObject {
     /// **Supported Fields**:
     /// - "notes": Updates session notes (string value)
     /// - "mood": Updates mood rating (integer 0-10, must be valid integer string)
+    /// - "action": Updates session action (string value)
+    /// - "is_milestone": Updates milestone flag (boolean string, e.g., "true" or "1")
     ///
     /// **Data Flow**:
     /// 1. Find session by ID in current session list
@@ -496,7 +496,7 @@ class SessionManager: ObservableObject {
     /// **Error Handling**:
     /// - Returns false if session ID not found
     /// - Returns false for unsupported field names
-    /// - Returns false if mood value is not a valid integer
+    /// - Returns false if mood or is_milestone value is not valid
     /// - Silent failure (no exceptions thrown)
     ///
     /// **Thread Safety**: Method is not thread-safe, should be called from main thread
@@ -505,18 +505,24 @@ class SessionManager: ObservableObject {
     ///
     /// - Parameters:
     ///   - id: Session identifier to update
-    ///   - field: Field name to update ("notes" or "mood")
-    ///   - value: New value as string (for mood, must be valid integer)
+    ///   - field: Field name to update ("notes", "mood", "action", or "is_milestone")
+    ///   - value: New value as string (for mood, must be valid integer; for is_milestone, "true"/"1" or "false"/"0")
     /// - Returns: True if update successful, false otherwise
     func updateSession(id: String, field: String, value: String) -> Bool {
         guard let session = allSessions.first(where: { $0.id == id }) else { return false }
         var updated = session
         switch field {
-        case "notes": updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, milestoneText: session.milestoneText, notes: value, mood: session.mood)
+        case "notes": 
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: value, mood: session.mood)
         case "mood": 
             if let m = Int(value) {
-                updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, milestoneText: session.milestoneText, notes: session.notes, mood: m)
+                updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: session.notes, mood: m)
             }
+        case "action":
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: value, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: session.notes, mood: session.mood)
+        case "is_milestone":
+            let boolValue = (value.lowercased() == "true" || value == "1")
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: boolValue, milestoneText: session.milestoneText, notes: session.notes, mood: session.mood)
         default: return false
         }
         if let idx = allSessions.firstIndex(where: { $0.id == id }) {
@@ -564,10 +570,12 @@ class SessionManager: ObservableObject {
     ///   - mood: Mood rating 0-10 (optional)
     ///   - activityTypeID: Activity type identifier (optional)
     ///   - projectPhaseID: Project phase identifier (optional)
-    ///   - milestoneText: Milestone description (optional)
+    ///   - action: Session action (optional)
+    ///   - isMilestone: Boolean indicating if session is a milestone (optional)
+    ///   - milestoneText: Milestone description (optional) - Deprecated
     ///   - projectID: Project identifier (required for new sessions)
     /// - Returns: True if update successful, false otherwise
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
         // Find existing session to update
         guard let session = allSessions.first(where: { $0.id == id }) else { return false }
 
@@ -599,6 +607,8 @@ class SessionManager: ObservableObject {
             projectID: resolvedProjectID,
             activityTypeID: activityTypeID ?? session.activityTypeID,
             projectPhaseID: projectPhaseID,
+            action: action ?? session.action,
+            isMilestone: isMilestone ?? session.isMilestone,
             milestoneText: milestoneText ?? session.milestoneText,
             notes: notes,
             mood: mood
@@ -687,7 +697,7 @@ class SessionManager: ObservableObject {
                     try await csvManager.writeToYearFile(csvContent, for: year)
                 } else {
                     // If no sessions remain, write an empty file with just the header
-                    let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood\n"
+                    let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood\n"
                     try await csvManager.writeToYearFile(header, for: year)
                 }
 
@@ -747,27 +757,29 @@ class SessionManager: ObservableObject {
     
     // MARK: - CSV Operations
     
-    private func saveSessionToCSV(_ sessionData: SessionData, mood: Int? = nil, completion: @escaping (Bool) -> Void) {
+    private func saveSessionToCSV(_ startTime: Date, _ endTime: Date, _ projectID: String, _ activityTypeID: String?, _ projectPhaseID: String?, action: String?, isMilestone: Bool, milestoneText: String?, notes: String, mood: Int?, completion: @escaping (Bool) -> Void) {
         // Format the CSV row using full Date objects (new format)
         let dateTimeFormatter = DateFormatter()
         dateTimeFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
         let id = UUID().uuidString
-        let startDateStr = dateTimeFormatter.string(from: sessionData.startTime)
-        let endDateStr = dateTimeFormatter.string(from: sessionData.endTime)
+        let startDateStr = dateTimeFormatter.string(from: startTime)
+        let endDateStr = dateTimeFormatter.string(from: endTime)
         let moodStr = mood.map { String($0) } ?? ""
         
-        // Build CSV row with NEW format (without projectName field)
-        let projectID = csvManager.csvEscape(sessionData.projectID)
-        let activityTypeID = sessionData.activityTypeID.map { csvManager.csvEscape($0) } ?? ""
-        let projectPhaseID = sessionData.projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
-        let milestoneText = sessionData.milestoneText.map { csvManager.csvEscape($0) } ?? ""
+        // Build CSV row with NEW format (with action and is_milestone fields)
+        let projectID_Escaped = csvManager.csvEscape(projectID)
+        let activityTypeID_Escaped = activityTypeID.map { csvManager.csvEscape($0) } ?? ""
+        let projectPhaseID_Escaped = projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
+        let actionText_Escaped = action.map { csvManager.csvEscape($0) } ?? ""
+        let isMilestoneStr = isMilestone ? "1" : "0" // CSV stores boolean as 0 or 1
+        let milestoneText_Escaped = milestoneText.map { csvManager.csvEscape($0) } ?? ""
         
-        // NEW FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
-        let csvRow = "\(id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(milestoneText),\(csvManager.csvEscape(sessionData.notes)),\(moodStr)\n"
+        // NEW FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood
+        let csvRow = "\(id),\(startDateStr),\(endDateStr),\(projectID_Escaped),\(activityTypeID_Escaped),\(projectPhaseID_Escaped),\(actionText_Escaped),\(isMilestoneStr),\(milestoneText_Escaped),\(csvManager.csvEscape(notes)),\(moodStr)\n"
         
         // Determine year from session start date
-        let year = Calendar.current.component(.year, from: sessionData.startTime)
+        let year = Calendar.current.component(.year, from: startTime)
         
         Task {
             do {

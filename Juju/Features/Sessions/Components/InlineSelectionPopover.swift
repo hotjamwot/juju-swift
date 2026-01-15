@@ -565,6 +565,96 @@ struct MilestoneSelectionPopover: View {
     }
 }
 
+// MARK: - Action Selection Popover
+/// Popover for editing session action text
+/// Allows users to enter a single-line action description for a session
+struct ActionSelectionPopover: View {
+    let currentAction: String?
+    let currentIsMilestone: Bool
+    let onSaveAction: (String?, Bool) -> Void
+    let onDismiss: () -> Void
+    
+    @State private var actionText: String
+    @State private var isMilestone: Bool
+    @FocusState private var isTextFieldFocused: Bool
+    
+    init(currentAction: String?, currentIsMilestone: Bool = false, onSaveAction: @escaping (String?, Bool) -> Void, onDismiss: @escaping () -> Void) {
+        self.currentAction = currentAction
+        self.currentIsMilestone = currentIsMilestone
+        self.onSaveAction = onSaveAction
+        self.onDismiss = onDismiss
+        self._actionText = State(initialValue: currentAction ?? "")
+        self._isMilestone = State(initialValue: currentIsMilestone)
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Title
+            Text("Edit Action")
+                .font(Theme.Fonts.body.weight(.semibold))
+                .foregroundColor(Theme.Colors.textPrimary)
+            
+            // Text field
+            TextField("Enter action text", text: $actionText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .focused($isTextFieldFocused)
+                .frame(minWidth: 200, maxWidth: 280)
+                .onSubmit {
+                    saveAction()
+                }
+            
+            // Milestone toggle
+            HStack(spacing: 8) {
+                Toggle("Milestone", isOn: $isMilestone)
+                    .disabled(actionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                
+                if actionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                }
+            }
+            .font(Theme.Fonts.caption)
+            
+            // Buttons
+            HStack(spacing: 8) {
+                Button("Cancel") {
+                    cancelAction()
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                
+                Button("Save") {
+                    saveAction()
+                }
+                .buttonStyle(PrimaryButtonStyle())
+            }
+        }
+        .padding(16)
+        .frame(minWidth: 240, maxWidth: 320)
+        .cornerRadius(8)
+        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .onAppear {
+            isTextFieldFocused = true
+        }
+        .onDisappear {
+            // Clear focus when popover disappears to prevent blue outline
+            isTextFieldFocused = false
+        }
+    }
+    
+    private func saveAction() {
+        let trimmedText = actionText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let actionToSave = trimmedText.isEmpty ? nil : trimmedText
+        // Pass both action and milestone together in a single callback
+        onSaveAction(actionToSave, isMilestone)
+        onDismiss()
+    }
+    
+    private func cancelAction() {
+        onDismiss()
+    }
+}
+
 // MARK: - Time Picker Component
 /// Simple time picker using SwiftUI's built-in DatePicker
 /// Provides a compact, keyboard-friendly interface for time selection

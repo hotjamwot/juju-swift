@@ -38,7 +38,7 @@ nodes:
   - id: A8_Session_Data_Parser
     component: SessionDataParser
     function: Parse CSV Session Data
-    description: Parses CSV data with format detection and creates SessionRecord objects
+    description: Parses CSV data with format detection and creates SessionRecord objects. Uses dynamic column index mapping to handle action/isMilestone fields in any column position. Supports legacy CSV formats.
 
   # Dashboard Data Flow
   - id: B1_Data_Aggregator
@@ -117,10 +117,14 @@ nodes:
     component: SessionsRowView
     function: Edit Activity Type
     description: Inline activity type selection
+  - id: I3A_Action_Editor
+    component: ActionSelectionPopover
+    function: Edit Action and Milestone Status
+    description: Popover for editing session action text and milestone toggle. Milestone toggle disabled when action is empty.
   - id: I4_Milestone_Editor
     component: SessionsRowView
-    function: Edit Milestone Text
-    description: Inline milestone editing
+    function: Edit Milestone Status (via Action Editor)
+    description: Milestone boolean is now edited via ActionSelectionPopover (Phase 4). Legacy milestoneText editing deprecated.
   - id: I5_Mood_Editor
     component: SessionsRowView
     function: Edit Mood Rating

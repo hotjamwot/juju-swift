@@ -9,6 +9,9 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     private var notesViewModel = NotesViewModel()
     private var hostingWindow: NSWindow?
     
+    // currentAction and currentIsMilestone are no longer needed
+    // as NotesModalView directly binds to NotesViewModel's properties.
+    
     override private init() {}
     
     // MARK: - Presentation Methods
@@ -17,7 +20,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?) -> Void
+        completion: @escaping (String, Int?, String?, String?, String?, String, Bool) -> Void // Added action, isMilestone
     ) {
         // Ensure we're on main thread
         guard Thread.isMainThread else {
@@ -40,7 +43,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?) -> Void
+        completion: @escaping (String, Int?, String?, String?, String?, String, Bool) -> Void
     ) {
         // Clean up existing window if any
         if let existingWindow = hostingWindow {
@@ -49,13 +52,14 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         }
         
         // Create the SwiftUI view
+        // NotesModalView now directly binds its UI to the notesViewModel's properties.
         let notesView = NotesModalView(viewModel: notesViewModel)
         
         // Create hosting controller
         let hostingController = NSHostingController(rootView: notesView)
         
         // Create window
-        let windowSize = NSSize(width: 750, height: 450)
+        let windowSize = NSSize(width: 750, height: 450) // Adjusted height for new fields
         let screen = NSScreen.main
         _ = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
         
@@ -76,7 +80,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.minSize = NSSize(width: 750, height: 600)
+        window.minSize = NSSize(width: 750, height: 600) // Adjusted min height
         window.isReleasedWhenClosed = false
         window.level = .floating
         
@@ -99,9 +103,15 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             projectID: projectID,
             projectName: projectName,
             projects: projects
-        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, milestoneText in
-            self?.dismissNotes()
-            completion(notes, mood, activityTypeID, projectPhaseID, milestoneText)
+        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, milestoneText, isMilestoneFromViewModel in
+            guard let self = self else { return }
+            
+            // NotesModalView is bound to notesViewModel.action and notesViewModel.isMilestone.
+            // So, notesViewModel.action will hold the current action text.
+            let actionToPass = self.notesViewModel.action
+            
+            self.dismissNotes()
+            completion(notes, mood, activityTypeID, projectPhaseID, milestoneText, actionToPass, isMilestoneFromViewModel)
         }
     }
     
@@ -117,6 +127,8 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     
     func resetContentAndFocus() {
         notesViewModel.resetContent()
+        // Reset local action/milestone state if they are managed by NotesManager directly
+        // (Not needed anymore as they are part of NotesViewModel)
         
         // Bring window to front and focus
         if let window = hostingWindow {
@@ -124,13 +136,13 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             NSApp.activate(ignoringOtherApps: true)
         }
     }
-    
+
     // MARK: - NSWindowDelegate
     
     func windowWillClose(_ notification: Notification) {
         // Handle window close - treat as cancel if not explicitly saved
         if isPresented {
-            notesViewModel.cancelNotes()
+            notesViewModel.cancelNotes() // This now correctly handles new fields
         }
         
         hostingWindow = nil
@@ -148,7 +160,10 @@ extension NotesManager {
     /// Legacy method to match the old NotesModalWindowController interface
     func present(completion: @escaping (String, Int?) -> Void) {
         // For backward compatibility, use empty project info
-        presentNotes(projectID: nil, projectName: nil, projects: []) { notes, mood, _, _, _ in
+        // The new action and isMilestone fields are not part of this legacy flow.
+        presentNotes(projectID: nil, projectName: nil, projects: []) { notes, mood, _, _, _, action, isMilestone in
+            // The legacy completion only expects notes and mood.
+            // The other fields (including new action/isMilestone) are ignored here.
             completion(notes, mood)
         }
     }

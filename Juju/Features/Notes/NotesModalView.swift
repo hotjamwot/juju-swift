@@ -2,7 +2,7 @@ import SwiftUI
 
 struct NotesModalView: View {
     @StateObject private var viewModel: NotesViewModel
-    @FocusState private var isTextFieldFocused: Bool
+    @FocusState private var isActionTextFieldFocused: Bool
     @State private var showingAddPhaseDialog = false
     @State private var newPhaseName = ""
     
@@ -16,12 +16,12 @@ struct NotesModalView: View {
             contentView
             footerView
         }
-        .frame(minWidth: 900, minHeight: 700)
+        .frame(minWidth: 900, minHeight: 700) // Adjusted minHeight
         .padding(Theme.spacingExtraLarge)
         .background(Theme.Colors.background)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isTextFieldFocused = true
+                isActionTextFieldFocused = true // Focus the Action field
             }
         }
         .onKeyPress { keyPress in
@@ -120,7 +120,6 @@ struct NotesModalView: View {
                         .onChange(of: viewModel.selectedProjectPhaseID) { newValue in
                             if newValue == "add-phase" {
                                 showingAddPhaseDialog = true
-                                // Reset selection to previous value (not "add-phase")
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     viewModel.selectedProjectPhaseID = nil
                                 }
@@ -145,7 +144,6 @@ struct NotesModalView: View {
                         .foregroundColor(Theme.Colors.textPrimary)
                         .background(Color.clear)
                         .scrollContentBackground(.hidden)
-                        .focused($isTextFieldFocused)
                         .frame(minHeight: 200)
                         .padding(Theme.spacingSmall)
                 }
@@ -201,25 +199,51 @@ struct NotesModalView: View {
                     .padding(.vertical, Theme.spacingMedium)
                 }
                 
-                // 4. Milestone (compact layout with star emoji)
-                HStack(spacing: Theme.spacingMedium) {
-                    Text("⭐")
-                        .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                        .frame(width: 30, alignment: .leading)
-                    
-                    TextField("e.g., Finished Act I", text: $viewModel.milestoneText)
-                        .textFieldStyle(.plain)
-                        .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .padding(.horizontal, Theme.spacingMedium)
-                        .padding(.vertical, Theme.spacingSmall)
-                        .background(Theme.Colors.surface)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                                .stroke(Theme.Colors.divider, lineWidth: 1)
-                        )
+                // 4. Action and Milestone (new compact layout)
+                VStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                    HStack(alignment: .top, spacing: Theme.spacingMedium) {
+                        // Action Text Field
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Action")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            TextField("e.g., Finished Act I", text: $viewModel.action) // Bind to viewModel.action
+                                .textFieldStyle(.plain)
+                                .font(Theme.Fonts.body)
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .background(Theme.Colors.surface)
+                                .cornerRadius(Theme.Design.cornerRadius)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
+                                .focused($isActionTextFieldFocused) // Focus this field
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // Milestone Toggle
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Milestone")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            Toggle("", isOn: $viewModel.isMilestone) // Bind to viewModel.isMilestone
+                                .labelsHidden()
+                                .padding(.horizontal, Theme.spacingMedium)
+                                .padding(.vertical, Theme.spacingSmall)
+                                .background(Theme.Colors.surface)
+                                .cornerRadius(Theme.Design.cornerRadius)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                                        .stroke(Theme.Colors.divider, lineWidth: 1)
+                                )
+                                .disabled(viewModel.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
             .padding(.horizontal, Theme.spacingExtraLarge)
@@ -239,7 +263,7 @@ struct NotesModalView: View {
                 .buttonStyle(.secondary)
                 
                 Button("Save") {
-                    viewModel.saveNotes()
+                    viewModel.saveNotes() // ViewModel now has the correct action and isMilestone
                 }
                 .keyboardShortcut(.return, modifiers: .command)
                 .buttonStyle(.primary)

@@ -33,68 +33,65 @@ This phase focuses on updating data structures, persistence, and parsing logic t
 
 #### 🎯 Objective: Add new fields to SessionRecord struct while maintaining backward compatibility
 
-- [ ] **1.1.1.** Add `action: String? = nil` property to `public struct SessionRecord: Identifiable, Codable`.
+- [x] **1.1.1.** Add `action: String? = nil` property to `public struct SessionRecord: Identifiable, Codable`.
   ```swift
   // Add to SessionRecord struct
   public var action: String? = nil
   ```
 
-- [ ] **1.1.2.** Add `isMilestone: Bool = false` property to `public struct SessionRecord: Identifiable, Codable`.
+- [x] **1.1.2.** Add `isMilestone: Bool = false` property to `public struct SessionRecord: Identifiable, Codable`.
   ```swift
   // Add to SessionRecord struct
   public var isMilestone: Bool = false
   ```
 
-- [ ] **1.1.3.** Ensure new `action` and `isMilestone` properties are `Codable`. (SwiftCodable conformance should be automatic if they are standard types).
+- [x] **1.1.3.** Ensure new `action` and `isMilestone` properties are `Codable`. (SwiftCodable conformance should be automatic if they are standard types).
 
-- [ ] **1.1.4.** Keep `milestoneText: String?` property in the struct for now.
+- [x] **1.1.4.** Keep `milestoneText: String?` property in the struct for now.
 
-- [ ] **1.1.5.** Update all `SessionRecord` initializers to accept `action` and `isMilestone` parameters with default values for backward compatibility.
+- [x] **1.1.5.** Update all `SessionRecord` initializers to accept `action` and `isMilestone` parameters with default values for backward compatibility.
     - Primary initializer example:
       ```swift
       init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectName: String, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, milestoneText: String? = nil, action: String? = nil, isMilestone: Bool = false, notes: String = "", mood: Int? = nil)
       ```
     - Ensure all other initializers (if any) also include these, possibly with defaults.
 
-- [ ] **1.1.6.** Update `Documentation/ARCHITECTURE.md` to reflect these new fields in the `SessionRecord` definition and related sections. Update the table in "Session Model" / "SessionRecord Struct".
+- [x] **1.1.6.** Update `Documentation/ARCHITECTURE.md` to reflect these new fields in the `SessionRecord` definition and related sections. Update the table in "Session Model" / "SessionRecord Struct".
 
 ### 1.2. Update CSV Schema and Parsing in `Juju/Core/Managers/Data/SessionDataParser.swift`
 
 #### 🎯 Objective: Update CSV format to include new fields while maintaining backward compatibility
 
-- [ ] **1.2.1.** **CSV Header (`convertSessionsToCSV`)**:
-    - Locate the function that generates the CSV header string.
-    - Add `action` and `is_milestone` columns to the CSV header string.
-    - Example new header: `id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,action,is_milestone,notes,mood`
-    - Ensure the order is logical.
+- [x] **1.2.1.** **CSV Header (`convertSessionsToCSV`)**:
+    - Updated header to: `id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood`
+    - Action and is_milestone columns now included in CSV output
 
-- [ ] **1.2.2.** **CSV Parsing (`parseSessionsFromCSV...` methods)**:
-    - Locate the functions that parse CSV data into `SessionRecord` objects (e.g., `parseSessionsFromCSVData...`).
-    - Add logic to read the new `action` and `is_milestone` columns.
-    - Map the `action` column to `SessionRecord.action`. Handle potential empty strings as `nil`.
-    - Map the `is_milestone` column to `SessionRecord.isMilestone`. Handle potential string representations like "1", "0", "True", "False" and convert to `Bool`. Default to `false` if column is missing or unparsable.
+- [x] **1.2.2.** **CSV Parsing (`parseSessionsFromCSV...` methods)**:
+    - Added parsing logic for `action` (mapped to `SessionRecord.action`, empty strings become `nil`)
+    - Added parsing logic for `is_milestone` (mapped to `SessionRecord.isMilestone` using `parseBool` helper)
+    - Implemented `parseBool` helper method to handle various boolean representations
 
-- [ ] **1.2.3.** Handle missing new columns in older CSV files:
-    - When parsing, if the `action` column is not present, default `SessionRecord.action` to `nil`.
-    - When parsing, if the `is_milestone` column is not present, default `SessionRecord.isMilestone` to `false`.
-    - Ensure this doesn't break if `milestoneText` is the only legacy field present.
+- [x] **1.2.3.** Handle missing new columns in older CSV files:
+    - Old CSV files without `action` and `is_milestone` columns: `action` defaults to `nil`, `isMilestone` defaults to `false`
+    - Backward compatibility maintained for legacy CSV formats
 
-- [ ] **1.2.4.** Ensure parsing logic remains robust for older files containing only `milestoneText`.
-    - The parsing should continue to correctly import `milestoneText`. The new fields will just be defaulted.
-    - No data loss should occur for existing `milestoneText` data.
+- [x] **1.2.4.** Ensure parsing logic remains robust for older files containing only `milestoneText`.
+    - Existing `milestoneText` data is preserved and continues to parse correctly
+    - No data loss for existing sessions
 
-- [ ] **1.2.5.** Update `Documentation/ARCHITECTURE.md` (data persistence/CSV flow) to reflect the new CSV columns.
+- [x] **1.2.5.** Update `Documentation/ARCHITECTURE.md` (data persistence/CSV flow) to reflect the new CSV columns.
 
-- [ ] **1.2.6.** Check `Documentation/DATA_FLOW.yaml` if any `data_packet` definitions related to CSV parsing or SessionRecord creation need adjustment. It's likely the `SessionRecord` model itself is the primary change.
+- [x] **1.2.6.** Check `Documentation/DATA_FLOW.yaml` if any `data_packet` definitions need adjustment.
+    - DATA_FLOW.yaml already references SessionRecord; ARCHITECTURE.md is source of truth for data types
 
 ### 1.3. Update Export Logic in `Juju/Core/Managers/Data/SessionDataParser.swift`
 
 #### 🎯 Objective: Ensure exports include new fields in correct format
 
-- [ ] **1.3.1.** Locate CSV export functions (likely `convertSessionsToCSV`).
-    - Ensure CSV exports use the updated header including `action` and `is_milestone`.
-    - Ensure the `action` field is written correctly (e.g., as an empty string if `nil`).
-    - Ensure the `is_milestone` field is written correctly (e.g., as "1" for true, "0" for false).
+- [x] **1.3.1.** Locate CSV export functions (likely `convertSessionsToCSV`).
+    - CSV exports now include updated header with `action` and `is_milestone`
+    - `action` written as empty string if `nil`
+    - `is_milestone` written as "1" for true, "0" for false
 
 - [ ] **1.3.2.** Locate other export functions (e.g., for TXT or Markdown).
     - Decide on representation for `action` and `isMilestone` in these formats.
@@ -104,31 +101,29 @@ This phase focuses on updating data structures, persistence, and parsing logic t
 
 #### 🎯 Objective: Ensure new sessions include default values for new fields
 
-- [ ] **1.4.1.** Identify methods in `SessionManager` that create new `SessionRecord` instances.
+- [x] **1.4.1.** Identify methods in `SessionManager` that create new `SessionRecord` instances.
     - Key candidates: `startSession(projectID:activityTypeID:projectPhaseID:notes:mood:)`, `endSession(notes:mood:)`, `createSession(...)`, `activeSession` property if it creates a new record.
-- [ ] **1.4.2.** Modify these methods to pass `action: nil` and `isMilestone: false` when creating new `SessionRecord` objects.
-    - Example: `let newSession = SessionRecord(..., action: nil, isMilestone: false, ...)`
-    - Ensure that the `activeSession` (if it's a temporary object before saving) also reflects these defaults.
+- [x] **1.4.2.** Modified these methods to pass `action: nil` and `isMilestone: false` when creating new `SessionRecord` objects.
+    - Updated `activeSession` property
+    - All new SessionRecord creations include new fields with defaults
 
 ### 1.5. Update Session Updating Logic in `Juju/Core/Managers/SessionManager.swift`
 
 #### 🎯 Objective: Prepare for future updates to new fields
 
-- [ ] **1.5.1.** Review `updateSessionField` and related methods that modify existing `SessionRecord` instances.
-    - For this phase, these methods likely don't need to handle `action` or `isMilestone` yet, as the UI doesn't expose them for editing.
-    - However, ensure the logic for updating other fields doesn't accidentally break or ignore the new fields if they are part of the `SessionRecord` being passed around.
-    - Prepare for future extension (Phase 4) where these fields might need updating. The `updateSessionField` method might need to be generalized or new methods added.
+- [x] **1.5.1.** Review `updateSessionField` and related methods that modify existing `SessionRecord` instances.
+    - Updated `updateSession` method to preserve `action` and `isMilestone` when updating other fields
+    - Updated `editSession` method to preserve new fields during edits
 
 ### 1.6. Update Usage in Extensions and Other Managers
 
 #### 🎯 Objective: Ensure all components work with updated SessionRecord structure
 
-- [ ] **1.6.1.** **`Juju/Core/Extensions/Array+SessionExtensions.swift`**:
-    - Review any methods that construct new `SessionRecord` objects. If they use initializers, ensure they now include the new parameters (likely with defaults).
-    - If they manually create structs, ensure they include the new properties.
+- [x] **1.6.1.** **`Juju/Core/Extensions/Array+SessionExtensions.swift`**:
+    - Reviewed; no changes needed. Extensions don't construct SessionRecord objects.
 
-- [ ] **1.6.2.** **`Juju/Core/Extensions/SessionRecord+Filtering.swift`**:
-    - No changes expected for now. This is for future filtering based on `action` or `isMilestone`.
+- [x] **1.6.2.** **`Juju/Core/Extensions/SessionRecord+Filtering.swift`**:
+    - No changes needed at this phase. Ready for filtering based on `action` or `isMilestone` in future phases.
 
 - [ ] **1.6.3.** **`Juju/Core/Managers/ChartDataPreparer.swift`**:
     - This is a critical one. Review `ChartDataPreparer` methods that aggregate session data.
@@ -150,8 +145,14 @@ This phase focuses on updating data structures, persistence, and parsing logic t
 
 #### 🎯 Objective: Verify all changes work correctly before proceeding
 
-- [ ] **1.7.1.** Build the application (e.g., `xcodebuild -project Juju.xcodeproj -scheme Juju build`).
-- [ ] **1.7.2.** Fix any compilation errors. Pay attention to initializer mismatches or missing properties.
+- [x] **1.7.1.** Build the application (e.g., `xcodebuild -project Juju.xcodeproj -scheme Juju build`).
+    - Build completed successfully
+
+- [x] **1.7.2.** Fix any compilation errors. Pay attention to initializer mismatches or missing properties.
+    - All compilation errors resolved
+    - All SessionRecord initializers updated
+    - All manager methods handle new fields
+
 - [ ] **1.7.3.** Run the app.
     - [ ] Ensure no crashes occur.
     - [ ] Verify that existing sessions still load correctly from CSVs (old and new format if applicable).
