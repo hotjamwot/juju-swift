@@ -1,130 +1,204 @@
-# 🌟 Project Story System
+# 📖 ProjectStoryView — Design Brief
 
-## PROJECT STORY VIEW: **The Narrative Surface**
+## Purpose
 
-### Purpose
+ProjectStoryView is the narrative heart of Juju.
 
-Turn a single project into a **readable, human story**.
+Its job is not to optimise productivity, surface metrics, or encourage real-time behaviour change. Its job is to **preserve meaning**.
 
-This is where:
+ProjectStoryView exists to answer one question, clearly and honestly:
 
-* phases matter
-* milestones belong
-* memory and meaning live
+> *What did it actually feel like to make this project over time?*
 
----
+It turns raw session data into a legible story — revealing momentum, drift, turning points, and moments that genuinely mattered.
 
-### 🧩 This Is a Separate View (Swipe / Tab)
-
-This is **not** a dashboard panel.
-It’s a destination.
-
-Think:
-
-> “I want to *remember* what happened here.”
+This view is designed primarily for **future-you**.
 
 ---
 
-### 📖 The Visual Concept — *Project Story Timeline*
+## Core Philosophy
 
-A **horizontal timeline**, read left → right, like a book.
+ProjectStoryView is governed by a single rule:
 
-**Structure:**
+> **Nothing appears here unless it helps future-you remember or reckon.**
 
-* **X-axis:** Time (weeks or days, depending on zoom)
-* **Y-axis:** Project phases (Draft 1, Draft 2, Edit, Polish, etc.)
-* **Bands:**
+This is a read-only space. A place to witness history, not rewrite it.
 
-  * Show active periods within each phase
-  * Gaps are meaningful and visible
-
-**Milestones:**
-
-* ⭐ Star markers placed on the timeline
-* Optional short labels
-* Simple native tooltip on hover for milestone text
-
-**Sessions:**
-
-* Implicit via band presence or subtle density
-* No dot spam
-* No micromanagement of duration
+It should feel closer to opening a book than opening a dashboard.
 
 ---
 
-### 🧪 Build This in Tiny Steps
+## What ProjectStoryView Is (and Is Not)
 
-**Step 1:**
-Render a horizontal timeline for one project with time only.
+### It *is*:
 
-**Step 2:**
-Add phase rows (static, no data yet).
+* A narrative representation of a single project
+* A chapter-based view of creative effort
+* A place where drift and flow are visible without judgement
+* A long-form, reflective surface
 
-**Step 3:**
-Fill bands where sessions exist.
+### It is *not*:
 
-**Step 4:**
-Overlay milestone stars (no labels at first).
-
-**Step 5:**
-Add tooltips / short labels once spacing is proven.
-
-Each step should compile, render, and *feel useful* on its own.
+* A productivity report
+* A configuration screen
+* A real-time coaching interface
+* A place for micro-optimisation or editing
 
 ---
 
-## 🎭 Emotional Contract (Important)
+## Entry Point & Placement
 
-### Focus Map Should Feel:
+ProjectStoryView replaces the **main content area** when a project is selected. It is accessed via the Projects tab, by selecting a button on a project's row.
 
-* Neutral
-* Observational
-* Slightly sobering, but kind
+* The sidebar remains for navigation
+* Selecting a project transitions the app into its story
+* No new top-level tabs are introduced
 
-### Project Story Should Feel:
-
-* Personal
-* Celebratory
-* Memory-like, not analytical
-
-If either view starts to feel stressful, it’s doing the wrong job.
+This reinforces the idea that you are *entering* a project, not viewing a report about it.
 
 ---
 
-## 🎯 Success Indicators (Reframed)
+## Visual Structure
 
-### Behavioural
+### Overall Layout
 
-* Users glance at the Focus Map without needing explanation
-* Users linger in the Project Story view
-* Users say “oh yeah… that’s when that happened”
+* Full-width, scrollable vertical timeline
+* Chronological from first recorded session to most recent (or archive point)
+* Visual at-a-glance feeling of seeing the journey a project, while more details tell the story
 
-### Emotional
+### Timeline Elements
 
-* Pride without pressure
-* Insight without judgement
-* Motivation without gamification
+#### 1. Project Header
 
----
+* Project name, emoji, colour
+* Project start date
 
-## 🧱 What We Are *Not* Doing (Yet)
-
-* No “ultimate yearly everything view”
-* No combining activities, phases, milestones, and stats in one surface
-* No cleverness that can’t be read in under 5 seconds
-
-This plan explicitly resists ambition creep.
+This anchors the story.
 
 ---
 
-## 🧠 Final Framing (Keep This)
+#### 2. Phases (Chapter Markers)
 
-**Yearly Dashboard:**
+Phases are the primary narrative unit.
 
-> *“How did my year feel?”*
+Each phase appears as a clear chapter break with:
 
-**Project Story View:**
+* Phase name or identifier
+* Date range (from first session logged with PhaseID to last), like a vertical gannt chart almost
 
-> *“What did I actually build?”*
+Phases structure memory. Sessions do not.
 
-That separation is the spine of the product now.
+---
+
+#### 3. Sessions (Implied, Not Exhaustive)
+
+Sessions are represented as **density**, not rows.
+
+* Grouped visually within phases
+* Density implies momentum
+* Gaps imply drift
+
+Individual sessions are not the focus — their *pattern* is.
+
+---
+
+#### 4. Milestones
+
+Milestones are rare, deliberate markers.
+
+* Represented visually with a star or equivalent icon
+* Drawn from the `isMilestone` boolean on sessions, using `action` string
+* Signal moments that *mattered*, not just moments that happened
+
+Milestones should feel canonised.
+
+---
+
+#### 5. Drift & Flow
+
+Drift and flow are not labelled explicitly.
+
+They are inferred visually through:
+
+* Gaps in time
+* Changes in session density
+* Shifts in phase structure
+
+This avoids judgement while still enabling reckoning.
+
+---
+
+## Interaction Rules
+
+* Read-only
+* No inline editing
+* No sorting, filtering, or reordering
+* Minimal controls
+
+Editing belongs elsewhere. This view exists to protect history.
+
+---
+
+## Data Sources & Architecture
+
+ProjectStoryView introduces **no new persistent data**.
+
+It is a pure read-layer built from existing sources:
+
+* `YYYY-data.csv` files
+
+  * project
+  * startDate / endDate
+  * duration
+  * phaseID
+  * action
+  * mood
+  * isMilestone
+
+* `projects.json`
+
+  * project metadata (name, colour, emoji, archive state)
+
+All narrative structure is **derived**, not stored.
+
+---
+
+## View Model Responsibility
+
+A dedicated `ProjectStoryViewModel` is responsible for:
+
+* Loading all sessions for a project
+* Sorting chronologically
+* Grouping by phaseID
+* Inferring:
+
+  * phase spans
+  * session density
+  * temporal gaps
+  * milestone positions
+
+No mutations. No writes.
+
+---
+
+## Emotional Design Goals
+
+When viewing ProjectStoryView, the user should:
+
+* Feel the weight of time
+* Notice patterns they had forgotten
+* Experience mild discomfort at drift
+* Feel pride at momentum and completion
+* Sense clear chapters instead of blur
+
+If the view feels quiet, serious, or slightly confronting — it is working.
+
+---
+
+## Long-Term Intention
+
+If Juju works perfectly, ProjectStoryView becomes the place you visit *after* a project is done — not while it’s being optimised.
+
+It is the proof that the chapter existed.
+
+And that it mattered.
