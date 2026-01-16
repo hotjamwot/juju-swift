@@ -10,7 +10,6 @@ public struct SessionRecord: Identifiable, Codable {
     public let projectPhaseID: String?
     public let action: String?
     public let isMilestone: Bool
-    public let milestoneText: String?
     public let notes: String
     public let mood: Int?
     
@@ -23,7 +22,6 @@ public struct SessionRecord: Identifiable, Codable {
         projectPhaseID: String? = nil,
         action: String? = nil,
         isMilestone: Bool = false,
-        milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
     ) {
@@ -35,7 +33,6 @@ public struct SessionRecord: Identifiable, Codable {
         self.projectPhaseID = projectPhaseID
         self.action = action
         self.isMilestone = isMilestone
-        self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood
     }
@@ -58,7 +55,6 @@ struct SessionData {
     let projectPhaseID: String?
     let action: String?
     let isMilestone: Bool
-    let milestoneText: String?
     let notes: String
     let mood: Int?
     
@@ -74,7 +70,6 @@ struct SessionData {
         projectPhaseID: String? = nil,
         action: String? = nil,
         isMilestone: Bool = false,
-        milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
     ) {
@@ -85,7 +80,6 @@ struct SessionData {
         self.projectPhaseID = projectPhaseID
         self.action = action
         self.isMilestone = isMilestone
-        self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood
     }
@@ -99,7 +93,6 @@ struct SessionData {
         projectPhaseID: String? = nil,
         action: String? = nil,
         isMilestone: Bool = false,
-        milestoneText: String? = nil,
         notes: String = "",
         mood: Int? = nil
     ) {
@@ -110,7 +103,6 @@ struct SessionData {
         self.projectPhaseID = projectPhaseID
         self.action = action
         self.isMilestone = isMilestone
-        self.milestoneText = milestoneText
         self.notes = notes
         self.mood = mood
     }

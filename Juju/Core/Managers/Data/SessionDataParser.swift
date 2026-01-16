@@ -81,7 +81,6 @@ class SessionDataParser {
                 let projectPhaseID = columnIndex["project_phase_id"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let action = columnIndex["action"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let isMilestone = columnIndex["is_milestone"].map { parseBool(safeFields[$0]) } ?? false
-                let milestoneText = columnIndex["milestone_text"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let notes = columnIndex["notes"].map { cleanField(safeFields[$0]) } ?? ""
                 let mood = columnIndex["mood"].flatMap { parseMood(safeFields[$0]) }
                 
@@ -94,7 +93,6 @@ class SessionDataParser {
                     projectPhaseID: projectPhaseID,
                     action: action,
                     isMilestone: isMilestone,
-                    milestoneText: milestoneText,
                     notes: notes,
                     mood: mood
                 )
@@ -130,7 +128,6 @@ class SessionDataParser {
                 let projectPhaseID = columnIndex["project_phase_id"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let action = columnIndex["action"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let isMilestone = columnIndex["is_milestone"].map { parseBool(safeFields[$0]) } ?? false
-                let milestoneText = columnIndex["milestone_text"].flatMap { cleanField(safeFields[$0]).nilIfEmpty }
                 let notes = columnIndex["notes"].map { cleanField(safeFields[$0]) } ?? ""
                 let mood = columnIndex["mood"].flatMap { parseMood(safeFields[$0]) }
                 
@@ -143,7 +140,6 @@ class SessionDataParser {
                     projectPhaseID: projectPhaseID,
                     action: action,
                     isMilestone: isMilestone,
-                    milestoneText: milestoneText,
                     notes: notes,
                     mood: mood
                 )
@@ -212,9 +208,6 @@ class SessionDataParser {
                 let isMilestone = columnIndex["is_milestone"].map { idx in
                     idx < fieldCount ? parseBool(fields[idx]) : false
                 } ?? false
-                let milestoneText = columnIndex["milestone_text"].flatMap { idx in
-                    idx < fieldCount ? cleanField(fields[idx]).nilIfEmpty : nil
-                }
                 let notes = columnIndex["notes"].flatMap { idx in
                     idx < fieldCount ? cleanField(fields[idx]) : nil
                 } ?? ""
@@ -231,7 +224,6 @@ class SessionDataParser {
                     projectPhaseID: projectPhaseID,
                     action: action,
                     isMilestone: isMilestone,
-                    milestoneText: milestoneText,
                     notes: notes,
                     mood: mood
                 )
@@ -256,7 +248,6 @@ class SessionDataParser {
                 
                 let activityTypeIdx = columnIndex["activity_type_id"]
                 let projectPhaseIdx = columnIndex["project_phase_id"]
-                let milestoneTextIdx = columnIndex["milestone_text"]
                 let notesIdx = columnIndex["notes"]
                 let moodIdx = columnIndex["mood"]
                 
@@ -272,9 +263,6 @@ class SessionDataParser {
                 let isMilestone = columnIndex["is_milestone"].map { idx in
                     idx < fieldCount ? parseBool(fields[idx]) : false
                 } ?? false
-                let milestoneText = milestoneTextIdx.flatMap { idx in
-                    idx < fieldCount ? cleanField(fields[idx]).nilIfEmpty : nil
-                }
                 let notes = notesIdx.flatMap { idx in
                     idx < fieldCount ? cleanField(fields[idx]) : nil
                 } ?? ""
@@ -298,7 +286,6 @@ class SessionDataParser {
                     projectPhaseID: projectPhaseID,
                     action: action,
                     isMilestone: isMilestone,
-                    milestoneText: milestoneText,
                     notes: notes,
                     mood: mood
                 )
@@ -380,36 +367,32 @@ class SessionDataParser {
                 let projectPhaseID: String?
                 let action: String?
                 let isMilestone: Bool
-                let milestoneText: String?
                 let notes: String
                 let mood: Int?
                 
                 if hasNewFields {
                     if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
-                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
                         activityTypeID = cleanField(safeFields[5]).nilIfEmpty // activity_type_id is at index 5
                         projectPhaseID = cleanField(safeFields[6]).nilIfEmpty // project_phase_id is at index 6
-                        action = nil
-                        isMilestone = false
-                        milestoneText = cleanField(safeFields[7]).nilIfEmpty // milestone_text is at index 7
-                        notes = cleanField(safeFields[8]) // notes is at index 8
-                        mood = parseMood(safeFields[9]) // mood is at index 9
+                        action = cleanField(safeFields[7]).nilIfEmpty // action is at index 7
+                        isMilestone = parseBool(safeFields[8]) // is_milestone is at index 8
+                        notes = cleanField(safeFields[9]) // notes is at index 9
+                        mood = parseMood(safeFields[10]) // mood is at index 10
                     } else {
-                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
                         activityTypeID = cleanField(safeFields[4]).nilIfEmpty // activity_type_id is at index 4
                         projectPhaseID = cleanField(safeFields[5]).nilIfEmpty // project_phase_id is at index 5
-                        action = nil
-                        isMilestone = false
-                        milestoneText = cleanField(safeFields[6]).nilIfEmpty // milestone_text is at index 6
-                        notes = cleanField(safeFields[7]) // notes is at index 7
-                        mood = parseMood(safeFields[8]) // mood is at index 8
+                        action = cleanField(safeFields[6]).nilIfEmpty // action is at index 6
+                        isMilestone = parseBool(safeFields[7]) // is_milestone is at index 7
+                        notes = cleanField(safeFields[8]) // notes is at index 8
+                        mood = parseMood(safeFields[9]) // mood is at index 9
                     }
                 } else {
                     activityTypeID = nil
                     projectPhaseID = nil
                     action = nil
                     isMilestone = false
-                    milestoneText = nil
                     notes = cleanField(safeFields.count > 4 ? safeFields[4] : "")
                     mood = parseMood(safeFields.count > 5 ? safeFields[5] : "")
                 }
@@ -421,7 +404,8 @@ class SessionDataParser {
                     projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
-                    milestoneText: milestoneText,
+                    action: action,
+                    isMilestone: isMilestone,
                     notes: notes,
                     mood: mood
                 )
@@ -453,11 +437,10 @@ class SessionDataParser {
                 
                 let activityTypeID = hasNewFields ? cleanField(safeFields[7]).nilIfEmpty : nil
                 let projectPhaseID = hasNewFields ? cleanField(safeFields[8]).nilIfEmpty : nil
-                let action: String? = nil
-                let isMilestone: Bool = false
-                let milestoneText = hasNewFields ? cleanField(safeFields[9]).nilIfEmpty : nil
-                let notes = cleanField(hasNewFields ? safeFields[10] : safeFields[6])
-                let mood = parseMood(hasNewFields ? safeFields[11] : safeFields[7])
+                let action = hasNewFields ? cleanField(safeFields[6]).nilIfEmpty : nil
+                let isMilestone = hasNewFields ? parseBool(safeFields[7]) : false
+                let notes = cleanField(hasNewFields ? safeFields[9] : safeFields[6])
+                let mood = parseMood(hasNewFields ? safeFields[10] : safeFields[7])
                 
                 let record = SessionRecord(
                     id: id,
@@ -468,7 +451,6 @@ class SessionDataParser {
                     projectPhaseID: projectPhaseID,
                     action: action,
                     isMilestone: isMilestone,
-                    milestoneText: milestoneText,
                     notes: notes,
                     mood: mood
                 )
@@ -625,14 +607,13 @@ class SessionDataParser {
     // MARK: - Session Record to CSV Conversion
     
     func convertSessionsToCSV(_ sessions: [SessionRecord]) -> String {
-        let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood\n"
+        let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood\n"
         let rows = sessions.map { s in
             let projectID = csvEscape(s.projectID)
             let activityTypeID = s.activityTypeID.map { csvEscape($0) } ?? ""
             let projectPhaseID = s.projectPhaseID.map { csvEscape($0) } ?? ""
             let action = s.action.map { csvEscape($0) } ?? ""
             let isMilestone = s.isMilestone ? "1" : "0"
-            let milestoneText = s.milestoneText.map { csvEscape($0) } ?? ""
             let notes = csvEscape(s.notes)
             let moodStr = s.mood.map(String.init) ?? ""
             
@@ -641,8 +622,8 @@ class SessionDataParser {
             let startDateStr = dateFormatter.string(from: s.startDate)
             let endDateStr = dateFormatter.string(from: s.endDate)
             
-            // New field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood
-            return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(action),\(isMilestone),\(milestoneText),\(notes),\(moodStr)"
+            // New field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
+            return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(action),\(isMilestone),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"
     }
@@ -796,30 +777,34 @@ class SessionDataParser {
                 
                 let activityTypeID: String?
                 let projectPhaseID: String?
-                let milestoneText: String?
+                let action: String?
+                let isMilestone: Bool
                 let notes: String
                 let mood: Int?
                 
                 if hasNewFields {
                     if headerFields.contains("project") && headerFields.firstIndex(of: "project") == 3 {
-                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        // Legacy format: id,start_date,end_date,project,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
                         activityTypeID = cleanField(fields[5]).nilIfEmpty // activity_type_id is at index 5
                         projectPhaseID = cleanField(fields[6]).nilIfEmpty // project_phase_id is at index 6
-                        milestoneText = cleanField(fields[7]).nilIfEmpty // milestone_text is at index 7
-                        notes = cleanField(fields[8]) // notes is at index 8
-                        mood = parseMood(fields[9]) // mood is at index 9
+                        action = cleanField(fields[7]).nilIfEmpty // action is at index 7
+                        isMilestone = parseBool(fields[8]) // is_milestone is at index 8
+                        notes = cleanField(fields[9]) // notes is at index 9
+                        mood = parseMood(fields[10]) // mood is at index 10
                     } else {
-                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,milestone_text,notes,mood
+                        // New format: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
                         activityTypeID = cleanField(fields[4]).nilIfEmpty // activity_type_id is at index 4
                         projectPhaseID = cleanField(fields[5]).nilIfEmpty // project_phase_id is at index 5
-                        milestoneText = cleanField(fields[6]).nilIfEmpty // milestone_text is at index 6
-                        notes = cleanField(fields[7]) // notes is at index 7
-                        mood = parseMood(fields[8]) // mood is at index 8
+                        action = cleanField(fields[6]).nilIfEmpty // action is at index 6
+                        isMilestone = parseBool(fields[7]) // is_milestone is at index 7
+                        notes = cleanField(fields[8]) // notes is at index 8
+                        mood = parseMood(fields[9]) // mood is at index 9
                     }
                 } else {
                     activityTypeID = nil
                     projectPhaseID = nil
-                    milestoneText = nil
+                    action = nil
+                    isMilestone = false
                     notes = cleanField(fieldCount > 4 ? fields[4] : "")
                     mood = parseMood(fieldCount > 5 ? fields[5] : "")
                 }
@@ -831,7 +816,8 @@ class SessionDataParser {
                     projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
-                    milestoneText: milestoneText,
+                    action: action,
+                    isMilestone: isMilestone,
                     notes: notes,
                     mood: mood
                 )
@@ -857,10 +843,11 @@ class SessionDataParser {
                 
                 let activityTypeID = (hasNewFields && fieldCount > 7) ? cleanField(fields[7]).nilIfEmpty : nil
                 let projectPhaseID = (hasNewFields && fieldCount > 8) ? cleanField(fields[8]).nilIfEmpty : nil
-                let milestoneText = (hasNewFields && fieldCount > 9) ? cleanField(fields[9]).nilIfEmpty : nil
+                let action = (hasNewFields && fieldCount > 6) ? cleanField(fields[6]).nilIfEmpty : nil
+                let isMilestone = (hasNewFields && fieldCount > 7) ? parseBool(fields[7]) : false
                 
-                let notesIndex = hasNewFields ? 10 : 6
-                let moodIndex = hasNewFields ? 11 : 7
+                let notesIndex = hasNewFields ? 9 : 6
+                let moodIndex = hasNewFields ? 10 : 7
                 let notes = (notesIndex < fieldCount) ? cleanField(fields[notesIndex]) : ""
                 let mood = (moodIndex < fieldCount) ? parseMood(fields[moodIndex]) : nil
                 
@@ -876,7 +863,8 @@ class SessionDataParser {
                     projectID: projectID,
                     activityTypeID: activityTypeID,
                     projectPhaseID: projectPhaseID,
-                    milestoneText: milestoneText,
+                    action: action,
+                    isMilestone: isMilestone,
                     notes: notes,
                     mood: mood
                 )

@@ -230,9 +230,9 @@ final class NarrativeEngine: ObservableObject {
     
     private func detectRecentMilestone(from sessions: [SessionRecord]) -> Milestone? {
         guard let oneWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) else { return nil }
-        let recent = sessions.filter { $0.startDate >= oneWeekAgo && !($0.milestoneText?.isEmpty ?? true) }
+        let recent = sessions.filter { $0.startDate >= oneWeekAgo && $0.isMilestone && !($0.action?.isEmpty ?? true) }
             .sorted { $0.startDate > $1.startDate }
-        guard let session = recent.first, let text = session.milestoneText else { return nil }
+        guard let session = recent.first, let text = session.action else { return nil }
         let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
         let project = projectsViewModel.projects.first { $0.id == session.projectID }
         return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)
@@ -242,10 +242,10 @@ final class NarrativeEngine: ObservableObject {
         let calendar = Calendar.current
         guard let interval = calendar.dateInterval(of: .weekOfYear, for: Date()) else { return [] }
         return sessionManager.allSessions
-            .filter { interval.contains($0.startDate) && !($0.milestoneText?.isEmpty ?? true) }
+            .filter { interval.contains($0.startDate) && $0.isMilestone && !($0.action?.isEmpty ?? true) }
             .sorted { $0.startDate > $1.startDate }
             .compactMap { session -> Milestone? in
-                guard let text = session.milestoneText else { return nil }
+                guard let text = session.action else { return nil }
                 let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
                 return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)
@@ -254,7 +254,7 @@ final class NarrativeEngine: ObservableObject {
     
     private func detectMilestones(in sessions: [SessionRecord]) -> [Milestone] {
         sessions.compactMap { session -> Milestone? in
-            guard let text = session.milestoneText else { return nil }
+            guard session.isMilestone, let text = session.action else { return nil }
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
             let project = projectsViewModel.projects.first { $0.id == session.projectID }
             return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)

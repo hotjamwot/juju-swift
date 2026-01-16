@@ -841,7 +841,6 @@ struct SessionsRowView: View {
             projectPhaseID: newPhaseID,
             action: currentSession.action,
             isMilestone: currentSession.isMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: project.id
         )
         
@@ -914,7 +913,6 @@ struct SessionsRowView: View {
             projectPhaseID: phase.id,
             action: currentSession.action,
             isMilestone: currentSession.isMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
         
@@ -958,7 +956,6 @@ struct SessionsRowView: View {
             projectPhaseID: currentSession.projectPhaseID,
             action: currentSession.action,
             isMilestone: currentSession.isMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
         
@@ -1025,7 +1022,6 @@ struct SessionsRowView: View {
             projectPhaseID: currentSession.projectPhaseID,
             action: currentSession.action,
             isMilestone: currentSession.isMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
         
@@ -1062,7 +1058,6 @@ struct SessionsRowView: View {
             projectPhaseID: currentSession.projectPhaseID,
             action: currentSession.action,
             isMilestone: currentSession.isMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
         
@@ -1102,7 +1097,6 @@ struct SessionsRowView: View {
             projectPhaseID: currentSession.projectPhaseID,
             action: action,
             isMilestone: sessionIsMilestone,
-            milestoneText: currentSession.milestoneText,
             projectID: currentSession.projectID
         )
         
@@ -1263,7 +1257,6 @@ struct SessionsRowView_Previews: PreviewProvider {
                 projectID: "1",
                 activityTypeID: "writing",
                 projectPhaseID: "phase-1",
-                milestoneText: "First Draft Complete",
                 notes: "Quick meeting about the new features.",
                 mood: 7
             ),

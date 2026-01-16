@@ -494,77 +494,6 @@ struct PhaseSelectionPopover: View {
     }
 }
 
-// MARK: - Milestone Selection Popover
-/// Popover view for editing milestone text with a text field and save functionality
-struct MilestoneSelectionPopover: View {
-    let currentMilestone: String?
-    let onMilestoneChanged: (String?) -> Void
-    let onDismiss: () -> Void
-    
-    @State private var milestoneText: String
-    @FocusState private var isTextFieldFocused: Bool
-    
-    init(currentMilestone: String?, onMilestoneChanged: @escaping (String?) -> Void, onDismiss: @escaping () -> Void) {
-        self.currentMilestone = currentMilestone
-        self.onMilestoneChanged = onMilestoneChanged
-        self.onDismiss = onDismiss
-        self._milestoneText = State(initialValue: currentMilestone ?? "")
-    }
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            // Title
-            Text("Edit Milestone")
-                .font(Theme.Fonts.body.weight(.semibold))
-                .foregroundColor(Theme.Colors.textPrimary)
-            
-            // Text field
-            TextField("Enter milestone text", text: $milestoneText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .focused($isTextFieldFocused)
-                .frame(minWidth: 200, maxWidth: 280)
-                .onSubmit {
-                    saveMilestone()
-                }
-            
-            // Buttons
-            HStack(spacing: 8) {
-                Button("Cancel") {
-                    cancelMilestone()
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                
-                Button("Save") {
-                    saveMilestone()
-                }
-                .buttonStyle(PrimaryButtonStyle())
-            }
-        }
-        .padding(16)
-        .frame(minWidth: 240, maxWidth: 320)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        .onAppear {
-            isTextFieldFocused = true
-        }
-        .onDisappear {
-            // Clear focus when popover disappears to prevent blue outline
-            isTextFieldFocused = false
-        }
-    }
-    
-    private func saveMilestone() {
-        let trimmedText = milestoneText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let milestoneToSave = trimmedText.isEmpty ? "" : trimmedText
-        onMilestoneChanged(milestoneToSave)
-        onDismiss()
-    }
-    
-    private func cancelMilestone() {
-        onDismiss()
-    }
-}
-
 // MARK: - Action Selection Popover
 /// Popover for editing session action text
 /// Allows users to enter a single-line action description for a session
@@ -907,12 +836,6 @@ struct InlineSelectionPopover_Previews: PreviewProvider {
             MoodSelectionPopover(
                 currentMood: 7,
                 onMoodSelected: { _ in },
-                onDismiss: {}
-            )
-            
-            MilestoneSelectionPopover(
-                currentMilestone: "First Draft Complete",
-                onMilestoneChanged: { _ in },
                 onDismiss: {}
             )
             

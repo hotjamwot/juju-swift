@@ -144,8 +144,8 @@ class MenuManager {
                     projectID: projectID,
                     projectName: projectName,
                     projects: self.projects
-                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, milestoneText: String?, action: String, isMilestone: Bool) in
-                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Milestone: \(milestoneText ?? "nil") Action: \(action) IsMilestone: \(isMilestone)")
+                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, action: String, isMilestone: Bool) in
+                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Action: \(action) IsMilestone: \(isMilestone)")
                     // Only end the session if notes are provided (not empty) and action is provided
                     if let note = note, !note.isEmpty, !action.isEmpty {
                         self?.sessionManager.endSession(
@@ -153,9 +153,8 @@ class MenuManager {
                             mood: mood,
                             activityTypeID: activityTypeID,
                             projectPhaseID: projectPhaseID,
-                            milestoneText: milestoneText, // Deprecated, but pass for transition
-                            action: action,             // New parameter
-                            isMilestone: isMilestone   // New parameter
+                            action: action,
+                            isMilestone: isMilestone
                         )
                         self?.appDelegate?.updateMenuBarIcon(isActive: false)
                         self?.refreshMenu()

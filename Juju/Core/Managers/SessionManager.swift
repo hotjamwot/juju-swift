@@ -59,7 +59,6 @@ class SessionManager: ObservableObject {
                 projectPhaseID: currentProjectPhaseID,
                 action: nil, // Active session doesn't have a final action yet
                 isMilestone: false, // Active session isn't a milestone until saved
-                milestoneText: nil,
                 notes: "",
                 mood: nil
             )
@@ -229,7 +228,6 @@ class SessionManager: ObservableObject {
     ///   - mood: Optional mood rating 0-10 (defaults to nil)
     ///   - activityTypeID: Optional activity type identifier (defaults to nil)
     ///   - projectPhaseID: Optional project phase identifier (defaults to nil)
-    ///   - milestoneText: Optional milestone description (defaults to nil) - Deprecated
     ///   - action: Optional session action (defaults to nil)
     ///   - isMilestone: Boolean indicating if session is a milestone (defaults to false)
     ///   - completion: Callback executed when operation completes (true = success, false = failure)
@@ -238,9 +236,8 @@ class SessionManager: ObservableObject {
         mood: Int? = nil,
         activityTypeID: String? = nil,
         projectPhaseID: String? = nil,
-        milestoneText: String? = nil, // Deprecated
-        action: String? = nil, // New field, made optional to match other fields
-        isMilestone: Bool = false, // New field
+        action: String? = nil,
+        isMilestone: Bool = false,
         completion: ((Bool) -> Void)? = nil
     ) {
         guard isSessionActive, let projectName = currentProjectName, let startTime = sessionStartTime else {
@@ -256,12 +253,7 @@ class SessionManager: ObservableObject {
             return
         }
         
-        // Determine final action and isMilestone, prioritizing new fields
-        // with fallback for backward compatibility during deprecation.
-        let finalAction = action ?? milestoneText
-        let finalIsMilestone = isMilestone || (milestoneText != nil && action == nil)
-        
-        saveSessionToCSV(startTime, endTime, projectID, activityTypeID, projectPhaseID, action: finalAction, isMilestone: finalIsMilestone, milestoneText: milestoneText, notes: notes, mood: mood) { [weak self] success in
+        saveSessionToCSV(startTime, endTime, projectID, activityTypeID, projectPhaseID, action: action, isMilestone: isMilestone, notes: notes, mood: mood) { [weak self] success in
             guard let self = self else { 
                 completion?(false)
                 return 
@@ -513,16 +505,16 @@ class SessionManager: ObservableObject {
         var updated = session
         switch field {
         case "notes": 
-            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: value, mood: session.mood)
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, notes: value, mood: session.mood)
         case "mood": 
             if let m = Int(value) {
-                updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: session.notes, mood: m)
+                updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: session.isMilestone, notes: session.notes, mood: m)
             }
         case "action":
-            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: value, isMilestone: session.isMilestone, milestoneText: session.milestoneText, notes: session.notes, mood: session.mood)
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: value, isMilestone: session.isMilestone, notes: session.notes, mood: session.mood)
         case "is_milestone":
             let boolValue = (value.lowercased() == "true" || value == "1")
-            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: boolValue, milestoneText: session.milestoneText, notes: session.notes, mood: session.mood)
+            updated = SessionRecord(id: session.id, startDate: session.startDate, endDate: session.endDate, projectID: session.projectID, activityTypeID: session.activityTypeID, projectPhaseID: session.projectPhaseID, action: session.action, isMilestone: boolValue, notes: session.notes, mood: session.mood)
         default: return false
         }
         if let idx = allSessions.firstIndex(where: { $0.id == id }) {
@@ -572,10 +564,9 @@ class SessionManager: ObservableObject {
     ///   - projectPhaseID: Project phase identifier (optional)
     ///   - action: Session action (optional)
     ///   - isMilestone: Boolean indicating if session is a milestone (optional)
-    ///   - milestoneText: Milestone description (optional) - Deprecated
     ///   - projectID: Project identifier (required for new sessions)
     /// - Returns: True if update successful, false otherwise
-    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool? = nil, milestoneText: String? = nil, projectID: String? = nil) -> Bool {
+    func updateSessionFull(id: String, date: String, startTime: String, endTime: String, projectName: String, notes: String, mood: Int?, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool? = nil, projectID: String? = nil) -> Bool {
         // Find existing session to update
         guard let session = allSessions.first(where: { $0.id == id }) else { return false }
 
@@ -609,7 +600,6 @@ class SessionManager: ObservableObject {
             projectPhaseID: projectPhaseID,
             action: action ?? session.action,
             isMilestone: isMilestone ?? session.isMilestone,
-            milestoneText: milestoneText ?? session.milestoneText,
             notes: notes,
             mood: mood
         )
@@ -757,7 +747,7 @@ class SessionManager: ObservableObject {
     
     // MARK: - CSV Operations
     
-    private func saveSessionToCSV(_ startTime: Date, _ endTime: Date, _ projectID: String, _ activityTypeID: String?, _ projectPhaseID: String?, action: String?, isMilestone: Bool, milestoneText: String?, notes: String, mood: Int?, completion: @escaping (Bool) -> Void) {
+    private func saveSessionToCSV(_ startTime: Date, _ endTime: Date, _ projectID: String, _ activityTypeID: String?, _ projectPhaseID: String?, action: String?, isMilestone: Bool, notes: String, mood: Int?, completion: @escaping (Bool) -> Void) {
         // Format the CSV row using full Date objects (new format)
         let dateTimeFormatter = DateFormatter()
         dateTimeFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -773,10 +763,9 @@ class SessionManager: ObservableObject {
         let projectPhaseID_Escaped = projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
         let actionText_Escaped = action.map { csvManager.csvEscape($0) } ?? ""
         let isMilestoneStr = isMilestone ? "1" : "0" // CSV stores boolean as 0 or 1
-        let milestoneText_Escaped = milestoneText.map { csvManager.csvEscape($0) } ?? ""
         
-        // NEW FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,milestone_text,notes,mood
-        let csvRow = "\(id),\(startDateStr),\(endDateStr),\(projectID_Escaped),\(activityTypeID_Escaped),\(projectPhaseID_Escaped),\(actionText_Escaped),\(isMilestoneStr),\(milestoneText_Escaped),\(csvManager.csvEscape(notes)),\(moodStr)\n"
+        // NEW FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
+        let csvRow = "\(id),\(startDateStr),\(endDateStr),\(projectID_Escaped),\(activityTypeID_Escaped),\(projectPhaseID_Escaped),\(actionText_Escaped),\(isMilestoneStr),\(csvManager.csvEscape(notes)),\(moodStr)\n"
         
         // Determine year from session start date
         let year = Calendar.current.component(.year, from: startTime)

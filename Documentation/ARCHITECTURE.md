@@ -117,9 +117,8 @@ UI Components → ViewModels → Managers → File I/O
 | `projectID` | String? | ⚠️ | Required for new sessions |
 | `activityTypeID` | String? | ❌ | Activity type identifier |
 | `projectPhaseID` | String? | ❌ | Project phase identifier |
-| `action` | String? | ❌ | Session action or description. Replaces `milestoneText` for capturing the main achievement or task. |
+| `action` | String? | ❌ | Session action or description - captures the main achievement or task. |
 | `isMilestone` | Bool | ✅ | Whether the session is marked as a significant milestone or achievement. |
-| `milestoneText` | String? | ❌ | **DEPRECATED**: Use `action` and `isMilestone` instead. Retained for backward compatibility during data migration. |
 | `notes` | String | ✅ | Session notes |
 | `mood` | Int? | ❌ | Mood rating (0-10) |
 
@@ -127,9 +126,9 @@ UI Components → ViewModels → Managers → File I/O
 
 #### SessionRecord Initializers
 
-**Modern (preferred):**
+**Constructor:**
 ```swift
-init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool = false, milestoneText: String? = nil, notes: String = "", mood: Int? = nil)
+init(id: String = UUID().uuidString, startDate: Date, endDate: Date, projectID: String, activityTypeID: String? = nil, projectPhaseID: String? = nil, action: String? = nil, isMilestone: Bool = false, notes: String = "", mood: Int? = nil)
 ```
 
 **Methods**: `overlaps(with interval: DateInterval) -> Bool` - checks date interval overlap
@@ -213,9 +212,8 @@ struct SessionData {
     let projectName: String
     let projectID: String
     let activityTypeID, projectPhaseID: String?
-    let milestoneText: String? // Deprecated
-    let action: String? // New field
-    let isMilestone: Bool // New field
+    let action: String?
+    let isMilestone: Bool
     let notes: String
 }
 ```
@@ -453,11 +451,10 @@ This flow ensures that `sessionManager.allSessions` serves as the single source 
 - **Data Consistency**: All inline edits maintain data integrity through centralized validation
 
 ### 6. **Action and Milestone Fields**
-- **Introduction**: Added `action: String?` and `isMilestone: Bool` to `SessionRecord` model.
+- **Purpose**: Capture session action/achievement (`action`) and mark significant sessions (`isMilestone`).
 - **UI Capture**: Implemented in `NotesModalView` with a text field for "Action" and a toggle for "Is Milestone".
 - **Data Flow**: Values flow through `NotesViewModel` to `NotesManager`, then to `MenuManager`, and finally to `SessionManager` for persistence.
-- **Deprecation**: `milestoneText: String?` is deprecated. New code should use `action` and `isMilestone`. Backward compatibility is maintained during the transition.
-- **CSV Persistence**: Updated CSV format and parsers to include `action` and `is_milestone` columns.
+- **CSV Persistence**: CSV format includes `action` and `is_milestone` columns.
 
 ### 7. **Helper Extensions Architecture**
 - **Purpose**: Provide reusable, focused utilities for common operations

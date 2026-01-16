@@ -182,7 +182,8 @@ init() {
                 mood: session.mood,
                 activityTypeID: session.activityTypeID,
                 projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText,
+                action: session.action,
+                isMilestone: session.isMilestone,
                 projectID: migrationTarget.id
             )
             
@@ -230,7 +231,8 @@ init() {
                 mood: session.mood,
                 activityTypeID: session.activityTypeID,
                 projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText,
+                action: session.action,
+                isMilestone: session.isMilestone,
                 projectID: targetProject.id
             )
             
@@ -304,7 +306,8 @@ init() {
                 mood: session.mood,
                 activityTypeID: session.activityTypeID,
                 projectPhaseID: session.projectPhaseID,
-                milestoneText: session.milestoneText,
+                action: session.action,
+                isMilestone: session.isMilestone,
                 projectID: migrationTarget.id
             )
             

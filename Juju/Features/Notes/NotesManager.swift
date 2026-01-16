@@ -20,7 +20,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?, String, Bool) -> Void // Added action, isMilestone
+        completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void // notes, mood, activityTypeID, projectPhaseID, action, isMilestone
     ) {
         // Ensure we're on main thread
         guard Thread.isMainThread else {
@@ -43,7 +43,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?, String, Bool) -> Void
+        completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
         // Clean up existing window if any
         if let existingWindow = hostingWindow {
@@ -103,15 +103,11 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             projectID: projectID,
             projectName: projectName,
             projects: projects
-        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, milestoneText, isMilestoneFromViewModel in
+        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
             guard let self = self else { return }
             
-            // NotesModalView is bound to notesViewModel.action and notesViewModel.isMilestone.
-            // So, notesViewModel.action will hold the current action text.
-            let actionToPass = self.notesViewModel.action
-            
             self.dismissNotes()
-            completion(notes, mood, activityTypeID, projectPhaseID, milestoneText, actionToPass, isMilestoneFromViewModel)
+            completion(notes, mood, activityTypeID, projectPhaseID, action, isMilestone)
         }
     }
     
@@ -161,7 +157,7 @@ extension NotesManager {
     func present(completion: @escaping (String, Int?) -> Void) {
         // For backward compatibility, use empty project info
         // The new action and isMilestone fields are not part of this legacy flow.
-        presentNotes(projectID: nil, projectName: nil, projects: []) { notes, mood, _, _, _, action, isMilestone in
+        presentNotes(projectID: nil, projectName: nil, projects: []) { notes, mood, _, _, action, isMilestone in
             // The legacy completion only expects notes and mood.
             // The other fields (including new action/isMilestone) are ignored here.
             completion(notes, mood)

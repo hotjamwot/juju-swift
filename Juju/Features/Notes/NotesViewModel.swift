@@ -10,7 +10,6 @@ class NotesViewModel: ObservableObject {
     // New fields for Activity Type and Phase
     @Published var selectedActivityTypeID: String? = nil
     @Published var selectedProjectPhaseID: String? = nil
-    @Published var milestoneText: String = "" // Deprecated, kept for now for smooth transition
     
     // New fields for Action and Milestone
     @Published var action: String = ""
@@ -73,7 +72,7 @@ class NotesViewModel: ObservableObject {
             .first { $0.id == activityTypeID }
     }
     
-    private var completion: ((String, Int?, String?, String?, String?, Bool) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, milestoneText, isMilestone
+    private var completion: ((String, Int?, String?, String?, String, Bool) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, action, isMilestone
     private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
     // MARK: - Presentation Management
@@ -82,7 +81,7 @@ class NotesViewModel: ObservableObject {
         projectID: String?,
         projectName: String?,
         projects: [Project],
-        completion: @escaping (String, Int?, String?, String?, String?, Bool) -> Void
+        completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
         self.currentProjectID = projectID
         self.currentProjectName = projectName
@@ -104,7 +103,6 @@ class NotesViewModel: ObservableObject {
     func resetContent() {
         notesText = ""
         mood = nil
-        milestoneText = "" // Deprecated
         action = ""
         isMilestone = false
         // Don't reset activityTypeID and projectPhaseID - they may have smart defaults
@@ -186,14 +184,13 @@ class NotesViewModel: ObservableObject {
     
     func saveNotes() {
         // Pass the new action and isMilestone to the completion handler
-        // milestoneText is deprecated but kept for transition. It's nil if empty.
-        completion?(notesText, mood, selectedActivityTypeID, selectedProjectPhaseID, milestoneText.isEmpty ? nil : milestoneText, isMilestone)
+        completion?(notesText, mood, selectedActivityTypeID, selectedProjectPhaseID, action, isMilestone)
         dismiss()
     }
     
     func cancelNotes() {
         // Pass nil/default for the new fields
-        completion?("", nil, nil, nil, nil, false)
+        completion?("", nil, nil, nil, "", false)
         dismiss()
     }
     
