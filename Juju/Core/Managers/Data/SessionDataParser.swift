@@ -622,7 +622,7 @@ class SessionDataParser {
             let startDateStr = dateFormatter.string(from: s.startDate)
             let endDateStr = dateFormatter.string(from: s.endDate)
             
-            // New field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
+            // Field order: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
             return "\(s.id),\(startDateStr),\(endDateStr),\(projectID),\(activityTypeID),\(projectPhaseID),\(action),\(isMilestone),\(notes),\(moodStr)"
         }
         return header + rows.joined(separator: "\n") + "\n"

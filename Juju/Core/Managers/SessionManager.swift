@@ -757,14 +757,14 @@ class SessionManager: ObservableObject {
         let endDateStr = dateTimeFormatter.string(from: endTime)
         let moodStr = mood.map { String($0) } ?? ""
         
-        // Build CSV row with NEW format (with action and is_milestone fields)
+        // Build CSV row with NEW format (with action and is_milestone fields, milestone_text removed)
         let projectID_Escaped = csvManager.csvEscape(projectID)
         let activityTypeID_Escaped = activityTypeID.map { csvManager.csvEscape($0) } ?? ""
         let projectPhaseID_Escaped = projectPhaseID.map { csvManager.csvEscape($0) } ?? ""
         let actionText_Escaped = action.map { csvManager.csvEscape($0) } ?? ""
         let isMilestoneStr = isMilestone ? "1" : "0" // CSV stores boolean as 0 or 1
         
-        // NEW FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
+        // FORMAT: id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood
         let csvRow = "\(id),\(startDateStr),\(endDateStr),\(projectID_Escaped),\(activityTypeID_Escaped),\(projectPhaseID_Escaped),\(actionText_Escaped),\(isMilestoneStr),\(csvManager.csvEscape(notes)),\(moodStr)\n"
         
         // Determine year from session start date
