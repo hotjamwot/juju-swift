@@ -1,379 +1,202 @@
-# AI Development Guide for Juju
+# AI Development Guide: Adding Features to Juju
 
-## 🤖 Quick Start
-
-**Architecture**: MVVM + Managers + SwiftUI
-**Data Flow**: UI → ViewModels → Managers → File I/O
-**Storage**: Local CSV/JSON files
-**Threading**: @MainActor for UI, async/await for background
-
-**Key Files**:
-- SessionManager: Session operations
-- ProjectManager: Project lifecycle
-- ChartDataPreparer: Dashboard data
-- Theme.swift: UI utilities
-
-**Navigation**:
-- [Common AI Tasks](#common-ai-tasks)
-- [Error Handling](#error-handling-patterns)
-- [Performance](#performance-best-practices)
-- [Testing](#testing-guidelines)
+**[AI_QUICK_REFERENCE]** Step-by-step feature development. For code patterns, see SWIFT_PATTERNS.md.
 
 ---
 
-## 🎯 When Adding New Features
+## 🎯 BEFORE STARTING
 
-### 1. Follow MVVM
+Read these in order:
+1. **ARCHITECTURE.md** - System design
+2. **SWIFT_PATTERNS.md** - Coding standards & threading
+3. **DATA_FLOW.yaml** - Component relationships
 
-Create ViewModel, avoid logic in Views.
+---
 
+## ✨ ADDING A NEW FEATURE
+
+### Step 1: Analyze Architecture
+- Where does this fit? (Which Manager?)
+- What data models?
+- File storage? (CSV or JSON?)
+
+### Step 2: Design Data Model
+- Add to ARCHITECTURE.md
+- Update DATA_FLOW.yaml if new component
+
+### Step 3: Implement Manager Methods
 ```swift
-class NewFeatureViewModel: ObservableObject {
-    @Published var data: [DataType] = []   
-    func loadData() async { /* Business logic */ }
+func featureOperation() async -> FeatureResult {
+    // 1. Validate
+    guard isValid else { return .failure }
+    
+    // 2. Perform work
+    let result = try performOperation()
+    
+    // 3. Persist
+    try await saveToStorage()
+    
+    // 4. Notify UI
+    NotificationCenter.default.post(name: .featureDidChange, object: nil)
+    
+    return .success(result)
 }
 ```
 
-### 2. Use Managers
-
-- Session data: SessionManager
-- Project data: ProjectManager
-- Validation: DataValidator
-- Notifications: NSNotificationCenter
-
-### 3. Data Consistency
-
-- Use projectID (projectName is legacy)
-- Validate with DataValidator
-- Handle notifications
-- Follow existing patterns
-
----
-
-## 🛠️ Modifying Data Models
-
-### 1. Update Docs
-
-- ARCHITECTURE.md: new data types
-- DATA_FLOW.yaml: new data_packet types
-- Maintain backward compatibility
-
-### 2. Add Validation
-
-```swift
-func validateNewModel(_ model: NewFeatureModel) -> ValidationResult { /* Validation logic */ }
-```
-
-### 3. Handle Migration
-
-- Support legacy data
-- Use existing migration patterns
-- Test with new/legacy data
-
----
-
-## 📊 Working with Sessions
-
-### 1. Use SessionManager
-
-```swift
-SessionManager.shared.startSession(for: "Project Name", projectID: "project-id")
-SessionManager.shared.endSession(notes: "Session notes", mood: 8)
-```
-
-### 2. Handle Project IDs
-
-```swift
-SessionManager.shared.startSession(for: "Project Name", projectID: "project-uuid")
-// Legacy support: SessionManager.shared.startSession(for: "Legacy Project Name")
-```
-
-### 3. Post Notifications
-
-```swift
-NotificationCenter.default.post(name: .sessionDidEnd, object: nil)
-```
-
-### 🗑️ Deleting Sessions
-```swift
-// Safe deletion - only removes specified session, preserves others
-SessionManager.shared.deleteSession(id: "session-id-to-delete")
-```
-
-### 4. Dashboard Data Loading
-
-When working with dashboard data, ensure that `DashboardRootView` (or a similar orchestrator) performs the initial full data load before specific dashboard views attempt to render.
-
-```swift
-// In DashboardRootView.swift (or similar orchestrator)
-.onAppear {
-    Task {
-        await sessionManager.loadAllSessions() // Populate allSessions first
-        // Subsequent views will now consume this populated data
-    }
-}
-```
-
-Individual dashboard views (e.g., `WeeklyDashboardView`, `YearlyDashboardView`) should then consume `sessionManager.allSessions` and pass it to their `ChartDataPreparer` instances. The `ChartDataPreparer` will handle filtering this complete dataset for the specific view.
-
-```swift
-// In a Dashboard View (e.g., WeeklyDashboardView)
-.onAppear {
-    Task {
-        await projectsViewModel.loadProjects()
-        // Pass ALL sessions to ChartDataPreparer; it will filter internally
-        chartDataPreparer.prepareWeeklyData(
-            sessions: sessionManager.allSessions, // All sessions are now loaded
-            projects: projectsViewModel.projects
-        )
-        narrativeEngine.generateWeeklyHeadline()
-    }
-}
-```
-
----
-
-## 🎨 Modifying UI
-
-### 1. Follow Theme
-
-```swift
-.padding(.horizontal, Theme.spacingMedium)
-.background(Theme.Colors.surface)
-.font(Theme.Fonts.body)
-.dashboardPadding()
-.chartPadding()
-.loadingOverlay(isLoading: isLoading)
-```
-
-### 2. State Management
-
-```swift
-@StateObject private var viewModel = NewFeatureViewModel()
-@State private var isEditing = false
-```
-
-### 3. Accessibility
-
-- Implement labels
-- Test light/dark mode
-- Use consistent spacing/typography
-
----
-
-## 🔄 Adding Logic
-
-### 1. Place in Managers
-
-```swift
-class SessionManager {
-    func calculateSessionMetrics() -> SessionMetrics { /* Business logic */ }
-}
-```
-
-### 2. Use @MainActor
-
+### Step 4: Create ViewModel
 ```swift
 @MainActor
-class DashboardViewModel: ObservableObject {
-    @Published var sessions: [SessionRecord] = []   
-    func updateSessions() { sessions = SessionManager.shared.allSessions }
+class FeatureViewModel: ObservableObject {
+    @Published var data: [FeatureModel] = []
+    
+    func load() async {
+        data = try await FeatureManager.shared.loadData()
+    }
 }
 ```
 
-### 3. Implement Validation
+### Step 5: Build UI (Pure Presentation)
+- Use ViewModel for state
+- Follow Theme styling
+- Add doc comments
 
+### Step 6: Handle Errors
 ```swift
-guard DataValidator.shared.validateSession(session).isValid else { return false }
-do { let result = try someOperation() } catch { ErrorHandler.shared.handleError(error, context: "ClassName.methodName") }
+do {
+    result = try await operation()
+} catch {
+    ErrorHandler.shared.handleError(error, context: "ClassName.methodName")
+}
 ```
+
+### Step 7: Post Notifications
+- Observers refresh automatically
+- Update cache invalidation
 
 ---
 
-## 🚨 Error Handling
+## 🐛 FIXING A BUG
 
-### 1. Use JujuError
+1. **Reproduce** - Write minimal test case
+2. **Root Cause** - Check error handling, threading, notifications
+3. **Fix** - Implement fix, not workaround
+4. **Verify** - Confirm fix, check for regressions
 
-```swift
-enum JujuError: Error {
-    case invalidSessionData(String)
-    case fileOperationFailed(String)
+---
+
+## ⚡ OPTIMIZATION CHECKLIST
+
+- [ ] Using cached data? (`SessionManager.allSessions`, `ProjectStatisticsCache`)
+- [ ] File I/O on background?
+- [ ] Lists lazy loaded?
+- [ ] Dashboard using `ChartDataPreparer` for filtering?
+
+---
+
+## 📊 SESSION OPERATIONS
     case dataMigrationFailed(String)
 }
 throw JujuError.invalidSessionData("Session \(id) has invalid start time")
 ```
 
-### 2. Use ErrorHandler
-
+### Load All Sessions
 ```swift
-ErrorHandler.shared.handleError(error, context: "SessionManager.startSession", severity: .error)
-ErrorHandler.shared.logDebug("Starting operation", context: "ClassName.methodName")
-ErrorHandler.shared.logPerformance("operation completed", duration: 150.0, context: "ClassName.methodName")
+let allSessions = await SessionManager.shared.loadAllSessions()
+// sessionManager.allSessions now cached in memory
 ```
 
-### 3. Provide Suggestions
-
+### Start/End Session
 ```swift
-case .fileError(let operation, let filePath, let reason, _):
-    return "Check file permissions for '\(filePath)' and try again."
+SessionManager.shared.startSession(for: "Project", projectID: "uuid")
+// ... user works ...
+SessionManager.shared.endSession(notes: "note", mood: 8, action: "Built feature")
+```
+
+### Delete Session
+```swift
+SessionManager.shared.deleteSession(id: "session-uuid")
 ```
 
 ---
 
-## ⚡ Performance
-
-### 1. Data Loading
+## 📈 PROJECT OPERATIONS
 
 ```swift
-let query = SessionQuery(startDate: Calendar.current.date(byAdding: .month, value: -6, to: Date()), endDate: Date(), limit: 1000)
-let sessions = try await SessionManager.shared.loadSessions(query: query)
-let cachedResult = ProjectStatisticsCache.shared.getStatistics(for: projectID)
+let projects = ProjectManager.shared.projects
+let project = Project(name: "New", color: "#4E79A7", emoji: "📁")
+ProjectManager.shared.createProject(project)
+
+let duration = ProjectStatisticsCache.shared.getTotalDuration(for: projectID)
 ```
 
-### 2. UI Performance
+---
+
+## 🎨 UI PATTERNS
 
 ```swift
-@StateObject private var viewModel = ExpensiveViewModel()
-.onAppear { Task { await viewModel.loadData() } }
-```
+// Use Theme
+.padding(.horizontal, Theme.spacingMedium)
+.background(Theme.Colors.surface)
+.font(Theme.Fonts.body)
 
-### 3. Background
+// State in ViewModel, not View
+@StateObject private var viewModel = FeatureViewModel()
 
-```swift
-func loadDataInBackground() async {
-    await Task.detached {
-        let data = try await SessionManager.shared.loadAllSessions()
-        await MainActor.run { /* Update UI */ }
+// Views are pure presentation
+struct SessionsView: View {
+    @StateObject private var viewModel = SessionsViewModel()
+    var body: some View {
+        List(viewModel.sessions) { session in
+            SessionsRowView(session: session)
+        }
     }
 }
 ```
 
 ---
 
-## 🧪 Testing
-
-### 1. Unit Tests
+## 🚨 ERROR HANDLING
 
 ```swift
-class SessionManagerTests: XCTestCase {
-    var sessionManager: SessionManager!
-    var mockFileManager: MockSessionFileManager!
-    override func setUp() { super.setUp(); mockFileManager = MockSessionFileManager(); sessionManager = SessionManager(fileManager: mockFileManager) }
-    func testStartSession_ValidProject_CreatesSession() async throws {
-        let projectID = "test-project"; mockFileManager.mockProjects = [Project(id: projectID, name: "Test Project")]
-        let result = try await sessionManager.startSession(projectID: projectID)
-        XCTAssertTrue(result); XCTAssertEqual(mockFileManager.savedSessions.count, 1); XCTAssertEqual(mockFileManager.savedSessions.first?.projectID, projectID)
-    }
+do {
+    result = try await operation()
+} catch {
+    ErrorHandler.shared.handleError(error, context: "ClassName.methodName")
 }
 ```
 
-### 2. Mock Objects
-
-```swift
-class MockSessionFileManager: SessionFileManagerProtocol {
-    var mockSessions: [SessionRecord] = []
-    var savedSessions: [SessionRecord] = []
-    var deletedSessionIDs: [String] = []
-    func loadSessions() throws -> [SessionRecord] { return mockSessions }
-    func saveSession(_ session: SessionRecord) throws { savedSessions.append(session) }
-    func deleteSession(_ sessionID: String) throws { deletedSessionIDs.append(sessionID) }
-}
-```
-
-### 3. Integration Tests
-
-- Test UI to persistence
-- Verify notifications
-- Test new/legacy data
-- Validate dashboard data (ensure correct data is loaded and displayed, especially for yearly dashboards)
+**Never use** `try?` or `try!`
 
 ---
 
-## 🎯 AI Tasks
+## 🧪 TESTING
 
-### Add Feature
-
-1. Analyze architecture
-2. Design data models
-3. Implement manager methods
-4. Create view models
-5. Build UI
-6. Document
-7. Update architecture
-8. Test
-
-### Fix Bug
-
-1. Reproduce
-2. Identify root cause
-3. Check error handling
-4. Implement fix
-5. Add/update tests
-6. Verify
-
-### Optimize
-
-1. Profile
-2. Use SessionQuery
-3. Implement caching
-4. Use @MainActor
-5. Batch operations
-6. Lazy load
+- Unit tests for Managers
+- Mock objects for dependencies
+- Test with new AND legacy data
+- Test error scenarios
 
 ---
 
-## 🚨 Avoid
+## ⚠️ COMMON MISTAKES
 
-1. Direct File Access
-2. Logic in Views
-3. Missing Notifications
-4. Inconsistent Errors
-5. Hardcoded Values
-6. Blocking UI
-7. Ignoring Legacy Data
-8. Race Conditions in Data Loading: Ensure a single source of truth (e.g., `DashboardRootView`) populates shared data (e.g., `sessionManager.allSessions`) before dependent views consume it.
+1. **projectName instead of projectID** → Use UUID
+2. **Block main thread with I/O** → Use async/await
+3. **Forget notifications** → UI won't update
+4. **Missing error handling** → Silent crashes
+5. **Race conditions** → Use @MainActor
+6. **No validation before persist** → Corrupted data
 
 ---
 
-## 📚 Resources
+## 📚 DOCUMENTATION FILES
 
-- ARCHITECTURE.md: System overview
-- DATA_FLOW.yaml: Component relationships
-- Features/: UI patterns
-- ErrorHandler.shared: Error patterns
-- CODE_CONVENTIONS.md: Coding standards
+| File | Purpose |
+|------|---------|
+| **ARCHITECTURE.md** | Data models, design |
+| **SWIFT_PATTERNS.md** | Coding standards |
+| **DATA_FLOW.yaml** | Component relationships |
 
 ---
 
-## 🔄 Workflow
-
-### New Feature
-
-1. Analyze architecture
-2. Design data models
-3. Implement manager methods
-4. Create view models
-5. Build UI
-6. Document
-7. Update architecture
-8. Test
-
-### Bug Fix
-
-1. Reproduce
-2. Identify root cause
-3. Check error handling
-4. Implement fix
-5. Add/update tests
-6. Verify
-
-### Performance
-
-1. Profile
-2. Use SessionQuery
-3. Implement caching
-4. Optimize UI
-5. Use background operations
-6. Test
-
-This guide helps AI assistants work with Juju while maintaining code quality.
+**Read SWIFT_PATTERNS.md for detailed code patterns and conventions.**

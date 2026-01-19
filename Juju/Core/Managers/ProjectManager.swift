@@ -19,6 +19,27 @@ import SwiftUI
 /// - ErrorHandler: For error handling and logging
 /// - ProjectStatisticsCache: For performance optimization
 /// 
+/// **AI Quick Find (Method Index)**:
+/// - CRUD: createProject(), updateProject(), deleteProject(), getProject(id:)
+/// - Query: projects (all), getProjectName(id:)
+/// - Archive: archiveProject(), unarchiveProject()
+/// - Phase Mgmt: addPhase(), updatePhase(), deletePhase(), archivePhase()
+/// - Stats: updateAllProjectStatistics(), cacheStatistics
+/// - Validation: validateProjectAssociation(), validatePhaseAssociation()
+/// 
+/// **AI Gotchas**:
+/// - [GOTCHA] ProjectStatisticsCache has 30-second TTL; may return stale duration if called too frequently
+/// - [GOTCHA] Archiving project does NOT delete sessions; sessions remain but project hidden
+/// - [GOTCHA] Phase deletion requires checking all sessions using that phase
+/// - [GOTCHA] projects property populated from JSON; not real-time until saveAllProjects() called
+/// - [GOTCHA] Statistics calculated from SessionManager.allSessions; must be loaded first
+/// - [GOTCHA] Color stored as hex string; access via swiftUIColor computed property
+/// 
+/// **AI Integrations**:
+/// - [CALLS] SessionManager.allSessions for duration calculations
+/// - [NOTIFIES] .projectsDidChange when projects modified (UI observers refresh)
+/// - [USES] ProjectStatisticsCache for performance-critical stats
+/// 
 /// **AI Notes**:
 /// - Uses JSON file storage in Application Support directory
 /// - Implements caching with 5-minute expiration for loaded projects
@@ -320,6 +341,8 @@ class ProjectManager {
         let validator = DataValidator.shared
         let errorHandler = ErrorHandler.shared
         
+        // [INTEGRATION] This method is called after every project CRUD operation
+        // [GOTCHA] Cache is NOT automatically cleared here; must call clearCache() separately
         var validProjects: [Project] = []
         var invalidProjects: [(Project, String)] = []
         
@@ -329,6 +352,7 @@ class ProjectManager {
                 validProjects.append(project)
             case .invalid(let reason):
                 invalidProjects.append((project, reason))
+                // [INTEGRATION] Validation errors logged to ErrorHandler for debugging
                 errorHandler.handleValidationError(
                     NSError(domain: "DataValidation", code: 1002, userInfo: [NSLocalizedDescriptionKey: reason]),
                     dataType: "Project"
@@ -337,6 +361,7 @@ class ProjectManager {
         }
         
         if !invalidProjects.isEmpty {
+            // [GOTCHA] Invalid projects are dropped silently; check errorHandler logs for details
             print("⚠️ Found \(invalidProjects.count) invalid projects. Skipping them.")
             for (project, reason) in invalidProjects {
                 print("  - Project '\(project.name)': \(reason)")
@@ -350,7 +375,8 @@ class ProjectManager {
                 let data = try encoder.encode(validProjects)
                 try data.write(to: projectsFile)
                 print("✅ Saved \(validProjects.count) projects to \(projectsFile.path)")
-                // Clear cache after saving to ensure fresh data on next load
+                // [INTEGRATION] Clear cache after saving to ensure fresh data on next load
+                // [INTEGRATION] This triggers UI refresh via .projectsDidChange notification
                 clearCache()
                 NotificationCenter.default.post(name: .projectsDidChange, object: nil)
             } catch {
@@ -405,10 +431,13 @@ class ProjectManager {
     ///   - archived: Boolean indicating whether to archive (true) or unarchive (false)
     ///   - projectID: Unique identifier of the project to modify
     func setProjectArchived(_ archived: Bool, for projectID: String) {
+        // [INTEGRATION] Called from ProjectsListView when user archives a project
+        // [GOTCHA] Archiving does NOT delete sessions; they remain queryable in reports
         var projects = loadProjects()
         if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
             var project = projects[projectIndex]
             project.archived = archived
+            // [INTEGRATION] Archived flag updated; saveProjects will trigger notification
             projects[projectIndex] = project
             saveProjects(projects)
         }
@@ -487,9 +516,12 @@ class ProjectManager {
     
     /// Delete a phase from a project (permanent removal)
     func deletePhase(from projectID: String, phaseID: String) {
+        // [INTEGRATION] Called from PhaseManagementView when user deletes a phase
+        // [GOTCHA] Deleting a phase does NOT affect existing sessions using that phase
         var projects = loadProjects()
         if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
             var project = projects[projectIndex]
+            // [GOTCHA] Sessions may still reference this phaseID; they will show "Unknown Phase"
             project.phases.removeAll { $0.id == phaseID }
             projects[projectIndex] = project
             saveProjects(projects)
@@ -663,6 +695,8 @@ class ProjectManager {
     /// Update a project and automatically migrate all associated sessions
     /// This ensures CSV files remain clean and human-readable
     func updateProject(_ project: Project, oldName: String? = nil) {
+        // [INTEGRATION] Called from ProjectFormView when user modifies project details
+        // [GOTCHA] Name changes do not require session updates (we use projectID as key)
         var projects = loadProjects()
         guard let projectIndex = projects.firstIndex(where: { $0.id == project.id }) else {
             print("❌ Project \(project.id) not found for update")
@@ -677,6 +711,7 @@ class ProjectManager {
         saveProjects(projects)
         
         // If the project name changed, migrate all associated sessions
+        // [INTEGRATION] Sessions now use projectID, so name change is transparent
         if oldName != project.name {
             print("📝 Project name changed from '\(oldName)' to '\(project.name)' - updating sessions...")
             migrateSessionProjectNames(oldName: oldName, newName: project.name, projectID: project.id)
@@ -687,11 +722,15 @@ class ProjectManager {
     
     /// Update session statistics for all projects in the background
     func updateAllProjectStatistics() {
+        // [INTEGRATION] Called by SessionManager after session operations
+        // [INTEGRATION] Triggers ProjectStatisticsCache invalidation
+        // [GOTCHA] Runs in background; cache is NOT immediately updated
         Task { [weak self] in
             guard let self = self else { return }
             let projects = self.loadProjects()
             
             // Process projects in batches to avoid overwhelming the system
+            // [GOTCHA] Batching prevents UI lockup for large project counts
             let batchSize = 10
             for batchStart in stride(from: 0, to: projects.count, by: batchSize) {
                 let batchEnd = min(batchStart + batchSize, projects.count)

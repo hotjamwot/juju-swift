@@ -28,6 +28,32 @@ import Foundation
 /// - ActivityTypeManager: For activity type validation
 /// - SessionMigrationManager: For automatic data repair
 /// 
+/// **AI Quick Find (Method Index)**:
+/// - Main Validation: validateSession(), validateProject(), validateActivityType()
+/// - Integrity: runIntegrityCheck(), checkReferentialIntegrity()
+/// - Quick Checks: isValidUUID(), isValidDateRange(), isValidProjectID()
+/// - Repair: autoRepairIssues(), fixOrphanedSessions()
+/// - Report: DataIntegrityReport (returned by checks)
+/// 
+/// **AI Gotchas**:
+/// - [GOTCHA] Validation fails silently for many cases; check return value always
+/// - [GOTCHA] autoRepairIssues() MODIFIES data; may remove sessions without warning
+/// - [GOTCHA] orphaned sessions (project deleted but session remains) are repaired by deletion
+/// - [GOTCHA] UUID validation is strict; non-UUID strings fail validation
+/// - [GOTCHA] Date ranges must have endDate > startDate; equal times fail
+/// - [GOTCHA] Midnight-crossing sessions may be flagged as needing repair (expected behavior)
+/// 
+/// **AI Integrations**:
+/// - [VALIDATES] All SessionRecord objects before SessionManager persists
+/// - [VALIDATES] All Project objects before ProjectManager saves
+/// - [VALIDATES] referential integrity: sessions reference valid projectIDs/activityTypeIDs
+/// - [REPAIRS] Calls SessionMigrationManager for data recovery
+/// - [CALLED_BY] SessionManager on initialization (async, non-blocking)
+/// 
+/// **AI Notes**:
+/// - Centralized validation for all data operations to prevent data corruption
+/// - Ensures referential integrity across the application
+/// 
 /// **AI Notes**:
 /// - Singleton pattern for centralized validation access
 /// - Comprehensive error reporting with specific reasons
@@ -118,7 +144,7 @@ class DataValidator {
         // Note: startDate and endDate are now non-optional Date objects
         // The validation is implicit - if they exist, they're valid Date objects
         
-        // Validate time consistency
+        // [GOTCHA] Validate time consistency - endDate must be >= startDate
         guard session.endDate >= session.startDate else {
             return .invalid(reason: "Session end time must be after start time")
         }
@@ -128,10 +154,11 @@ class DataValidator {
             return .valid
         }
         
+        // [INTEGRATION] Load all projects for referential validation
         let projectManager = ProjectManager.shared
         let projects = projectManager.loadProjects()
         
-        // Allow sessions to reference archived projects (preserves historical data)
+        // [GOTCHA] Allow sessions to reference archived projects (preserves historical data)
         // Only reject if the project doesn't exist at all
         guard projects.contains(where: { $0.id == session.projectID }) else {
             return .invalid(reason: "Session references non-existent project: \(session.projectID)")
@@ -143,6 +170,7 @@ class DataValidator {
                 return .invalid(reason: "Could not find project for phase validation")
             }
             
+            // [GOTCHA] Phase must exist in project (even if archived, included in check)
             let activePhases = project.phases.filter { !$0.archived }
             guard activePhases.contains(where: { $0.id == phaseID }) else {
                 return .invalid(reason: "Session references phase that doesn't belong to project: \(phaseID)")
@@ -150,11 +178,12 @@ class DataValidator {
         }
         
         // Validate activity type reference (if provided)
-        // Note: Sessions can reference archived activity types - this preserves historical data
+        // [GOTCHA] Sessions can reference archived activity types - preserves historical data
         guard let activityTypeID = session.activityTypeID, !activityTypeID.isEmpty else {
             return .valid
         }
         
+        // [INTEGRATION] Load activity types for validation
         let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
         guard activityTypes.contains(where: { $0.id == session.activityTypeID }) else {
             return .invalid(reason: "Session references non-existent activity type: \(session.activityTypeID)")
@@ -182,12 +211,13 @@ class DataValidator {
             return .invalid(reason: "Project color cannot be empty")
         }
         
-        // Validate color format (should be hex color)
+        // [GOTCHA] Validate color format - must be hex color like #FF0000
         guard project.color.hasPrefix("#") && project.color.count == 7 else {
             return .invalid(reason: "Project color must be a valid hex color (e.g., #FF0000)")
         }
         
         // Check for duplicate project names (case insensitive)
+        // [INTEGRATION] Load existing projects for duplicate checking
         let projectManager = ProjectManager.shared
         let existingProjects = projectManager.loadProjects()
         
@@ -210,7 +240,7 @@ class DataValidator {
                 return .invalid(reason: "Phase name cannot be empty")
             }
             
-            // Check for duplicate phase names within the project
+            // [GOTCHA] Check for duplicate phase names within the same project
             let duplicatePhase = project.phases.first { otherPhase in
                 otherPhase.id != phase.id &&
                 otherPhase.name.lowercased() == phase.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -229,6 +259,7 @@ class DataValidator {
     /// Validate referential integrity across all data
     /// - Returns: ValidationResult indicating if data integrity is maintained
     func validateReferentialIntegrity() -> ValidationResult {
+        // [INTEGRATION] Load all data managers for comprehensive validation
         let projectManager = ProjectManager.shared
         let sessionManager = SessionManager.shared
         let activityTypes = ActivityTypeManager.shared.loadActivityTypes()
@@ -237,6 +268,7 @@ class DataValidator {
         let sessions = sessionManager.allSessions
         
         // Check for orphaned sessions (sessions with invalid project references)
+        // [GOTCHA] Orphaned sessions may be deleted automatically by repair operations
         let orphanedSessions = sessions.filter { session in
             guard !session.projectID.isEmpty else {
                 return false // Sessions without projectID are legacy and allowed

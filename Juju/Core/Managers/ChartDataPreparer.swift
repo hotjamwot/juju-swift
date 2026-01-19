@@ -18,6 +18,28 @@ import SwiftUI
 /// - ActivityTypeManager: For activity type categorization
 /// - ChartDataModels: For chart data structures
 /// 
+/// **AI Quick Find (Method Index)**:
+/// - Data Prep: prepareWeeklyData(), prepareAllTimeData(), prepareYearlyData()
+/// - Aggregation: aggregateActivityTypeTotals(), aggregateProjectTotals()
+/// - Filtering: filterSessionsByDateInterval(), filterByActivityType()
+/// - Chart Points: createActivityChartData(), createProjectChartData()
+/// - Utilities: currentWeekInterval (computed), currentYearInterval (computed)
+/// 
+/// **AI Gotchas**:
+/// - [GOTCHA] Input MUST be sessionManager.allSessions (pre-loaded); not lazily fetched
+/// - [GOTCHA] Filters archived projects from yearly charts but NOT from weekly (design choice)
+/// - [GOTCHA] Percentages calculated as: (total / grandTotal) * 100; handle division-by-zero
+/// - [GOTCHA] Monday-based weeks; week boundaries may differ from calendar view
+/// - [GOTCHA] Session minutes converted to hours; small sessions round to 0.0 hours visually
+/// - [GOTCHA] Activity type names resolved from ActivityTypeManager; missing types show as "uncategorized"
+/// 
+/// **AI Integrations**:
+/// - [RECEIVES] sessionManager.allSessions (must call loadAllSessions() first)
+/// - [RECEIVES] projectManager.projects for colors and archived status
+/// - [RECEIVES] activityTypeManager.activityTypes for category names
+/// - [OUTPUTS] ActivityChartData[] for pie/bar charts
+/// - [OUTPUTS] ProjectChartData[] for dashboard display
+/// 
 /// **AI Notes**:
 /// - Uses @MainActor for UI-bound operations
 /// - Implements weekly interval calculation (Monday-based weeks)
@@ -39,11 +61,16 @@ final class ChartDataPreparer: ObservableObject {
     private let calendar = Calendar.current
     
     func prepareAllTimeData(sessions: [SessionRecord], projects: [Project]) {
+        // [INTEGRATION] Called from DashboardRootView with pre-loaded sessions
+        // [INTEGRATION] Updates viewModel which triggers UI refresh
         viewModel.sessions = sessions
         viewModel.projects = projects
     }
     
     func prepareWeeklyData(sessions: [SessionRecord], projects: [Project]) {
+        // [INTEGRATION] Called from WeeklyDashboardView with pre-loaded sessions
+        // [GOTCHA] Filters to current week only (Monday-based); earlier weeks hidden
+        // [GOTCHA] Uses currentWeekInterval computed property based on system calendar
         viewModel.sessions = sessions.filter { currentWeekInterval.contains($0.startDate) }
         viewModel.projects = projects
     }
@@ -86,6 +113,10 @@ final class ChartDataPreparer: ObservableObject {
     ///   - sessions: Array of SessionRecord objects to aggregate
     /// - Returns: Array of ActivityChartData objects sorted by total hours (descending)
     private func aggregateActivityTotals(from sessions: [SessionRecord]) -> [ActivityChartData] {
+        // [INTEGRATION] Called from prepareWeeklyData() and prepareAllTimeData()
+        // [INTEGRATION] Receives pre-loaded sessions from DashboardRootView
+        // [GOTCHA] Input MUST be pre-loaded; method does not fetch from SessionManager
+        
         // 1. Create activity type lookup for efficient name/emoji resolution
         let activityLookup = getActivityTypeLookup()
         
@@ -94,6 +125,7 @@ final class ChartDataPreparer: ObservableObject {
         
         // 3. Calculate percentages and create chart data
         let totalHours = totals.values.reduce(0, +)
+        // [GOTCHA] If totalHours is 0, all percentages will be 0 (not NaN)
         let chartData = createActivityChartData(from: totals, lookup: activityLookup, totalHours: totalHours)
         
         // 4. Sort by total hours (descending)
@@ -164,9 +196,10 @@ final class ChartDataPreparer: ObservableObject {
         var totals: [String: Double] = [:]
         
         for session in sessions {
-            // Determine activity type ID (handle nil values)
+            // [INTEGRATION] Determine activity type ID (handle nil values)
             let activityTypeID = session.activityTypeID ?? "uncategorized"
             
+            // [GOTCHA] durationMinutes stored as Int; division by 60.0 for hours
             // Convert session minutes to hours and add to total
             let hours = Double(session.durationMinutes) / 60.0
             totals[activityTypeID, default: 0] += hours
