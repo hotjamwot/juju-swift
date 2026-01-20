@@ -409,8 +409,8 @@ struct SessionsRowView: View {
                     }) {
                         if let action = currentSession.action, !action.isEmpty {
                             if currentSession.isMilestone {
-                                // With text + milestone: capsule with bolt icon and text
-                                HStack(spacing: 6) {
+                                // With milestone: just colored lightning icon + text (no capsule)
+                                HStack(spacing: 8) {
                                     Image(systemName: "bolt.fill")
                                         .font(.system(size: 10))
                                         .foregroundColor(projectColor)
@@ -418,19 +418,9 @@ struct SessionsRowView: View {
                                         .font(Theme.Fonts.body.weight(.semibold))
                                         .foregroundColor(Theme.Colors.textPrimary)
                                 }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(projectColor.opacity(0.15))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                )
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             } else {
-                                // With text (no milestone): plain text, no capsule, no icon, left-aligned
+                                // With text (no milestone): plain text, no icon, left-aligned
                                 Text(action)
                                     .font(Theme.Fonts.body.weight(.semibold))
                                     .foregroundColor(Theme.Colors.textPrimary)
@@ -486,7 +476,7 @@ struct SessionsRowView: View {
                 .padding(.top, 4)
                 
                 // LINE 2: Start-End Time | Duration | Mood | Notes
-                HStack(spacing: 2) {
+                HStack(spacing: 4) {
                     // Column 1: Start and End Time (under Project Name)
                     HStack(spacing: 2) {
                         // Start Time with combined date/time picker
@@ -1251,26 +1241,118 @@ struct SessionsRowView_Previews: PreviewProvider {
         // Parse the date strings to Date objects for the new SessionRecord initializer
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let startDate = dateFormatter.date(from: "2024-01-15 09:00:00") ?? Date()
-        let endDate = dateFormatter.date(from: "2024-01-15 10:30:00") ?? Date()
         
-        // Use live data from shared instances for preview
-        return SessionsRowView(
-            session: SessionRecord(
+        // Create multiple sessions with different variations for preview
+        let sessions = [
+            // Session 1: Standard session with moderate notes and milestone
+            SessionRecord(
                 id: "1",
-                startDate: startDate,
-                endDate: endDate,
+                startDate: dateFormatter.date(from: "2024-01-15 09:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-15 10:30:00") ?? Date(),
                 projectID: "1",
                 activityTypeID: "writing",
                 projectPhaseID: "phase-1",
-                notes: "Quick meeting about the new features.",
+                action: "Design Review", isMilestone: true, notes: "Quick meeting about the new features.",
                 mood: 7
             ),
-            projects: ProjectsViewModel.shared.projects,
-            activityTypes: ActivityTypesViewModel.shared.activeActivityTypes,
-            onDelete: { _ in },
-            onNotesChanged: { _ in }
-        )
+            
+            // Session 2: Short session with minimal notes, no milestone
+            SessionRecord(
+                id: "2",
+                startDate: dateFormatter.date(from: "2024-01-15 11:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-15 11:15:00") ?? Date(),
+                projectID: "2",
+                activityTypeID: "coding",
+                projectPhaseID: "phase-2",
+                action: nil, isMilestone: false, notes: "Fixed a bug.",
+                mood: 6
+            ),
+            
+            // Session 3: Long session with extensive notes, milestone
+            SessionRecord(
+                id: "3",
+                startDate: dateFormatter.date(from: "2024-01-15 13:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-15 16:45:00") ?? Date(),
+                projectID: "3",
+                activityTypeID: "research",
+                projectPhaseID: "phase-3",
+                action: "Architecture Planning", isMilestone: true, notes: "Deep dive into the new architecture. Discussed multiple approaches including microservices, monorepo, and hybrid solutions. Considered trade-offs in terms of complexity, maintainability, and scalability. The team leaned towards a modular monorepo approach with clear boundaries.",
+                mood: 9
+            ),
+            
+            // Session 4: No notes, no milestone, short duration
+            SessionRecord(
+                id: "4",
+                startDate: dateFormatter.date(from: "2024-01-15 17:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-15 17:20:00") ?? Date(),
+                projectID: "1",
+                activityTypeID: "meeting",
+                projectPhaseID: "phase-1",
+                action: nil, isMilestone: false, notes: "",
+                mood: 5
+            ),
+            
+            // Session 5: Evening session, medium notes, no milestone
+            SessionRecord(
+                id: "5",
+                startDate: dateFormatter.date(from: "2024-01-15 19:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-15 20:30:00") ?? Date(),
+                projectID: "2",
+                activityTypeID: "writing",
+                projectPhaseID: "phase-4",
+                action: "API Docs", isMilestone: false, notes: "Documentation update for the new API endpoints.",
+                mood: 8
+            ),
+            
+            // Session 6: Morning session, milestone, high mood
+            SessionRecord(
+                id: "6",
+                startDate: dateFormatter.date(from: "2024-01-16 08:30:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-16 10:00:00") ?? Date(),
+                projectID: "3",
+                activityTypeID: "coding",
+                projectPhaseID: "phase-5",
+                action: "Core Feature", isMilestone: true, notes: "Implemented core functionality. All tests passing.",
+                mood: 10
+            ),
+            
+            // Session 7: Short session with action but no milestone
+            SessionRecord(
+                id: "7",
+                startDate: dateFormatter.date(from: "2024-01-16 11:30:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-16 12:00:00") ?? Date(),
+                projectID: "1",
+                activityTypeID: "meeting",
+                projectPhaseID: "phase-2",
+                action: "Standup", isMilestone: false, notes: "Standup meeting",
+                mood: 6
+            ),
+            
+            // Session 8: Very long notes, milestone
+            SessionRecord(
+                id: "8",
+                startDate: dateFormatter.date(from: "2024-01-16 14:00:00") ?? Date(),
+                endDate: dateFormatter.date(from: "2024-01-16 18:00:00") ?? Date(),
+                projectID: "2",
+                activityTypeID: "research",
+                projectPhaseID: "phase-3",
+                action: "Performance Analysis", isMilestone: true, notes: "Extensive research on performance optimization techniques. Analyzed profiling data, identified bottlenecks in the rendering pipeline, and proposed solutions including lazy loading, memoization, and virtual scrolling. Created a detailed implementation plan with phased rollout strategy. The findings suggest potential 40% performance improvement.",
+                mood: 8
+            )
+        ]
+        
+        // Use live data from shared instances for preview
+        return VStack(spacing: 12) {
+            ForEach(sessions) { session in
+                SessionsRowView(
+                    session: session,
+                    projects: ProjectsViewModel.shared.projects,
+                    activityTypes: ActivityTypesViewModel.shared.activeActivityTypes,
+                    onDelete: { _ in },
+                    onNotesChanged: { _ in }
+                )
+            }
+        }
         .onAppear {
             // Load live data for preview
             Task {
@@ -1278,7 +1360,7 @@ struct SessionsRowView_Previews: PreviewProvider {
                 ActivityTypesViewModel.shared.loadActivityTypes()
             }
         }
-        .frame(width: 1300, height: 200)
+        .frame(width: 1300)
         .background(Theme.Colors.background)
         .padding()
         .previewLayout(.sizeThatFits)
