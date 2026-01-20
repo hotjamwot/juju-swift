@@ -193,67 +193,301 @@ struct SessionsRowView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Main row content - consolidated display logic
-            HStack(spacing: Theme.Row.compactSpacing) {
-                // Project capsule with popover (fixed width, left aligned)
-                Button(action: {
-                    showingProjectPopover = true
-                    selectedProjectID = currentSession.projectID
-                }) {
-                    HStack(spacing: 6) {
-                        // Project color dot
-                        Circle()
-                            .fill(projectColor)
-                            .frame(width: Theme.Row.projectDotSize, height: Theme.Row.projectDotSize)
-                        
-                        // Project emoji
-                        Text(projectEmoji)
-                            .font(.system(size: 12))
-                        
-                        // Project name
-                        Text(projectName)
-                            .font(Theme.Fonts.body.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
+            // Main row content - Grid-aligned 2-line layout
+            VStack(spacing: 2) {
+                // LINE 1: Project Colour | Project Name | Activity Type | Phase | Action | Delete
+                HStack(spacing: 8) {
+                    // Column 1: Project colour dot + Project name
+                    Button(action: {
+                        showingProjectPopover = true
+                        selectedProjectID = currentSession.projectID
+                    }) {
+                        HStack(spacing: 6) {
+                            // Project color dot
+                            Circle()
+                                .fill(projectColor)
+                                .frame(width: Theme.Row.projectDotSize, height: Theme.Row.projectDotSize)
+                            
+                            // Project emoji
+                            Text(projectEmoji)
+                                .font(.system(size: 12))
+                            
+                            // Project name
+                            Text(projectName)
+                                .font(Theme.Fonts.body.weight(.semibold))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(projectColor.opacity(0.1))
+                                .opacity(isProjectHovering ? 1.0 : 0.0)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                .opacity(isProjectHovering ? 1.0 : 0.0)
+                        )
+                        .contentShape(Rectangle()) // Make entire capsule tappable
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isProjectHovering = hovering
+                    }
+                    .popover(isPresented: $showingProjectPopover) {
+                        InlineSelectionPopover(
+                            items: projects.filter { !$0.archived }, // Only show active (non-archived) projects
+                            currentID: currentSession.projectID, // Use current session's projectID directly
+                            onItemSelected: { project in
+                                // Update session with new project and reset phase
+                                updateSessionProject(project)
+                            },
+                            onDismiss: {
+                                showingProjectPopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
+                    .padding(.leading, Theme.Row.contentPadding)
+                    
+                    // Column 2: Activity Type (moved before Phase)
+                    if let activityType = getActivityTypeDisplay() {
+                        Button(action: {
+                            showingActivityTypePopover = true
+                            selectedActivityTypeID = currentSession.activityTypeID
+                        }) {
+                            HStack(spacing: 4) {
+                                Text(activityType.emoji)
+                                    .font(.system(size: 10))
+                                Text(activityType.name)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Theme.Colors.divider.opacity(0.2)
+                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                            )
+                            .clipShape(Capsule())
+                            .contentShape(Rectangle()) // Make entire area tappable
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isActivityTypeHovering = hovering
+                        }
+                        .popover(isPresented: $showingActivityTypePopover) {
+                            ActivityTypeSelectionPopover(
+                                activityTypes: activityTypes,
+                                currentActivityTypeID: currentSession.activityTypeID,
+                                onActivityTypeSelected: { activityType in
+                                    updateSessionActivityType(activityType)
+                                },
+                                onDismiss: {
+                                    showingActivityTypePopover = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
+                    } else {
+                        // Empty space when no activity type - make it clickable to add one
+                        Button(action: {
+                            showingActivityTypePopover = true
+                            selectedActivityTypeID = currentSession.activityTypeID
+                        }) {
+                            HStack(spacing: 4) {
+                                Text("📝")
+                                    .font(.system(size: 10))
+                                Text("Activity Type")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textPrimary.opacity(0.6))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Theme.Colors.divider.opacity(0.2)
+                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                            )
+                            .clipShape(Capsule())
+                            .contentShape(Rectangle()) // Make entire area tappable
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovering in
+                            isActivityTypeHovering = hovering
+                        }
+                        .popover(isPresented: $showingActivityTypePopover) {
+                            ActivityTypeSelectionPopover(
+                                activityTypes: activityTypes,
+                                currentActivityTypeID: currentSession.activityTypeID,
+                                onActivityTypeSelected: { activityType in
+                                    updateSessionActivityType(activityType)
+                                },
+                                onDismiss: {
+                                    showingActivityTypePopover = false
+                                }
+                            )
+                            .padding()
+                        }
+                        .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
+                    }
+                    
+                    // Column 3: Phase
+                    Button(action: {
+                        showingPhasePopover = true
+                        selectedPhaseID = currentSession.projectPhaseID
+                    }) {
+                        if let phaseName = getProjectPhaseDisplay() {
+                            HStack(spacing: 4) {
+                                Image(systemName: "play.circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                                Text(phaseName)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            }
+                        } else {
+                            // Empty space when no phase - make it clickable to add a phase
+                            Image(systemName: "play.circle")
+                                .font(.system(size: 10))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isPhaseHovering = hovering
+                    }
+                    .popover(isPresented: $showingPhasePopover) {
+                        // Always get the current project to ensure we show the correct phases
+                        // Include projectDataVersion as a dependency to force refresh when project data changes
+                        if !currentSession.projectID.isEmpty,
+                           let project = projects.first(where: { $0.id == currentSession.projectID }) {
+                            PhaseSelectionPopover(
+                                project: project,
+                                currentPhaseID: currentSession.projectPhaseID,
+                                onPhaseSelected: { phase in
+                                    updateSessionPhase(phase)
+                                },
+                                onDismiss: {
+                                    showingPhasePopover = false
+                                }
+                            )
+                            .padding()
+                            .id(projectDataVersion) // Force refresh when project data version changes
+                        }
+                    }
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(projectColor.opacity(0.1))
-                            .opacity(isProjectHovering ? 1.0 : 0.0)
+                        Theme.Colors.divider.opacity(0.2)
+                            .opacity(isPhaseHovering ? 0.4 : 0.2)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 999)
                             .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isProjectHovering ? 1.0 : 0.0)
+                            .opacity(isPhaseHovering ? 1.0 : 0.0)
                     )
-                    .contentShape(Rectangle()) // Make entire capsule tappable
-                }
-                .buttonStyle(PlainButtonStyle())
-                .onHover { hovering in
-                    isProjectHovering = hovering
-                }
-                .popover(isPresented: $showingProjectPopover) {
-                    InlineSelectionPopover(
-                        items: projects.filter { !$0.archived }, // Only show active (non-archived) projects
-                        currentID: currentSession.projectID, // Use current session's projectID directly
-                        onItemSelected: { project in
-                            // Update session with new project and reset phase
-                            updateSessionProject(project)
-                        },
-                        onDismiss: {
-                            showingProjectPopover = false
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
+                    
+                    // Column 4: Action
+                    Button(action: {
+                        showingActionPopover = true
+                        actionText = currentSession.action ?? ""
+                    }) {
+                        if let action = currentSession.action, !action.isEmpty {
+                            if currentSession.isMilestone {
+                                // With text + milestone: capsule with bolt icon and text
+                                HStack(spacing: 6) {
+                                    Image(systemName: "bolt.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(projectColor)
+                                    Text(action)
+                                        .font(Theme.Fonts.body.weight(.semibold))
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(projectColor.opacity(0.15))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            } else {
+                                // With text (no milestone): plain text, no capsule, no icon, left-aligned
+                                Text(action)
+                                    .font(Theme.Fonts.body.weight(.semibold))
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        } else {
+                            // No text: empty lightning icon
+                            Image(systemName: "bolt")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isActionHovering = hovering
+                    }
+                    .popover(isPresented: $showingActionPopover, attachmentAnchor: .point(.topLeading), arrowEdge: .top) {
+                        ActionSelectionPopover(
+                            currentAction: currentSession.action,
+                            currentIsMilestone: sessionIsMilestone,
+                            onSaveAction: { action, isMilestone in
+                                sessionIsMilestone = isMilestone
+                                updateSessionAction(action)
+                            },
+                            onDismiss: {
+                                showingActionPopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .background(
+                        Theme.Colors.textSecondary.opacity(0.05)
+                            .opacity(isActionHovering ? 0.08 : 0)
                     )
-                    .padding()
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(maxWidth: .infinity)
+                    
+                    // Column 5: Delete button - appears on hover
+                    Button(action: {
+                        onDelete(currentSession)
+                    }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.Colors.error)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .opacity(isHovering ? 1.0 : 0.0)
+                    .animation(.easeInOut(duration: 0.15), value: isHovering)
+                    .padding(.trailing, Theme.Row.contentPadding)
+                    .frame(width: 20, alignment: .center)
                 }
-                .frame(width: 200, alignment: .leading) // Fixed width for project capsule, left aligned
-                .padding(.leading, Theme.Row.contentPadding)
+                .padding(.top, 4)
                 
-                // Session details (horizontal layout with optimized spacing)
-                HStack(spacing: Theme.Row.compactSpacing) {
-                    // Start and End Time (fixed width) - now clickable with hover effects
+                // LINE 2: Start-End Time | Duration | Mood | Notes
+                HStack(spacing: 2) {
+                    // Column 1: Start and End Time (under Project Name)
                     HStack(spacing: 2) {
                         // Start Time with combined date/time picker
                         Button(action: {
@@ -333,258 +567,29 @@ struct SessionsRowView: View {
                         .clipShape(Capsule())
                         .contentShape(Rectangle()) // Make entire area tappable
                     }
-                    .frame(width: 140)
+                    .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
+                    .padding(.leading, 22) // Align with Project Name text (accounting for circle + spacing)
                     
-                    // Activity Type (with fallback to "Uncategorized")
-                    if let activityType = getActivityTypeDisplay() {
-                        Button(action: {
-                            showingActivityTypePopover = true
-                            selectedActivityTypeID = currentSession.activityTypeID
-                        }) {
-                            HStack(spacing: 4) {
-                                Text(activityType.emoji)
-                                    .font(.system(size: 10))
-                                Text(activityType.name)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Theme.Colors.divider.opacity(0.2)
-                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 999)
-                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
-                            )
-                            .clipShape(Capsule())
-                            .contentShape(Rectangle()) // Make entire area tappable
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .onHover { hovering in
-                            isActivityTypeHovering = hovering
-                        }
-                        .popover(isPresented: $showingActivityTypePopover) {
-                            ActivityTypeSelectionPopover(
-                                activityTypes: activityTypes,
-                                currentActivityTypeID: currentSession.activityTypeID,
-                                onActivityTypeSelected: { activityType in
-                                    updateSessionActivityType(activityType)
-                                },
-                                onDismiss: {
-                                    showingActivityTypePopover = false
-                                }
-                            )
-                            .padding()
-                        }
-                        .frame(minWidth: 100, maxWidth: 140)
-                    } else {
-                        // Empty space when no activity type - make it clickable to add one
-                        Button(action: {
-                            showingActivityTypePopover = true
-                            selectedActivityTypeID = currentSession.activityTypeID
-                        }) {
-                            HStack(spacing: 4) {
-                                Text("📝")
-                                    .font(.system(size: 10))
-                                Text("Activity Type")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Theme.Colors.divider.opacity(0.2)
-                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 999)
-                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
-                            )
-                            .clipShape(Capsule())
-                            .contentShape(Rectangle()) // Make entire area tappable
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .onHover { hovering in
-                            isActivityTypeHovering = hovering
-                        }
-                        .popover(isPresented: $showingActivityTypePopover) {
-                            ActivityTypeSelectionPopover(
-                                activityTypes: activityTypes,
-                                currentActivityTypeID: currentSession.activityTypeID,
-                                onActivityTypeSelected: { activityType in
-                                    updateSessionActivityType(activityType)
-                                },
-                                onDismiss: {
-                                    showingActivityTypePopover = false
-                                }
-                            )
-                            .padding()
-                        }
-                        .frame(minWidth: 100, maxWidth: 140)
-                    }
+                    // Column 2: Duration (under Activity Type)
+                    Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
+                        .padding(.leading, 0) // Add spacing to align with Activity Type
                     
-                    // Project Phase (fixed width)
-                    Button(action: {
-                        showingPhasePopover = true
-                        selectedPhaseID = currentSession.projectPhaseID
-                    }) {
-                        if let phaseName = getProjectPhaseDisplay() {
-                            HStack(spacing: 4) {
-                                Image(systemName: "play.circle")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
-                                Text(phaseName)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                        } else {
-                            // Empty space when no phase - make it clickable to add a phase
-                            Image(systemName: "play.circle")
-                                .font(.system(size: 10))
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .onHover { hovering in
-                        isPhaseHovering = hovering
-                    }
-                    .popover(isPresented: $showingPhasePopover) {
-                        // Always get the current project to ensure we show the correct phases
-                        // Include projectDataVersion as a dependency to force refresh when project data changes
-                        if !currentSession.projectID.isEmpty,
-                           let project = projects.first(where: { $0.id == currentSession.projectID }) {
-                            PhaseSelectionPopover(
-                                project: project,
-                                currentPhaseID: currentSession.projectPhaseID,
-                                onPhaseSelected: { phase in
-                                    updateSessionPhase(phase)
-                                },
-                                onDismiss: {
-                                    showingPhasePopover = false
-                                }
-                            )
-                            .padding()
-                            .id(projectDataVersion) // Force refresh when project data version changes
-                        }
-                    }
-                    .background(
-                        Theme.Colors.divider.opacity(0.2)
-                            .opacity(isPhaseHovering ? 0.4 : 0.2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 999)
-                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isPhaseHovering ? 1.0 : 0.0)
-                    )
-                    .clipShape(Capsule())
-                    .contentShape(Rectangle()) // Make entire area tappable
-                    .frame(width: 100)
-                    
-                    // Action (flexible width)
-                    Button(action: {
-                        showingActionPopover = true
-                        actionText = currentSession.action ?? ""
-                    }) {
-                        if let action = currentSession.action, !action.isEmpty {
-                            HStack(spacing: 6) {
-                                Image(systemName: "bolt.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(projectColor.opacity(0.9))
-                                Text(action)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                
-                                // Milestone indicator
-                                if currentSession.isMilestone {
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(Color(hex: "#FFD700")) // Gold color for milestone
-                                }
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
-                        } else {
-                            // Grayed out bolt icon when no action (nil or empty string)
-                            Image(systemName: "bolt")
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .onHover { hovering in
-                        isActionHovering = hovering
-                    }
-                    .popover(isPresented: $showingActionPopover) {
-                        ActionSelectionPopover(
-                            currentAction: currentSession.action,
-                            currentIsMilestone: sessionIsMilestone,
-                            onSaveAction: { action, isMilestone in
-                                sessionIsMilestone = isMilestone
-                                updateSessionAction(action)
-                            },
-                            onDismiss: {
-                                showingActionPopover = false
-                            }
-                        )
-                        .padding()
-                    }
-                    .background(
-                        Theme.Colors.divider.opacity(0.2)
-                            .opacity(isActionHovering ? 0.4 : 0.2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 999)
-                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isActionHovering ? 1.0 : 0.0)
-                    )
-                    .clipShape(Capsule())
-                    .contentShape(Rectangle()) // Make entire area tappable
-                    .frame(minWidth: 160, maxWidth: 180)
-                    
-                    // Notes (expanded flexible width - takes more space)
-                    if !currentSession.notes.isEmpty {
-                        Text(currentSession.notes)
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                            .lineLimit(1)
-                            .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle()) // Make entire area tappable
-                            .onTapGesture {
-                                onShowNoteOverlay?(currentSession)
-                            }
-                    } else {
-                        // Empty space when no notes - expanded to fill more space
-                        // Make this tappable too for adding notes
-                        Text("No notes")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                            .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle()) // Make entire area tappable
-                            .onTapGesture {
-                                onShowNoteOverlay?(currentSession)
-                            }
-                    }
-                    
-                    // Mood (fixed width)
+                    // Column 3: Mood (under Phase)
                     Button(action: {
                         showingMoodPopover = true
                         selectedMood = currentSession.mood
                     }) {
                         if let mood = currentSession.mood {
                             Text("\(mood)/10")
-                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                         } else {
-                            // Empty space when no mood - make it clickable to add a mood
-                            Text("Mood")
+                            Text("-")
                                 .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -603,40 +608,41 @@ struct SessionsRowView: View {
                         )
                         .padding()
                     }
-                    .background(
-                        Theme.Colors.divider.opacity(0.2)
-                            .opacity(isMoodHovering ? 0.4 : 0.2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 999)
-                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isMoodHovering ? 1.0 : 0.0)
-                    )
-                    .clipShape(Capsule())
-                    .contentShape(Rectangle()) // Make entire area tappable
-                    .frame(width: 60)
+                    .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
+                    
+                    // Column 4: Notes (under Action)
+                    if !currentSession.notes.isEmpty {
+                        Text(currentSession.notes)
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle()) // Make entire area tappable
+                            .onTapGesture {
+                                onShowNoteOverlay?(currentSession)
+                            }
+                    } else {
+                        // Empty space when no notes
+                        Text("No notes")
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle()) // Make entire area tappable
+                            .onTapGesture {
+                                onShowNoteOverlay?(currentSession)
+                            }
+                    }
+                    
+                    // Column 5: Empty space for delete alignment
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: 20)
+                        .padding(.trailing, Theme.Row.contentPadding)
                 }
-                
-                // Duration (moved to far right with flexible width)
-                Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(width: 80)
-                
-                // Delete button - appears on hover
-                Button(action: {
-                    onDelete(currentSession)
-                }) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Colors.error)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .opacity(isHovering ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.15), value: isHovering)
-                .padding(.trailing, Theme.Row.contentPadding)
             }
-            .frame(height: Theme.Row.height)
+            
+            // Adjust row height for 2-line layout with better spacing
+            .frame(height: 62) // Compact height with minimal spacing between lines
             .background(
                 Theme.Colors.surface.opacity(0.7)
             )

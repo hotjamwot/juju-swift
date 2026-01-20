@@ -140,12 +140,6 @@ public struct SessionsView: View {
                 }
                 .padding(.vertical, Theme.spacingSmall)
                 .padding(.horizontal, Theme.spacingMedium)
-                .overlay(
-                    Rectangle()
-                        .frame(height: 1)
-                        .foregroundColor(Theme.Colors.divider),
-                    alignment: .bottom
-                )
                 
                 // Session rows (always visible now - no expansion needed)
                 VStack(spacing: Theme.spacingSmall) {
