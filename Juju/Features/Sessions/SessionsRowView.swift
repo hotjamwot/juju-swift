@@ -413,9 +413,9 @@ struct SessionsRowView: View {
                     }) {
                         if let action = currentSession.action, !action.isEmpty {
                             if currentSession.isMilestone {
-                                // With milestone: just colored lightning icon + text (no capsule)
+                                // With milestone: just colored flag icon + text (no capsule)
                                 HStack(spacing: 8) {
-                                    Image(systemName: "bolt.fill")
+                                    Image(systemName: "flag.fill")
                                         .font(.system(size: 10))
                                         .foregroundColor(projectColor)
                                     Text(action)
@@ -431,8 +431,8 @@ struct SessionsRowView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         } else {
-                            // No text: empty lightning icon
-                            Image(systemName: "bolt")
+                            // No text: empty flag icon
+                            Image(systemName: "flag")
                                 .font(.system(size: 12))
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -562,7 +562,7 @@ struct SessionsRowView: View {
                         .contentShape(Rectangle()) // Make entire area tappable
                     }
                     .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
-                    .padding(.leading, 22) // Align with Project Name text (accounting for circle + spacing)
+                    .padding(.leading, 16) // Align with Project Name text (accounting for circle + spacing)
                     
                     // Column 2: Duration (under Activity Type)
                     Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
@@ -576,14 +576,19 @@ struct SessionsRowView: View {
                         showingMoodPopover = true
                         selectedMood = currentSession.mood
                     }) {
-                        if let mood = currentSession.mood {
-                            Text("\(mood)/10")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                        } else {
-                            Text("-")
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt")
+                                .font(.system(size: 10))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                            if let mood = currentSession.mood {
+                                Text("\(mood)/10")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                            } else {
+                                Text("-")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                            }
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -635,7 +640,7 @@ struct SessionsRowView: View {
                                 showingNotesPopover = false
                             }
                         )
-                        .padding()
+                        .padding(.leading, 6)
                     }
                     .background(
                         Theme.Colors.textSecondary.opacity(0.05)

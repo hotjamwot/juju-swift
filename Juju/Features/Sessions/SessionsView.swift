@@ -134,8 +134,6 @@ public struct SessionsView: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Theme.Colors.divider.opacity(0.2))
-                        .clipShape(Capsule())
                 }
                 .padding(.vertical, Theme.spacingSmall)
                 .padding(.horizontal, Theme.spacingMedium)
