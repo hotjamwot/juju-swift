@@ -101,7 +101,6 @@ public struct SessionsView: View {
         let sidebarState: SidebarStateManager
         let onDelete: ((SessionRecord) -> Void)
         let onNotesChanged: ((SessionRecord, String) -> Void)
-        let onShowNoteOverlay: ((SessionRecord) -> Void)
         let onProjectChanged: (() -> Void)
         
         var body: some View {
@@ -152,7 +151,6 @@ public struct SessionsView: View {
                             onNotesChanged: { newNotes in
                                 onNotesChanged(session, newNotes)
                             },
-                            onShowNoteOverlay: onShowNoteOverlay,
                             onProjectChanged: onProjectChanged
                         )
                     }
@@ -184,12 +182,6 @@ public struct SessionsView: View {
     // Track last update time to force UI refresh
     @State private var lastRefreshTime = Date()
     
-    // Note overlay state
-    @State private var showingNoteOverlay = false
-    @State private var overlaySession: SessionRecord?
-    @State private var isEditingNotes = false
-    @State private var editedNotes: String = ""
-    @FocusState private var isTextFieldFocused: Bool
     
     // Filter persistence: store the last applied filter state
     @State private var lastAppliedFilter: SessionsDateFilter = .thisWeek
@@ -336,7 +328,6 @@ public struct SessionsView: View {
                 sidebarState: sidebarState,
                 onDelete: handleDeleteSession,
                 onNotesChanged: handleNotesChanged,
-                onShowNoteOverlay: handleShowNoteOverlay,
                 onProjectChanged: handleProjectChanged
             )
         }
@@ -450,16 +441,6 @@ public struct SessionsView: View {
         }
     }
     
-    private func handleShowNoteOverlay(_ sessionToOverlay: SessionRecord) {
-        let sessionNotes = sessionToOverlay.notes
-        withAnimation(.easeInOut(duration: 0.2)) {
-            overlaySession = sessionToOverlay
-            editedNotes = sessionNotes
-            showingNoteOverlay = true
-            isEditingNotes = false
-        }
-    }
-    
     private func handleProjectChanged() {
         print("🔄 Project changed callback triggered in SessionsView")
         // This callback is triggered when a session is edited, not just when project changes
@@ -477,172 +458,6 @@ public struct SessionsView: View {
     private var groupedCurrentWeekSessions: [GroupedSession] {
         let sessions = getCurrentWeekSessions()
         return groupSessionsByDate(sessions)
-    }
-    
-    // MARK: - Note Overlay
-    @ViewBuilder
-    private var noteOverlay: some View {
-        if showingNoteOverlay, let session = overlaySession {
-            contextualNoteOverlay(for: session)
-        }
-    }
-    
-    @ViewBuilder
-    private func contextualNoteOverlay(for session: SessionRecord) -> some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Subtle background dimming - only dim the area outside the row
-                Color.black.opacity(0.1)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showingNoteOverlay = false
-                            isEditingNotes = false
-                            overlaySession = nil
-                            editedNotes = ""
-                        }
-                    }
-                
-                // Contextual notes overlay
-                VStack(spacing: 0) {
-                    if isEditingNotes {
-                        contextualNoteEditorView(session: session)
-                    } else {
-                        contextualNoteDisplayView(session: session)
-                    }
-                }
-                .padding(.horizontal, Theme.spacingMedium)
-                .padding(.vertical, Theme.spacingMedium)
-                .background(Theme.Colors.surface)
-                .cornerRadius(Theme.Design.cornerRadius)
-                .shadow(color: Theme.Colors.divider.opacity(0.3), radius: 8, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .stroke(Theme.Colors.divider, lineWidth: 1)
-                )
-                .transition(.asymmetric(
-                    insertion: AnyTransition.move(edge: .trailing).combined(with: .opacity),
-                    removal: AnyTransition.move(edge: .trailing).combined(with: .opacity)
-                ))
-                .animation(.easeInOut(duration: 0.25), value: isEditingNotes)
-                .animation(.easeInOut(duration: 0.25), value: showingNoteOverlay)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .zIndex(100) // Ensure overlay appears above all other content
-    }
-    
-    @ViewBuilder
-    private func contextualNoteEditorView(session: SessionRecord) -> some View {
-        VStack(spacing: Theme.spacingMedium) {
-            VStack(spacing: Theme.spacingSmall) {
-                // Text editor with improved styling
-                TextEditor(text: $editedNotes)
-                    .font(Theme.Fonts.body)
-                    .frame(minHeight: 120, maxHeight: 200)
-                    .textFieldStyle(.plain)
-                    .padding(Theme.spacingSmall)
-                    .background(Theme.Colors.background)
-                    .cornerRadius(Theme.Design.cornerRadius)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                    )
-                    .focused($isTextFieldFocused)
-                
-                // Action buttons with better styling
-                HStack(spacing: Theme.spacingSmall) {
-                    Spacer()
-                    
-                    Button("Cancel") {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isEditingNotes = false
-                            editedNotes = session.notes // Reset to original
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                showingNoteOverlay = false
-                                overlaySession = nil
-                                editedNotes = ""
-                            }
-                        }
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
-                    .keyboardShortcut(.escape, modifiers: [])
-                    
-                    Button("Save") {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            // Update only the session notes using the single-field update method
-                            // This avoids any date/time parsing issues that could cause midnight duration bugs
-                            let success = sessionManager.updateSession(id: session.id, field: "notes", value: editedNotes)
-                            
-                            if success {
-                                // Trigger refresh to update the UI
-                                Task {
-                                    await loadCurrentWeekSessions()
-                                }
-                            }
-                            
-                            isEditingNotes = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                showingNoteOverlay = false
-                                overlaySession = nil
-                                editedNotes = ""
-                            }
-                        }
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(editedNotes == session.notes) // Disable if no changes
-                    .opacity(editedNotes == session.notes ? 0.5 : 1.0)
-                }
-            }
-        }
-        .padding(Theme.spacingMedium)
-    }
-    
-    @ViewBuilder
-    private func contextualNoteDisplayView(session: SessionRecord) -> some View {
-        VStack(spacing: Theme.spacingMedium) {
-            VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                HStack {
-                    Text("Notes")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                    
-                    Spacer()
-                    
-                    // Session context info
-                    HStack(spacing: 8) {
-                        Text(session.getProjectName(from: projectsViewModel.projects))
-                            .font(Theme.Fonts.caption.weight(.medium))
-                            .foregroundColor(Theme.Colors.textSecondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
-                    }
-                }
-                
-                Text(session.notes.isEmpty ? "No notes yet. Click to add notes." : session.notes)
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                    .lineLimit(nil)
-                    .multilineTextAlignment(.leading)
-                    .padding(Theme.spacingSmall)
-                    .background(Theme.Colors.background)
-                    .cornerRadius(Theme.Design.cornerRadius)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
-                    )
-                    .contentShape(Rectangle()) // Make entire area tappable
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isEditingNotes = true
-                        }
-                    }
-            }
-        }
-        .padding(Theme.spacingMedium)
     }
     
     // MARK: - Header View
@@ -752,17 +567,10 @@ public struct SessionsView: View {
         }
     }
     
-    /// Note overlay that appears above all content
-    @ViewBuilder
-    private var noteOverlayLayer: some View {
-        noteOverlay
-    }
-    
     // MARK: - Content Area View
     private var contentAreaView: some View {
         ZStack {
             mainContentArea
-            noteOverlayLayer
             floatingFilterBar
             filterToggleButton
         }

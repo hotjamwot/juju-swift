@@ -145,6 +145,10 @@ struct SessionsRowView: View {
     @State private var actionText: String = ""
     @State private var isActionHovering = false
     
+    // Notes selection state
+    @State private var showingNotesPopover = false
+    @State private var isNotesHovering = false
+    
     // Milestone toggle state
     @State private var sessionIsMilestone: Bool = false
     
@@ -194,7 +198,7 @@ struct SessionsRowView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Main row content - Grid-aligned 2-line layout
-            VStack(spacing: 2) {
+            VStack(spacing: 0) {
                 // LINE 1: Project Colour | Project Name | Activity Type | Phase | Action | Delete
                 HStack(spacing: 8) {
                     // Column 1: Project colour dot + Project name
@@ -478,7 +482,7 @@ struct SessionsRowView: View {
                 // LINE 2: Start-End Time | Duration | Mood | Notes
                 HStack(spacing: 4) {
                     // Column 1: Start and End Time (under Project Name)
-                    HStack(spacing: 2) {
+                    HStack(spacing: 0) {
                         // Start Time with combined date/time picker
                         Button(action: {
                             showingStartTimePicker = true
@@ -600,28 +604,45 @@ struct SessionsRowView: View {
                     }
                     .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
                     
-                    // Column 4: Notes (under Action)
-                    if !currentSession.notes.isEmpty {
-                        Text(currentSession.notes)
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary)
-                            .lineLimit(1)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle()) // Make entire area tappable
-                            .onTapGesture {
-                                onShowNoteOverlay?(currentSession)
-                            }
-                    } else {
-                        // Empty space when no notes
-                        Text("No notes")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle()) // Make entire area tappable
-                            .onTapGesture {
-                                onShowNoteOverlay?(currentSession)
-                            }
+                    // Column 4: Notes (under Action) - now uses inline popover
+                    Button(action: {
+                        showingNotesPopover = true
+                    }) {
+                        if !currentSession.notes.isEmpty {
+                            Text(currentSession.notes)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            Text("No notes")
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isNotesHovering = hovering
+                    }
+                    .popover(isPresented: $showingNotesPopover, attachmentAnchor: .point(.topLeading), arrowEdge: .top) {
+                        NotesSelectionPopover(
+                            currentNotes: currentSession.notes,
+                            onSaveNotes: { newNotes in
+                                updateSessionNotes(newNotes)
+                            },
+                            onDismiss: {
+                                showingNotesPopover = false
+                            }
+                        )
+                        .padding()
+                    }
+                    .background(
+                        Theme.Colors.textSecondary.opacity(0.05)
+                            .opacity(isNotesHovering ? 0.08 : 0)
+                    )
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .frame(maxWidth: .infinity)
                     
                     // Column 5: Empty space for delete alignment
                     Rectangle()
@@ -632,7 +653,7 @@ struct SessionsRowView: View {
             }
             
             // Adjust row height for 2-line layout with better spacing
-            .frame(height: 62) // Compact height with minimal spacing between lines
+            .frame(height: 56) // Compact height with minimal spacing between lines
             .background(
                 Theme.Colors.surface.opacity(0.7)
             )
@@ -1070,6 +1091,32 @@ struct SessionsRowView: View {
     
     // MARK: - Milestone Selection Handler
     
+    // MARK: - Notes Selection Handler
+    
+    /// Update session with new notes
+    /// This method handles the notes change workflow:
+    /// 1. Updates the session with the new notes
+    /// 2. Immediately updates the session in the data store
+    /// 3. Triggers a UI refresh by calling the callback
+    /// 4. Forces an immediate refresh of the session observer to update the UI
+    private func updateSessionNotes(_ newNotes: String) {
+        // Update only the notes field using the single-field update method
+        // This avoids any date/time parsing issues that could cause midnight duration bugs
+        let success = SessionManager.shared.updateSession(id: session.id, field: "notes", value: newNotes)
+        
+        if success {
+            print("✅ Successfully updated session \(session.id) with new notes")
+            // Force immediate refresh of the session observer to update the UI
+            // Use the same robust synchronization approach as other updates
+            refreshSessionData()
+            
+            // Notify parent that project has changed so it can refresh the view
+            onProjectChanged?()
+        } else {
+            print("❌ Failed to update session \(session.id) with new notes")
+        }
+    }
+    
     // MARK: - Action Selection Handler
     
     /// Update session with new action and milestone state
@@ -1230,6 +1277,99 @@ struct TimePickerPopover: View {
             onTimeChanged: onTimeChanged,
             onDismiss: onDismiss
         )
+    }
+}
+
+// MARK: - Inline Notes Popover
+/// Compact inline popover for editing session notes
+/// Similar to ActionSelectionPopover but dedicated to notes editing
+struct NotesSelectionPopover: View {
+    let currentNotes: String
+    let onSaveNotes: (String) -> Void
+    let onDismiss: () -> Void
+    
+    @State private var editedNotes: String
+    @FocusState private var isNotesTextFieldFocused: Bool
+    
+    init(currentNotes: String, onSaveNotes: @escaping (String) -> Void, onDismiss: @escaping () -> Void) {
+        self.currentNotes = currentNotes
+        self.onSaveNotes = onSaveNotes
+        self.onDismiss = onDismiss
+        self._editedNotes = State(initialValue: currentNotes)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Title
+            Text("Edit Notes")
+                .font(Theme.Fonts.body.weight(.semibold))
+                .foregroundColor(Theme.Colors.textPrimary)
+            
+            // Notes text editor
+            ZStack(alignment: .topLeading) {
+                if editedNotes.isEmpty {
+                    Text("Enter session notes...")
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                }
+                TextEditor(text: $editedNotes)
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .frame(height: 100)
+                    .scrollContentBackground(.hidden)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                    .padding(0)
+            }
+            .padding(0)
+            
+            // Action buttons
+            HStack(spacing: 8) {
+                Button("Cancel") {
+                    onDismiss()
+                }
+                .buttonStyle(.secondary)
+                
+                Spacer()
+                
+                Button("Save") {
+                    onSaveNotes(editedNotes)
+                    onDismiss()
+                }
+                .buttonStyle(.primary)
+                .disabled(editedNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(.top, 8)
+        }
+        .padding(16)
+        .frame(width: 400)
+        .cornerRadius(12)
+        .shadow(radius: 10)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isNotesTextFieldFocused = true
+            }
+        }
+        .onKeyPress { keyPress in
+            if keyPress.key == .escape {
+                onDismiss()
+                return .handled
+            }
+            if keyPress.modifiers.contains(.command) && keyPress.key == .return {
+                if !editedNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    onSaveNotes(editedNotes)
+                    onDismiss()
+                }
+                return .handled
+            }
+            return .ignored
+        }
     }
 }
 
