@@ -53,25 +53,6 @@ class NotesViewModel: ObservableObject {
         return sortedActivityTypes
     }
     
-    /// Get the most recent activity type used for the current project
-    private var mostRecentActivityTypeForProject: ActivityType? {
-        guard let projectID = currentProjectID else { return nil }
-        
-        // Find the most recent session for this project
-        let recentSessions = SessionManager.shared.allSessions
-            .filter { $0.projectID == projectID }
-            .sorted { $0.startDate > $1.startDate }
-        
-        guard let mostRecentSession = recentSessions.first,
-              let activityTypeID = mostRecentSession.activityTypeID else {
-            return nil
-        }
-        
-        // Find the activity type by ID
-        return ActivityTypeManager.shared.getActiveActivityTypes()
-            .first { $0.id == activityTypeID }
-    }
-    
     private var completion: ((String, Int?, String?, String?, String, Bool) -> Void)?  // notes, mood, activityTypeID, projectPhaseID, action, isMilestone
     private var addPhaseCompletion: ((String) -> Void)?  // phase name
     
@@ -131,13 +112,22 @@ class NotesViewModel: ObservableObject {
     // MARK: - Smart Defaults
     
     private func setSmartDefaults() {
-        // Set smart defaults based on last used for this project
-        // First, try to use the most recent activity type for this project
+        // Set smart defaults based on last session with the same project ID
+        if let lastSessionForProject = getLastSessionForCurrentProject() {
+            // Use the activity type from the last session
+            if selectedActivityTypeID == nil && lastSessionForProject.activityTypeID != nil {
+                selectedActivityTypeID = lastSessionForProject.activityTypeID
+            }
+            
+            // Use the phase from the last session
+            if selectedProjectPhaseID == nil && lastSessionForProject.projectPhaseID != nil {
+                selectedProjectPhaseID = lastSessionForProject.projectPhaseID
+            }
+        }
+        
+        // Fallback: If no last session or missing values, use defaults
         if selectedActivityTypeID == nil {
-            if let mostRecentActivityType = mostRecentActivityTypeForProject {
-                selectedActivityTypeID = mostRecentActivityType.id
-            } else if !activityTypes.isEmpty {
-                // Fall back to first activity type if no recent history
+            if !activityTypes.isEmpty {
                 selectedActivityTypeID = activityTypes.first?.id
             }
         }
@@ -146,9 +136,18 @@ class NotesViewModel: ObservableObject {
         if selectedProjectPhaseID == nil && !availablePhases.isEmpty {
             selectedProjectPhaseID = availablePhases.first?.id
         }
+    }
+    
+    /// Get the most recent session for the current project
+    private func getLastSessionForCurrentProject() -> SessionRecord? {
+        guard let projectID = currentProjectID else { return nil }
         
-        // TODO: Set smart defaults for action and isMilestone if historical data exists
-        // For now, they start empty/False
+        // Find all sessions for this project and sort by start date (descending)
+        let sessionsForProject = SessionManager.shared.allSessions
+            .filter { $0.projectID == projectID }
+            .sorted { $0.startDate > $1.startDate }
+        
+        return sessionsForProject.first
     }
     
     // MARK: - Phase Management
