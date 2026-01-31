@@ -210,7 +210,7 @@ class ActivityTypeManager {
     
     private func createDefaultActivityTypes() -> [ActivityType] {
         let defaults = [
-            ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: false), // Fallback for legacy data
+            ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: true), // Fallback for legacy data
             ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
             ActivityType(id: "outlining", name: "Outlining / Brainstorming", emoji: "🧠", description: "Planning and organizing ideas", archived: false),
             ActivityType(id: "editing", name: "Editing / Rewriting", emoji: "✂️", description: "Refining and improving existing content", archived: false),

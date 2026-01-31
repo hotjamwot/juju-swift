@@ -1058,7 +1058,7 @@ class SessionManager: ObservableObject {
         
         Task {
             do {
-                try await csvManager.appendToYearFile(csvRow, for: year)
+                try await csvManager.prependToYearFile(csvRow, for: year)
                 
                 await MainActor.run {
                     completion(true)

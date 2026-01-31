@@ -52,8 +52,8 @@ class SessionCSVManager {
         try await fileManager.writeToFile(finalContent, to: fileURL)
     }
     
-    /// Append content to a year-based file (checks for header first)
-    func appendToYearFile(_ content: String, for year: Int) async throws {
+    /// Prepend content to a year-based file (adds new session after header, keeping newest at top)
+    func prependToYearFile(_ content: String, for year: Int) async throws {
         let fileURL = getDataFileURL(for: year)
         
         // Check if file exists and has header
@@ -61,14 +61,34 @@ class SessionCSVManager {
         let hasHeader = exists ? await fileManager.fileHasHeader(at: fileURL) : false
         
         if !exists || !hasHeader {
-            // Need to write header + content
-            // Use the field structure that matches SessionDataParser.convertSessionsToCSV()
+            // Need to write header + content (new file or missing header)
             let header = "id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood\n"
             let contentWithHeader = hasHeader ? content : header + content
             try await fileManager.writeToFile(contentWithHeader, to: fileURL)
         } else {
-            // Just append the row
-            try await fileManager.appendToFile(content, to: fileURL)
+            // Read existing content, then write header + new content + existing content
+            let existingContent = try await fileManager.readFromFile(fileURL)
+            let lines = existingContent.components(separatedBy: .newlines)
+            
+            // Find the header line and separate it from the data
+            var headerLine = ""
+            var dataLines: [String] = []
+            
+            for (index, line) in lines.enumerated() {
+                if index == 0 {
+                    headerLine = line
+                } else if !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    dataLines.append(line)
+                }
+            }
+            
+            // Write: header + new content + existing data (newest sessions at top)
+            var newContent = headerLine + "\n" + content
+            if !dataLines.isEmpty {
+                newContent += dataLines.joined(separator: "\n")
+            }
+            
+            try await fileManager.writeToFile(newContent, to: fileURL)
         }
     }
     
