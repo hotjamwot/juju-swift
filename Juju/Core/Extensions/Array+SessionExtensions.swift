@@ -88,6 +88,7 @@ extension Array where Element == SessionRecord {
     /// - Uses exact string comparison for activityTypeID
     /// - Case-sensitive matching
     /// - Returns empty array if no sessions match
+    /// - Special handling for "Uncategorized" to match nil/empty activityTypeID
     ///
     /// **Performance Notes**:
     /// - Single pass through array (O(n))
@@ -97,12 +98,19 @@ extension Array where Element == SessionRecord {
     /// **Edge Cases**:
     /// - Empty array returns empty array
     /// - Non-existent activityTypeID returns empty array
-    /// - Nil activityTypeID values are excluded
+    /// - Nil activityTypeID values are excluded (except when filtering by "Uncategorized")
     ///
     /// - Parameters:
-    ///   - activityTypeID: Activity type identifier to filter by
+    ///   - activityTypeID: Activity type identifier to filter by (use "Uncategorized" for nil/empty)
     /// - Returns: Array of sessions with the specified activity type
     func filteredByActivityType(_ activityTypeID: String) -> [SessionRecord] {
+        // Special case: "Uncategorized" should match sessions with nil or empty activityTypeID
+        if activityTypeID == "Uncategorized" {
+            return self.filter { session in
+                return session.activityTypeID == nil || session.activityTypeID?.isEmpty == true
+            }
+        }
+        // Standard case: exact match for activityTypeID
         return self.filter { $0.activityTypeID == activityTypeID }
     }
     

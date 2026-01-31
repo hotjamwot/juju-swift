@@ -631,7 +631,21 @@ class ProjectManager {
             Project(name: "Other", color: "#76B7B2", emoji: "📁")
         ]
         print("Created default projects")
-        saveProjects(defaults)
+        
+        // Write directly to disk without triggering notification loop
+        // This avoids the recursive loadProjects -> createDefaultProjects -> saveProjects -> notification -> loadProjects loop
+        if let projectsFile = projectsFile {
+            do {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                let data = try encoder.encode(defaults)
+                try data.write(to: projectsFile)
+                print("✅ Saved default projects to \(projectsFile.path)")
+            } catch {
+                print("Error writing default projects: \(error)")
+            }
+        }
+        
         return defaults
     }
     

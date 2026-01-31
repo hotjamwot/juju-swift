@@ -131,22 +131,39 @@ actor SessionFileManager {
     /// - Parameter jujuPath: The base Juju application support directory
     /// - Returns: Sorted array of years that have data files
     nonisolated func getAvailableYears(in jujuPath: URL) -> [Int] {
+        print("🔍 getAvailableYears called for path: \(jujuPath.path)")
+        
         guard let contents = try? fileManager.contentsOfDirectory(at: jujuPath, includingPropertiesForKeys: [.nameKey], options: []) else {
+            print("❌ Could not read directory contents")
             return []
         }
         
+        print("📁 Found \(contents.count) items in directory")
+        
         let yearFiles = contents.filter { url in
             let fileName = url.lastPathComponent
-            return fileName.hasSuffix("-data.csv") && fileName.count == 13 // "YYYY-data.csv" = 13 chars
+            let isYearFile = fileName.hasSuffix("-data.csv") && fileName.count == 13 // "YYYY-data.csv" = 13 chars
+            if isYearFile {
+                print("  ✓ Found year file: \(fileName)")
+            }
+            return isYearFile
         }
+        
+        print("📊 Matched \(yearFiles.count) year files")
         
         let years = yearFiles.compactMap { url -> Int? in
             let fileName = url.lastPathComponent
             let yearString = String(fileName.prefix(4)) // Extract "YYYY" from "YYYY-data.csv"
-            return Int(yearString)
+            let year = Int(yearString)
+            if let year = year {
+                print("  → Year \(year) extracted from \(fileName)")
+            }
+            return year
         }
         
-        return years.sorted()
+        let sortedYears = years.sorted()
+        print("✅ Returning years: \(sortedYears)")
+        return sortedYears
     }
     
     /// Check if legacy data.csv file exists

@@ -239,6 +239,18 @@ struct BottomFilterBar: View {
             Button(action: { onActivityTypeFilterChange("All") }) {
                 Text("All Activities")
             }
+            // Add "Uncategorized" option to filter sessions with no activity type
+            Button(action: { onActivityTypeFilterChange("Uncategorized") }) {
+                HStack {
+                    Text("Uncategorized")
+                        .font(Theme.Fonts.body.weight(.medium))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                    Text("(no activity type)")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             // Only show active (non-archived) activity types
             ForEach(activityTypes.filter { !$0.archived }) { type in
                 Button(action: { onActivityTypeFilterChange(type.id) }) {
@@ -254,6 +266,12 @@ struct BottomFilterBar: View {
             HStack {
                 if filterState.activityTypeFilter == "All" {
                     Text("All Activities")
+                } else if filterState.activityTypeFilter == "Uncategorized" {
+                    HStack {
+                        Text("Uncategorized")
+                            .font(Theme.Fonts.body.weight(.medium))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                    }
                 } else {
                     // Find the activity type by ID and display only its name (no emoji)
                     if let activityType = activityTypes.first(where: { $0.id == filterState.activityTypeFilter }) {
