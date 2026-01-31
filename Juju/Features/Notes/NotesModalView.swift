@@ -26,6 +26,13 @@ struct NotesModalView: View {
                 }
             }
         }
+        .onChange(of: viewModel.shouldFocusActionField) { newValue in
+            if newValue {
+                isActionTextFieldFocused = true
+                // Reset the flag so future requests can be detected
+                viewModel.shouldFocusActionField = false
+            }
+        }
         .onKeyPress { keyPress in
             if keyPress.modifiers.contains(.command) && keyPress.key == .return {
                 if viewModel.canSave {

@@ -14,6 +14,31 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     
     override private init() {}
     
+    // MARK: - Initialization
+    
+    private var hasSetupAppLifecycleObservers = false
+
+    private func setupAppLifecycleObservers() {
+        // Ensure we only register observers once
+        guard !hasSetupAppLifecycleObservers else { return }
+        hasSetupAppLifecycleObservers = true
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidActivate),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func appDidActivate() {
+        // When app comes back to foreground, ensure the window is visible if it was previously shown
+        if isPresented, let window = hostingWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+    
     // MARK: - Presentation Methods
     
     func presentNotes(
@@ -33,6 +58,9 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         // Activate the app to bring it to front
         NSApp.activate(ignoringOtherApps: true)
         
+        // Set up app lifecycle observers (only once)
+        setupAppLifecycleObservers()
+        
         // Create and configure the hosting window
         createHostingWindow(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
         
@@ -45,21 +73,43 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projects: [Project],
         completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
-        // Clean up existing window if any
+        // If window already exists, just bring it to front and update context
         if let existingWindow = hostingWindow {
-            existingWindow.close()
-            hostingWindow = nil
+            // Detect if we're switching to a different project so we don't keep stale selections
+            let projectChanged = notesViewModel.currentProjectID != projectID
+
+            // Use a centralized helper on the view model to prepare project-related state
+            notesViewModel.prepareForPresentation(projectID: projectID, projectName: projectName, projects: projects)
+
+            // If the project changed, ensure ephemeral content is reset (but keep typed notes if present)
+            if projectChanged {
+                notesViewModel.resetContent()
+            }
+
+            // Update completion handler with wrapper that hides window
+            let wrappedCompletion: (String, Int?, String?, String?, String, Bool) -> Void = { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
+                self?.dismissNotes()
+                completion(notes, mood, activityTypeID, projectPhaseID, action, isMilestone)
+            }
+            notesViewModel.updateCompletion(wrappedCompletion)
+
+            // Ensure the window appears centered when re-presenting
+            existingWindow.center()
+
+            // Bring window back to front
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
         }
         
         // Create the SwiftUI view
-        // NotesModalView now directly binds its UI to the notesViewModel's properties.
         let notesView = NotesModalView(viewModel: notesViewModel)
         
         // Create hosting controller
         let hostingController = NSHostingController(rootView: notesView)
         
         // Create window
-        let windowSize = NSSize(width: 750, height: 450) // Adjusted height for new fields
+        let windowSize = NSSize(width: 750, height: 450)
         let screen = NSScreen.main
         _ = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1400, height: 900)
         
@@ -79,10 +129,8 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         window.backgroundColor = NSColor.clear
         window.hasShadow = true
         window.isMovableByWindowBackground = true
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.minSize = NSSize(width: 750, height: 600) // Adjusted min height
+        window.minSize = NSSize(width: 750, height: 600)
         window.isReleasedWhenClosed = false
-        window.level = .floating
         
         // Set the content view controller
         window.contentViewController = hostingController
@@ -98,25 +146,26 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         
         hostingWindow = window
         
-        // Present the notes modal with completion handler
+        // Wrap the completion handler so it also hides the window
+        let wrappedCompletion: (String, Int?, String?, String?, String, Bool) -> Void = { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
+            self?.dismissNotes()
+            completion(notes, mood, activityTypeID, projectPhaseID, action, isMilestone)
+        }
+        
+        // Present the notes modal with wrapped completion handler
         notesViewModel.present(
             projectID: projectID,
             projectName: projectName,
-            projects: projects
-        ) { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
-            guard let self = self else { return }
-            
-            self.dismissNotes()
-            completion(notes, mood, activityTypeID, projectPhaseID, action, isMilestone)
-        }
+            projects: projects,
+            completion: wrappedCompletion
+        )
     }
     
     private func dismissNotes() {
         isPresented = false
         
-        // Close the hosting window
-        hostingWindow?.close()
-        hostingWindow = nil
+        // Hide the window instead of closing it
+        hostingWindow?.orderOut(nil)
     }
     
     // MARK: - Public Interface
@@ -136,17 +185,18 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
     // MARK: - NSWindowDelegate
     
     func windowWillClose(_ notification: Notification) {
-        // Handle window close - treat as cancel if not explicitly saved
-        if isPresented {
-            notesViewModel.cancelNotes() // This now correctly handles new fields
-        }
-        
-        hostingWindow = nil
+        // Close button clicked - treat as cancel
+        notesViewModel.cancelNotes()
     }
     
     func windowDidBecomeKey(_ notification: Notification) {
-        // Window became key - ensure focus is on text field
-        resetContentAndFocus()
+        // Window became key - ensure focus is on the action field, but don't clear user's content
+        if let window = hostingWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        // Request focus in the SwiftUI view (without resetting content)
+        notesViewModel.requestActionFieldFocus()
     }
 }
 

@@ -14,6 +14,13 @@ class NotesViewModel: ObservableObject {
     // New fields for Action and Milestone
     @Published var action: String = ""
     @Published var isMilestone: Bool = false
+
+    // Focus request flag to tell the view to focus the action text field without modifying content
+    @Published var shouldFocusActionField: Bool = false
+
+    func requestActionFieldFocus() {
+        shouldFocusActionField = true
+    }
     
     // Project info (locked, pre-filled)
     var currentProjectID: String?
@@ -58,25 +65,62 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - Presentation Management
     
+    /// Prepare the view model for a particular project without showing the modal.
+    /// This centralizes the logic needed by both the present flow and the existing-window update flow.
+    func prepareForPresentation(projectID: String?, projectName: String?, projects: [Project]) {
+        self.currentProjectID = projectID
+        self.currentProjectName = projectName
+        self.projects = projects
+
+        // Clear any previous activity/phase selection so smart defaults for the
+        // current project (based on the last recorded session) can be applied.
+        selectedActivityTypeID = nil
+        selectedProjectPhaseID = nil
+
+        loadActivityTypes()
+        loadPhasesForProject()
+
+        // Minimal structured debug: record presentation context
+        ErrorHandler.shared.logDebug("prepareForPresentation", context: "NotesViewModel", data: ["projectID": projectID ?? "nil", "projectName": projectName ?? "nil", "activityTypes": activityTypes.map { $0.id }])
+
+        setSmartDefaults()
+
+        // If sessions haven't been loaded yet, load them asynchronously and re-run smart defaults
+        if SessionManager.shared.allSessions.isEmpty {
+            print("[NotesViewModel] allSessions empty, loading sessions to attempt smart defaults")
+            Task { @MainActor in
+                _ = await SessionManager.shared.loadAllSessions()
+                print("[NotesViewModel] sessions loaded, re-running setSmartDefaults")
+                self.setSmartDefaults()
+            }
+        }
+    }
+
     func present(
         projectID: String?,
         projectName: String?,
         projects: [Project],
         completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
-        self.currentProjectID = projectID
-        self.currentProjectName = projectName
-        self.projects = projects
+        // Set completion first
         self.completion = completion
-        loadActivityTypes()
-        loadPhasesForProject()
-        setSmartDefaults()
+
+        // Prepare the view model for the provided project
+        prepareForPresentation(projectID: projectID, projectName: projectName, projects: projects)
+
+        // Reset ephemeral content (notes, mood, action, milestone)
         resetContent()
+
+        // Show the modal
         isPresented = true
     }
     
     func dismiss() {
         isPresented = false
+    }
+    
+    func updateCompletion(_ newCompletion: @escaping (String, Int?, String?, String?, String, Bool) -> Void) {
+        self.completion = newCompletion
     }
     
     // MARK: - Content Management
@@ -91,11 +135,11 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - Data Loading
     
-    private func loadActivityTypes() {
+    func loadActivityTypes() {
         activityTypes = ActivityTypeManager.shared.getActiveActivityTypes()
     }
     
-    private func loadPhasesForProject() {
+    func loadPhasesForProject() {
         guard let projectID = currentProjectID else {
             availablePhases = []
             return
@@ -111,12 +155,32 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - Smart Defaults
     
-    private func setSmartDefaults() {
+    func setSmartDefaults() {
         // Set smart defaults based on last session with the same project ID
         if let lastSessionForProject = getLastSessionForCurrentProject() {
-            // Use the activity type from the last session
-            if selectedActivityTypeID == nil && lastSessionForProject.activityTypeID != nil {
-                selectedActivityTypeID = lastSessionForProject.activityTypeID
+            // Minimal structured debug: last session info for this project
+            ErrorHandler.shared.logDebug("Last session found", context: "NotesViewModel", data: ["sessionID": lastSessionForProject.id, "activityType": lastSessionForProject.activityTypeID ?? "nil", "phase": lastSessionForProject.projectPhaseID ?? "nil"])
+
+            // Use the activity type from the last session if it's valid
+            if let candidate = lastSessionForProject.activityTypeID {
+                let resolved = ActivityTypeManager.shared.getActivityType(id: candidate)
+                let isActive = resolved != nil && resolved!.archived == false
+                ErrorHandler.shared.logDebug("Candidate activity type", context: "NotesViewModel", data: ["candidate": candidate, "resolved": resolved != nil, "active": isActive])
+                if isActive {
+                    // Only override an existing selection if it is empty or it is the fallback (first type)
+                    let currentSelection = selectedActivityTypeID
+                    let fallbackID = activityTypes.first?.id
+                    if currentSelection == nil || currentSelection == fallbackID {
+                        ErrorHandler.shared.logStateChange("selectedActivityTypeID", fromValue: currentSelection, toValue: candidate, context: "Applied smart default (overrode fallback)")
+                        selectedActivityTypeID = candidate
+                    } else {
+                        ErrorHandler.shared.logDebug("Not overriding existing activity selection", context: "NotesViewModel", data: ["currentSelection": currentSelection ?? "nil", "candidate": candidate])
+                    }
+                } else if resolved != nil {
+                    ErrorHandler.shared.logDebug("Candidate activity type archived", context: "NotesViewModel", data: ["candidate": candidate])
+                } else {
+                    ErrorHandler.shared.logDebug("Candidate activity type not found", context: "NotesViewModel", data: ["candidate": candidate])
+                }
             }
             
             // Use the phase from the last session
@@ -128,8 +192,14 @@ class NotesViewModel: ObservableObject {
         // Fallback: If no last session or missing values, use defaults
         if selectedActivityTypeID == nil {
             if !activityTypes.isEmpty {
-                selectedActivityTypeID = activityTypes.first?.id
+                let fallbackID = activityTypes.first?.id
+                ErrorHandler.shared.logStateChange("selectedActivityTypeID", fromValue: nil, toValue: fallbackID, context: "Fallback to first activity type")
+                selectedActivityTypeID = fallbackID
+            } else {
+                ErrorHandler.shared.logDebug("No activity types available to fall back to", context: "NotesViewModel")
             }
+        } else {
+            ErrorHandler.shared.logDebug("Final selectedActivityTypeID", context: "NotesViewModel", data: selectedActivityTypeID ?? "nil")
         }
         
         // Phase defaults to first phase if available
@@ -139,14 +209,27 @@ class NotesViewModel: ObservableObject {
     }
     
     /// Get the most recent session for the current project
+    ///
+    /// Prefer the most recent session that has a valid activityTypeID so we don't
+    /// inherit an "uncategorized" (nil) activity type when a later session exists
+    /// without an activityType.
     private func getLastSessionForCurrentProject() -> SessionRecord? {
         guard let projectID = currentProjectID else { return nil }
-        
-        // Find all sessions for this project and sort by start date (descending)
+
+        // Find sessions for this project and sort by start date (newest first)
         let sessionsForProject = SessionManager.shared.allSessions
             .filter { $0.projectID == projectID }
             .sorted { $0.startDate > $1.startDate }
-        
+
+        // Prefer the most recent session that has a non-nil, valid activity type
+        for session in sessionsForProject {
+            if let activityID = session.activityTypeID,
+               ActivityTypeManager.shared.getActivityType(id: activityID) != nil {
+                return session
+            }
+        }
+
+        // Fallback: return the most recent session even if it lacks an activity type
         return sessionsForProject.first
     }
     
@@ -182,13 +265,13 @@ class NotesViewModel: ObservableObject {
     // MARK: - Actions
     
     func saveNotes() {
-        // Pass the new action and isMilestone to the completion handler
+        // Only call completion handler on explicit Save
         completion?(notesText, mood, selectedActivityTypeID, selectedProjectPhaseID, action, isMilestone)
         dismiss()
     }
     
     func cancelNotes() {
-        // Pass nil/default for the new fields
+        // Pass empty data so MenuManager knows to keep session active
         completion?("", nil, nil, nil, "", false)
         dismiss()
     }
@@ -248,6 +331,7 @@ class NotesViewModel: ObservableObject {
         
         return false
     }
+    
 }
 
 // MARK: - Preview Helper
