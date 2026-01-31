@@ -216,22 +216,33 @@ struct SessionsRowView: View {
                             Text(projectEmoji)
                                 .font(.system(size: 12))
                             
-                            // Project name
+                            // Project name with grey styling for archived projects
                             Text(projectName)
                                 .font(Theme.Fonts.body.weight(.semibold))
-                                .foregroundColor(Theme.Colors.textPrimary)
+                                .foregroundColor(isProjectArchived ? Theme.Colors.textSecondary : Theme.Colors.textPrimary)
                                 .lineLimit(1)
+                            
+                            // Archived badge
+                            if isProjectArchived {
+                                Text("Archived")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.8))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .clipShape(Capsule())
+                            }
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(projectColor.opacity(0.1))
+                                .fill((isProjectArchived ? Theme.Colors.divider : projectColor).opacity(0.1))
                                 .opacity(isProjectHovering ? 1.0 : 0.0)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
+                                .stroke((isProjectArchived ? Theme.Colors.divider : projectColor).opacity(0.3), lineWidth: 1)
                                 .opacity(isProjectHovering ? 1.0 : 0.0)
                         )
                         .contentShape(Rectangle()) // Make entire capsule tappable
@@ -697,17 +708,27 @@ struct SessionsRowView: View {
     
     // MARK: - Computed Properties
     
+    /// Get project from projectID (includes both active and archived projects)
+    private var project: Project? {
+        projects.first { $0.id == currentSession.projectID }
+    }
+    
+    /// Check if the session's project is archived
+    private var isProjectArchived: Bool {
+        project?.archived ?? false
+    }
+    
     /// Get project name from projectID (looks up project name in projects array)
     private var projectName: String {
-        projects.first { $0.id == currentSession.projectID }?.name ?? currentSession.projectID
+        project?.name ?? currentSession.projectID
     }
     
     private var projectColor: Color {
-        projects.first { $0.id == currentSession.projectID }?.swiftUIColor ?? Theme.Colors.accentColor
+        project?.swiftUIColor ?? Theme.Colors.accentColor
     }
     
     private var projectEmoji: String {
-        projects.first { $0.id == currentSession.projectID }?.emoji ?? "📁"
+        project?.emoji ?? "📁"
     }
     
     /// Get activity type display info with fallback to "Uncategorized" for legacy sessions

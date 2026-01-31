@@ -316,12 +316,14 @@ public struct SessionsView: View {
     
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
-        let activeProjects = projectsViewModel.activeProjects
+        // Pass ALL projects (including archived) so SessionsRowView can look up project names
+        // and properly display archived project names with grey styling
+        let allProjects = projectsViewModel.projects
         let activeActivityTypes = activityTypesViewModel.activeActivityTypes
         return ForEach(currentWeekSessions, id: \.id) { group in
             GroupedSessionView(
                 group: group,
-                projects: activeProjects,
+                projects: allProjects,
                 activityTypes: activeActivityTypes,
                 sidebarState: sidebarState,
                 onDelete: handleDeleteSession,

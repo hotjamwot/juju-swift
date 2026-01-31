@@ -32,7 +32,6 @@
 		66AF6EBB2EF333A7008FDCEB /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AF6EBA2EF333A7008FDCEB /* ProjectsView.swift */; };
 		66AF6EBD2EF333B2008FDCEB /* ActivityTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66AF6EBC2EF333B2008FDCEB /* ActivityTypeView.swift */; };
 		66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F02EA8EA4B00E9BB4A /* AppDelegate.swift */; };
-		66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F12EA8EA4B00E9BB4A /* Info.plist */; };
 		66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F22EA8EA4B00E9BB4A /* Juju-entitlements.plist */; };
 		66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F42EA8EA4B00E9BB4A /* JujuUtils.swift */; };
 		66B1484C2EA8EA4B00E9BB4A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B147F52EA8EA4B00E9BB4A /* main.swift */; };
@@ -473,7 +472,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66B148492EA8EA4B00E9BB4A /* Info.plist in Resources */,
 				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
 				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
 			);
