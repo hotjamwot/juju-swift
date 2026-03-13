@@ -138,9 +138,7 @@ class MenuManager {
         
         print("[MenuManager] Presenting SwiftUI Notes modal")
         // Show the new SwiftUI-based modal
-        Task { @MainActor in
-            await MainActor.run {
-                NotesManager.shared.presentNotes(
+        NotesManager.shared.presentNotes(
                     projectID: projectID,
                     projectName: projectName,
                     projects: self.projects
@@ -164,8 +162,6 @@ class MenuManager {
                         self?.startUpdateTimer()
                     }
                 }
-            }
-        }
         print("[MenuManager] SwiftUI Notes modal presentation completed")
     }
     

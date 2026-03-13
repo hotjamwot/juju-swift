@@ -81,10 +81,9 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             // Use a centralized helper on the view model to prepare project-related state
             notesViewModel.prepareForPresentation(projectID: projectID, projectName: projectName, projects: projects)
 
-            // If the project changed, ensure ephemeral content is reset (but keep typed notes if present)
-            if projectChanged {
-                notesViewModel.resetContent()
-            }
+            // Always reset ephemeral content (notes, action) when presenting for a new session
+            // Smart defaults will still apply for activityType and phase
+            notesViewModel.resetContent()
 
             // Update completion handler with wrapper that hides window
             let wrappedCompletion: (String, Int?, String?, String?, String, Bool) -> Void = { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
@@ -93,8 +92,10 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             }
             notesViewModel.updateCompletion(wrappedCompletion)
 
-            // Ensure the window appears centered when re-presenting
-            existingWindow.center()
+            // Ensure the window appears centered when re-presenting (use async to allow frame calculation)
+            DispatchQueue.main.async {
+                existingWindow.center()
+            }
 
             // Bring window back to front
             existingWindow.makeKeyAndOrderFront(nil)
@@ -141,8 +142,10 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         // Show the window BEFORE centering to ensure proper positioning
         window.makeKeyAndOrderFront(nil)
         
-        // Center the window after it's shown
-        window.center()
+        // Center the window after a brief delay to ensure window frame is calculated
+        DispatchQueue.main.async {
+            window.center()
+        }
         
         hostingWindow = window
         
