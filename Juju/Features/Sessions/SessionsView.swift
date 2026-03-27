@@ -343,8 +343,16 @@ public struct SessionsView: View {
 
     /// Handle session update notifications to refresh specific session rows
     private func handleSessionUpdateNotification(_ notification: Notification) {
-        // Check if this notification contains a sessionID
         guard let sessionID = notification.userInfo?["sessionID"] as? String else {
+            return
+        }
+
+        if sessionID == "bulkPhaseClear" {
+            print("🔔 Refreshing sessions after bulk phase ID clear")
+            Task {
+                await loadCurrentWeekSessions()
+                await MainActor.run { updateSessionCount() }
+            }
             return
         }
 

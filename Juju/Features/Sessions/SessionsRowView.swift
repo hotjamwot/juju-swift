@@ -365,14 +365,14 @@ struct SessionsRowView: View {
                         showingPhasePopover = true
                         selectedPhaseID = currentSession.projectPhaseID
                     }) {
-                        if let phaseName = getProjectPhaseDisplay() {
+                        if let phaseInfo = getProjectPhaseDisplayInfo() {
                             HStack(spacing: 4) {
                                 Image(systemName: "play.circle")
                                     .font(.system(size: 10))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
-                                Text(phaseName)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(phaseInfo.isArchived ? 0.5 : 0.7))
+                                Text(phaseInfo.name)
                                     .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(phaseInfo.isArchived ? 0.55 : 1))
                             }
                         } else {
                             // Empty space when no phase - make it clickable to add a phase
@@ -749,31 +749,26 @@ struct SessionsRowView: View {
         }
     }
     
-    /// Get project phase display name with fallback for legacy sessions
-    private func getProjectPhaseDisplay() -> String? {
-        // If projects array is empty, we can't display phases yet
+    /// Resolves the phase label for this session (includes archived phases so history stays readable).
+    private func getProjectPhaseDisplayInfo() -> (name: String, isArchived: Bool)? {
         guard !projects.isEmpty else {
             return nil
         }
         
-        // If no phaseID is set, return nil to show the placeholder state
         guard let projectPhaseID = currentSession.projectPhaseID,
               !currentSession.projectID.isEmpty else {
             return nil
         }
         
-        // Use the projects array passed from SessionsView instead of loading directly
-        // This ensures we're using the same data source that's being managed by ProjectsViewModel
         guard let project = projects.first(where: { $0.id == currentSession.projectID }) else {
             return nil
         }
         
-        // Check if the phase exists and is not archived
-        guard let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
+        guard let phase = project.phases.first(where: { $0.id == projectPhaseID }) else {
             return nil
         }
         
-        return phase.name
+        return (phase.name, phase.archived)
     }
     
     private var formattedStartTime: String {

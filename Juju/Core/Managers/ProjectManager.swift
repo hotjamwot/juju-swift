@@ -30,7 +30,7 @@ import SwiftUI
 /// **AI Gotchas**:
 /// - [GOTCHA] ProjectStatisticsCache has 30-second TTL; may return stale duration if called too frequently
 /// - [GOTCHA] Archiving project does NOT delete sessions; sessions remain but project hidden
-/// - [GOTCHA] Phase deletion requires checking all sessions using that phase
+/// - [GOTCHA] Phase removal from UI saves clears session phase IDs via SessionManager; deletePhase() does the same
 /// - [GOTCHA] projects property populated from JSON; not real-time until saveAllProjects() called
 /// - [GOTCHA] Statistics calculated from SessionManager.allSessions; must be loaded first
 /// - [GOTCHA] Color stored as hex string; access via swiftUIColor computed property
@@ -516,12 +516,10 @@ class ProjectManager {
     
     /// Delete a phase from a project (permanent removal)
     func deletePhase(from projectID: String, phaseID: String) {
-        // [INTEGRATION] Called from PhaseManagementView when user deletes a phase
-        // [GOTCHA] Deleting a phase does NOT affect existing sessions using that phase
+        SessionManager.shared.clearProjectPhaseForSessions(projectID: projectID, phaseIDs: [phaseID])
         var projects = loadProjects()
         if let projectIndex = projects.firstIndex(where: { $0.id == projectID }) {
             var project = projects[projectIndex]
-            // [GOTCHA] Sessions may still reference this phaseID; they will show "Unknown Phase"
             project.phases.removeAll { $0.id == phaseID }
             projects[projectIndex] = project
             saveProjects(projects)

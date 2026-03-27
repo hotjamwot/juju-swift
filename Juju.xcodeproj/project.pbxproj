@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		66311C1B2F2E2F3E00695979 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 66B147F12EA8EA4B00E9BB4A /* Info.plist */; };
 		6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */; };
 		665909632EE45EFF007D1303 /* SessionsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909602EE45EFF007D1303 /* SessionsRowView.swift */; };
 		665909672EE47949007D1303 /* SidebarStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909662EE47949007D1303 /* SidebarStateManager.swift */; };
@@ -24,6 +23,7 @@
 		669AC6C22F0FC4EF00195AAE /* SessionQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */; };
 		669AC6C32F0FC4EF00195AAE /* JujuError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C12F0FC4EE00195AAE /* JujuError.swift */; };
 		669AC6C52F0FC68500195AAE /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C42F0FC68500195AAE /* SessionManager.swift */; };
+		669AC6C72F0FC68600195AAE /* SessionPhaseIntegrity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C62F0FC68600195AAE /* SessionPhaseIntegrity.swift */; };
 		66A30B0F2EEB001200C03DE4 /* InlineSelectionPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A30B0E2EEB001200C03DE4 /* InlineSelectionPopover.swift */; };
 		66A51B172EF0290E007E2343 /* SessionCSVManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A51B162EF0290D007E2343 /* SessionCSVManager.swift */; };
 		66A51B1E2EF03779007E2343 /* FilterToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A51B1A2EF03778007E2343 /* FilterToggleButton.swift */; };
@@ -68,7 +68,18 @@
 		66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448432EEC9186008FA5DD /* SidebarView.swift */; };
 		66F448462EEC9FDF008FA5DD /* WeeklyEditorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448452EEC9FDF008FA5DD /* WeeklyEditorialView.swift */; };
 		77F001032F40000300E9BB4A /* SessionDataParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F001022F40000200E9BB4A /* SessionDataParserTests.swift */; };
+		77F001092F40000A00E9BB4A /* PhaseDataIntegrityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		77F0010E2F40000E00E9BB4A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1234567890123456789012Q /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1234567890123456789012M;
+			remoteInfo = Juju;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesViewModel.swift; sourceTree = "<group>"; };
@@ -87,6 +98,7 @@
 		669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionQuery.swift; sourceTree = "<group>"; };
 		669AC6C12F0FC4EE00195AAE /* JujuError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuError.swift; sourceTree = "<group>"; };
 		669AC6C42F0FC68500195AAE /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		669AC6C62F0FC68600195AAE /* SessionPhaseIntegrity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionPhaseIntegrity.swift; sourceTree = "<group>"; };
 		66A30B0E2EEB001200C03DE4 /* InlineSelectionPopover.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InlineSelectionPopover.swift; sourceTree = "<group>"; };
 		66A51B162EF0290D007E2343 /* SessionCSVManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionCSVManager.swift; sourceTree = "<group>"; };
 		66A51B1A2EF03778007E2343 /* FilterToggleButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilterToggleButton.swift; sourceTree = "<group>"; };
@@ -133,20 +145,21 @@
 		66F448412EEC9164008FA5DD /* DashboardRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardRootView.swift; sourceTree = "<group>"; };
 		66F448432EEC9186008FA5DD /* SidebarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		66F448452EEC9FDF008FA5DD /* WeeklyEditorialView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyEditorialView.swift; sourceTree = "<group>"; };
-		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77F001012F40000100E9BB4A /* JujuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JujuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		77F001022F40000200E9BB4A /* SessionDataParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDataParserTests.swift; sourceTree = "<group>"; };
+		77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhaseDataIntegrityTests.swift; sourceTree = "<group>"; };
+		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A1234567890123456789012I /* Frameworks */ = {
+		77F001072F40000700E9BB4A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		77F001072F40000700E9BB4A /* Frameworks */ = {
+		A1234567890123456789012I /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -164,14 +177,6 @@
 				66B148882EA8EA6000E9BB4A /* README.md */,
 			);
 			name = "juju-swift";
-			sourceTree = "<group>";
-		};
-		77F001042F40000400E9BB4A /* JujuTests */ = {
-			isa = PBXGroup;
-			children = (
-				77F001022F40000200E9BB4A /* SessionDataParserTests.swift */,
-			);
-			path = JujuTests;
 			sourceTree = "<group>";
 		};
 		6659095C2EE44952007D1303 /* ActivityTypes */ = {
@@ -271,6 +276,7 @@
 		66B148022EA8EA4B00E9BB4A /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				669AC6C62F0FC68600195AAE /* SessionPhaseIntegrity.swift */,
 				665C25EF2F1075C8002125EF /* Extensions */,
 				66B147FC2EA8EA4B00E9BB4A /* Managers */,
 				66B147FF2EA8EA4B00E9BB4A /* Models */,
@@ -418,6 +424,15 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		77F001042F40000400E9BB4A /* JujuTests */ = {
+			isa = PBXGroup;
+			children = (
+				77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */,
+				77F001022F40000200E9BB4A /* SessionDataParserTests.swift */,
+			);
+			path = JujuTests;
+			sourceTree = "<group>";
+		};
 		A1234567890123456789012K /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -438,23 +453,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1234567890123456789012M /* Juju */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = A1234567890123456789012N /* Build configuration list for PBXNativeTarget "Juju" */;
-			buildPhases = (
-				A1234567890123456789012O /* Sources */,
-				A1234567890123456789012I /* Frameworks */,
-				A1234567890123456789012P /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Juju;
-			productName = Juju;
-			productReference = A1234567890123456789012G /* Juju.app */;
-			productType = "com.apple.product-type.application";
-		};
 		77F001052F40000500E9BB4A /* JujuTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 77F001122F40001200E9BB4A /* Build configuration list for PBXNativeTarget "JujuTests" */;
@@ -473,25 +471,24 @@
 			productReference = 77F001012F40000100E9BB4A /* JujuTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A1234567890123456789012M /* Juju */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1234567890123456789012N /* Build configuration list for PBXNativeTarget "Juju" */;
+			buildPhases = (
+				A1234567890123456789012O /* Sources */,
+				A1234567890123456789012I /* Frameworks */,
+				A1234567890123456789012P /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Juju;
+			productName = Juju;
+			productReference = A1234567890123456789012G /* Juju.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXContainerItemProxy section */
-		77F0010E2F40000E00E9BB4A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A1234567890123456789012Q /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A1234567890123456789012M;
-			remoteInfo = Juju;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXTargetDependency section */
-		77F0010F2F40000F00E9BB4A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A1234567890123456789012M /* Juju */;
-			targetProxy = 77F0010E2F40000E00E9BB4A /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		A1234567890123456789012Q /* Project object */ = {
@@ -499,14 +496,14 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
-					A1234567890123456789012M = {
-						CreatedOnToolsVersion = 15.0;
-					};
 					77F001052F40000500E9BB4A = {
 						CreatedOnToolsVersion = 15.0;
 						TestTargetID = A1234567890123456789012M;
+					};
+					A1234567890123456789012M = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -530,16 +527,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A1234567890123456789012P /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				66311C1B2F2E2F3E00695979 /* Info.plist in Resources */,
-				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
-				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		77F001082F40000800E9BB4A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -547,9 +534,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1234567890123456789012P /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				66B1484A2EA8EA4B00E9BB4A /* Juju-entitlements.plist in Resources */,
+				66B148812EA8EA4B00E9BB4A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		77F001062F40000600E9BB4A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				77F001092F40000A00E9BB4A /* PhaseDataIntegrityTests.swift in Sources */,
+				77F001032F40000300E9BB4A /* SessionDataParserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1234567890123456789012O /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -596,6 +601,7 @@
 				66F448382EEC9131008FA5DD /* WeeklyDashboardView.swift in Sources */,
 				66F448372EEC9131008FA5DD /* WeeklyActivityBubbleChartView.swift in Sources */,
 				66A30B0F2EEB001200C03DE4 /* InlineSelectionPopover.swift in Sources */,
+				669AC6C72F0FC68600195AAE /* SessionPhaseIntegrity.swift in Sources */,
 				669AC6C52F0FC68500195AAE /* SessionManager.swift in Sources */,
 				669AC6C22F0FC4EF00195AAE /* SessionQuery.swift in Sources */,
 				6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */,
@@ -614,17 +620,53 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		77F001062F40000600E9BB4A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				77F001032F40000300E9BB4A /* SessionDataParserTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		77F0010F2F40000F00E9BB4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1234567890123456789012M /* Juju */;
+			targetProxy = 77F0010E2F40000E00E9BB4A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		77F001102F40001000E9BB4A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z5Z57S6JKU;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Juju.app/Contents/MacOS/Juju";
+			};
+			name = Debug;
+		};
+		77F001112F40001100E9BB4A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z5Z57S6JKU;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Juju.app/Contents/MacOS/Juju";
+			};
+			name = Release;
+		};
 		A1234567890123456789012S /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -808,42 +850,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		77F001102F40001000E9BB4A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z5Z57S6JKU;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Juju.app/Contents/MacOS/Juju";
-			};
-			name = Debug;
-		};
-		77F001112F40001100E9BB4A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z5Z57S6JKU;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.juju.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Juju.app/Contents/MacOS/Juju";
 			};
 			name = Release;
 		};

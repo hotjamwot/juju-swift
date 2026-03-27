@@ -19,7 +19,7 @@ import Foundation
 /// 
 /// **AI Quick Find (Method Index)**:
 /// - State: isSessionActive, currentProjectID, currentActivityTypeID, sessionStartTime
-/// - Lifecycle: startSession(), endSession(), updateSessionFull(), deleteSession()
+/// - Lifecycle: startSession(), endSession(), updateSessionFull(), deleteSession(), clearProjectPhaseForSessions()
 /// - Load: loadAllSessions(), loadSessions(in:), loadCurrentWeekSessions(), loadCurrentYearSessions()
 /// - Export: exportSessions(format:fileName:)
 /// - Utilities: getCurrentSessionDuration(), activeSession property
@@ -820,6 +820,30 @@ class SessionManager: ObservableObject {
         }
 
         return true
+    }
+    
+    /// Clears `projectPhaseID` for every session on `projectID` whose phase ID is in `phaseIDs`.
+    /// Used when phase definitions are removed from a project so sessions do not keep orphaned IDs.
+    /// - Returns: Number of sessions updated.
+    @discardableResult
+    func clearProjectPhaseForSessions(projectID: String, phaseIDs: Set<String>) -> Int {
+        let (updated, changed) = SessionPhaseIntegrity.clearingPhaseReferences(
+            in: allSessions,
+            projectID: projectID,
+            phaseIDs: phaseIDs
+        )
+        guard changed > 0 else { return 0 }
+        allSessions = updated
+        lastUpdated = Date()
+        NotificationCenter.default.post(name: .sessionDidEnd, object: nil, userInfo: ["sessionID": "bulkPhaseClear"])
+        Task {
+            saveAllSessions(allSessions)
+            await MainActor.run {
+                self.lastUpdated = Date()
+                ProjectManager.shared.updateAllProjectStatistics()
+            }
+        }
+        return changed
     }
     
     /// Delete a session using a robust atomic operation to prevent data loss

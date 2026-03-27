@@ -136,6 +136,8 @@ SessionManager.shared.deleteSession(id: "session-uuid")
 
 ## 📈 PROJECT OPERATIONS
 
+**Phases:** Sessions reference phases by `projectPhaseID`. **Archived** phases remain valid for validation and session row display; pickers only offer non-archived phases. Removing a phase from a project (sidebar editor on save, or `deletePhase`) must clear `projectPhaseID` on affected sessions—use `SessionManager.shared.clearProjectPhaseForSessions(projectID:phaseIDs:)` when batching; it posts `.sessionDidEnd` with `userInfo["sessionID"] == "bulkPhaseClear"` so `SessionsView` can reload. Details: **Documentation/PHASE_ID_DATA_INTEGRITY.md**.
+
 ```swift
 let projects = ProjectManager.shared.projects
 let project = Project(name: "New", color: "#4E79A7", emoji: "📁")
@@ -193,22 +195,25 @@ do {
 | **Target** | `JujuTests` — macOS **unit test bundle** (not UI tests) |
 | **Host app** | `Juju.app` — tests load with `TEST_HOST` / `BUNDLE_LOADER` so `@testable import Juju` resolves |
 | **Location** | `JujuTests/` at repo root (sibling of `Juju/`) |
-| **Current focus** | Session **CSV integrity**: `SessionDataParser` — canonical rows, reordered columns, legacy `date`+`start_time`+`end_time`+`project_id`, round-trip via `convertSessionsToCSV`, sparse optionals, midnight-spanning durations |
-| **Main file** | `JujuTests/SessionDataParserTests.swift` |
+| **Current focus** | (1) Session **CSV integrity** via `SessionDataParser`. (2) **Phase integrity**: `SessionPhaseIntegrity.clearingPhaseReferences` and `DataValidator.validateSession(_:projectList:)` with in-memory `Project` / `SessionRecord` fixtures — see `JujuTests/PhaseDataIntegrityTests.swift`. |
+| **Main files** | `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift` |
 
 ### How to run
 
 - **Xcode**: scheme **Juju** → **Product → Test** (⌘U), or run only `SessionDataParserTests` from the Test navigator.
+
+**Test navigator (◆) looks stale (e.g. only 6 tests)?** The sidebar list is refreshed from the last test build. Use **Product → Clean Build Folder** (hold ⌥), then **Product → Test** (⌘U) again; or **Product → Build For → Testing**. Confirm `PhaseDataIntegrityTests.swift` → File Inspector → **Target Membership** → **JujuTests** is checked. If it still lies, quit Xcode and delete this project’s folder under **Derived Data**, then reopen.
 - **CLI** (full `JujuTests` suite):  
   `xcodebuild -scheme Juju -destination 'platform=macOS' test`
 - **CLI** (single class):  
-  `xcodebuild -scheme Juju -destination 'platform=macOS' test -only-testing:JujuTests/SessionDataParserTests`
+  `xcodebuild -scheme Juju -destination 'platform=macOS' test -only-testing:JujuTests/SessionDataParserTests`  
+  `xcodebuild -scheme Juju -destination 'platform=macOS' test -only-testing:JujuTests/PhaseDataIntegrityTests`
 
 ### Conventions when adding tests
 
 - Use `@testable import Juju` for types that are `internal` (e.g. `SessionDataParser`).
 - Prefer **small fixtures** (inline CSV strings) and **XCTAssert** APIs; avoid UI / AppKit in this target unless you add UI tests later.
-- If you change **CSV columns**, **parsing**, or **`SessionRecord` persistence**, extend or add tests in `JujuTests/` and mention it in any PR summary.
+- If you change **CSV columns**, **parsing**, **`SessionRecord` persistence**, or **phase clear / validation** (`SessionPhaseIntegrity`, `validateSession`), extend `JujuTests/` and mention it in any PR summary.
 
 ### Not in scope yet
 

@@ -80,6 +80,7 @@ This is where patterns emerge — momentum, drift, obsession, avoidance.
 * Delete sessions with confirmation.
 **Project Manager (Projects):**
 * Add, edit, archive, and delete projects.
+* Phases as sub-tracks per project: **Retired** (archived) phases stay visible on past sessions but disappear from phase pickers; removing a phase confirms when sessions still use it and clears their phase on save so CSV data stays consistent.
 * Colour picker and emoji picker for quick visual identity.
 **Activity Type Manager:**
 * Add, edit, archive Activity Types.
@@ -129,7 +130,7 @@ Open by design. Durable by intent.
 
 ## 🧪 Tests
 
-The Xcode target **JujuTests** contains **unit tests only** (no UI tests). Today they focus on **session CSV parsing and round-trip integrity** (`SessionDataParser`). Run **Product → Test** (⌘U) on the **Juju** scheme, or from the terminal:
+The Xcode target **JujuTests** contains **unit tests only** (no UI tests). They cover **session CSV parsing** (`SessionDataParser`) and **phase reference clearing / validation** (`PhaseDataIntegrityTests`, in-memory fixtures). Run **Product → Test** (⌘U) on the **Juju** scheme, or from the terminal:
 
 `xcodebuild -scheme Juju -destination 'platform=macOS' test`
 

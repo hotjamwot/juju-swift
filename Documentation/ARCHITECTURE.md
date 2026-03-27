@@ -183,6 +183,8 @@ init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int =
 
 **Initializer**: `init(id: String = UUID().uuidString, name: String, order: Int = 0, archived: Bool = false)`
 
+**Integrity**: Archiving a phase keeps session `projectPhaseID` valid and still resolves in the sessions table; removing a phase clears that field on affected sessions on save. See **PHASE_ID_DATA_INTEGRITY.md**.
+
 ---
 
 ### 4. ActivityType Model

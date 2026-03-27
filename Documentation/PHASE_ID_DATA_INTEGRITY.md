@@ -1,192 +1,94 @@
-# Phase ID Data Integrity Issue
+# Phase ID Data Integrity
 
 ## Overview
 
-This document outlines the data integrity concerns when modifying or deleting phases in the Juju app, and the implications for existing session data.
+Sessions store a `projectPhaseID` that references a `Phase.id` on the owning project. This document describes how Juju keeps that reference consistent, how **archive** differs from **remove**, and what remains to watch for (e.g. project deletion).
 
 ---
 
-## Current Architecture
+## Architecture
 
-### How Phase Data is Stored
-
-1. **Session Records** store a `projectPhaseID` (String) - this is a reference to a Phase entity
-2. **Project Records** contain an array of `Phase` objects, each with a unique `id`
-3. At **display time**, the UI resolves the phase name by looking up the phase ID in the project's phases array
-
-### Data Flow Diagram
-
-```
-CSV Session File
-       │
-       ▼
-SessionRecord { projectPhaseID: "phase-123" }
-       │
-       ▼ (at display time)
-Project.phases.first { $0.id == "phase-123" }?.name
-       │
-       ▼ (if phase deleted)
-Returns nil → displays nothing
-```
+1. **Session records** (CSV) store `projectPhaseID` (optional string).
+2. **Projects** (`projects.json`) store phases with stable `id`, `name`, `order`, and `archived`.
+3. **Display**: Session rows resolve the phase label from `Project.phases` by id (including **archived** phases so history stays readable).
+4. **Assignment**: Phase pickers and similar UI only list **non-archived** phases for new choices.
 
 ---
 
-## Operations and Their Impact
+## Behaviors (Implemented)
 
-### 1. Renaming a Phase
+### Renaming a phase
 
 | Aspect | Status |
 |--------|--------|
-| **Current Behavior** | ✅ Safe |
-| **Impact on Sessions** | None - ID remains, name resolved dynamically |
-| **Risk Level** | None |
+| **Behavior** | Safe |
+| **Sessions** | Unchanged; name is resolved from the project at display time |
 
-**Code Reference:** Phase name is looked up at display time in `SessionsRowView.swift:771-774`
-
----
-
-### 2. Deleting a Phase
+### Archiving a phase (“Retired” in project editor)
 
 | Aspect | Status |
 |--------|--------|
-| **Current Behavior** | ⚠️ Leaves orphaned IDs |
-| **Impact on Sessions** | Sessions retain the `projectPhaseID` but it resolves to nothing |
-| **Risk Level** | Medium - Data integrity issue |
+| **Behavior** | Phase is hidden from phase **pickers**; past sessions **still show** the phase name (slightly muted in the sessions table) |
+| **Sessions** | Still store the same `projectPhaseID` |
+| **Recovery** | Unarchive in **Projects → edit project → phases** |
 
-**Code Reference:** `ProjectManager.deletePhase()` at `ProjectManager.swift:517-529`
+**UI**: Toggle **Retired** per phase in `ProjectSidebarEditView`.
 
-```swift
-// [GOTCHA] Deleting a phase does NOT affect existing sessions using that phase
-// [GOTCHA] Sessions may still reference this phaseID; they will show "Unknown Phase"
-project.phases.removeAll { $0.id == phaseID }
-```
-
-**What Happens:**
-- The phase is removed from the project's phases array
-- Existing sessions still have `projectPhaseID = "deleted-phase-id"`
-- UI checks: `project.phases.first { $0.id == projectPhaseID }` → returns `nil`
-- Result: Phase display is empty (not "Unknown Phase" or any warning)
-
----
-
-### 3. Archiving a Phase
+### Removing a phase from a project
 
 | Aspect | Status |
 |--------|--------|
-| **Current Behavior** | ⚠️ Orphaned in UI |
-| **Impact on Sessions** | Sessions retain the `projectPhaseID` |
-| **Risk Level** | Low - Can be unarchived to restore |
+| **Behavior** | If any sessions use that phase, a confirmation explains that **saving** will clear their phase tag (`projectPhaseID` → empty / nil for those sessions). Removing a phase with zero sessions does not prompt. |
+| **On Save** | `SessionManager.clearProjectPhaseForSessions(projectID:phaseIDs:)` clears all matching session rows, then `projects.json` is written without those phase definitions |
 
-**Code Reference:** Phase is filtered out in `SessionsRowView.swift:772`
+**Code**: `ProjectSidebarEditView.saveProject()`, `SessionManager.clearProjectPhaseForSessions`, `ProjectManager.deletePhase()` (also clears sessions if that API is used).
 
-```swift
-// Check if the phase exists and is not archived
-guard let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
-    return nil
-}
-```
+### `ProjectManager.deletePhase`
 
----
+Removes the phase from the project **after** clearing `projectPhaseID` on affected sessions for that project.
 
-### 4. Deleting a Project
+### Validation
 
-| Aspect | Status |
-|--------|--------|
-| **Current Behavior** | ⚠️ Orphaned projectIDs |
-| **Impact on Sessions** | Sessions retain the `projectID` but project no longer exists |
-| **Risk Level** | High - No recovery possible |
-
-**What Happens:**
-- Project is removed entirely
-- Sessions still have `projectID = "deleted-project-id"`
-- UI checks: `projects.first { $0.id == projectID }` → returns `nil`
-- Result: Session shows no project (empty)
+`DataValidator` treats a session’s `projectPhaseID` as valid if the phase **exists on the project**, whether archived or not—so archived phases do not invalidate existing session rows.
 
 ---
 
-## Bulk Operations Concern
+## Behaviors (Still Sharp Edges)
 
-When performing bulk data changes (e.g., renaming projects, migrating large datasets):
+### Deleting a project
 
-### ✅ Safe Operations
-- Renaming projects (ID-based, name resolved dynamically)
-- Changing phase names (ID-based)
-- Reordering phases/activities
+Sessions can still reference a `projectID` that no longer exists if a project is removed without migrating sessions. Existing flows may migrate or warn; treat full project delete as high-impact.
 
-### ⚠️ Risky Operations
-- Deleting phases (orphans session references)
-- Deleting projects (orphans session references)
-- Bulk import that creates orphaned IDs
+### Bulk import
+
+Imported CSV rows can reference unknown phase IDs; a future integrity checker could report and repair these.
 
 ---
 
-## Recommendations
+## Related Code
 
-### Option 1: Soft Delete with Migration (Recommended)
-
-When deleting a phase/project:
-1. Archive instead of delete (reversible)
-2. If must delete, run a migration to clear orphaned IDs:
-
-```swift
-func deletePhaseWithMigration(from projectID: String, phaseID: String) {
-    // 1. Find all sessions using this phase
-    let affectedSessions = SessionManager.shared.allSessions.filter { 
-        $0.projectID == projectID && $0.projectPhaseID == phaseID 
-    }
-    
-    // 2. Option A: Clear the phaseID (loses history)
-    // Option B: Mark with special "deleted" marker
-    // Option C: Ask user what to do
-    
-    // 3. Update sessions
-    for session in affectedSessions {
-        // update session to clear projectPhaseID
-    }
-    
-    // 4. Then delete the phase
-    deletePhase(from: projectID, phaseID: phaseID)
-}
-```
-
-### Option 2: Display "Unknown" Instead of Nothing
-
-In `SessionsRowView`, show a fallback when phase is orphaned:
-
-```swift
-guard let phase = project.phases.first(where: { $0.id == projectPhaseID && !$0.archived }) else {
-    return "Unknown Phase"  // Instead of returning nil
-}
-```
-
-### Option 3: Data Integrity Checker
-
-Add a periodic check that:
-1. Scans all sessions for orphaned IDs
-2. Reports them to the user
-3. Offers cleanup options
+| Area | Location |
+|------|----------|
+| Clear phase IDs on many sessions | `SessionManager.clearProjectPhaseForSessions` |
+| Delete phase + clear sessions | `ProjectManager.deletePhase` |
+| Edit phases, retire toggle, remove confirm | `ProjectSidebarEditView` |
+| Session row phase label (includes archived) | `SessionsRowView.getProjectPhaseDisplayInfo()` |
+| Phase picker (active only) | `InlineSelectionPopover` / phase selection popovers |
+| Session validation (phase exists on project) | `DataValidator.validateSession` |
+| Bulk refresh after phase clear | `SessionsView.handleSessionUpdateNotification` (`sessionID == "bulkPhaseClear"`) |
 
 ---
 
-## Related Code Files
+## Historical Note
 
-| File | Purpose |
-|------|---------|
-| `ProjectManager.swift:517-529` | deletePhase() method |
-| `SessionsRowView.swift:759-777` | Phase display resolution |
-| `SessionModels.swift:10` | SessionRecord.projectPhaseID |
-| `Project.swift:5-17` | Phase model definition |
+Earlier builds could orphan `projectPhaseID` when a phase was removed from the editor, and archived phases did not resolve in the sessions table. Both are addressed as of March 2026.
 
----
+## Tests
 
-## Open Questions for Development Team
-
-1. Should we implement a "soft delete" pattern (archive-first, delete second)?
-2. Should deleted phases/projects be stored in a "deleted references" table for display as "Unknown"?
-3. Should we add a data integrity validation tool?
-4. How should we handle bulk imports that might create orphaned IDs?
+- `JujuTests/PhaseDataIntegrityTests.swift` — `SessionPhaseIntegrity.clearingPhaseReferences` (no disk I/O) and `DataValidator.validateSession(_:projectList:)` with archived vs missing phases.
+- Run: `xcodebuild -scheme Juju -destination 'platform=macOS' test -only-testing:JujuTests/PhaseDataIntegrityTests`
 
 ---
 
-**Last Updated:** March 2026
-**Status:** Awaiting developer review
+**Last Updated:** March 2026  
+**Status:** Implemented (archive + remove-with-clear + display rules)

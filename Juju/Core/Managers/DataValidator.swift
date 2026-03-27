@@ -133,9 +133,11 @@ class DataValidator {
     /// - Archived entities are considered valid references
     /// - Phase validation only occurs if phaseID is provided
     ///
-    /// - Parameter session: The SessionRecord to validate
+    /// - Parameters:
+    ///   - session: The SessionRecord to validate
+    ///   - projectList: When non-nil (e.g. unit tests), used instead of loading from `ProjectManager`.
     /// - Returns: ValidationResult (.valid or .invalid with specific reason)
-    func validateSession(_ session: SessionRecord) -> ValidationResult {
+    func validateSession(_ session: SessionRecord, projectList: [Project]? = nil) -> ValidationResult {
         // Check required fields
         guard !session.id.isEmpty else {
             return .invalid(reason: "Session ID cannot be empty")
@@ -154,9 +156,7 @@ class DataValidator {
             return .valid
         }
         
-        // [INTEGRATION] Load all projects for referential validation
-        let projectManager = ProjectManager.shared
-        let projects = projectManager.loadProjects()
+        let projects = projectList ?? ProjectManager.shared.loadProjects()
         
         // [GOTCHA] Allow sessions to reference archived projects (preserves historical data)
         // Only reject if the project doesn't exist at all
@@ -164,15 +164,13 @@ class DataValidator {
             return .invalid(reason: "Session references non-existent project: \(session.projectID)")
         }
         
-        // If projectPhaseID is provided, validate it belongs to the project
+        // If projectPhaseID is provided, validate it belongs to the project (including archived phases)
         if let phaseID = session.projectPhaseID, !phaseID.isEmpty {
             guard let project = projects.first(where: { $0.id == session.projectID }) else {
                 return .invalid(reason: "Could not find project for phase validation")
             }
             
-            // [GOTCHA] Phase must exist in project (even if archived, included in check)
-            let activePhases = project.phases.filter { !$0.archived }
-            guard activePhases.contains(where: { $0.id == phaseID }) else {
+            guard project.phases.contains(where: { $0.id == phaseID }) else {
                 return .invalid(reason: "Session references phase that doesn't belong to project: \(phaseID)")
             }
         }
