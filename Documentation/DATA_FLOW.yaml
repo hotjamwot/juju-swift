@@ -1,6 +1,7 @@
 # Juju Data Flow Map
 # AI/Dev reference for component dependencies and data movement
 # See ARCHITECTURE.md for data types and patterns
+# Session CSV parsing: unit tests in JujuTests/SessionDataParserTests.swift (AI_DEVELOPMENT_GUIDE.md → Testing)
 
 flowName: Juju Data Flow
 description: Processing steps and data object transfers between components

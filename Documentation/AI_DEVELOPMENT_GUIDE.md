@@ -186,10 +186,33 @@ do {
 
 ## 🧪 TESTING
 
-- Unit tests for Managers
-- Mock objects for dependencies
-- Test with new AND legacy data
-- Test error scenarios
+### What exists today (for AI / new contributors)
+
+| Item | Detail |
+|------|--------|
+| **Target** | `JujuTests` — macOS **unit test bundle** (not UI tests) |
+| **Host app** | `Juju.app` — tests load with `TEST_HOST` / `BUNDLE_LOADER` so `@testable import Juju` resolves |
+| **Location** | `JujuTests/` at repo root (sibling of `Juju/`) |
+| **Current focus** | Session **CSV integrity**: `SessionDataParser` — canonical rows, reordered columns, legacy `date`+`start_time`+`end_time`+`project_id`, round-trip via `convertSessionsToCSV`, sparse optionals, midnight-spanning durations |
+| **Main file** | `JujuTests/SessionDataParserTests.swift` |
+
+### How to run
+
+- **Xcode**: scheme **Juju** → **Product → Test** (⌘U), or run only `SessionDataParserTests` from the Test navigator.
+- **CLI** (full `JujuTests` suite):  
+  `xcodebuild -scheme Juju -destination 'platform=macOS' test`
+- **CLI** (single class):  
+  `xcodebuild -scheme Juju -destination 'platform=macOS' test -only-testing:JujuTests/SessionDataParserTests`
+
+### Conventions when adding tests
+
+- Use `@testable import Juju` for types that are `internal` (e.g. `SessionDataParser`).
+- Prefer **small fixtures** (inline CSV strings) and **XCTAssert** APIs; avoid UI / AppKit in this target unless you add UI tests later.
+- If you change **CSV columns**, **parsing**, or **`SessionRecord` persistence**, extend or add tests in `JujuTests/` and mention it in any PR summary.
+
+### Not in scope yet
+
+- UI tests, snapshot tests, and broad manager coverage are **optional follow-ups**. Existing guidance still applies: mock dependencies where singletons hurt testability, and cover legacy session file shapes when touching the parser.
 
 ---
 
@@ -208,10 +231,11 @@ do {
 
 | File | Purpose |
 |------|---------|
-| **ARCHITECTURE.md** | Data models, design |
-| **SWIFT_PATTERNS.md** | Coding standards |
+| **ARCHITECTURE.md** | Data models, design, test layout summary |
+| **SWIFT_PATTERNS.md** | Coding standards; testing patterns |
 | **DATA_FLOW.yaml** | Component relationships |
 
 ---
 
-**Read SWIFT_PATTERNS.md for detailed code patterns and conventions.**
+**Read SWIFT_PATTERNS.md for detailed code patterns and conventions.**  
+**See the Testing section above for the `JujuTests` target and how to run it.**

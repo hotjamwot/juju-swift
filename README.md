@@ -127,6 +127,16 @@ Open by design. Durable by intent.
 
 ---
 
+## 🧪 Tests
+
+The Xcode target **JujuTests** contains **unit tests only** (no UI tests). Today they focus on **session CSV parsing and round-trip integrity** (`SessionDataParser`). Run **Product → Test** (⌘U) on the **Juju** scheme, or from the terminal:
+
+`xcodebuild -scheme Juju -destination 'platform=macOS' test`
+
+Details for contributors and AI tooling: **Documentation/AI_DEVELOPMENT_GUIDE.md** (section **Testing**).
+
+---
+
 ## 💡 Why Juju?
 Juju is for makers, freelancers, and creative professionals who don’t just want to be productive, they want their time to *mean something* when they look back.
 It’s for people who care about the journey as much as the outcome.

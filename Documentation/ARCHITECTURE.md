@@ -18,6 +18,7 @@
 1. Update type definitions here when adding new business entities
 2. Update DATA_FLOW.yaml to reflect new data_packet types
 3. Update AI_DEVELOPMENT_GUIDE.md for new development patterns
+4. When changing **session CSV format or `SessionDataParser`**, update or add **unit tests** under `JujuTests/` (see **AI_DEVELOPMENT_GUIDE.md → Testing**)
 
 ---
 
@@ -29,7 +30,8 @@
 **Threading**: Use @MainActor for SwiftUI-bound ViewModels  
 **Async**: All asynchronous work uses async/await (no completion handlers)  
 **Views**: Contain no business logic; ViewModels handle state and data flow  
-**Singletons**: Avoid except where already used (SessionManager, MenuManager)
+**Singletons**: Avoid except where already used (SessionManager, MenuManager)  
+**Automated tests**: `JujuTests` target (unit tests only); session CSV / `SessionDataParser` coverage in `JujuTests/SessionDataParserTests.swift`. Run and conventions: **AI_DEVELOPMENT_GUIDE.md → Testing**.
 
 ---
 
@@ -39,6 +41,7 @@
 - **Core/**: Models, Managers, ViewModels (business logic)
 - **Features/**: Feature-specific SwiftUI views + feature-specific viewmodels
 - **Shared/**: Cross-cutting UI components, previews, extensions
+- **JujuTests/**: XCTest unit tests (`@testable import Juju`); hosted by `Juju.app` (no UI tests in this target)
 
 ---
 
@@ -519,7 +522,7 @@ NotificationCenter.default.post(name: .projectsDidChange, object: nil)
 
 - **Scalability**: Monitor cache effectiveness as data grows
 - **Extensibility**: Managers are well-separated for easy extension
-- **Testing**: Each manager should have comprehensive tests
+- **Testing**: Session CSV parsing has a baseline XCTest suite (`JujuTests`). Expand with manager-level tests, fixtures for `DataValidator`, and migration edge cases as needed; keep **AI_DEVELOPMENT_GUIDE.md → Testing** in sync.
 
 ---
 

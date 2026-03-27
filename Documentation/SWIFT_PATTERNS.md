@@ -157,6 +157,15 @@ class SessionsViewModel: ObservableObject {
 
 ## 🧪 TESTING PATTERN
 
+### Current repo (`JujuTests`)
+
+- **Target**: `JujuTests` (macOS unit test bundle; **no UI tests**). **Host**: `Juju.app`.
+- **Import**: `@testable import Juju` for internal types (e.g. `SessionDataParser`).
+- **Existing coverage**: `JujuTests/SessionDataParserTests.swift` — CSV parse, legacy layouts, round-trip, optionals, midnight-spanning duration.
+- **Run / add tests**: **AI_DEVELOPMENT_GUIDE.md → Testing** (Xcode ⌘U and `xcodebuild` examples).
+
+When you add parsers, validators, or CSV columns, add or extend tests in `JujuTests/` before merging.
+
 ### Mock Objects
 ```swift
 class MockSessionFileManager: SessionFileManagerProtocol {
