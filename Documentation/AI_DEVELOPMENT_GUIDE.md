@@ -94,25 +94,40 @@ do {
 ---
 
 ## 📊 SESSION OPERATIONS
-    case dataMigrationFailed(String)
-}
-throw JujuError.invalidSessionData("Session \(id) has invalid start time")
+
+Common `SessionManager` usage. Full flow and persistence details are in **ARCHITECTURE.md** (session data flow).
+
+### Domain errors
+
+Prefer `JujuError` for typed failures (see `Juju/Core/Models/JujuError.swift`):
+
+```swift
+throw JujuError.sessionError(operation: "end", sessionID: id, reason: "No active session", state: "idle")
+throw JujuError.dataError(operation: "parse", entity: "session", reason: "Missing project_id", context: "CSV row 42")
+throw JujuError.migrationError(fromVersion: "1", toVersion: "2", reason: "Unsupported column layout", affectedRecords: 0)
 ```
 
-### Load All Sessions
+### Load all sessions
 ```swift
 let allSessions = await SessionManager.shared.loadAllSessions()
-// sessionManager.allSessions now cached in memory
+// `SessionManager.shared.allSessions` holds the cached in-memory array
 ```
 
-### Start/End Session
+### Start / end session
 ```swift
-SessionManager.shared.startSession(for: "Project", projectID: "uuid")
+SessionManager.shared.startSession(for: "Project display name", projectID: "project-uuid")
 // ... user works ...
-SessionManager.shared.endSession(notes: "note", mood: 8, action: "Built feature")
+SessionManager.shared.endSession(
+    notes: "What shifted today",
+    mood: 8,
+    activityTypeID: "optional-activity-type-id",
+    projectPhaseID: "optional-phase-id",
+    action: "Shipped the feature",
+    isMilestone: false
+)
 ```
 
-### Delete Session
+### Delete session
 ```swift
 SessionManager.shared.deleteSession(id: "session-uuid")
 ```

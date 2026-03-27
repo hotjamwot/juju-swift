@@ -116,9 +116,12 @@ And one guiding rule above all else:
 ---
 
 ## 📝 Data Format
-* Sessions: CSV with columns:
-  * `id, startDate, endDate, project, activityType, notes, mood, milestone, phaseID`
-* Projects: JSON array with project names and colour IDs.
+* **Sessions** (year files under Application Support, e.g. `YYYY-data.csv`): CSV whose **canonical header** matches the `SessionRecord` fields in **Documentation/ARCHITECTURE.md**:
+  * `id,start_date,end_date,project_id,activity_type_id,project_phase_id,action,is_milestone,notes,mood`
+  * `start_date` / `end_date` use `yyyy-MM-dd HH:mm:ss`. `is_milestone` is `0` or `1`. Optional fields may be empty.
+  * Older files may use different column names or extra columns (e.g. legacy `milestone_text`); the app detects layout from the header and can rewrite to the current format when saving.
+* **Projects**: JSON (`projects.json`) — array of projects with `id`, `name`, `color`, optional `about`, `order`, `emoji`, `archived`, and `phases` (see **ARCHITECTURE.md**).
+* **Activity types**: JSON (`activityTypes.json`) — see **ARCHITECTURE.md**.
 
 Open by design. Durable by intent.
 
