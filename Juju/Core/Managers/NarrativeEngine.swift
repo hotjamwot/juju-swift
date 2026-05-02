@@ -117,12 +117,15 @@ final class NarrativeEngine: ObservableObject {
     private let projectsViewModel: ProjectsViewModel
     private let activityTypeManager: ActivityTypeManager
     
-    init(sessionManager: SessionManager = .shared,
-         projectsViewModel: ProjectsViewModel = .shared,
-         activityTypeManager: ActivityTypeManager = .shared) {
-        self.sessionManager = sessionManager
-        self.projectsViewModel = projectsViewModel
-        self.activityTypeManager = activityTypeManager
+    init(
+        sessionManager: SessionManager? = nil,
+        projectsViewModel: ProjectsViewModel? = nil,
+        activityTypeManager: ActivityTypeManager? = nil
+    ) {
+        // Swift 6 actor isolation: avoid referencing MainActor singletons in default arg expressions.
+        self.sessionManager = sessionManager ?? .shared
+        self.projectsViewModel = projectsViewModel ?? .shared
+        self.activityTypeManager = activityTypeManager ?? .shared
     }
     
     func generateWeeklyHeadline() {

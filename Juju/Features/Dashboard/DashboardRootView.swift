@@ -80,7 +80,7 @@ struct DashboardRootView: View {
                                 .environmentObject(sidebarState)
                                 .transition(.opacity)
                         case .projects:
-                            ProjectsView()
+                            ProjectStoryContainerView()
                                 .environmentObject(sidebarState)
                                 .transition(.opacity)
                         case .activityTypes:

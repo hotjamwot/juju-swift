@@ -3,6 +3,10 @@ import SwiftUI
 struct ProjectsView: View {
     @StateObject private var viewModel = ProjectsViewModel.shared
     @EnvironmentObject var sidebarState: SidebarStateManager
+
+    /// Optional hook to open the read-only ProjectStoryView in main content.
+    /// When nil, row taps keep existing behavior (open project editor in sidebar).
+    var onOpenProjectStory: ((Project) -> Void)? = nil
     
     @State private var showingAddProjectSheet = false
     @State private var selectedProjectForEdit: Project?
@@ -42,7 +46,11 @@ struct ProjectsView: View {
                         if !viewModel.activeProjects.isEmpty {
                             ForEach(viewModel.activeProjects) { project in
                                 Button(action: {
-                                    sidebarState.show(.project(project))
+                                    if let onOpenProjectStory {
+                                        onOpenProjectStory(project)
+                                    } else {
+                                        sidebarState.show(.project(project))
+                                    }
                                 }) {
                                     ProjectRowView(
                                         project: project,
@@ -58,7 +66,11 @@ struct ProjectsView: View {
                         if shouldShowArchived {
                             ForEach(viewModel.archivedProjects) { project in
                                 Button(action: {
-                                    sidebarState.show(.project(project))
+                                    if let onOpenProjectStory {
+                                        onOpenProjectStory(project)
+                                    } else {
+                                        sidebarState.show(.project(project))
+                                    }
                                 }) {
                                     ProjectRowView(
                                         project: project,
@@ -373,6 +385,25 @@ struct ProjectRowView: View {
                 .background(Theme.Colors.divider.opacity(0.3))
                 .clipShape(Capsule())
                 .frame(width: 120)
+
+                // Disclosure control (so row click remains primary action)
+                if !isArchived {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isExpanded.toggle()
+                        }
+                    } label: {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .frame(width: 28, height: 28)
+                            .background(Theme.Colors.divider.opacity(0.25))
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                    .pointingHandOnHover()
+                    .accessibilityLabel(isExpanded ? "Collapse project details" : "Expand project details")
+                }
             }
             .frame(height: Theme.Row.height)
             .background(
@@ -386,13 +417,6 @@ struct ProjectRowView: View {
             .contentShape(Rectangle())
             .onHover { hovering in
                 isHovering = hovering
-            }
-            .onTapGesture {
-                if !isArchived {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded.toggle()
-                    }
-                }
             }
             
             // Expanded state - project details (only show when expanded for active projects)
