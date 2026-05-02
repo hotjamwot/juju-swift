@@ -587,7 +587,8 @@ Juju/
 │   │   ├── SessionQuery.swift        # Query parameters
 │   │   └── DashboardViewType.swift   # Dashboard view types
 │   └── ViewModels/        # UI state management
-│       └── ProjectsViewModel.swift   # Projects UI state
+│       ├── ProjectsViewModel.swift   # Projects UI state
+│       └── ProjectStoryViewModel.swift # Project timeline derivation
 ├── Features/              # Feature-specific implementations
 │   ├── Dashboard/         # Dashboard functionality
 │   │   ├── DashboardRootView.swift   # Main dashboard container
@@ -611,6 +612,9 @@ Juju/
 │   ├── Projects/          # Project management UI
 │   │   ├── ProjectsView.swift        # Main projects list
 │   │   └── ProjectSidebarEditView.swift  # Project editing
+│   ├── ProjectStory/      # Project biography/timeline feature
+│   │   ├── ProjectStoryView.swift    # Main timeline view
+│   │   └── ProjectStoryViewModel.swift # Timeline state & derivation logic
 │   ├── ActivityTypes/     # Activity type management
 │   │   ├── ActivityTypeView.swift    # Activity type list
 │   │   └── ActivityTypeSidebarEditView.swift  # Activity type editing
@@ -659,5 +663,62 @@ Juju/
 - ErrorHandler provides centralized error logging.
 - DataValidator performs data integrity checks.
 - Managers handle specific error scenarios with user feedback.
+
+---
+
+## 📖 ProjectStory Feature
+
+### Overview
+ProjectStory provides a read-only narrative timeline for individual projects, showing how work evolved over time through phases, sessions, and milestones.
+
+### Architecture Flow
+```
+Project → ProjectStoryViewModel → Timeline Items (Chapters + Gaps) → ProjectStoryView
+```
+
+### Data Derivation Pipeline
+
+1. **Input Sources**:
+   - `SessionManager.allSessions` - All session records
+   - `ProjectsViewModel.projects` - Project + phase definitions
+   - `Calendar` - For weekly density bucketing
+
+2. **Derivation Steps** (in `ProjectStoryViewModel.deriveTimelineItems`):
+   - **Phase Grouping**: Sessions grouped by `projectPhaseID` (nil/unknown → "Unphased")
+   - **Chapter Creation**: One chapter per phase with aggregated data
+   - **Density Calculation**: Weekly aggregation of session duration + mood
+   - **Milestone Extraction**: Filter sessions with `isMilestone=true` and non-empty action
+   - **Timeline Assembly**: Chapters sorted by start date, gaps inserted at future thresholds
+
+### Data Models
+
+| Type | Purpose |
+|------|---------|
+| `Chapter` | A phase period with sessions, density, and milestones |
+| `Milestone` | A significant session with action description |
+| `DensityBucket` | Weekly session aggregation (duration, mood, count) |
+| `PhaseSegment` | Visual segment for phase timeline bar |
+| `Gap` | A future period with no sessions (for timeline visualization) |
+
+### Timeline Items Enum
+```swift
+enum TimelineItem {
+    case chapter(Chapter)
+    case gap(Gap)
+}
+```
+
+### View Composition
+
+**ProjectStoryView**:
+- Header with project name, emoji, dates, and duration
+- Summary stats row (total time, sessions, mood, phases)
+- Phase timeline bar with colored segments per phase
+- Intensity/mood chart showing session bars over time
+- Notable moments section listing milestone sessions
+
+### Reactive Updates
+- Listens to `.projectsDidChange` and `.sessionDidEnd` notifications
+- Calls `viewModel.reload()` on data changes
 
 This consolidated architecture documentation provides a complete reference for understanding the Juju codebase structure, data models, and component relationships.

@@ -185,6 +185,24 @@ nodes:
     function: Apply Midnight Fix to Sessions
     description: Applies midnight fix
 
+  # ProjectStory Flow
+  - id: PS1_Timeline_Deriver
+    component: ProjectStoryViewModel
+    function: Derive Project Timeline
+    description: Derives chapters, phases, density, and milestones from sessions
+  - id: PS2_Header_Resolver
+    component: ProjectStoryViewModel
+    function: Resolve Project Header
+    description: Creates header with project name, emoji, dates, and duration
+  - id: PS3_Summary_Calculator
+    component: ProjectStoryViewModel
+    function: Calculate Summary Stats
+    description: Computes total duration, session count, average mood, phase count
+  - id: PS4_Phase_Timeline_Builder
+    component: ProjectStoryViewModel
+    function: Build Phase Timeline Segments
+    description: Creates phase segments for visual timeline bar
+
   # Filter Bar and Session Filtering Flow
   - id: F1_Filter_Toggle_Button
     component: FilterToggleButton
@@ -206,33 +224,33 @@ nodes:
 edges:
   # Session Flow
   - source: A1_Session_Recorder
-    target: A2_Persistence_Writer
+    target: A5_Persistence_Writer
     data_packet: SessionRecord
-  - source: A2_Persistence_Writer
+  - source: A5_Persistence_Writer
     target: A8_Session_Data_Parser
     data_packet: CSVContent
   - source: A8_Session_Data_Parser
-    target: A2_Persistence_Writer
+    target: A5_Persistence_Writer
     data_packet: SessionRecord
-  - source: A2_Persistence_Writer
-    target: A3_Session_Cache_Updater
+  - source: A5_Persistence_Writer
+    target: A6_Session_Cache_Updater
     data_packet: SessionRecord
   - source: A1_Session_Recorder
-    target: A4_Session_Operations
+    target: A3_CSV_Operations
     data_packet: SessionData
 
   # Dashboard Flow (Updated)
-  - source: A2_Persistence_Writer # Full data load notification or initial load
+  - source: A5_Persistence_Writer
     target: B3_Dashboard_Navigator_and_Data_Orchestrator
-    data_packet: SessionLoadNotification # Or direct [SessionRecord] if B3 directly calls loadAllSessions
+    data_packet: SessionLoadNotification
   - source: B3_Dashboard_Navigator_and_Data_Orchestrator
-    target: SessionManager # Implicit call to loadAllSessions
+    target: SessionManager
     action: loadAllSessions
   - source: SessionManager
-    target: B1_Data_Aggregator (Weekly Instance) # Through WeeklyDashboardView
+    target: B1_Data_Aggregator (Weekly Instance)
     data_packet: [SessionRecord] (allSessions)
   - source: SessionManager
-    target: B1_Data_Aggregator (Yearly Instance) # Through YearlyDashboardView
+    target: B1_Data_Aggregator (Yearly Instance)
     data_packet: [SessionRecord] (allSessions)
   - source: B1_Data_Aggregator
     target: B2_Editorial_Engine
@@ -250,12 +268,11 @@ edges:
     target: B5_Yearly_View_Controller
     data_packet: DashboardViewType (yearly)
   - source: B4_Weekly_View_Controller
-    target: B1_Data_Aggregator (Weekly Instance) # To prepare weekly data
-    data_packet: [SessionRecord] (allSessions) # Passes all, ChartDataPreparer filters
+    target: B1_Data_Aggregator (Weekly Instance)
+    data_packet: [SessionRecord] (allSessions)
   - source: B5_Yearly_View_Controller
-    target: B1_Data_Aggregator (Yearly Instance) # To prepare yearly data
-    data_packet: [SessionRecord] (allSessions) # Passes all, ChartDataPreparer filters
-
+    target: B1_Data_Aggregator (Yearly Instance)
+    data_packet: [SessionRecord] (allSessions)
 
   # Project Flow
   - source: C1_Project_Loader
@@ -291,19 +308,19 @@ edges:
 
   # Data Migration Flow
   - source: E3_Data_Migrator
-    target: A2_Persistence_Writer
+    target: A5_Persistence_Writer
     data_packet: SessionRecord
   - source: E3_Data_Migrator
     target: C2_Project_Saver
     data_packet: Project
 
   # Cache Management Flow
-  - source: A3_Session_Cache_Updater
+  - source: A6_Session_Cache_Updater
     target: E2_Cache_Manager
     data_packet: CacheUpdate
   - source: E2_Cache_Manager
     target: B1_Data_Aggregator
-    data_packet: CachedData # This edge might need re-evaluation based on current ChartDataPreparer interaction with caches
+    data_packet: CachedData
 
   # Data Validation Flow
   - source: A1_Session_Recorder
@@ -316,14 +333,14 @@ edges:
     target: E1_Data_Validator
     data_packet: ActivityType
   - source: E1_Data_Validator
-    target: A2_Persistence_Writer
+    target: A5_Persistence_Writer
     data_packet: ValidatedSessionRecord
   - source: E1_Data_Validator
     target: C2_Project_Saver
     data_packet: ValidatedProject
 
   # Error Handling Flow
-  - source: A2_Persistence_Writer
+  - source: A5_Persistence_Writer
     target: E4_Error_Handler
     data_packet: Error
   - source: E3_Data_Migrator
@@ -369,7 +386,7 @@ edges:
     target: F3_Filter_Export_State
     data_packet: FilterState
   - source: F4_Sessions_View
-    target: A2_Persistence_Writer
+    target: A5_Persistence_Writer
     data_packet: SessionRecord
   - source: F4_Sessions_View
     target: C1_Project_Loader
@@ -398,15 +415,46 @@ edges:
     target: F4_Sessions_View
     data_packet: [SessionRecord]
   - source: B4_Weekly_View_Controller
-    target: View+DashboardExtensions # Assuming this exists or is conceptual
+    target: View+DashboardExtensions
     data_packet: View
   - source: View+DashboardExtensions
     target: B4_Weekly_View_Controller
     data_packet: View
   - source: B5_Yearly_View_Controller
-    target: View+DashboardExtensions # Assuming this exists or is conceptual
+    target: View+DashboardExtensions
     data_packet: View
   - source: View+DashboardExtensions
     target: B5_Yearly_View_Controller
     data_packet: View
   - source: Array+SessionExtensions
+    target: B4_Weekly_View_Controller
+    data_packet: [SessionRecord]
+
+  # ProjectStory Flow
+  - source: SessionManager
+    target: PS1_Timeline_Deriver
+    data_packet: [SessionRecord]
+  - source: ProjectsViewModel
+    target: PS1_Timeline_Deriver
+    data_packet: [Project]
+  - source: PS1_Timeline_Deriver
+    target: PS2_Header_Resolver
+    data_packet: [SessionRecord]
+  - source: PS1_Timeline_Deriver
+    target: PS3_Summary_Calculator
+    data_packet: [SessionRecord]
+  - source: PS1_Timeline_Deriver
+    target: PS4_Phase_Timeline_Builder
+    data_packet: [SessionRecord]
+  - source: PS2_Header_Resolver
+    target: ProjectStoryView
+    data_packet: Header
+  - source: PS3_Summary_Calculator
+    target: ProjectStoryView
+    data_packet: SummaryStats
+  - source: PS4_Phase_Timeline_Builder
+    target: ProjectStoryView
+    data_packet: [PhaseSegment]
+  - source: PS1_Timeline_Deriver
+    target: ProjectStoryView
+    data_packet: [TimelineItem]

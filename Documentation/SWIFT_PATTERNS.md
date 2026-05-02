@@ -152,6 +152,7 @@ class SessionsViewModel: ObservableObject {
 | **Calculate Stats** | Use `ProjectStatisticsCache` (30s TTL) | Don't recalculate per view update |
 | **File I/O** | Background via `Task` or `async/await` | Don't block main thread |
 | **List Rendering** | Lazy load via `List` + `ForEach` | Don't render all at once |
+| **Cache Access** | Use `CacheManager` for invalidation | Don't bypass notification system |
 
 ---
 
@@ -190,6 +191,19 @@ func testStartSession_ValidProject_CreatesSession() async throws {
 
 ---
 
+## 🔧 EXTENSION PATTERNS
+
+### Date+SessionExtensions
+Handles date calculations for session timing, midnight-crossing detection, and week/year boundaries.
+
+### Array+SessionExtensions  
+Provides session filtering, grouping, and aggregation utilities for dashboard data preparation.
+
+### View+DashboardExtensions
+Dashboard-specific view modifiers for consistent styling and layout patterns.
+
+---
+
 ## ❌ ANTIPATTERNS (AVOID)
 
 1. **Direct file access** → Use SessionFileManager
@@ -208,11 +222,20 @@ func testStartSession_ValidProject_CreatesSession() async throws {
 | Manager | Responsibility | When to Use |
 |---------|-----------------|-------------|
 | **SessionManager** | Session lifecycle, CSV I/O, state | Start/end sessions, load sessions |
+| **SessionStateManager** | Session state and data creation | Managing session state transitions |
+| **SessionCSVManager** | CSV formatting and year-based file routing | CSV write operations |
+| **SessionFileManager** | Thread-safe file I/O with proper quoting | Direct file operations |
+| **SessionPersistenceManager** | Session persistence coordination | Persistence workflow |
 | **ProjectManager** | Project CRUD, JSON I/O | Create/edit projects, resolve IDs |
+| **ActivityTypeManager** | Activity type CRUD, JSON I/O | Load/save activity types |
 | **ChartDataPreparer** | Dashboard data aggregation | Prepare chart data for views |
 | **DataValidator** | Validation, data integrity | Before persistence |
 | **ErrorHandler** | Error logging, user feedback | When errors occur |
 | **ProjectStatisticsCache** | Cached project statistics | Get expensive calculations |
+| **CacheManager** | Cache invalidation management | Cache state updates |
+| **DataMigrationManager** | Legacy data migration | Data version upgrades |
+| **NarrativeEngine** | Dashboard editorial content | Generate headlines |
+| **ProjectStoryViewModel** | Project timeline derivation | Project story views |
 
 ---
 
@@ -251,5 +274,5 @@ ProjectManager.shared.updateProject(project)
 
 ---
 
-**Last Updated**: January 2026  
+**Last Updated**: May 2026  
 **For AI Tools**: Copilot, Cline, Cursor
