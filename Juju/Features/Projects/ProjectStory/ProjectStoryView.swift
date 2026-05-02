@@ -43,14 +43,16 @@ struct ProjectStoryView: View {
                             ProjectStorySummaryRowView(summary: summary, projectColorHex: header.colorHex)
                         }
 
-                        // 2) Phase timeline bar + milestone pins + labels/ticks
-                        if let header = viewModel.header, !viewModel.phaseTimeline.isEmpty {
-                            ProjectStoryPhaseTimelineView(
-                                segments: viewModel.phaseTimeline,
-                                phaseBoundaries: viewModel.phaseBoundaries,
-                                projectColorHex: header.colorHex
-                            )
-                        }
+                         // 2) Phase timeline bar + milestone pins + labels/ticks
+                         if let header = viewModel.header, !viewModel.phaseTimeline.isEmpty {
+                             ProjectStoryPhaseTimelineView(
+                                 segments: viewModel.phaseTimeline,
+                                 phaseBoundaries: viewModel.phaseBoundaries,
+                                 projectColorHex: header.colorHex,
+                                 headerStartDate: header.startDate,
+                                 headerEndDate: header.endDate
+                             )
+                         }
 
                         // 3) Full-project intensity + mood chart
                         if let header = viewModel.header, !viewModel.projectSessions.isEmpty {
@@ -61,13 +63,7 @@ struct ProjectStoryView: View {
                             )
                         }
 
-                        // 4) Gaps only (chapters removed; redundant with bar + chart + notable moments)
-                        ForEach(viewModel.items.compactMap { item -> ProjectStoryViewModel.Gap? in
-                            if case .gap(let g) = item { return g }
-                            return nil
-                        }) { gap in
-                            ProjectStoryGapView(gap: gap)
-                        }
+
 
                         // 5) Notable moments
                         if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
@@ -285,6 +281,8 @@ private struct ProjectStoryPhaseTimelineView: View {
     let segments: [ProjectStoryViewModel.PhaseSegment]
     let phaseBoundaries: [Date]
     let projectColorHex: String
+    let headerStartDate: Date?
+    let headerEndDate: Date?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -299,7 +297,7 @@ private struct ProjectStoryPhaseTimelineView: View {
                         ForEach(segments.indices, id: \.self) { idx in
                             let seg = segments[idx]
                             Rectangle()
-                                .fill(phaseColor(index: idx, for: seg))
+                                .fill(phaseColor(index: seg.phaseIndex ?? 0, for: seg))
                                 .opacity(seg.isArchivedPhase ? 0.45 : 1.0)
                                 .frame(width: max(1, geo.size.width * seg.fractionOfTotal))
                         }
@@ -334,8 +332,8 @@ private struct ProjectStoryPhaseTimelineView: View {
 
             // Date ticks beneath labels (start/end + phase boundaries)
             ProjectStoryTimelineTicksView(
-                projectStart: nil,
-                projectEnd: nil,
+                projectStart: headerStartDate,
+                projectEnd: headerEndDate,
                 phaseBoundaries: phaseBoundaries,
                 projectColorHex: projectColorHex
             )
@@ -424,19 +422,38 @@ private struct ProjectStoryTimelineTicksView: View {
 
     var body: some View {
         GeometryReader { geo in
-            ZStack(alignment: .topLeading) {
-                if let start = projectStart, let end = projectEnd, end > start {
-                    // Start + end ticks
-                    tick(x: 0, text: df.string(from: start))
-                    tick(x: geo.size.width, text: df.string(from: end), alignTrailing: true)
+            if let start = projectStart, let end = projectEnd, end > start {
+                HStack(spacing: 0) {
+                    let allDates = [start] + phaseBoundaries + [end]
+                    let allLabels = allDates.map { df.string(from: $0) }
 
-                    // Phase boundary ticks
-                    ForEach(phaseBoundaries, id: \.timeIntervalSince1970) { d in
-                        let x = geo.size.width * fraction(d, start: start, end: end)
-                        tick(x: x, text: df.string(from: d))
+                    ForEach(Array(allDates.enumerated()), id: \.offset) { idx, date in
+                        if idx == 0 {
+                            VStack {
+                                Text(allLabels[idx])
+                                    .font(.system(size: 9))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            let previousDate = allDates[idx-1]
+                            let previousFraction = fraction(previousDate, start: start, end: end)
+                            let currentFraction = fraction(date, start: start, end: end)
+                            Spacer(minLength: 0)
+                                .frame(width: geo.size.width * (currentFraction - previousFraction))
+                            VStack {
+                                Text(allLabels[idx])
+                                    .font(.system(size: 9))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        }
                     }
-                } else {
-                    // When start/end aren't provided, render boundary labels at even spacing.
+                }
+                .frame(width: geo.size.width, height: 12)
+            } else {
+                // When start/end aren't provided, render boundary labels at even spacing.
+                ZStack(alignment: .topLeading) {
                     ForEach(Array(phaseBoundaries.enumerated()), id: \.offset) { idx, d in
                         let t = CGFloat(idx + 1) / CGFloat(max(phaseBoundaries.count + 1, 1))
                         tick(x: geo.size.width * t, text: df.string(from: d))
@@ -553,21 +570,27 @@ private struct ProjectStoryIntensityMoodChartView: View {
         return 6 + (t * (48 - 6))
     }
 
-    private func barFill(for session: SessionRecord, projectColorHex: String) -> Color {
-        if session.isMilestone {
-            return Color(hex: "F5A623").opacity(1.0)
-        }
+        private func barFill(for session: SessionRecord, projectColorHex: String) -> Color {
+            if session.isMilestone {
+                return Color(hex: "F5A623").opacity(1.0)
+            }
 
-        let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 30)
-        let phaseIndex = session.projectPhaseID.flatMap { phaseIndexByID[$0] }
-        let base = Color(hex: projectColorHex)
-        let phaseColor = phaseIndex.flatMap { idx in phaseColors[safe: idx] } ?? base
-        if let mood = session.mood {
-            return phaseColor.opacity(moodOpacity(Double(mood)))
+            let base = Color(hex: projectColorHex)
+            let phaseIndex = session.projectPhaseID.flatMap { phaseIndexByID[$0] }
+            
+            // Unphased sessions use muted project color
+            if phaseIndex == nil {
+                return base.opacity(0.25)
+            }
+            
+            let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
+            let phaseColor = phaseColors[safe: phaseIndex ?? 0] ?? base
+            if let mood = session.mood {
+                return phaseColor.opacity(moodOpacity(Double(mood)))
+            }
+            // Nil mood fallback should not "penalise" visibility.
+            return phaseColor.opacity(0.45)
         }
-        // Nil mood fallback should not "penalise" visibility.
-        return phaseColor.opacity(0.45)
-    }
 
     private func moodOpacity(_ mood: Double) -> Double {
         switch mood {
@@ -673,12 +696,12 @@ private enum ColorFamily {
         var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 1
         base.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
 
-        // Keep saturation/brightness close to source (±15%), rotate hue only.
-        let sat = clampAroundSource(s, percent: 0.15)
-        let bri = clampAroundSource(b, percent: 0.15)
+        // Keep saturation/brightness close to source (±8%), rotate hue only.
+        let sat = clampAroundSource(s, percent: 0.08)
+        let bri = clampAroundSource(b, percent: 0.08)
 
         return (0..<16).map { i in
-            let deg = stepDegrees * CGFloat(i)
+            let deg = 18 * CGFloat(i)
             let newHue = (h + (deg / 360.0)).truncatingRemainder(dividingBy: 1.0)
             return Color(NSColor(hue: newHue, saturation: sat, brightness: bri, alpha: 1.0))
         }

@@ -58,8 +58,7 @@ final class ProjectStoryDerivationTests: XCTestCase {
         let items = ProjectStoryViewModel.deriveTimelineItems(
             sessions: [s2, s3, s1],
             project: project,
-            calendar: calendar,
-            gapThresholdDays: 7
+            calendar: calendar
         )
 
         let chapters = items.compactMap { item -> ProjectStoryViewModel.Chapter? in
@@ -81,7 +80,7 @@ final class ProjectStoryDerivationTests: XCTestCase {
         let project = Project(id: "p1", name: "X", color: "#000000", about: nil, order: 0, emoji: "📁", phases: [archived])
 
         let s = session(id: "s", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: "ph-arch")
-        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s], project: project, calendar: calendar, gapThresholdDays: 7)
+        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s], project: project, calendar: calendar)
 
         guard case .chapter(let c)? = items.first else {
             return XCTFail("Expected first item to be a chapter")
@@ -94,7 +93,7 @@ final class ProjectStoryDerivationTests: XCTestCase {
         let project = Project(id: "p1", name: "X", color: "#000000", about: nil, order: 0, emoji: "📁", phases: [])
         let s = session(id: "s", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: "missing")
 
-        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s], project: project, calendar: calendar, gapThresholdDays: 7)
+        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s], project: project, calendar: calendar)
         guard case .chapter(let c)? = items.first else {
             return XCTFail("Expected chapter")
         }
@@ -110,12 +109,12 @@ final class ProjectStoryDerivationTests: XCTestCase {
         let b = session(id: "b", start: d(2026, 1, 2), end: d(2026, 1, 2, 13), phaseID: "ph1", action: "", isMilestone: true)
         let c = session(id: "c", start: d(2026, 1, 3), end: d(2026, 1, 3, 13), phaseID: "ph1", action: "Did thing", isMilestone: false)
 
-        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [a, b, c], project: project, calendar: calendar, gapThresholdDays: 7)
+        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [a, b, c], project: project, calendar: calendar)
         guard case .chapter(let chapter)? = items.first else {
             return XCTFail("Expected chapter")
         }
 
-        XCTAssertEqual(chapter.milestones.map(\.id), ["a"])
+        XCTAssertEqual(chapter.milestones.map { $0.id }, ["a"])
         XCTAssertEqual(chapter.milestones.first?.action, "Shipped")
         XCTAssertEqual(chapter.milestones.first?.phaseTitle, "Build")
     }
@@ -128,11 +127,12 @@ final class ProjectStoryDerivationTests: XCTestCase {
         let s1 = session(id: "a", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: "ph1")
         let s2 = session(id: "b", start: d(2026, 1, 25), end: d(2026, 1, 25, 13), phaseID: "ph2")
 
-        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s1, s2], project: project, calendar: calendar, gapThresholdDays: 7)
-        XCTAssertEqual(items.count, 3)
+        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s1, s2], project: project, calendar: calendar)
+        XCTAssertEqual(items.count, 2) // Two chapters, no gap
 
+        // Both items should be chapters
         XCTAssertTrue({
-            if case .gap = items[1] { return true }
+            if case .chapter = items[0], case .chapter = items[1] { return true }
             return false
         }())
     }
@@ -156,7 +156,7 @@ final class ProjectStoryDerivationTests: XCTestCase {
             mood: 10
         )
 
-        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s1, s2], project: project, calendar: calendar, gapThresholdDays: 7)
+        let items = ProjectStoryViewModel.deriveTimelineItems(sessions: [s1, s2], project: project, calendar: calendar)
         guard case .chapter(let c)? = items.first else {
             return XCTFail("Expected chapter")
         }

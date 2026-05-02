@@ -48,6 +48,7 @@ final class ProjectStoryViewModel: ObservableObject {
         let isArchivedPhase: Bool
         let durationMinutes: Int
         let fractionOfTotal: Double
+        let phaseIndex: Int? // Index into the project's phases array for color lookup; nil for unphased
     }
 
     struct Chapter: Identifiable, Equatable {
@@ -96,7 +97,6 @@ final class ProjectStoryViewModel: ObservableObject {
     private let projectsProvider: () -> [Project]
     private let sessionsProvider: () -> [SessionRecord]
     private let calendar: Calendar
-    private let gapThresholdDays: Int
 
     private var cancellables: Set<AnyCancellable> = []
 
@@ -104,14 +104,12 @@ final class ProjectStoryViewModel: ObservableObject {
         projectID: String,
         projectsProvider: @escaping () -> [Project],
         sessionsProvider: @escaping () -> [SessionRecord],
-        calendar: Calendar = .current,
-        gapThresholdDays: Int = 28
+        calendar: Calendar = .current
     ) {
         self.projectID = projectID
         self.projectsProvider = projectsProvider
         self.sessionsProvider = sessionsProvider
         self.calendar = calendar
-        self.gapThresholdDays = gapThresholdDays
 
         NotificationCenter.default.publisher(for: .sessionDidEnd)
             .merge(with: NotificationCenter.default.publisher(for: .projectsDidChange))
@@ -156,8 +154,7 @@ final class ProjectStoryViewModel: ObservableObject {
         items = Self.deriveTimelineItems(
             sessions: sessions,
             project: project,
-            calendar: calendar,
-            gapThresholdDays: gapThresholdDays
+            calendar: calendar
         )
 
         let chapters = items.compactMap { item -> Chapter? in
@@ -173,8 +170,7 @@ final class ProjectStoryViewModel: ObservableObject {
     nonisolated static func deriveTimelineItems(
         sessions: [SessionRecord],
         project: Project,
-        calendar: Calendar,
-        gapThresholdDays: Int
+        calendar: Calendar
     ) -> [TimelineItem] {
         guard !sessions.isEmpty else { return [] }
 
@@ -222,32 +218,8 @@ final class ProjectStoryViewModel: ObservableObject {
             }
             .sorted { $0.startDate < $1.startDate }
 
-        // Infer gaps between chapters (based on their date spans)
-        var items: [TimelineItem] = []
-        items.reserveCapacity(chapters.count * 2)
-
-        for idx in chapters.indices {
-            let chapter = chapters[idx]
-            items.append(.chapter(chapter))
-
-            guard idx < chapters.count - 1 else { continue }
-            let next = chapters[idx + 1]
-
-            let gapStart = chapter.endDate
-            let gapEnd = next.startDate
-            let dayDelta = calendar.dateComponents([.day], from: gapStart, to: gapEnd).day ?? 0
-            if dayDelta > gapThresholdDays {
-                let gap = Gap(
-                    id: "\(chapter.id)-to-\(next.id)-\(gapStart.timeIntervalSince1970)",
-                    startDate: gapStart,
-                    endDate: gapEnd,
-                    days: dayDelta
-                )
-                items.append(.gap(gap))
-            }
-        }
-
-        return items
+        // Convert chapters to TimelineItems (no gaps)
+        return chapters.map { .chapter($0) }
     }
 
     private nonisolated static func deriveWeeklyDensity(from sessions: [SessionRecord], calendar: Calendar) -> [DensityBucket] {
@@ -333,49 +305,69 @@ final class ProjectStoryViewModel: ObservableObject {
 
     nonisolated static func derivePhaseTimeline(from sessions: [SessionRecord], project: Project) -> [PhaseSegment] {
         guard !sessions.isEmpty else { return [] }
-
+        
         let phasesByID = Dictionary(uniqueKeysWithValues: project.phases.map { ($0.id, $0) })
-        var minutesByKey: [String: Int] = [:]
-
-        func key(for phaseID: String?) -> String {
-            guard let phaseID, phasesByID[phaseID] != nil else { return "__unphased__" }
-            return phaseID
+        var phaseIndexByID: [String: Int] = [:]
+        for (index, phase) in project.phases.enumerated() {
+            phaseIndexByID[phase.id] = index
         }
-
-        for s in sessions {
-            minutesByKey[key(for: s.projectPhaseID), default: 0] += max(s.durationMinutes, 0)
+        
+        let totalDuration = sessions.reduce(0) { $0 + max($1.durationMinutes, 0) }
+        guard totalDuration > 0 else { return [] }
+        
+        var segments: [PhaseSegment] = []
+        var currentPhaseID: String? = sessions.first?.projectPhaseID
+        var currentPhaseTitle: String {
+            guard let phaseID = currentPhaseID,
+                  let phase = phasesByID[phaseID] else { return "Unphased" }
+            return phase.name
         }
-
-        let total = max(minutesByKey.values.reduce(0, +), 1)
-
-        // Sort by project phase order, then Unphased last if present.
-        let orderedPhaseIDs = project.phases.sorted { $0.order < $1.order }.map(\.id)
-        var orderedKeys: [String] = orderedPhaseIDs.filter { minutesByKey[$0] != nil }
-        if minutesByKey["__unphased__"] != nil {
-            orderedKeys.append("__unphased__")
+        var currentIsArchivedPhase: Bool {
+            guard let phaseID = currentPhaseID,
+                  let phase = phasesByID[phaseID] else { return false }
+            return phase.archived
         }
-
-        return orderedKeys.compactMap { k in
-            guard let minutes = minutesByKey[k], minutes > 0 else { return nil }
-            if k == "__unphased__" {
-                return PhaseSegment(
-                    id: "unphased",
-                    title: "Unphased",
-                    isArchivedPhase: false,
-                    durationMinutes: minutes,
-                    fractionOfTotal: Double(minutes) / Double(total)
-                )
+        var currentPhaseIndex: Int? {
+            guard let phaseID = currentPhaseID else { return nil }
+            return phaseIndexByID[phaseID]
+        }
+        var currentDuration: Int = 0
+        
+        for session in sessions {
+            if session.projectPhaseID != currentPhaseID {
+                // Phase changed, finalize current segment
+                if currentDuration > 0 {
+                    segments.append(PhaseSegment(
+                        id: "\(currentPhaseID ?? "unphased")-\(segments.count)",
+                        title: currentPhaseTitle,
+                        isArchivedPhase: currentIsArchivedPhase,
+                        durationMinutes: currentDuration,
+                        fractionOfTotal: Double(currentDuration) / Double(totalDuration),
+                        phaseIndex: currentPhaseIndex
+                    ))
+                }
+                // Start new segment
+                currentPhaseID = session.projectPhaseID
+                currentDuration = max(session.durationMinutes, 0)
+            } else {
+                // Same phase, accumulate duration
+                currentDuration += max(session.durationMinutes, 0)
             }
-
-            guard let phase = phasesByID[k] else { return nil }
-            return PhaseSegment(
-                id: phase.id,
-                title: phase.name,
-                isArchivedPhase: phase.archived,
-                durationMinutes: minutes,
-                fractionOfTotal: Double(minutes) / Double(total)
-            )
         }
+        
+        // Don't forget the last segment
+        if currentDuration > 0 {
+            segments.append(PhaseSegment(
+                id: "\(currentPhaseID ?? "unphased")-\(segments.count)",
+                title: currentPhaseTitle,
+                isArchivedPhase: currentIsArchivedPhase,
+                durationMinutes: currentDuration,
+                fractionOfTotal: Double(currentDuration) / Double(totalDuration),
+                phaseIndex: currentPhaseIndex
+            ))
+        }
+        
+        return segments
     }
 }
 
