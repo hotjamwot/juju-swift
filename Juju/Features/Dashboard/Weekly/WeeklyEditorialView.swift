@@ -1,103 +1,20 @@
 import SwiftUI
 
-/// Weekly Editorial View - Standalone component for the editorial narrative
-/// Displays the weekly summary with total hours, focus activity, and milestones
+/// Narrative Strip — Compact horizontal summary bar at the top of the dashboard
+/// Shows the weekly editorial content in a single-line, clean format
 struct WeeklyEditorialView: View {
     @StateObject var narrativeEngine: NarrativeEngine
-    @State private var headlineText: String = "Loading your creative story..."
 
-    // MARK: - Project Capsule Component
-    private func projectCapsule(for projectName: String, emoji: String) -> some View {
-        HStack(spacing: Theme.spacingExtraSmall) {
-            Text(emoji)
-                .font(.system(size: 12, weight: .medium))
-            Text(projectName)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(Theme.Colors.textPrimary)
-        }
-        .padding(.horizontal, Theme.spacingSmall)
-        .padding(.vertical, Theme.spacingExtraSmall)
-        .background(Theme.Colors.divider.opacity(0.2))
-        .cornerRadius(Theme.Design.cornerRadius * 0.8)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius * 0.8)
-                .stroke(Theme.Colors.divider, lineWidth: 1)
-        )
-    }
-
-    // MARK: - Milestone List Component
-    private var milestoneList: some View {
-        VStack(alignment: .center, spacing: Theme.spacingSmall) {
-            if narrativeEngine.currentWeekMilestones.isEmpty {
-                Text("No milestones this week")
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(Theme.Colors.textSecondary)
-            } else {
-                Text("Milestones reached:")
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                ForEach(narrativeEngine.currentWeekMilestones) { milestone in
-                    HStack(alignment: .center, spacing: Theme.spacingSmall) {
-                        projectCapsule(
-                            for: milestone.projectName,
-                            emoji: projectEmoji(for: milestone.projectName)
-                        )
-                        .padding(.trailing, Theme.spacingExtraSmall)
-                        
-                        Text(milestone.text)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded)) // Smaller font
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .multilineTextAlignment(.leading)
-                    }
-                    .padding(.vertical, Theme.spacingExtraSmall)
-                }
-            }
-        }
-    }
-
-    // MARK: - Helper to get project emoji
-    private func projectEmoji(for projectName: String) -> String {
-        // Try to get emoji from projectsViewModel
-        let projectsViewModel = ProjectsViewModel.shared
-        if let project = projectsViewModel.projects.first(where: { $0.name == projectName }) {
-            return project.emoji
-        }
-        // Fallback for common project names
-        switch projectName.lowercased() {
-        case "film", "movie", "video":
-            return "🎬"
-        case "writing", "book", "novel":
-            return "✍️"
-        case "music", "song":
-            return "🎵"
-        case "art", "drawing", "painting":
-            return "🎨"
-        case "code", "programming", "dev":
-            return "💻"
-        case "admin", "planning", "organization":
-            return "📋"
-        default:
-            return "📁"
-        }
-    }
-
+    // MARK: - Body
     var body: some View {
-        VStack(alignment: .center, spacing: 0) {
-            // Three-line editorial information with accent colors
-            VStack(alignment: .center, spacing: Theme.spacingSmall) {
-                // Line 1: Total logged time
-                Text("This week you logged")
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(Theme.Colors.textPrimary)
+        HStack(spacing: Theme.spacingMedium) {
+            // Left: Total hours (prominent)
+            HStack(spacing: Theme.spacingExtraSmall) {
+                Text("This week:")
+                    .font(Theme.Fonts.narrative)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 Text(narrativeEngine.currentHeadline?.formattedHours ?? "0h 0m")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(Theme.Fonts.narrativeAccent)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
@@ -105,70 +22,85 @@ struct WeeklyEditorialView: View {
                             endPoint: .trailing
                         )
                     )
-                
-                // Space between sections
-                Spacer().frame(height: Theme.spacingMedium)
-                
-                // Line 2: Focus activity
-                Text("You did a lot of")
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                if let topActivity = narrativeEngine.currentHeadline?.topActivity {
-                    HStack(spacing: Theme.spacingExtraSmall) {
-                        Text(topActivity.emoji)
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                        Text(topActivity.name)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Theme.Colors.accentColor, Theme.Colors.accentColor.opacity(0.7)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                    }
-                } else {
-                    Text("Uncategorized")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+            }
+
+            // Separator dot
+            Circle()
+                .fill(Theme.Colors.divider)
+                .frame(width: 4, height: 4)
+
+            // Center: Top activity
+            if let topActivity = narrativeEngine.currentHeadline?.topActivity {
+                HStack(spacing: 4) {
+                    Text(topActivity.emoji)
+                        .font(.system(size: 14))
+                    Text(topActivity.name)
+                        .font(Theme.Fonts.narrative)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                }
+            }
+
+            // Separator dot
+            Circle()
+                .fill(Theme.Colors.divider)
+                .frame(width: 4, height: 4)
+
+            // Right: Top project with emoji
+            if let topProject = narrativeEngine.currentHeadline?.topProject {
+                HStack(spacing: 4) {
+                    Text(topProject.emoji)
+                        .font(.system(size: 14))
+                    Text(topProject.name)
+                        .font(Theme.Fonts.narrative)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                }
+            }
+
+            Spacer()
+
+            // Milestone count badge (if any)
+            if !narrativeEngine.currentWeekMilestones.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Colors.accentColor)
+                    Text("\(narrativeEngine.currentWeekMilestones.count) milestone\(narrativeEngine.currentWeekMilestones.count == 1 ? "" : "s")")
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.accentColor)
                 }
-                
-                // Space between sections
-                Spacer().frame(height: Theme.spacingMedium)
-                
-                // Milestone List
-                milestoneList
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Theme.Colors.accentColor.opacity(0.1))
+                .cornerRadius(8)
             }
         }
+        .padding(.horizontal, Theme.DashboardLayout.chartPadding)
+        .padding(.vertical, 10)
+        .background(Theme.Colors.cardSurface)
+        .cornerRadius(Theme.Design.cornerRadius)
         .onAppear {
-            // Generate initial headline
             narrativeEngine.generateWeeklyHeadline()
-            headlineText = narrativeEngine.getCurrentHeadlineText()
         }
-        .onChange(of: narrativeEngine.currentHeadline) { _ in
-            headlineText = narrativeEngine.getCurrentHeadlineText()
-        }
+        .onChange(of: narrativeEngine.currentHeadline) { _ in }
     }
 }
 
 // MARK: Preview
 #Preview {
     return WeeklyEditorialView_PreviewsContent()
-        .frame(width: 400, height: 300)
+        .frame(width: 700, height: 50)
         .background(Theme.Colors.background)
         .padding()
 }
 
 struct WeeklyEditorialView_PreviewsContent: View {
     @StateObject var narrativeEngine = NarrativeEngine()
-    
+
     var body: some View {
         WeeklyEditorialView(
             narrativeEngine: narrativeEngine
         )
         .onAppear {
-            // Generate initial headline for preview
             narrativeEngine.generateWeeklyHeadline()
         }
     }

@@ -54,10 +54,10 @@ nodes:
     component: DashboardRootView
     function: Navigate Views & Load Initial Data
     description: Handles dashboard view switching and orchestrates initial loading of all session data into SessionManager.
-  - id: B4_Weekly_View_Controller
-    component: WeeklyDashboardView
-    function: Display Weekly Dashboard
-    description: Manages the display of the weekly dashboard, consuming data from ChartDataPreparer.
+  - id: B4_Overview_View_Controller
+    component: OverviewDashboardView
+    function: Display Overview Dashboard
+    description: Manages the display of the overview dashboard (weekly summary + 30-day heat map), consuming data from ChartDataPreparer.
   - id: B5_Yearly_View_Controller
     component: YearlyDashboardView
     function: Display Yearly Dashboard
@@ -262,12 +262,12 @@ edges:
     target: B1_Data_Aggregator
     data_packet: [ActivityType]
   - source: B3_Dashboard_Navigator_and_Data_Orchestrator
-    target: B4_Weekly_View_Controller
-    data_packet: DashboardViewType (weekly)
+    target: B4_Overview_View_Controller
+    data_packet: DashboardViewType (overview)
   - source: B3_Dashboard_Navigator_and_Data_Orchestrator
     target: B5_Yearly_View_Controller
     data_packet: DashboardViewType (yearly)
-  - source: B4_Weekly_View_Controller
+  - source: B4_Overview_View_Controller
     target: B1_Data_Aggregator (Weekly Instance)
     data_packet: [SessionRecord] (allSessions)
   - source: B5_Yearly_View_Controller
@@ -414,11 +414,11 @@ edges:
   - source: Array+SessionExtensions
     target: F4_Sessions_View
     data_packet: [SessionRecord]
-  - source: B4_Weekly_View_Controller
+  - source: B4_Overview_View_Controller
     target: View+DashboardExtensions
     data_packet: View
   - source: View+DashboardExtensions
-    target: B4_Weekly_View_Controller
+    target: B4_Overview_View_Controller
     data_packet: View
   - source: B5_Yearly_View_Controller
     target: View+DashboardExtensions
@@ -427,7 +427,7 @@ edges:
     target: B5_Yearly_View_Controller
     data_packet: View
   - source: Array+SessionExtensions
-    target: B4_Weekly_View_Controller
+    target: B4_Overview_View_Controller
     data_packet: [SessionRecord]
 
   # ProjectStory Flow

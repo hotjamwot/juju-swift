@@ -138,6 +138,7 @@ struct DashboardLayout: View {
     }
     
     // Reusable chart container for consistent styling
+    // Uses the new borderless card design: 12pt radius, cardSurface background, no borders
     private struct ChartContainer<Content: View>: View {
         let content: Content
         
@@ -147,13 +148,8 @@ struct DashboardLayout: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .padding(Theme.DashboardLayout.chartPadding)
-            .background(Theme.Colors.surface.opacity(0.3)) // Reduced opacity for cleaner look
-            .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.DashboardLayout.chartCornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: Theme.DashboardLayout.chartBorderWidth)
-            )
-            // Removed shadow for cleaner, flatter aesthetic
+            .background(Theme.Colors.cardSurface)
+            .cornerRadius(Theme.Design.cornerRadius)
         }
     }
 }
@@ -207,27 +203,27 @@ struct DashboardLayout: View {
 
 // MARK: - Bottom Navigation Circles
 
-/// Bottom navigation circles for switching between weekly and yearly dashboard views
+/// Bottom navigation circles for switching between overview and yearly dashboard views
 /// Positioned at the bottom of the dashboard window, similar to the active session status bar
 struct BottomNavigationCircles: View {
     @Binding var currentView: DashboardViewType?
     
     var body: some View {
         HStack(spacing: 16) {
-            // Weekly indicator circle
+            // Overview indicator circle
             Circle()
-                .fill(currentView == .weekly ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
+                .fill(currentView == .overview ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                 .frame(width: 10, height: 10)
-                .opacity(currentView == .weekly ? 0.8 : 0.3)
-                .scaleEffect(currentView == .weekly ? 1.1 : 1.0)
+                .opacity(currentView == .overview ? 0.8 : 0.3)
+                .scaleEffect(currentView == .overview ? 1.1 : 1.0)
                 .animation(.easeInOut(duration: 0.2), value: currentView)
                 .contentShape(Circle()) // Make entire circle clickable
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.25)) {
-                        currentView = .weekly
+                        currentView = .overview
                     }
                 }
-                .help("Weekly Dashboard")
+                .help("Overview Dashboard")
             
             // Yearly indicator circle
             Circle()
@@ -301,7 +297,7 @@ struct BottomNavigationCircles: View {
 #Preview {
     VStack {
         Spacer()
-        BottomNavigationCircles(currentView: .constant(.weekly))
+        BottomNavigationCircles(currentView: .constant(.overview))
     }
     .frame(width: 400, height: 100)
     .background(Theme.Colors.background)

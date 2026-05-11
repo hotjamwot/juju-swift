@@ -7,16 +7,16 @@
 import Foundation
 
 /// Enum to track the current dashboard view state
-/// Used for navigation between weekly and yearly dashboard views
+/// Used for navigation between overview (weekly) and yearly dashboard views
 enum DashboardViewType: CaseIterable, Hashable {
-    case weekly
+    case overview
     case yearly
     
     /// Human-readable title for the view type
     var title: String {
         switch self {
-        case .weekly:
-            return "Weekly"
+        case .overview:
+            return "Overview"
         case .yearly:
             return "Yearly"
         }
@@ -25,10 +25,10 @@ enum DashboardViewType: CaseIterable, Hashable {
     /// Next view type for cycling through views
     var next: DashboardViewType {
         switch self {
-        case .weekly:
+        case .overview:
             return .yearly
         case .yearly:
-            return .weekly
+            return .overview
         }
     }
 }

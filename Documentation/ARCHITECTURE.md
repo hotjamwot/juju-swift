@@ -348,7 +348,7 @@ enum ChartTimePeriod {
 
 ```swift
 enum DashboardViewType {
-    case weekly, yearly
+    case overview, yearly
     // Computed: title, next
 }
 ```
@@ -396,7 +396,7 @@ init(hex: String)
    - `DashboardRootView` calls `sessionManager.loadAllSessions()` to populate `sessionManager.allSessions` with the complete dataset.
    - This ensures all dashboard views start with a consistent, comprehensive session history.
 2. **Dashboard-Specific Data Preparation**:
-   - When a dashboard view (e.g., `WeeklyDashboardView` or `YearlyDashboardView`) appears, it receives the already-populated `sessionManager.allSessions`.
+   - When a dashboard view (e.g., `OverviewDashboardView` or `YearlyDashboardView`) appears, it receives the already-populated `sessionManager.allSessions`.
    - It then calls `ChartDataPreparer.prepareWeeklyData()` or `ChartDataPreparer.prepareAllTimeData()`, passing the *complete* `sessionManager.allSessions`.
 3. **Internal Filtering and Aggregation**:
    - `ChartDataPreparer` filters the received *complete* session list based on the dashboard's requirements (e.g., current week for `prepareWeeklyData`, current year for `prepareAllTimeData` when used by `YearlyDashboardView`).
@@ -404,7 +404,7 @@ init(hex: String)
 4. **Caching (ProjectStatisticsCache)**:
    - Project-level statistics are cached by `ProjectStatisticsCache` for performance, which `ChartDataPreparer` might utilize.
 5. **Display**:
-   - Charts within the respective dashboard view (`WeeklyDashboardView`, `YearlyDashboardView`) display the aggregated data provided by `ChartDataPreparer`.
+   - Charts within the respective dashboard view (`OverviewDashboardView`, `YearlyDashboardView`) display the aggregated data provided by `ChartDataPreparer`.
 
 This flow ensures that `sessionManager.allSessions` serves as the single source of truth for all session data, preventing race conditions where a dashboard view might populate this shared state with incomplete, view-specific data.
 
@@ -592,11 +592,15 @@ Juju/
 ├── Features/              # Feature-specific implementations
 │   ├── Dashboard/         # Dashboard functionality
 │   │   ├── DashboardRootView.swift   # Main dashboard container
-│   │   ├── Weekly/          # Weekly dashboard views
-│   │   │   ├── WeeklyDashboardView.swift
-│   │   │   ├── WeeklyEditorialView.swift
-│   │   │   ├── SessionCalendarChartView.swift
-│   │   │   └── WeeklyActivityBubbleChartView.swift
+│   │   ├── Overview/         # Overview dashboard views (weekly summary)
+│   │   │   ├── OverviewDashboardView.swift
+│   │   │   └── SessionCalendarChartView.swift
+│   │   ├── Shared/           # Shared dashboard components
+│   │   │   ├── DashboardLayout.swift
+│   │   │   ├── ActiveSessionStatusView.swift
+│   │   │   └── SessionHeatMapView.swift
+│   │   ├── Weekly/           # Legacy — use Overview/ instead
+│   │   │   └── WeeklyEditorialView.swift
 │   │   └── Yearly/          # Yearly dashboard views
 │   │       ├── YearlyDashboardView.swift
 │   │       ├── YearlyProjectBarChartView.swift
@@ -650,7 +654,6 @@ Juju/
 
 **Dashboard → Data Integration:**
 - `DashboardRootView` orchestrates initial data loading into `SessionManager`.
-- Individual dashboard views (`WeeklyDashboardView`, `YearlyDashboardView`) consume `sessionManager.allSessions` and pass it to their `ChartDataPreparer` instances.
 - `ChartDataPreparer` instances filter and aggregate data for their specific views.
 - Real-time updates flow through `@Published` properties and `NotificationCenter`.
 

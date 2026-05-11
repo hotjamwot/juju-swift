@@ -9,7 +9,7 @@ import AppKit
 /// - Dark theme consistency: deep background (#121212), soft surface (#1C1C1E)
 /// - Typography hierarchy: rounded headers, clean body text, compact captions
 /// - Spacing rhythm: 8pt/16pt/24pt system creates visual breathing room
-/// - Rounded corners: 18pt for cards, 10pt for rows, 5pt for bars (soft edges)
+/// - Rounded corners: 12pt for cards, 10pt for rows, 5pt for bars (soft edges)
 /// - Charts: minimalist with subtle grid lines, working hours shading, clear data
 /// - Lists: compact 44pt rows with subtle hover states, emoji integration
 /// - Color philosophy: project colors for data, accent (#E100FF) for actions
@@ -31,6 +31,14 @@ public struct Theme {
         public static let error       = Color("Error")  // #B02A21
         public static let accentColor       = Color("AppAccentColor")  // #E100FF or #C800C8 in dark mode
 
+        /// Subtle card surface — slightly lighter than background but still distinct
+        /// Used for card containers and chart areas to create depth without borders
+        public static let cardSurface: Color = {
+            // Slightly lighter than background (#161618 vs #121212) to create
+            // a subtle floating effect without needing borders
+            Color(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.094, alpha: 1.0))
+        }()
+
         /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)
         public static func nsColor(_ color: Color) -> NSColor? {
             #if arch(x86_64) || arch(arm64) // macOS build
@@ -51,6 +59,10 @@ public struct Theme {
         public static let body     = Font.system(size: 14, weight: .regular)
         public static let caption  = Font.system(size: 10, weight: .medium)
         public static let icon     = Font.system(size: 20, weight: .regular)
+        
+        // New: Compact narrative strip fonts
+        public static let narrative = Font.system(size: 13, weight: .medium, design: .rounded)
+        public static let narrativeAccent = Font.system(size: 14, weight: .semibold, design: .rounded)
     }
 
     // MARK: Spacing & Sizing
@@ -62,7 +74,8 @@ public struct Theme {
 
     // MARK: Corners / Animation
     public struct Design {
-        public static let cornerRadius     = CGFloat(18)
+        /// Standard corner radius for cards and containers (reduced from 18pt for a cleaner look)
+        public static let cornerRadius     = CGFloat(12)
         public static let animationDuration = 0.2
     }
 
@@ -73,8 +86,10 @@ public struct Theme {
         public static let chartPadding: CGFloat = 12
         public static let chartGap: CGFloat = 24
         public static let dashboardPadding: CGFloat = 24
-        public static let chartCornerRadius: CGFloat = 16
-        public static let chartBorderWidth: CGFloat = 1
+        /// Chart corner radius — now uses the standard 12pt
+        public static let chartCornerRadius: CGFloat = 12
+        /// Border width set to 0 for the borderless card look
+        public static let chartBorderWidth: CGFloat = 0
         
         // Responsive breakpoints
         public static let breakpoints = (
@@ -242,9 +257,6 @@ extension View {
     /// - Can be applied multiple times (last one wins)
     /// - Compatible with most other view modifiers
     ///
-    /// - Parameters:
-    ///   - isLoading: Boolean indicating whether to show loading overlay
-    ///   - message: Custom loading message (defaults to "Loading...")
     /// - Returns: View with conditional loading overlay
     @ViewBuilder
     func loadingOverlay(isLoading: Bool, message: String = "Loading...") -> some View {
@@ -276,9 +288,9 @@ extension View {
     /// consistent chart components across dashboard views.
     ///
     /// **Business Rules**:
-    /// - Applies surface background color
-    /// - Adds subtle border using divider color
-    /// - Uses Theme corner radius for consistency
+    /// - Applies cardSurface background color for the new borderless card look
+    /// - No border stroke — content floats on the surface for a cleaner aesthetic
+    /// - Uses reduced corner radius (12pt) for a more modern feel
     /// - Provides chart-specific padding
     ///
     /// **Performance Notes**:
@@ -294,11 +306,8 @@ extension View {
     /// - Returns: View styled as chart container
     func chartContainer() -> some View {
         self
-            .background(Theme.Colors.surface)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
-            )
+            .background(Theme.Colors.cardSurface)
+            .cornerRadius(Theme.Design.cornerRadius)
             .chartPadding()
     }
     
@@ -309,9 +318,9 @@ extension View {
     /// visually distinct container that stands out from the background.
     ///
     /// **Business Rules**:
-    /// - Applies surface background color
-    /// - Adds subtle border using divider color
-    /// - Uses Theme corner radius for consistency
+    /// - Applies cardSurface background — subtle differentiation without borders
+    /// - No border stroke for a cleaner, more modern card look
+    /// - Uses reduced corner radius (12pt)
     /// - Provides dashboard-specific padding
     ///
     /// **Performance Notes**:
@@ -327,11 +336,8 @@ extension View {
     /// - Returns: View styled as dashboard card
     func dashboardCard() -> some View {
         self
-            .background(Theme.Colors.surface)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
-            )
+            .background(Theme.Colors.cardSurface)
+            .cornerRadius(Theme.Design.cornerRadius)
             .dashboardPadding()
     }
     

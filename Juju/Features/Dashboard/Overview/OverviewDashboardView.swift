@@ -10,7 +10,7 @@ extension Date {
     }
 }
 
-struct WeeklyDashboardView: View {
+struct OverviewDashboardView: View {
     // MARK: - State objects (passed from DashboardRootView)
     @ObservedObject var chartDataPreparer: ChartDataPreparer
     @ObservedObject var sessionManager: SessionManager
@@ -31,28 +31,49 @@ struct WeeklyDashboardView: View {
                         ActiveSessionStatusView(sessionManager: sessionManager)
                             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                             .padding(.top, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced padding
+                            .padding(.bottom, Theme.DashboardLayout.chartPadding)
                     }
+                    
+                    // Narrative Strip — compact horizontal bar
+                    WeeklyEditorialView(narrativeEngine: narrativeEngine)
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                        .padding(.bottom, Theme.DashboardLayout.chartGap)
                     
                     // Dashboard charts using optimized layout
                     DashboardLayout.weekly(
                         topLeft: {
-                            WeeklyEditorialView(
-                                narrativeEngine: narrativeEngine
-                            )
+                            VStack {
+                                Spacer()
+                                Text("Coming Soon")
+                                    .font(.headline)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                Text("Heat map view")
+                                    .font(.subheadline)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         },
                         topRight: {
-                            WeeklyActivityBubbleChartView(
-                                data: chartDataPreparer.weeklyActivityTotals()
-                            )
+                            VStack {
+                                Spacer()
+                                Text("Coming Soon")
+                                    .font(.headline)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                Text("Project distribution")
+                                    .font(.subheadline)
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         },
                         bottom: {
                             SessionCalendarChartView(
                                 sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                             )
                         },
-                        topHeightRatio: 0.45,  // More space for editorial content
-                        bottomHeightRatio: 0.55
+                        topHeightRatio: 0.4,
+                        bottomHeightRatio: 0.6
                     )
                 }
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
@@ -176,32 +197,11 @@ struct WeeklyDashboardView: View {
     }
 }
 
-// MARK: - Navigation Button Component
-
-/// Floating navigation button for switching between weekly and yearly views
-/// This button is embedded directly in WeeklyDashboardView for better encapsulation
-struct NavigationButton: View {
-    @StateObject private var sessionManager = SessionManager.shared
-    
-    var body: some View {
-        Button(action: {
-            // This will be handled by parent DashboardRootView through state management
-            // For now, we'll use a notification to trigger the navigation
-            NotificationCenter.default.post(name: .switchToYearlyView, object: nil)
-        }) {
-            Image(systemName: "chevron.right")
-                .font(.system(size: 16, weight: .semibold))
-        }
-        .buttonStyle(.navigation) // Use shared NavigationButtonStyle
-        .help("Switch to Yearly Dashboard")
-    }
-}
-
 // MARK: - Preview
 
-struct WeeklyDashboardView_Previews: PreviewProvider {
+struct OverviewDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        WeeklyDashboardView(
+        OverviewDashboardView(
             chartDataPreparer: ChartDataPreparer(),
             sessionManager: SessionManager.shared,
             projectsViewModel: ProjectsViewModel.shared,

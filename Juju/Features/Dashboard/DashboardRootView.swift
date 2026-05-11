@@ -6,11 +6,11 @@ struct DashboardRootView: View {
     @StateObject private var sidebarState = SidebarStateManager()
     @Environment(\.presentationMode) private var presentationMode
     
-    // Navigation state for weekly/yearly dashboard views
-    @State private var dashboardViewType: DashboardViewType? = .weekly
+    // Navigation state for overview/yearly dashboard views
+    @State private var dashboardViewType: DashboardViewType? = .overview
     
     // State objects for dashboard views to ensure proper state management
-    @StateObject private var weeklyDashboardState = ChartDataPreparer()
+    @StateObject private var overviewDashboardState = ChartDataPreparer()
     @StateObject private var yearlyDashboardState = ChartDataPreparer()
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var projectsViewModel = ProjectsViewModel.shared
@@ -28,19 +28,19 @@ struct DashboardRootView: View {
                     ZStack {
                         switch selected {
                         case .charts:
-                            // Dashboard content with weekly/yearly navigation using programmatic ScrollView
+                            // Dashboard content with overview/yearly navigation using programmatic ScrollView
                             ZStack {
                                 // ScrollView with both dashboards
                                 ScrollView(.horizontal) {
                                     HStack(spacing: 0) {
-// Weekly Dashboard
-                                        WeeklyDashboardView(
-                                            chartDataPreparer: weeklyDashboardState,
+// Overview Dashboard
+                                        OverviewDashboardView(
+                                            chartDataPreparer: overviewDashboardState,
                                             sessionManager: sessionManager,
                                             projectsViewModel: projectsViewModel,
                                             narrativeEngine: narrativeEngine
                                         )
-                                        .id(DashboardViewType.weekly)
+                                        .id(DashboardViewType.overview)
                                         .containerRelativeFrame(.horizontal)
                                         
 // Yearly Dashboard
@@ -106,8 +106,8 @@ struct DashboardRootView: View {
         .onReceive(NotificationCenter.default.publisher(for: .switchToYearlyView)) { _ in
             dashboardViewType = .yearly
         }
-        .onReceive(NotificationCenter.default.publisher(for: .switchToWeeklyView)) { _ in
-            dashboardViewType = .weekly
+        .onReceive(NotificationCenter.default.publisher(for: .switchToOverviewView)) { _ in
+            dashboardViewType = .overview
         }
         // Keyboard shortcuts for navigation
         .onAppear {
@@ -124,8 +124,8 @@ struct DashboardRootView: View {
                 if event.modifierFlags.contains(.command) {
                     switch event.keyCode {
                     case 123: // Left Arrow key
-                        // Command + Left Arrow: Go to Weekly
-                        dashboardViewType = .weekly
+                        // Command + Left Arrow: Go to Overview
+                        dashboardViewType = .overview
                         return nil
                     case 124: // Right Arrow key
                         // Command + Right Arrow: Go to Yearly
@@ -151,7 +151,7 @@ struct DashboardRootView: View {
 
 extension Notification.Name {
     static let switchToYearlyView = Notification.Name("switchToYearlyView")
-    static let switchToWeeklyView = Notification.Name("switchToWeeklyView")
+    static let switchToOverviewView = Notification.Name("switchToOverviewView")
 }
 
 // MARK: - Preview
