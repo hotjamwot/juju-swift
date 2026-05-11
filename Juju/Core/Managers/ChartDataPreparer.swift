@@ -192,25 +192,25 @@ final class ChartDataPreparer: ObservableObject {
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    /// Compute daily total hours for the last N days.
+    /// Compute daily total hours for the last N days from the given sessions.
     /// Used by the heat map view to show tracked time intensity per day.
     ///
-    /// **AI Context**: Aggregates all sessions (not just weekly) to build a
-    /// dictionary of Date → total hours. Dates with no sessions are absent
-    /// from the result (the heat map view treats missing dates as zero).
+    /// Unlike other preparer methods which read from `viewModel.sessions` (weekly filtered),
+    /// this takes an explicit sessions array so the heat map gets full-range data.
     ///
-    /// - Parameter days: Number of trailing days to include (default 30)
+    /// - Parameters:
+    ///   - days: Number of trailing days to include (default 35)
+    ///   - sessions: The session records to aggregate (pass sessionManager.allSessions)
     /// - Returns: Dictionary mapping each calendar date to total hours tracked
-    func dailyTotalsForLast(days: Int = 30) -> [Date: Double] {
+    func dailyTotalsForLast(days: Int = 35, sessions: [SessionRecord]) -> [Date: Double] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         guard let startDate = calendar.date(byAdding: .day, value: -days, to: today) else {
             return [:]
         }
         
-        // Filter sessions within the date range and aggregate by day
         var totals: [Date: Double] = [:]
-        for session in viewModel.sessions where session.startDate >= startDate {
+        for session in sessions where session.startDate >= startDate {
             let day = calendar.startOfDay(for: session.startDate)
             totals[day, default: 0] += Double(session.durationMinutes) / 60.0
         }

@@ -66,11 +66,32 @@ public struct Theme {
     }
 
     // MARK: Spacing & Sizing
-    public static let spacingSmall       = CGFloat(8)
-    public static let spacingExtraSmall  = CGFloat(4)
-    public static let spacingMedium      = CGFloat(16)
-    public static let spacingLarge       = CGFloat(24)
-    public static let spacingExtraLarge       = CGFloat(32)
+    public static let spacingExtraSmall = CGFloat(4)
+    public static let spacingSmall      = CGFloat(8)
+    public static let spacingMedium     = CGFloat(16)
+    public static let spacingLarge      = CGFloat(24)
+    public static let spacingExtraLarge = CGFloat(32)
+    
+    // MARK: Spacing scale for Japanese/Scandinavian minimal design
+    // Inspired by the 8pt grid system — consistent, calm, breathing room
+    public struct Spacing {
+        /// 2pt — micro spacing, almost invisible
+        public static let micro: CGFloat = 2
+        /// 4pt — very tight, for inline elements
+        public static let xxs: CGFloat = 4
+        /// 8pt — small, for compact content
+        public static let xs: CGFloat = 8
+        /// 12pt — standard inner padding
+        public static let sm: CGFloat = 12
+        /// 16pt — medium, for section gaps
+        public static let md: CGFloat = 16
+        /// 24pt — large, for major section breaks
+        public static let lg: CGFloat = 24
+        /// 32pt — extra large, for page-level padding
+        public static let xl: CGFloat = 32
+        /// 48pt — spacious, for deep breathing room
+        public static let xxl: CGFloat = 48
+    }
 
     // MARK: Corners / Animation
     public struct Design {
@@ -90,6 +111,9 @@ public struct Theme {
         public static let chartCornerRadius: CGFloat = 12
         /// Border width set to 0 for the borderless card look
         public static let chartBorderWidth: CGFloat = 0
+        
+        /// Padding between narrative strip and dashboard charts
+        public static let narrativeToContentGap: CGFloat = 20
         
         // Responsive breakpoints
         public static let breakpoints = (
@@ -284,7 +308,7 @@ extension View {
     /// Create a chart container with consistent styling
     ///
     /// **AI Context**: This modifier provides standardized styling for chart containers,
-    /// including background, border, and corner radius. It's used to create visually
+    /// including background, corner radius. It's used to create visually
     /// consistent chart components across dashboard views.
     ///
     /// **Business Rules**:

@@ -9,6 +9,11 @@ import Charts
 
 /// Yearly Dashboard View
 /// Dedicated view for all yearly charts and metrics
+///
+/// Design Philosophy (Scandinavian-Japanese Minimal):
+/// - Consistent padding with overview dashboard
+/// - Charts breathe with generous whitespace
+/// - No redundant nesting — the layout owns the space fully
 struct YearlyDashboardView: View {
     // MARK: - State objects (passed from DashboardRootView)
     @ObservedObject var chartDataPreparer: ChartDataPreparer
@@ -26,8 +31,7 @@ struct YearlyDashboardView: View {
         return year
     }
     
-    // MARK: - Component Views    
-    // MARK - Body
+    // MARK: - Component Views
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -41,7 +45,7 @@ struct YearlyDashboardView: View {
                         ActiveSessionStatusView(sessionManager: sessionManager)
                             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                             .padding(.top, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.bottom, Theme.DashboardLayout.chartPadding) // Reduced padding
+                            .padding(.bottom, Theme.DashboardLayout.chartPadding)
                     }
                     
                     // Dashboard charts using optimized two-column layout
@@ -65,10 +69,9 @@ struct YearlyDashboardView: View {
                             )
                         }
                     )
-                    .frame(maxHeight: sessionManager.activeSession != nil ? .infinity : nil) // Add responsive height when active session is present
                 }
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                .padding(.bottom, Theme.DashboardLayout.dashboardPadding)
+                .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32) // Extra for nav circles
                 .background(Theme.Colors.background)
             }
         }

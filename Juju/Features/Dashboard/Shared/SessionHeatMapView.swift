@@ -2,74 +2,85 @@ import SwiftUI
 
 /// A single cell in the heat map, representing one day's total tracked time
 struct HeatMapCell: Identifiable {
-    let id = UUID()
     let date: Date
     let totalHours: Double
-    let dayOfWeek: Int  // 0=Sunday, 1=Monday, etc.
-    let weekOffset: Int // How many weeks ago (0 = current/latest week)
+    /// Day-of-week index (0=Monday … 6=Sunday)
+    let dayOfWeek: Int
+    /// Week offset — 0 = oldest week, increasing toward today
+    let weekOffset: Int
+    var id: Date { date }
 }
 
-/// GitHub-style heat map showing daily total hours over a configurable number of days
-/// Cells are colored by intensity based on total hours tracked that day
+/// GitHub-style heat map showing daily total hours over the last 5 calendar weeks.
+///
+/// Layout (matches GitHub contribution graph):
+/// - **Columns** = days of the week (Mon … Sun) — 7 columns
+/// - **Rows** = calendar weeks (oldest top, current week at the bottom)
+/// - **Today** is always in the bottom row, in its correct day-of-week column
+/// - The grid is aligned to calendar week boundaries (Mon-Sun)
+/// - No title, no legend — pure data with a rich tooltip on hover
 struct SessionHeatMapView: View {
+    /// Pre-computed daily totals — one entry per day, missing days are zero
     let dailyTotals: [Date: Double]
-    let title: String
-    let subtitle: String
     
-    // Number of days to display (default 30)
+    /// Number of trailing days to show (typically 35)
     let dayCount: Int
     
-    // Color intensity thresholds (in hours)
-    private let thresholds: [Double] = [0.5, 2.0, 4.0, 8.0]
+    /// Color intensity thresholds (in hours)
+    private let thresholds: [Double] = [0.5, 2.0, 4.0, 6.0]
+    
+    private let calendar = Calendar.current
+    
+    /// Currently hovered cell
+    @State private var hoveredCell: HeatMapCell? = nil
+    /// Whether the hover timer has fired (slight delay before showing tooltip)
+    @State private var showTooltip: Bool = false
     
     init(
         dailyTotals: [Date: Double],
-        title: String = "Activity Heat Map",
-        subtitle: String = "Last 30 days",
-        dayCount: Int = 30
+        dayCount: Int = 35
     ) {
         self.dailyTotals = dailyTotals
-        self.title = title
-        self.subtitle = subtitle
         self.dayCount = dayCount
     }
     
     // MARK: - Data Processing
     
-    /// Generate heat map cells from the daily totals dictionary
+    /// Generate cells aligned to calendar week boundaries (Mon-Sun).
     private var cells: [HeatMapCell] {
-        let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let maxHours = dailyTotals.values.max() ?? 1.0
+        let weekday = calendar.component(.weekday, from: today)
         
-        // Generate cells for the last `dayCount` days
-        return (0..<dayCount).compactMap { daysAgo in
-            guard let date = calendar.date(byAdding: .day, value: -daysAgo, to: today) else { return nil }
+        let daysSinceMonday = (weekday + 5) % 7
+        let thisMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today) ?? today
+        let numberOfWeeks = max(1, (dayCount + 6) / 7)
+        let startMonday = calendar.date(byAdding: .day, value: -(numberOfWeeks - 1) * 7, to: thisMonday) ?? thisMonday
+        
+        let totalDays = numberOfWeeks * 7
+        
+        var result: [HeatMapCell] = []
+        for dayOffset in 0..<totalDays {
+            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: startMonday) else { continue }
             
-            // Calculate week offset (consecutive from right)
-            // We want the most recent day to be the last column
-            let dayIndex = dayCount - 1 - daysAgo
-            let weekOffset = dayIndex / 7
-            let dayOfWeek = calendar.component(.weekday, from: date) - 1 // 0=Sunday
-            
+            let weekOffset = dayOffset / 7
+            let dayOfWeek = dayOffset % 7
             let hours = dailyTotals[date] ?? 0.0
             
-            return HeatMapCell(
+            result.append(HeatMapCell(
                 date: date,
                 totalHours: hours,
                 dayOfWeek: dayOfWeek,
                 weekOffset: weekOffset
-            )
+            ))
         }
-        .filter { $0.weekOffset >= 0 } // Safety check
+        
+        return result
     }
     
-    /// Maximum number of weeks to display (ceil division)
     private var weekCount: Int {
-        (dayCount + 6) / 7
+        max(1, (dayCount + 6) / 7)
     }
     
-    /// Intensity level 0-4 based on hours
     private func intensityLevel(for hours: Double) -> Int {
         if hours <= 0 { return 0 }
         if hours < thresholds[0] { return 1 }
@@ -78,118 +89,155 @@ struct SessionHeatMapView: View {
         return 4
     }
     
-    /// Color for a given intensity level
     private func heatColor(level: Int) -> Color {
         switch level {
-        case 0: return Theme.Colors.cardSurface.opacity(0.5) // Empty day
-        case 1: return Theme.Colors.accentColor.opacity(0.15) // Very light
-        case 2: return Theme.Colors.accentColor.opacity(0.35) // Light
-        case 3: return Theme.Colors.accentColor.opacity(0.60) // Medium
-        case 4: return Theme.Colors.accentColor.opacity(0.85) // Dense
+        case 0: return Theme.Colors.cardSurface.opacity(0.5)
+        case 1: return Theme.Colors.accentColor.opacity(0.12)
+        case 2: return Theme.Colors.accentColor.opacity(0.30)
+        case 3: return Theme.Colors.accentColor.opacity(0.55)
+        case 4: return Theme.Colors.accentColor.opacity(0.85)
         default: return Theme.Colors.cardSurface
         }
     }
     
+    private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
+    
     // MARK: - Body
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Text(subtitle)
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
-            }
-            
-            Spacer()
-            
-            // Heat map grid
+        VStack(alignment: .leading, spacing: 0) {
             if dailyTotals.isEmpty {
+                Spacer()
                 Text("No data yet")
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
+                Spacer()
             } else {
-                HStack(alignment: .top, spacing: 4) {
-                    // Day labels column
-                    VStack(alignment: .trailing, spacing: 4) {
-                        let dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-                        ForEach(0..<7, id: \.self) { index in
-                            Text(dayLabels[index])
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                                .frame(height: 14)
-                        }
-                    }
-                    .padding(.trailing, 4)
+                GeometryReader { geo in
+                    let availableW = geo.size.width
+                    let availableH = geo.size.height
                     
-                    // Week columns
-                    HStack(alignment: .top, spacing: 4) {
-                        ForEach(0..<weekCount, id: \.self) { weekIndex in
-                            VStack(spacing: 4) {
-                                ForEach(0..<7, id: \.self) { dayIndex in
-                                    if let cell = cells.first(where: {
-                                        $0.weekOffset == weekIndex && $0.dayOfWeek == dayIndex
-                                    }) {
-                                        RoundedRectangle(cornerRadius: 3)
-                                            .fill(heatColor(level: intensityLevel(for: cell.totalHours)))
-                                            .frame(width: 14, height: 14)
-                                            .help("\(cell.date, format: .dateTime.month().day()): \(String(format: "%.1f", cell.totalHours))h")
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 3)
-                                            .fill(Color.clear)
-                                            .frame(width: 14, height: 14)
+                    let rows = weekCount
+                    let topLabelsH: CGFloat = 10
+                    let minGap: CGFloat = 6
+                    let maxGap: CGFloat = 16
+                    
+                    let widthBasedCell = (availableW - 6 * minGap) / 7
+                    let heightBasedCell = (availableH - topLabelsH - CGFloat(rows - 1) * minGap) / CGFloat(rows)
+                    let cellSize = max(6, min(widthBasedCell, heightBasedCell))
+                    
+                    let gap = min(maxGap, max(minGap, (availableW - 7 * cellSize) / 6))
+                    
+                    VStack(alignment: .center, spacing: 0) {
+                        // Top axis labels
+                        HStack(spacing: gap) {
+                            Spacer()
+                            ForEach(0..<7, id: \.self) { col in
+                                Text(dayLabels[col])
+                                    .font(.system(size: 8, weight: .medium))
+                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                                    .frame(width: cellSize)
+                            }
+                            Spacer()
+                        }
+                        .frame(height: topLabelsH)
+                        
+                        // Week rows
+                        VStack(spacing: gap) {
+                            ForEach(0..<rows, id: \.self) { row in
+                                HStack(spacing: gap) {
+                                    Spacer()
+                                    ForEach(0..<7, id: \.self) { dayIdx in
+                                        cellView(day: dayIdx, week: row, size: cellSize, rowIndex: row, totalRows: rows)
                                     }
+                                    Spacer()
                                 }
                             }
                         }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onHover { hovering in
+                        if !hovering {
+                            hoveredCell = nil
+                            showTooltip = false
+                        }
                     }
                 }
             }
-            
-            Spacer()
-            
-            // Legend
-            HStack(spacing: 6) {
-                Text("Less")
-                    .font(.system(size: 9))
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
-                
-                ForEach(0..<5, id: \.self) { level in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(heatColor(level: level))
-                        .frame(width: 12, height: 12)
-                }
-                
-                Text("More")
-                    .font(.system(size: 9))
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
-            }
         }
+    }
+    
+    // MARK: - Cell Builder
+    
+    /// Builds a single heat map cell with smart tooltip positioning.
+    @ViewBuilder
+    private func cellView(day dayIdx: Int, week row: Int, size: CGFloat, rowIndex: Int, totalRows: Int) -> some View {
+        let cell = cells.first(where: { $0.dayOfWeek == dayIdx && $0.weekOffset == row })
+        let isFuture = (cell?.date ?? Date()) > Date()
+        
+        RoundedRectangle(cornerRadius: 4)
+            .fill(
+                isFuture
+                    ? Color.clear
+                    : heatColor(level: intensityLevel(for: cell?.totalHours ?? 0))
+            )
+            .frame(width: size, height: size)
+            .overlay(alignment: rowIndex == 0 ? .bottom : .top) {
+                if showTooltip, let currentCell = cell, let hovered = hoveredCell, currentCell.id == hovered.id {
+                    VStack(spacing: 2) {
+                        Text(currentCell.date.formatted(date: .abbreviated, time: .omitted))
+                            .font(.system(size: 11, weight: .medium))
+                        Text("\(String(format: "%.1f", currentCell.totalHours))h")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Theme.Colors.accentColor)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Theme.Colors.surface)
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                    )
+                    .fixedSize()
+                    .offset(y: rowIndex == 0 ? 12 : -12)
+                    .transition(.opacity)
+                }
+            }
+            .onHover { hovering in
+                if hovering, let cell = cell {
+                    hoveredCell = cell
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [cell] in
+                        if hoveredCell?.id == cell.id {
+                            withAnimation(.easeOut(duration: 0.1)) {
+                                showTooltip = true
+                            }
+                        }
+                    }
+                } else if !hovering, hoveredCell?.id == cell?.id {
+                    showTooltip = false
+                    hoveredCell = nil
+                }
+            }
     }
 }
 
 // MARK: - Preview
 
 #Preview {
-    // Generate mock daily totals for the last 30 days
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
-    var mockTotals: [Date: Double] = [:]
-    
-    for i in 0..<30 {
-        guard let date = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
-        mockTotals[date] = Double.random(in: 0...10)
+    var mock: [Date: Double] = [:]
+    for i in 0..<35 {
+        guard let d = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
+        mock[d] = Double.random(in: 0...10)
     }
     
-    return VStack {
-        SessionHeatMapView(dailyTotals: mockTotals)
-            .padding()
-    }
-    .frame(width: 400, height: 250)
-    .background(Theme.Colors.background)
+    return SessionHeatMapView(dailyTotals: mock)
+        .padding()
+        .frame(width: 500, height: 280)
+        .background(Theme.Colors.background)
 }

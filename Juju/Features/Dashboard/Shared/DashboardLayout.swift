@@ -2,6 +2,11 @@ import SwiftUI
 
 /// Unified Dashboard Layout
 /// A flexible, responsive layout system for all dashboard charts with configurable parameters
+///
+/// Design Philosophy (Scandinavian-Japanese Minimal):
+/// - Single source of padding: the parent view owns all padding, the layout only manages internal gaps
+/// - Cards float on the surface without borders — subtlety through surface color, not lines
+/// - Generous but controlled whitespace for calm, focused data reading
 struct DashboardLayout: View {
     enum LayoutType {
         case weekly(
@@ -21,20 +26,17 @@ struct DashboardLayout: View {
     // Configurable layout parameters
     let topHeightRatio: CGFloat
     let bottomHeightRatio: CGFloat
-    let spacing: CGFloat
     let gap: CGFloat
     
     init(
         layoutType: LayoutType,
         topHeightRatio: CGFloat = 0.4,
         bottomHeightRatio: CGFloat = 0.5,
-        spacing: CGFloat = Theme.DashboardLayout.dashboardPadding,
         gap: CGFloat = Theme.DashboardLayout.chartGap
     ) {
         self.layoutType = layoutType
         self.topHeightRatio = topHeightRatio
         self.bottomHeightRatio = bottomHeightRatio
-        self.spacing = spacing
         self.gap = gap
     }
     
@@ -47,7 +49,6 @@ struct DashboardLayout: View {
         self.layoutType = layoutType
         self.topHeightRatio = topHeightRatio
         self.bottomHeightRatio = bottomHeightRatio
-        self.spacing = Theme.DashboardLayout.dashboardPadding
         self.gap = Theme.DashboardLayout.chartGap
     }
     
@@ -56,8 +57,8 @@ struct DashboardLayout: View {
         @ViewBuilder topLeft: () -> some View,
         @ViewBuilder topRight: () -> some View,
         @ViewBuilder bottom: () -> some View,
-        topHeightRatio: CGFloat = 0.45,
-        bottomHeightRatio: CGFloat = 0.55
+        topHeightRatio: CGFloat = 0.4,
+        bottomHeightRatio: CGFloat = 0.6
     ) -> DashboardLayout {
         DashboardLayout(
             layoutType: .weekly(
@@ -90,49 +91,50 @@ struct DashboardLayout: View {
             let width = geometry.size.width
             let height = geometry.size.height
             
-            // Calculate available space
-            let availableWidth = max(0, width - (spacing * 2))
-            let availableHeight = max(0, height - (spacing * 2))
+            // Available space — no horizontal padding since the parent owns that
+            let availableWidth = max(0, width)
+            let availableHeight = max(0, height)
             
             switch layoutType {
             case .weekly(let topLeft, let topRight, let bottom):
-                // Weekly layout: 2x2 grid with extra bottom padding for navigation circles
+                // Weekly layout: 2-column top row + full-width bottom
                 VStack(spacing: gap) {
                     HStack(spacing: gap) {
                         ChartContainer(content: topLeft)
-                            .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
+                            .frame(width: availableWidth * 0.5 - gap / 2,
+                                   height: availableHeight * topHeightRatio - gap / 2)
                         
                         ChartContainer(content: topRight)
-                            .frame(width: availableWidth * 0.48, height: availableHeight * topHeightRatio)
+                            .frame(width: availableWidth * 0.5 - gap / 2,
+                                   height: availableHeight * topHeightRatio - gap / 2)
                     }
+                    .frame(height: availableHeight * topHeightRatio)
                     
                     ChartContainer(content: bottom)
-                        .frame(width: availableWidth, height: availableHeight * bottomHeightRatio)
+                        .frame(width: availableWidth,
+                               height: availableHeight * bottomHeightRatio - gap / 2)
                 }
-                .padding(.horizontal, spacing)
-                .padding(.top, spacing)
-                .padding(.bottom, spacing + 40) // Extra padding for navigation circles
                 
             case .yearly(let left, let rightTop, let rightBottom):
                 // Yearly layout: left column full height, right column stacked
                 HStack(spacing: gap) {
                     // Left Column: Monthly distribution chart (full height)
                     ChartContainer(content: left)
-                        .frame(width: availableWidth * Theme.DashboardLayout.yearlyLeftColumnRatio, height: availableHeight)
+                        .frame(width: availableWidth * Theme.DashboardLayout.yearlyLeftColumnRatio,
+                               height: availableHeight)
                     
                     // Right Column: Stacked charts with explicit height allocation
-                    // Top chart gets 60% of right column height, bottom chart gets 40%
+                    // Top chart gets 60% of right column height, bottom gets 40%
                     VStack(spacing: gap) {
                         ChartContainer(content: rightTop)
-                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.6)
+                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.6 - gap / 2)
                         
                         ChartContainer(content: rightBottom)
-                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.4)
+                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.4 - gap / 2)
                     }
-                    .frame(width: availableWidth * Theme.DashboardLayout.yearlyRightColumnRatio, height: availableHeight)
+                    .frame(width: availableWidth * Theme.DashboardLayout.yearlyRightColumnRatio,
+                           height: availableHeight)
                 }
-                .padding(.horizontal, spacing)
-                .padding(.vertical, spacing)
             }
         }
     }
@@ -147,7 +149,7 @@ struct DashboardLayout: View {
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(Theme.DashboardLayout.chartPadding)
+            .padding(Theme.Spacing.sm)  // 12pt — consistent inner padding for all chart cards
             .background(Theme.Colors.cardSurface)
             .cornerRadius(Theme.Design.cornerRadius)
         }
