@@ -10,11 +10,83 @@ import SwiftUI
 struct WeeklyEditorialView: View {
     @StateObject var narrativeEngine: NarrativeEngine
 
+    /// Comparative data for this week vs last week
+    private var comparativeData: ComparativeAnalytics? {
+        narrativeEngine.getComparativeData(for: .week)
+    }
+
+    /// Format a delta value as a string with arrow
+    private func deltaText(current: Double, previous: Double) -> String {
+        let diff = current - previous
+        let sign = diff >= 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", diff))h"
+    }
+
+    /// Color for delta text based on whether hours increased or decreased
+    private func deltaColor(current: Double, previous: Double) -> Color {
+        current >= previous ? Theme.Colors.accentColor : Color.red.opacity(0.8)
+    }
+
+    /// Format hours as "Xh Ym" string
+    private func formatHours(_ hours: Double) -> String {
+        let h = Int(hours)
+        let m = Int((hours - Double(h)) * 60)
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    }
+
+    /// Last week comparison view
+    @ViewBuilder
+    private func lastWeekComparisonView(comparative: ComparativeAnalytics) -> some View {
+        let delta = deltaText(
+            current: comparative.current.totalHours,
+            previous: comparative.previous.totalHours
+        )
+
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.2.circlepath")
+                .font(.system(size: 10))
+                .foregroundColor(Theme.Colors.textSecondary)
+            Text("Last week:")
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+            Text(formatHours(comparative.previous.totalHours))
+                .font(Theme.Fonts.caption.weight(.semibold))
+                .foregroundColor(Theme.Colors.textSecondary)
+            Text(delta)
+                .font(Theme.Fonts.caption.weight(.bold))
+                .foregroundColor(deltaColor(
+                    current: comparative.current.totalHours,
+                    previous: comparative.previous.totalHours
+                ))
+                .contentShape(Rectangle())
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Theme.Colors.cardSurface.opacity(0.5))
+        .cornerRadius(6)
+    }
+
+    /// Milestone badge view
+    @ViewBuilder
+    private func milestoneBadgeView(milestones: [Milestone]) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 10))
+                .foregroundColor(Theme.Colors.accentColor)
+            Text("\(milestones.count) milestone\(milestones.count == 1 ? "" : "s")")
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.accentColor)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Theme.Colors.accentColor.opacity(0.1))
+        .cornerRadius(8)
+    }
+
     // MARK: - Body
     var body: some View {
-        // Only show when we have a headline
         if let headline = narrativeEngine.currentHeadline {
-            HStack(spacing: Theme.Spacing.sm) {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                 // Left: Total hours (prominent)
                 HStack(spacing: Theme.Spacing.xxs) {
                     Text("This week:")
@@ -61,20 +133,14 @@ struct WeeklyEditorialView: View {
 
                 Spacer()
 
+                // Last week comparison
+                if let comparative = comparativeData {
+                    lastWeekComparisonView(comparative: comparative)
+                }
+
                 // Milestone count badge (if any)
                 if !narrativeEngine.currentWeekMilestones.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(Theme.Colors.accentColor)
-                        Text("\(narrativeEngine.currentWeekMilestones.count) milestone\(narrativeEngine.currentWeekMilestones.count == 1 ? "" : "s")")
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.accentColor)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Theme.Colors.accentColor.opacity(0.1))
-                    .cornerRadius(8)
+                    milestoneBadgeView(milestones: narrativeEngine.currentWeekMilestones)
                 }
             }
             .padding(.horizontal, Theme.DashboardLayout.chartPadding)

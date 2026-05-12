@@ -124,25 +124,23 @@ struct SessionHeatMapView: View {
 
                     let rows = weekCount
                     let topLabelsH: CGFloat = 12
-                    let outerPadding: CGFloat = 12
-                    let minGap: CGFloat = 6
-                    let maxGap: CGFloat = 16
+                    let outerPadding: CGFloat = 8
+                    let minGap: CGFloat = 3
+                    let maxGap: CGFloat = 6
 
                     // Subtract outer padding for the graph area
                     let graphW = availableW - 2 * outerPadding
                     let graphH = availableH - topLabelsH - 2 * outerPadding
 
-                    // Calculate cell width to use more horizontal space
+                    // Calculate cell size — aim for square cells by using the more constraining dimension
                     let widthBasedCell = (graphW - 6 * minGap) / 7
-                    let cellWidth = max(8, widthBasedCell)
-
-                    // Cell height: rectangular — cap at 60% of width to keep graph compact vertically
-                    let maxCellHeight = cellWidth * 0.55
                     let heightBasedCell = (graphH - CGFloat(rows - 1) * minGap) / CGFloat(rows)
-                    let cellHeight = max(6, min(heightBasedCell, maxCellHeight))
+                    // Square cells: use the smaller of the two, capped reasonably
+                    let rawCellSize = min(widthBasedCell, heightBasedCell)
+                    let cellSize = max(6, min(rawCellSize, 28)) // cap at 28pt for readability
 
-                    let hGap = min(maxGap, max(minGap, (graphW - 7 * cellWidth) / 6))
-                    let vGap = min(maxGap, max(minGap, CGFloat(rows) > 1 ? (graphH - CGFloat(rows) * cellHeight) / CGFloat(rows - 1) : 0))
+                    let hGap = min(maxGap, max(minGap, (graphW - 7 * cellSize) / 6))
+                    let vGap = min(maxGap, max(minGap, CGFloat(rows) > 1 ? (graphH - CGFloat(rows) * cellSize) / CGFloat(rows - 1) : 0))
 
                     VStack(alignment: .center, spacing: 0) {
                         // Outer padding top
@@ -153,9 +151,9 @@ struct SessionHeatMapView: View {
                             Spacer().frame(width: outerPadding)
                             ForEach(0..<7, id: \.self) { col in
                                 Text(dayLabels[col])
-                                    .font(.system(size: 8, weight: .medium))
+                                    .font(.system(size: 7, weight: .medium))
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
-                                    .frame(width: cellWidth)
+                                    .frame(width: cellSize)
                             }
                             Spacer().frame(width: outerPadding)
                         }
@@ -167,7 +165,7 @@ struct SessionHeatMapView: View {
                                 HStack(spacing: hGap) {
                                     Spacer().frame(width: outerPadding)
                                     ForEach(0..<7, id: \.self) { dayIdx in
-                                        cellView(day: dayIdx, week: row, cellWidth: cellWidth, cellHeight: cellHeight, rowIndex: row, totalRows: rows)
+                                        cellView(day: dayIdx, week: row, cellSize: cellSize, rowIndex: row, totalRows: rows)
                                     }
                                     Spacer().frame(width: outerPadding)
                                 }
@@ -192,7 +190,7 @@ struct SessionHeatMapView: View {
     
     /// Builds a single heat map cell with smart tooltip positioning.
     @ViewBuilder
-    private func cellView(day dayIdx: Int, week row: Int, cellWidth: CGFloat, cellHeight: CGFloat, rowIndex: Int, totalRows: Int) -> some View {
+    private func cellView(day dayIdx: Int, week row: Int, cellSize: CGFloat, rowIndex: Int, totalRows: Int) -> some View {
         let cell = cells.first(where: { $0.dayOfWeek == dayIdx && $0.weekOffset == row })
         let isFuture = (cell?.date ?? Date()) > Date()
         let isToday = cell?.isToday ?? false
@@ -203,7 +201,7 @@ struct SessionHeatMapView: View {
                     ? Color.clear
                     : heatColor(level: intensityLevel(for: cell?.totalHours ?? 0))
             )
-            .frame(width: cellWidth, height: cellHeight)
+            .frame(width: cellSize, height: cellSize)
             .overlay {
                 if isToday && !isFuture {
                     RoundedRectangle(cornerRadius: 4)

@@ -51,7 +51,8 @@ struct OverviewDashboardView: View {
                             )
                         },
                         topHeightRatio: 0.35,
-                        bottomHeightRatio: 0.65
+                        bottomHeightRatio: 0.65,
+                        topLeftWidthRatio: 0.35
                     )
                     .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32)
@@ -158,12 +159,17 @@ struct OverviewDashboardView: View {
 /// Values use the accent color except project which uses its own project color.
 private struct NarrativeSummaryCard: View {
     @ObservedObject var narrativeEngine: NarrativeEngine
-    
+
+    /// The most recent milestone in the current week, if any
+    private var lastMilestone: Milestone? {
+        narrativeEngine.currentWeekMilestones.first
+    }
+
     var body: some View {
         GeometryReader { geometry in
             if let headline = narrativeEngine.currentHeadline {
                 let colWidth = (geometry.size.width - Theme.Spacing.xs * 2) / 3
-                
+
                 HStack(spacing: Theme.Spacing.xs) {
                     // Column 1: Total Duration
                     CenteredNarrativeColumn(
@@ -172,7 +178,7 @@ private struct NarrativeSummaryCard: View {
                         valueColor: Theme.Colors.accentColor,
                         width: colWidth
                     )
-                    
+
                     // Column 2: Focus Activity
                     CenteredNarrativeColumn(
                         label: "FOCUS",
@@ -180,44 +186,34 @@ private struct NarrativeSummaryCard: View {
                         valueColor: Theme.Colors.accentColor,
                         width: colWidth
                     )
-                    
+
                     // Column 3: Top Project (with milestone)
                     VStack(spacing: Theme.Spacing.xxs) {
                         Spacer()
-                        
+
                         Text("PROJECT")
                             .font(Theme.Fonts.caption.weight(.semibold))
                             .foregroundColor(Theme.Colors.textSecondary)
                             .tracking(1.0)
-                        
+
                         Text(headline.topProject.emoji)
                             .font(.system(size: 32))
-                        
+
                         Text(headline.topProject.name)
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
-                        
-                        if !narrativeEngine.currentWeekMilestones.isEmpty {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(Theme.Colors.accentColor)
-                                Text("\(narrativeEngine.currentWeekMilestones.count) milestone\(narrativeEngine.currentWeekMilestones.count == 1 ? "" : "s")")
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.accentColor)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Theme.Colors.accentColor.opacity(0.1))
-                            .cornerRadius(6)
-                        }
-                        
+
                         Spacer()
                     }
                     .frame(width: colWidth)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Last Milestone detail section beneath the columns
+                if let milestone = lastMilestone {
+                    lastMilestoneView(milestone: milestone)
+                }
             } else {
                 VStack(spacing: Theme.Spacing.xs) {
                     Spacer()
@@ -231,6 +227,53 @@ private struct NarrativeSummaryCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+    }
+
+    /// Displays the most recent milestone with date and action outline
+    @ViewBuilder
+    private func lastMilestoneView(milestone: Milestone) -> some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            // Milestone indicator
+            Image(systemName: "flag.fill")
+                .font(.system(size: 14))
+                .foregroundColor(Theme.Colors.accentColor)
+                .frame(width: 20, alignment: .top)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                Text("Last Milestone")
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .tracking(0.5)
+
+                Text(milestone.text)
+                    .font(Theme.Fonts.body.weight(.medium))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .lineLimit(2)
+
+                HStack(spacing: Theme.Spacing.xxs) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 10))
+                    Text(milestone.date.formatted(date: .abbreviated, time: .omitted))
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+
+                    Spacer()
+
+                    HStack(spacing: 2) {
+                        Text(milestone.projectEmoji)
+                        Text(milestone.projectName)
+                            .font(Theme.Fonts.caption)
+                    }
+                    .foregroundColor(Theme.Colors.textSecondary)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, Theme.DashboardLayout.chartPadding)
+        .padding(.vertical, 8)
+        .background(Theme.Colors.cardSurface.opacity(0.6))
+        .cornerRadius(Theme.Design.cornerRadius)
     }
 }
 

@@ -27,17 +27,20 @@ struct DashboardLayout: View {
     let topHeightRatio: CGFloat
     let bottomHeightRatio: CGFloat
     let gap: CGFloat
-    
+    let topLeftWidthRatio: CGFloat  // New: controls the left column width in weekly layout
+
     init(
         layoutType: LayoutType,
         topHeightRatio: CGFloat = 0.4,
         bottomHeightRatio: CGFloat = 0.5,
-        gap: CGFloat = Theme.DashboardLayout.chartGap
+        gap: CGFloat = Theme.DashboardLayout.chartGap,
+        topLeftWidthRatio: CGFloat = 0.5
     ) {
         self.layoutType = layoutType
         self.topHeightRatio = topHeightRatio
         self.bottomHeightRatio = bottomHeightRatio
         self.gap = gap
+        self.topLeftWidthRatio = topLeftWidthRatio
     }
     
     // Convenience initializers
@@ -50,6 +53,7 @@ struct DashboardLayout: View {
         self.topHeightRatio = topHeightRatio
         self.bottomHeightRatio = bottomHeightRatio
         self.gap = Theme.DashboardLayout.chartGap
+        self.topLeftWidthRatio = 0.5
     }
     
     // Convenience initializer for weekly layout
@@ -58,7 +62,8 @@ struct DashboardLayout: View {
         @ViewBuilder topRight: () -> some View,
         @ViewBuilder bottom: () -> some View,
         topHeightRatio: CGFloat = 0.4,
-        bottomHeightRatio: CGFloat = 0.6
+        bottomHeightRatio: CGFloat = 0.6,
+        topLeftWidthRatio: CGFloat = 0.5
     ) -> DashboardLayout {
         DashboardLayout(
             layoutType: .weekly(
@@ -67,7 +72,8 @@ struct DashboardLayout: View {
                 bottom: AnyView(bottom())
             ),
             topHeightRatio: topHeightRatio,
-            bottomHeightRatio: bottomHeightRatio
+            bottomHeightRatio: bottomHeightRatio,
+            topLeftWidthRatio: topLeftWidthRatio
         )
     }
     
@@ -101,11 +107,11 @@ struct DashboardLayout: View {
                 VStack(spacing: gap) {
                     HStack(spacing: gap) {
                         ChartContainer(content: topLeft)
-                            .frame(width: availableWidth * 0.5 - gap / 2,
+                            .frame(width: availableWidth * topLeftWidthRatio - gap / 2,
                                    height: availableHeight * topHeightRatio - gap / 2)
-                        
+
                         ChartContainer(content: topRight)
-                            .frame(width: availableWidth * 0.5 - gap / 2,
+                            .frame(width: availableWidth * (1 - topLeftWidthRatio) - gap / 2,
                                    height: availableHeight * topHeightRatio - gap / 2)
                     }
                     .frame(height: availableHeight * topHeightRatio)

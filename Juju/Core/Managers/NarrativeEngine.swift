@@ -34,8 +34,9 @@ struct Milestone: Identifiable, Hashable, Equatable {
     let date: Date
     let projectID: String
     let projectName: String
+    let projectEmoji: String
     let activityType: String
-    
+
     static func == (lhs: Milestone, rhs: Milestone) -> Bool {
         lhs.id == rhs.id && lhs.text == rhs.text && lhs.date == rhs.date
     }
@@ -238,9 +239,9 @@ final class NarrativeEngine: ObservableObject {
         guard let session = recent.first, let text = session.action else { return nil }
         let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
         let project = projectsViewModel.projects.first { $0.id == session.projectID }
-        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)
+        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
     }
-    
+
     private func detectAllCurrentWeekMilestones() -> [Milestone] {
         let calendar = Calendar.current
         guard let interval = calendar.dateInterval(of: .weekOfYear, for: Date()) else { return [] }
@@ -251,16 +252,16 @@ final class NarrativeEngine: ObservableObject {
                 guard let text = session.action else { return nil }
                 let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
-                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
             }
     }
-    
+
     private func detectMilestones(in sessions: [SessionRecord]) -> [Milestone] {
         sessions.compactMap { session -> Milestone? in
             guard session.isMilestone, let text = session.action else { return nil }
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
             let project = projectsViewModel.projects.first { $0.id == session.projectID }
-            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", activityType: activity.name)
+            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
         }
     }
     
