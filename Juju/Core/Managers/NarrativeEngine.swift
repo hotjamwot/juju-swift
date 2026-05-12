@@ -25,6 +25,39 @@ enum ChartTimePeriod: String, CaseIterable, Identifiable {
         case .allTime: return Int.max
         }
     }
+
+    var calendarComponent: Calendar.Component? {
+        switch self {
+        case .week: return .weekOfYear
+        case .month: return .month
+        case .year: return .year
+        case .allTime: return nil
+        }
+    }
+
+    func dateInterval(endingAt referenceDate: Date = Date(), calendar: Calendar = .current) -> DateInterval? {
+        switch self {
+        case .week:
+            return weekToDateInterval(endingAt: referenceDate, calendar: calendar)
+        case .month:
+            return calendar.dateInterval(of: .month, for: referenceDate)
+        case .year:
+            return calendar.dateInterval(of: .year, for: referenceDate)
+        case .allTime:
+            return DateInterval(start: .distantPast, end: .distantFuture)
+        }
+    }
+
+    private func weekToDateInterval(endingAt referenceDate: Date, calendar: Calendar) -> DateInterval? {
+        let today = calendar.startOfDay(for: referenceDate)
+        let weekday = calendar.component(.weekday, from: today)
+        let daysSinceMonday = (weekday + 5) % 7
+        guard let startMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today),
+              let endOfToday = calendar.date(byAdding: .day, value: 1, to: today) else {
+            return nil
+        }
+        return DateInterval(start: startMonday, end: endOfToday)
+    }
 }
 
 // MARK: - Narrative Models
@@ -114,6 +147,20 @@ final class NarrativeEngine: ObservableObject {
     @Published var currentHeadline: NarrativeHeadline?
     @Published var currentWeekMilestones: [Milestone] = []
     
+    /// Most recent milestone across all sessions
+    var mostRecentMilestone: Milestone? {
+        sessionManager.allSessions
+            .filter { $0.isMilestone && !($0.action?.isEmpty ?? true) }
+            .sorted { $0.startDate > $1.startDate }
+            .compactMap { session -> Milestone? in
+                guard let text = session.action else { return nil }
+                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
+                let project = projectsViewModel.projects.first { $0.id == session.projectID }
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
+            }
+            .first
+    }
+    
     private let sessionManager: SessionManager
     private let projectsViewModel: ProjectsViewModel
     private let activityTypeManager: ActivityTypeManager
@@ -149,10 +196,10 @@ final class NarrativeEngine: ObservableObject {
         currentHeadline?.headlineText ?? "Loading your story..."
     }
     
-    func getSessionData(for period: ChartTimePeriod) -> PeriodSessionData {
-        let sessions = filterSessions(for: period)
+    func getSessionData(for period: ChartTimePeriod, referenceDate: Date = Date()) -> PeriodSessionData {
+        let sessions = filterSessions(for: period, referenceDate: referenceDate)
         let calendar = Calendar.current
-        
+
         return PeriodSessionData(
             period: period,
             sessions: sessions,
@@ -163,20 +210,33 @@ final class NarrativeEngine: ObservableObject {
             averageDailyHours: calculateAverageDailyHours(from: sessions, for: period),
             activityDistribution: calculateActivityDistribution(from: sessions),
             projectDistribution: calculateProjectDistribution(from: sessions),
-            timeRange: getTimeRange(for: period, calendar: calendar)
+            timeRange: period.dateInterval(endingAt: referenceDate, calendar: calendar) ?? DateInterval(start: referenceDate, end: referenceDate)
         )
     }
-    
+
     func getComparativeData(for period: ChartTimePeriod) -> ComparativeAnalytics {
-        let currentData = getSessionData(for: period)
-        let previousData = getSessionData(for: period.previousPeriod)
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let currentData = getSessionData(for: period, referenceDate: currentDate)
+
+        let previousData: PeriodSessionData
+        if period == .week,
+           let previousReferenceDate = calendar.date(byAdding: .weekOfYear, value: -1, to: currentDate) {
+            previousData = getSessionData(for: period, referenceDate: previousReferenceDate)
+        } else if let component = period.calendarComponent,
+                  let previousReferenceDate = calendar.date(byAdding: component, value: -1, to: currentDate) {
+            previousData = getSessionData(for: period, referenceDate: previousReferenceDate)
+        } else {
+            previousData = currentData
+        }
+
         return ComparativeAnalytics(current: currentData, previous: previousData, trends: calculateTrends(current: currentData, previous: previousData))
     }
     
     // MARK: - Private
     
-    private func _generateHeadline(for period: ChartTimePeriod) -> NarrativeHeadline {
-        let sessions = filterSessions(for: period)
+    private func _generateHeadline(for period: ChartTimePeriod, referenceDate: Date = Date()) -> NarrativeHeadline {
+        let sessions = filterSessions(for: period, referenceDate: referenceDate)
         return NarrativeHeadline(
             totalHours: calculateTotalHours(from: sessions),
             topActivity: determineTopActivity(from: sessions),
@@ -185,22 +245,13 @@ final class NarrativeEngine: ObservableObject {
             period: period.title.lowercased().replacingOccurrences(of: "this ", with: "")
         )
     }
-    
-    private func filterSessions(for period: ChartTimePeriod) -> [SessionRecord] {
+
+    private func filterSessions(for period: ChartTimePeriod, referenceDate: Date = Date()) -> [SessionRecord] {
         let calendar = Calendar.current
-        switch period {
-        case .week:
-            let interval = calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-            return sessionManager.allSessions.filter { interval.contains($0.startDate) }
-        case .month:
-            let interval = calendar.dateInterval(of: .month, for: Date()) ?? DateInterval(start: Date(), end: Date())
-            return sessionManager.allSessions.filter { interval.contains($0.startDate) }
-        case .year:
-            let interval = calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
-            return sessionManager.allSessions.filter { interval.contains($0.startDate) }
-        case .allTime:
-            return sessionManager.allSessions
+        guard let interval = period.dateInterval(endingAt: referenceDate, calendar: calendar) else {
+            return []
         }
+        return sessionManager.allSessions.filter { interval.contains($0.startDate) }
     }
     
     private func calculateTotalHours(from sessions: [SessionRecord]) -> Double {

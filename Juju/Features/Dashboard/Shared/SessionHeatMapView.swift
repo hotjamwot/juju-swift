@@ -28,81 +28,100 @@ struct SessionHeatMapView: View {
     /// Number of trailing days to show (typically 35)
     let dayCount: Int
     
-    /// Color intensity thresholds (in hours)
-    private let thresholds: [Double] = [0.5, 2.0, 4.0, 6.0]
+     /// Color intensity thresholds (in hours)
+     private let thresholds: [Double] = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
     
     private let calendar = Calendar.current
     
-    /// Currently hovered cell
-    @State private var hoveredCell: HeatMapCell? = nil
-    /// Whether the hover timer has fired (slight delay before showing tooltip)
-    @State private var showTooltip: Bool = false
+     /// Currently hovered cell
+     @State private var hoveredCell: HeatMapCell? = nil
+     /// Whether the hover timer has fired (slight delay before showing tooltip)
+     @State private var showTooltip: Bool = false
+     
+     /// The Monday of the first week in the heatmap (used for date labels)
+     private let startMonday: Date
     
-    init(
-        dailyTotals: [Date: Double],
-        dayCount: Int = 35
-    ) {
-        self.dailyTotals = dailyTotals
-        self.dayCount = dayCount
-    }
+     init(
+         dailyTotals: [Date: Double],
+         dayCount: Int = 35
+     ) {
+         self.dailyTotals = dailyTotals
+         self.dayCount = dayCount
+         
+         // Calculate startMonday for date labels
+         let today = calendar.startOfDay(for: Date())
+         let weekday = calendar.component(.weekday, from: today)
+         let daysSinceMonday = (weekday + 5) % 7
+         let thisMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today) ?? today
+         let numberOfWeeks = max(1, (dayCount + 6) / 7)
+         self.startMonday = calendar.date(byAdding: .day, value: -(numberOfWeeks - 1) * 7, to: thisMonday) ?? thisMonday
+     }
     
     // MARK: - Data Processing
     
-    /// Generate cells aligned to calendar week boundaries (Mon-Sun).
-    private var cells: [HeatMapCell] {
-        let today = calendar.startOfDay(for: Date())
-        let weekday = calendar.component(.weekday, from: today)
-
-        let daysSinceMonday = (weekday + 5) % 7
-        let thisMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today) ?? today
-        let numberOfWeeks = max(1, (dayCount + 6) / 7)
-        let startMonday = calendar.date(byAdding: .day, value: -(numberOfWeeks - 1) * 7, to: thisMonday) ?? thisMonday
-
-        let totalDays = numberOfWeeks * 7
-
-        var result: [HeatMapCell] = []
-        for dayOffset in 0..<totalDays {
-            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: startMonday) else { continue }
-
-            let weekOffset = dayOffset / 7
-            let dayOfWeek = dayOffset % 7
-            let hours = dailyTotals[date] ?? 0.0
-            let isToday = calendar.isDate(date, inSameDayAs: today)
-
-            result.append(HeatMapCell(
-                date: date,
-                totalHours: hours,
-                dayOfWeek: dayOfWeek,
-                weekOffset: weekOffset,
-                isToday: isToday
-            ))
-        }
-
-        return result
-    }
+     /// Generate cells aligned to calendar week boundaries (Mon-Sun).
+     private var cells: [HeatMapCell] {
+         let today = calendar.startOfDay(for: Date())
+         let weekday = calendar.component(.weekday, from: today)
+ 
+         let daysSinceMonday = (weekday + 5) % 7
+         let thisMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today) ?? today
+         let numberOfWeeks = max(1, (dayCount + 6) / 7)
+         // startMonday is now computed in init
+ 
+         let totalDays = numberOfWeeks * 7
+ 
+         var result: [HeatMapCell] = []
+         for dayOffset in 0..<totalDays {
+             guard let date = calendar.date(byAdding: .day, value: dayOffset, to: startMonday) else { continue }
+ 
+             let weekOffset = dayOffset / 7
+             let dayOfWeek = dayOffset % 7
+             let hours = dailyTotals[date] ?? 0.0
+             let isToday = calendar.isDate(date, inSameDayAs: today)
+ 
+             result.append(HeatMapCell(
+                 date: date,
+                 totalHours: hours,
+                 dayOfWeek: dayOfWeek,
+                 weekOffset: weekOffset,
+                 isToday: isToday
+             ))
+         }
+ 
+         return result
+     }
     
     private var weekCount: Int {
         max(1, (dayCount + 6) / 7)
     }
     
-    private func intensityLevel(for hours: Double) -> Int {
-        if hours <= 0 { return 0 }
-        if hours < thresholds[0] { return 1 }
-        if hours < thresholds[1] { return 2 }
-        if hours < thresholds[2] { return 3 }
-        return 4
-    }
+     private func intensityLevel(for hours: Double) -> Int {
+         if hours <= 0 { return 0 }
+         if hours < thresholds[0] { return 1 }
+         if hours < thresholds[1] { return 2 }
+         if hours < thresholds[2] { return 3 }
+         if hours < thresholds[3] { return 4 }
+         if hours < thresholds[4] { return 5 }
+         if hours < thresholds[5] { return 6 }
+         if hours < thresholds[6] { return 7 }
+         return 8 // 8+ hours
+     }
     
-    private func heatColor(level: Int) -> Color {
-        switch level {
-        case 0: return Theme.Colors.cardSurface.opacity(0.5)
-        case 1: return Theme.Colors.accentColor.opacity(0.12)
-        case 2: return Theme.Colors.accentColor.opacity(0.30)
-        case 3: return Theme.Colors.accentColor.opacity(0.55)
-        case 4: return Theme.Colors.accentColor.opacity(0.85)
-        default: return Theme.Colors.cardSurface
-        }
-    }
+     private func heatColor(level: Int) -> Color {
+         switch level {
+         case 0: return Theme.Colors.cardSurface.opacity(0.5)
+         case 1: return Theme.Colors.accentColor.opacity(0.10)
+         case 2: return Theme.Colors.accentColor.opacity(0.15)
+         case 3: return Theme.Colors.accentColor.opacity(0.20)
+         case 4: return Theme.Colors.accentColor.opacity(0.30)
+         case 5: return Theme.Colors.accentColor.opacity(0.40)
+         case 6: return Theme.Colors.accentColor.opacity(0.50)
+         case 7: return Theme.Colors.accentColor.opacity(0.65)
+         case 8: return Theme.Colors.accentColor.opacity(0.85) // 8+ hours
+         default: return Theme.Colors.cardSurface
+         }
+     }
     
     private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
     
@@ -124,9 +143,9 @@ struct SessionHeatMapView: View {
 
                     let rows = weekCount
                     let topLabelsH: CGFloat = 12
-                    let outerPadding: CGFloat = 8
-                    let minGap: CGFloat = 3
-                    let maxGap: CGFloat = 6
+                    let outerPadding: CGFloat = 6
+                    let minGap: CGFloat = 2
+                    let maxGap: CGFloat = 5
 
                     // Subtract outer padding for the graph area
                     let graphW = availableW - 2 * outerPadding
@@ -137,44 +156,50 @@ struct SessionHeatMapView: View {
                     let heightBasedCell = (graphH - CGFloat(rows - 1) * minGap) / CGFloat(rows)
                     // Square cells: use the smaller of the two, capped reasonably
                     let rawCellSize = min(widthBasedCell, heightBasedCell)
-                    let cellSize = max(6, min(rawCellSize, 28)) // cap at 28pt for readability
+                    let cellSize = max(6, min(rawCellSize, 40)) // cap at 40pt for visibility
 
                     let hGap = min(maxGap, max(minGap, (graphW - 7 * cellSize) / 6))
                     let vGap = min(maxGap, max(minGap, CGFloat(rows) > 1 ? (graphH - CGFloat(rows) * cellSize) / CGFloat(rows - 1) : 0))
 
-                    VStack(alignment: .center, spacing: 0) {
-                        // Outer padding top
-                        Spacer().frame(height: outerPadding)
-
-                        // Top axis labels
-                        HStack(spacing: hGap) {
-                            Spacer().frame(width: outerPadding)
-                            ForEach(0..<7, id: \.self) { col in
-                                Text(dayLabels[col])
-                                    .font(.system(size: 7, weight: .medium))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
-                                    .frame(width: cellSize)
-                            }
-                            Spacer().frame(width: outerPadding)
+        VStack(alignment: .leading, spacing: 8) {
+            // Outer padding top
+            Spacer().frame(height: outerPadding)
+    
+            // Week rows with left-aligned date labels
+            VStack(spacing: vGap) {
+                ForEach(0..<rows, id: \.self) { row in
+                    HStack(alignment: .center, spacing: hGap) {
+                        // Left-aligned Monday date label for this week
+                        if let firstDayOfWeek = calendar.date(byAdding: .day, value: row * 7, to: startMonday) {
+                            Text(firstDayOfWeek.formatted(.dateTime.month(.abbreviated).day()))
+                                .font(.system(size: 7, weight: .medium))
+                                .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                                .frame(width: 25, alignment: .trailing)
                         }
-                        .frame(height: topLabelsH)
-
-                        // Week rows
-                        VStack(spacing: vGap) {
-                            ForEach(0..<rows, id: \.self) { row in
-                                HStack(spacing: hGap) {
-                                    Spacer().frame(width: outerPadding)
-                                    ForEach(0..<7, id: \.self) { dayIdx in
-                                        cellView(day: dayIdx, week: row, cellSize: cellSize, rowIndex: row, totalRows: rows)
-                                    }
-                                    Spacer().frame(width: outerPadding)
-                                }
-                            }
+                        
+                        Spacer().frame(width: outerPadding)
+                        ForEach(0..<7, id: \.self) { dayIdx in
+                            cellView(day: dayIdx, week: row, cellSize: cellSize, rowIndex: row, totalRows: rows)
                         }
-
-                        Spacer()
+                        Spacer().frame(width: outerPadding)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            
+            // Top axis labels (moved to bottom to keep original layout concept)
+            HStack(spacing: hGap) {
+                Spacer().frame(width: outerPadding + 25) // Account for date label width
+                ForEach(0..<7, id: \.self) { col in
+                    Text(dayLabels[col])
+                        .font(.system(size: 7, weight: .medium))
+                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                        .frame(width: cellSize)
+                }
+                Spacer().frame(width: outerPadding)
+            }
+            .frame(height: topLabelsH)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onHover { hovering in
                         if !hovering {
                             hoveredCell = nil
@@ -210,26 +235,30 @@ struct SessionHeatMapView: View {
             }
             .overlay(alignment: rowIndex == 0 ? .bottom : .top) {
                 if showTooltip, let currentCell = cell, let hovered = hoveredCell, currentCell.id == hovered.id {
-                    VStack(spacing: 2) {
-                        Text(currentCell.date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 11, weight: .medium))
-                        Text("\(String(format: "%.1f", currentCell.totalHours))h")
+                    VStack(spacing: 3) {
+                        Text(currentCell.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                        Text(String(format: "%.1f", currentCell.totalHours) + "h")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Theme.Colors.accentColor)
+                            .foregroundColor(currentCell.totalHours > 0 ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(Theme.Colors.surface)
-                    .cornerRadius(6)
+                    .cornerRadius(8)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Theme.Colors.divider, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Theme.Colors.divider.opacity(0.6), lineWidth: 1)
                     )
                     .fixedSize()
-                    .offset(y: rowIndex == 0 ? 12 : -12)
+                    .offset(y: rowIndex == 0 ? 14 : -14)
                     .transition(.opacity)
+                    .zIndex(2)
+                    .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 6, x: 0, y: 3)
                 }
             }
+            .zIndex(showTooltip && hoveredCell?.id == cell?.id ? 10 : 0)
             .onHover { hovering in
                 if hovering, let cell = cell {
                     hoveredCell = cell

@@ -340,7 +340,7 @@ struct AnalyticsTrends {
 
 enum ChartTimePeriod {
     case week, month, year, allTime
-    // Computed: previousPeriod, durationInDays
+    // Computed: previousPeriod, durationInDays, calendarComponent, dateInterval
 }
 ```
 

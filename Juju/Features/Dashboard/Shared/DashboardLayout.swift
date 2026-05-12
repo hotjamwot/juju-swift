@@ -63,7 +63,8 @@ struct DashboardLayout: View {
         @ViewBuilder bottom: () -> some View,
         topHeightRatio: CGFloat = 0.4,
         bottomHeightRatio: CGFloat = 0.6,
-        topLeftWidthRatio: CGFloat = 0.5
+        topLeftWidthRatio: CGFloat = 0.5,
+        gap: CGFloat = Theme.DashboardLayout.chartGap
     ) -> DashboardLayout {
         DashboardLayout(
             layoutType: .weekly(
@@ -73,6 +74,7 @@ struct DashboardLayout: View {
             ),
             topHeightRatio: topHeightRatio,
             bottomHeightRatio: bottomHeightRatio,
+            gap: gap,
             topLeftWidthRatio: topLeftWidthRatio
         )
     }

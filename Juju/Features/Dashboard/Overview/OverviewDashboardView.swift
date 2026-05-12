@@ -52,7 +52,8 @@ struct OverviewDashboardView: View {
                         },
                         topHeightRatio: 0.35,
                         bottomHeightRatio: 0.65,
-                        topLeftWidthRatio: 0.35
+                        topLeftWidthRatio: 0.42,
+                        gap: 14
                     )
                     .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32)
@@ -160,59 +161,118 @@ struct OverviewDashboardView: View {
 private struct NarrativeSummaryCard: View {
     @ObservedObject var narrativeEngine: NarrativeEngine
 
-    /// The most recent milestone in the current week, if any
+    /// The most recent milestone from all sessions
     private var lastMilestone: Milestone? {
-        narrativeEngine.currentWeekMilestones.first
+        narrativeEngine.mostRecentMilestone
+    }
+
+    /// Comparison data for the current week vs same elapsed period last week
+    private var comparativeData: ComparativeAnalytics? {
+        narrativeEngine.getComparativeData(for: .week)
+    }
+
+    private func deltaText(current: Double, previous: Double) -> String {
+        let diff = current - previous
+        let sign = diff >= 0 ? "+" : ""
+        return "\(sign)\(String(format: "%.1f", diff))h"
+    }
+
+    private func deltaColor(current: Double, previous: Double) -> Color {
+        current > previous ? Color.green : (current < previous ? Color.red.opacity(0.8) : Theme.Colors.textSecondary)
+    }
+
+    private func formatHours(_ hours: Double) -> String {
+        let h = Int(hours)
+        let m = Int((hours - Double(h)) * 60)
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
     }
 
     var body: some View {
         GeometryReader { geometry in
             if let headline = narrativeEngine.currentHeadline {
-                let colWidth = (geometry.size.width - Theme.Spacing.xs * 2) / 3
+                VStack(spacing: Theme.Spacing.sm) {
+                    let colWidth = (geometry.size.width - Theme.Spacing.xs * 2) / 3
 
-                HStack(spacing: Theme.Spacing.xs) {
-                    // Column 1: Total Duration
-                    CenteredNarrativeColumn(
-                        label: "THIS WEEK",
-                        value: headline.formattedHours,
-                        valueColor: Theme.Colors.accentColor,
-                        width: colWidth
-                    )
+                    HStack(spacing: Theme.Spacing.xs) {
+                        // Column 1: Total Duration + Comparison
+                        VStack(spacing: Theme.Spacing.xxs) {
+                            Spacer()
 
-                    // Column 2: Focus Activity
-                    CenteredNarrativeColumn(
-                        label: "FOCUS",
-                        value: "\(headline.topActivity.emoji) \(headline.topActivity.name)",
-                        valueColor: Theme.Colors.accentColor,
-                        width: colWidth
-                    )
+                            Text("THIS WEEK")
+                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .tracking(1.0)
 
-                    // Column 3: Top Project (with milestone)
-                    VStack(spacing: Theme.Spacing.xxs) {
-                        Spacer()
+                            Text(headline.formattedHours)
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.accentColor)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
 
-                        Text("PROJECT")
-                            .font(Theme.Fonts.caption.weight(.semibold))
-                            .foregroundColor(Theme.Colors.textSecondary)
-                            .tracking(1.0)
+                            if let comparative = comparativeData {
+                                VStack(spacing: 3) {
+                                    Text("Last week: \(formatHours(comparative.previous.totalHours))")                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.textSecondary)
+                                    Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
+                                        .font(Theme.Fonts.caption.weight(.bold))
+                                        .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
+                                }
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 4)
+                                .background(Theme.Colors.cardSurface.opacity(0.5))
+                                .cornerRadius(6)
+                            }
 
-                        Text(headline.topProject.emoji)
-                            .font(.system(size: 32))
+                            Spacer()
+                        }
+                        .frame(width: colWidth)
 
-                        Text(headline.topProject.name)
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
+                        // Column 2: Focus Activity
+                        VStack(spacing: Theme.Spacing.xxs) {
+                            Spacer()
 
-                        Spacer()
+                            Text("FOCUS")
+                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .tracking(1.0)
+
+                            Text("\(headline.topActivity.emoji) \(headline.topActivity.name)")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.accentColor)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+
+                            Spacer()
+                        }
+                        .frame(width: colWidth)
+
+                        // Column 3: Top Project
+                        VStack(spacing: Theme.Spacing.xxs) {
+                            Spacer()
+
+                            Text("PROJECT")
+                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .foregroundColor(Theme.Colors.textSecondary)
+                                .tracking(1.0)
+
+                            Text(headline.topProject.emoji)
+                                .font(.system(size: 32))
+
+                            Text(headline.topProject.name)
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .lineLimit(1)
+
+                            Spacer()
+                        }
+                        .frame(width: colWidth)
                     }
-                    .frame(width: colWidth)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Last Milestone detail section beneath the columns
-                if let milestone = lastMilestone {
-                    lastMilestoneView(milestone: milestone)
+                    // Last Milestone detail section at the bottom
+                    if let milestone = lastMilestone {
+                        lastMilestoneView(milestone: milestone)
+                    }
                 }
             } else {
                 VStack(spacing: Theme.Spacing.xs) {
@@ -229,17 +289,23 @@ private struct NarrativeSummaryCard: View {
         }
     }
 
-    /// Displays the most recent milestone with date and action outline
+    /// Displays the most recent milestone with project on left and details on right
     @ViewBuilder
     private func lastMilestoneView(milestone: Milestone) -> some View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            // Milestone indicator
-            Image(systemName: "flag.fill")
-                .font(.system(size: 14))
-                .foregroundColor(Theme.Colors.accentColor)
-                .frame(width: 20, alignment: .top)
+            // Left: Project emoji and name
+            VStack(alignment: .leading, spacing: 2) {
+                Text(milestone.projectEmoji)
+                    .font(.system(size: 16))
+                Text(milestone.projectName)
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .lineLimit(1)
+            }
+            .frame(width: 50, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+            // Right: Milestone details
+            VStack(alignment: .leading, spacing: 3) {
                 Text("Last Milestone")
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -256,52 +322,15 @@ private struct NarrativeSummaryCard: View {
                     Text(milestone.date.formatted(date: .abbreviated, time: .omitted))
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
-
-                    Spacer()
-
-                    HStack(spacing: 2) {
-                        Text(milestone.projectEmoji)
-                        Text(milestone.projectName)
-                            .font(Theme.Fonts.caption)
-                    }
-                    .foregroundColor(Theme.Colors.textSecondary)
                 }
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Theme.DashboardLayout.chartPadding)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .background(Theme.Colors.cardSurface.opacity(0.6))
         .cornerRadius(Theme.Design.cornerRadius)
-    }
-}
-
-/// A single centered column — label in secondary text, value in a large bold display color
-private struct CenteredNarrativeColumn: View {
-    let label: String
-    let value: String
-    let valueColor: Color
-    let width: CGFloat
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.xxs) {
-            Spacer()
-            
-            Text(label)
-                .font(Theme.Fonts.caption.weight(.semibold))
-                .foregroundColor(Theme.Colors.textSecondary)
-                .tracking(1.0)
-            
-            Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(valueColor)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-            
-            Spacer()
-        }
-        .frame(width: width)
     }
 }
 
