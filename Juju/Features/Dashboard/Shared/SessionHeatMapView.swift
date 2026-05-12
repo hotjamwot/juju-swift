@@ -28,8 +28,10 @@ struct SessionHeatMapView: View {
     /// Number of trailing days to show (typically 35)
     let dayCount: Int
     
-     /// Color intensity thresholds (in hours)
-     private let thresholds: [Double] = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
+/// Color intensity thresholds (in hours).
+      /// Low side: 0.5h is visible; high side: 8h is max brightness.
+      /// Evenly distributed steps give clear visual distinction per level.
+      private let thresholds: [Double] = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 8.0]
     
     private let calendar = Calendar.current
     
@@ -108,20 +110,20 @@ struct SessionHeatMapView: View {
          return 8 // 8+ hours
      }
     
-     private func heatColor(level: Int) -> Color {
-         switch level {
-         case 0: return Theme.Colors.cardSurface.opacity(0.5)
-         case 1: return Theme.Colors.accentColor.opacity(0.10)
-         case 2: return Theme.Colors.accentColor.opacity(0.15)
-         case 3: return Theme.Colors.accentColor.opacity(0.20)
-         case 4: return Theme.Colors.accentColor.opacity(0.30)
-         case 5: return Theme.Colors.accentColor.opacity(0.40)
-         case 6: return Theme.Colors.accentColor.opacity(0.50)
-         case 7: return Theme.Colors.accentColor.opacity(0.65)
-         case 8: return Theme.Colors.accentColor.opacity(0.85) // 8+ hours
-         default: return Theme.Colors.cardSurface
-         }
-     }
+private func heatColor(level: Int) -> Color {
+          switch level {
+          case 0: return Theme.Colors.cardSurface.opacity(0.5)
+          case 1: return Theme.Colors.accentColor.opacity(0.12)  // ~0.5h  – barely visible
+          case 2: return Theme.Colors.accentColor.opacity(0.25)  // ~1.5h
+          case 3: return Theme.Colors.accentColor.opacity(0.38)  // ~2.5h
+          case 4: return Theme.Colors.accentColor.opacity(0.50)  // ~3.5h – midpoint
+          case 5: return Theme.Colors.accentColor.opacity(0.63)  // ~4.5h
+          case 6: return Theme.Colors.accentColor.opacity(0.75)  // ~5.5h
+          case 7: return Theme.Colors.accentColor.opacity(0.88)  // ~6.5h
+          case 8: return Theme.Colors.accentColor.opacity(1.0)   // 8h+  – max brightness
+          default: return Theme.Colors.cardSurface
+          }
+      }
     
     private let dayLabels = ["M", "T", "W", "T", "F", "S", "S"]
     

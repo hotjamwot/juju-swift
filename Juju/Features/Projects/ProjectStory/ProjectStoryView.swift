@@ -499,20 +499,43 @@ private struct ProjectStoryIntensityMoodChartView: View {
         VStack(alignment: .leading, spacing: 8) {
             GeometryReader { geo in
                 ZStack(alignment: .bottomLeading) {
-                    let count = max(sessions.count, 1)
-                    let gap: CGFloat = 1
-                    let raw = (geo.size.width / CGFloat(count)) - gap
-                    let barW = max(1.5, raw)
                     let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
 
-                    HStack(alignment: .bottom, spacing: gap) {
+                    // Chronological bar chart: each bar is positioned proportionally
+                    // to its start date within the overall session time range.
+                    if let start = sessionStartDate, let end = sessionEndDate, end > start {
+                        let totalSpan = end.timeIntervalSince(start)
+
                         ForEach(sessions, id: \.id) { s in
+                            let sStart = s.startDate.timeIntervalSince(start)
+                            let sEnd = s.endDate.timeIntervalSince(start)
+                            let xFrac = totalSpan > 0 ? sStart / totalSpan : 0
+                            let wFrac = totalSpan > 0 ? (sEnd - sStart) / totalSpan : 0
+
+                            let x = geo.size.width * CGFloat(xFrac)
+                            let w = max(2.0, geo.size.width * CGFloat(wFrac))
+                            let h = barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes)
+
                             RoundedRectangle(cornerRadius: 1)
                                 .fill(barFill(for: s, projectColorHex: projectColorHex))
-                                .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
+                                .frame(width: w, height: h)
+                                .position(x: x + w / 2, y: geo.size.height - h / 2 - 4)
+                        }
+                    } else {
+                        // Fallback: single-session or zero-span — render as before, evenly spaced.
+                        let count = max(sessions.count, 1)
+                        let gap: CGFloat = 1
+                        let raw = (geo.size.width / CGFloat(count)) - gap
+                        let barW = max(1.5, raw)
+
+                        HStack(alignment: .bottom, spacing: gap) {
+                            ForEach(sessions, id: \.id) { s in
+                                RoundedRectangle(cornerRadius: 1)
+                                    .fill(barFill(for: s, projectColorHex: projectColorHex))
+                                    .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
+                            }
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 }
             }
             .frame(height: 72)
@@ -530,10 +553,6 @@ private struct ProjectStoryIntensityMoodChartView: View {
             }
             .font(.system(size: 9))
             .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-
-            Text("Bar height = time worked · Opacity = mood")
-                .font(.system(size: 10))
-                .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
         }
         .padding(.bottom, Theme.spacingLarge)
     }
@@ -567,27 +586,47 @@ private struct ProjectStoryIntensityMoodChartView: View {
         return 6 + (t * (48 - 6))
     }
 
-        private func barFill(for session: SessionRecord, projectColorHex: String) -> Color {
-            if session.isMilestone {
-                return Color(hex: "F5A623").opacity(1.0)
-            }
-
-            let base = Color(hex: projectColorHex)
-            let phaseIndex = session.projectPhaseID.flatMap { phaseIndexByID[$0] }
-            
-            // Unphased sessions use muted project color
-            if phaseIndex == nil {
-                return base.opacity(0.25)
-            }
-            
-            let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
-            let phaseColor = phaseColors[safe: phaseIndex ?? 0] ?? base
-            if let mood = session.mood {
-                return phaseColor.opacity(moodOpacity(Double(mood)))
-            }
-            // Nil mood fallback should not "penalise" visibility.
-            return phaseColor.opacity(0.45)
+    private func barFill(for session: SessionRecord, projectColorHex: String) -> Color {
+        if session.isMilestone {
+            return Color(hex: "F5A623")
         }
+
+        let base = Color(hex: projectColorHex)
+        let phaseIndex = session.projectPhaseID.flatMap { phaseIndexByID[$0] }
+
+        // Unphased sessions use muted project color
+        if phaseIndex == nil {
+            return lightenIfNeeded(base.opacity(0.40))
+        }
+
+        let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
+        let phaseColor = phaseColors[safe: phaseIndex ?? 0] ?? base
+        return lightenIfNeeded(phaseColor)
+    }
+
+    /// If the resulting color is too dark to be visible against the dark
+    /// surface background, blend it toward white to guarantee contrast.
+    private func lightenIfNeeded(_ color: Color) -> Color {
+        let nsColor = NSColor(color).usingColorSpace(.deviceRGB) ?? NSColor.gray
+        let r = nsColor.redComponent
+        let g = nsColor.greenComponent
+        let b = nsColor.blueComponent
+        let a = nsColor.alphaComponent
+        // Perceived luminance (rec. 601)
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        // If luminance is below ~0.35 the bar will be hard to see on dark backgrounds.
+        // Blend toward white proportionally.
+        if luminance < 0.35 {
+            let mix = 1.0 - luminance
+            return Color(
+                red: min(r + mix * 0.55, 1.0),
+                green: min(g + mix * 0.55, 1.0),
+                blue: min(b + mix * 0.55, 1.0),
+                opacity: Double(a)
+            )
+        }
+        return color
+    }
 
     private func moodOpacity(_ mood: Double) -> Double {
         switch mood {
@@ -600,7 +639,6 @@ private struct ProjectStoryIntensityMoodChartView: View {
         default: return 1.0
         }
     }
-
 }
 
 private struct ProjectStoryNotableMomentsView: View {
@@ -638,7 +676,7 @@ private struct NotableMomentCard: View {
         ZStack(alignment: .topTrailing) {
             HStack(alignment: .top, spacing: 12) {
                 Rectangle()
-                    .fill(Color(hex: projectColorHex))
+                    .fill(lightenColor(hex: projectColorHex))
                     .frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -663,7 +701,7 @@ private struct NotableMomentCard: View {
 
             Image(systemName: "star.fill")
                 .font(.system(size: 11))
-                .foregroundColor(Color(hex: projectColorHex))
+                .foregroundColor(lightenColor(hex: projectColorHex))
                 .padding(10)
         }
     }
@@ -676,12 +714,33 @@ private struct PhasePill: View {
     var body: some View {
         Text(title)
             .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(Color(hex: colorHex))
+            .foregroundColor(lightenColor(hex: colorHex))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(hex: colorHex).opacity(0.15))
+            .background(lightenColor(hex: colorHex).opacity(0.15))
             .cornerRadius(999)
     }
+}
+
+/// Lighten a hex color so it remains visible against dark backgrounds.
+/// Uses Rec. 601 perceived luminance; if below a threshold, blends toward white.
+private func lightenColor(hex: String) -> Color {
+    guard let nsColor = NSColor(hex: hex)?.usingColorSpace(.deviceRGB) else {
+        return Color(hex: hex)
+    }
+    let r = nsColor.redComponent
+    let g = nsColor.greenComponent
+    let b = nsColor.blueComponent
+    let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+    if luminance < 0.35 {
+        let mix = 1.0 - luminance
+        return Color(
+            red: min(r + mix * 0.55, 1.0),
+            green: min(g + mix * 0.55, 1.0),
+            blue: min(b + mix * 0.55, 1.0)
+        )
+    }
+    return Color(hex: hex)
 }
 
 private enum ColorFamily {
