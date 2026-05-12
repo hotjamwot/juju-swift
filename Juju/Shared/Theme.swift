@@ -6,7 +6,7 @@ import AppKit
 /// DESIGN RULES:
 /// - Minimalist aesthetic: clean, uncluttered interface with generous whitespace
 /// - Japanese-inspired wabi-sabi: subtle imperfections, natural flow, calming
-/// - Dark theme consistency: deep background (#121212), soft surface (#1C1C1E)
+/// - Dark theme consistency: deep background (#181818), soft surface (#1C1C1C)
 /// - Typography hierarchy: rounded headers, clean body text, compact captions
 /// - Spacing rhythm: 8pt/16pt/24pt system creates visual breathing room
 /// - Rounded corners: 12pt for cards, 10pt for rows, 5pt for bars (soft edges)
@@ -22,8 +22,8 @@ public struct Theme {
 
     // MARK: Colors
     public struct Colors {
-        public static let background  = Color("Background")  // #121212
-        public static let surface     = Color("Surface")  // #1C1C1E
+        public static let background  = Color("Background")  // #252525
+        public static let surface     = Color("Surface")  // #191919
         public static let textPrimary = Color("textPrimary")  // #E5E5E7
         public static let textSecondary = Color("textSecondary")  // #9A9AA0
         public static let divider     = Color("Divider")  // rgba(255,255,255,0.1)
@@ -34,9 +34,9 @@ public struct Theme {
         /// Subtle card surface — slightly lighter than background but still distinct
         /// Used for card containers and chart areas to create depth without borders
         public static let cardSurface: Color = {
-            // Slightly lighter than background (#161618 vs #121212) to create
-            // a subtle floating effect without needing borders
-            Color(NSColor(calibratedRed: 0.086, green: 0.086, blue: 0.094, alpha: 1.0))
+            // Create a subtle elevation by blending background and surface
+            // This creates a card that's slightly lifted from the background
+            Color(NSColor(calibratedRed: 0.100, green: 0.100, blue: 0.106, alpha: 1.0))
         }()
 
         /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)
@@ -259,7 +259,7 @@ extension View {
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
     
-    /// Create a loading overlay for dashboard views
+     /// Create a loading overlay for dashboard views
     ///
     /// **AI Context**: This modifier provides a standardized loading state for dashboard views
     /// when data is being fetched or processed. It shows a progress indicator with a message
@@ -287,7 +287,7 @@ extension View {
         if isLoading {
             self.overlay(
                 Rectangle()
-                    .fill(Theme.Colors.background.opacity(0.8))
+                    .fill(Theme.Colors.background.opacity(0.6))
                     .overlay(
                         VStack(spacing: 20) {
                             ProgressView()

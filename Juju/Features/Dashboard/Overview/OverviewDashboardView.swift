@@ -58,25 +58,25 @@ struct OverviewDashboardView: View {
                 }
                 
                 // Loading overlay
-                .overlay(
-                    Group {
-                        if isLoading {
-                            Rectangle()
-                                .fill(Theme.Colors.background.opacity(0.8))
-                                .overlay(
-                                    VStack(spacing: 20) {
-                                        ProgressView()
-                                            .scaleEffect(1.5)
-                                        Text("Loading dashboard...")
-                                            .foregroundColor(Theme.Colors.textPrimary)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(Theme.Colors.surface)
-                                    .cornerRadius(Theme.Design.cornerRadius)
-                                )
-                        }
-                    }
-                )
+                 .overlay(
+                     Group {
+                         if isLoading {
+                             Rectangle()
+                                 .fill(Theme.Colors.background.opacity(0.6))
+                                 .overlay(
+                                     VStack(spacing: 20) {
+                                         ProgressView()
+                                             .scaleEffect(1.5)
+                                         Text("Loading dashboard...")
+                                             .foregroundColor(Theme.Colors.textPrimary)
+                                     }
+                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                     .background(Theme.Colors.surface)
+                                     .cornerRadius(Theme.Design.cornerRadius)
+                                 )
+                         }
+                     }
+                 )
                 
                 .onAppear {
                     Task {

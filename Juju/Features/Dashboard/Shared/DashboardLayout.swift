@@ -112,7 +112,7 @@ struct DashboardLayout: View {
                     
                     ChartContainer(content: bottom)
                         .frame(width: availableWidth,
-                               height: availableHeight * bottomHeightRatio - gap / 2)
+                               height: availableHeight * bottomHeightRatio - gap)
                 }
                 
             case .yearly(let left, let rightTop, let rightBottom):
@@ -149,7 +149,7 @@ struct DashboardLayout: View {
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(Theme.Spacing.sm)  // 12pt — consistent inner padding for all chart cards
+            .padding(Theme.Spacing.md)  // 16pt — comfortable inner padding for all chart cards
             .background(Theme.Colors.cardSurface)
             .cornerRadius(Theme.Design.cornerRadius)
         }

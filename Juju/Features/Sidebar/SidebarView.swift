@@ -74,12 +74,12 @@ struct SidebarView: View {
             ZStack {
                 if isSelected {
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .fill(Theme.Colors.background.opacity(0.8))
+                        .fill(Theme.Colors.surface)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                         .fill(
                             colorScheme == .dark
-                                ? Theme.Colors.background.opacity(0.4)
+                                ? Theme.Colors.surface.opacity(0.3)
                                 : Theme.Colors.textSecondary
                         )
                 }

@@ -158,14 +158,14 @@ struct YearlyDashboardView: View {
         }
     }
     
-    // MARK: - Components
+     // MARK: - Components
     struct NoDataPlaceholder: View {
         var minHeight: CGFloat = 200
         var body: some View {
             Text("No data available")
                 .foregroundColor(Theme.Colors.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: minHeight)
-                .background(Theme.Colors.background.opacity(0.2))
+                .background(Theme.Colors.surface)
                 .cornerRadius(Theme.Design.cornerRadius)
         }
     }

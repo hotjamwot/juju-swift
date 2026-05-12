@@ -96,20 +96,17 @@ struct ProjectStoryView: View {
             Button {
                 onExit()
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.left")
-                    Text("Projects")
-                }
-                .font(Theme.Fonts.caption.weight(.semibold))
-                .foregroundColor(Theme.Colors.textPrimary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Theme.Colors.divider.opacity(0.25))
-                .cornerRadius(8)
+                Image(systemName: "chevron.left")
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Theme.Colors.divider.opacity(0.25))
+                    .cornerRadius(8)
             }
             .buttonStyle(.plain)
             .pointingHandOnHover()
-
+            
             Spacer()
         }
         .padding(.horizontal, Theme.spacingLarge)
