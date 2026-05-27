@@ -43,8 +43,15 @@ public class FilterExportState: ObservableObject {
     @Published var selectedDateFilter: SessionsDateFilter = .thisWeek
     @Published var customDateRange: DateRange? = nil
     
-    // Export state (removed - no longer needed)
+    // Bulk edit state
+    @Published var isBulkEditing: Bool = false
+    @Published var selectedSessionIDs: Set<String> = []
+    @Published var lastSelectedSessionID: String? = nil // For shift-click range selection
     
+    // Bulk edit pending values (nil = no change)
+    var pendingBulkProjectID: String? = nil
+    var pendingBulkPhaseID: String? = nil
+    var pendingBulkMood: Int? = nil
     
     // Manual refresh control
     @Published var shouldRefresh: Bool = false
@@ -60,6 +67,65 @@ public class FilterExportState: ObservableObject {
         activityTypeFilter = "All"
         selectedDateFilter = .thisWeek
         customDateRange = nil
+    }
+    
+    // MARK: - Bulk Edit Methods
+    
+    /// Enter bulk edit mode with optional first selected session
+    func enterBulkEditMode(firstSessionID: String? = nil) {
+        isBulkEditing = true
+        selectedSessionIDs = []
+        lastSelectedSessionID = nil
+        pendingBulkProjectID = nil
+        pendingBulkPhaseID = nil
+        pendingBulkMood = nil
+        
+        if let sessionID = firstSessionID {
+            selectedSessionIDs.insert(sessionID)
+            lastSelectedSessionID = sessionID
+        }
+        
+        // Ensure the filter bar is expanded when entering bulk editing
+        isExpanded = true
+    }
+    
+    /// Exit bulk edit mode and clear all selections
+    func exitBulkEditMode() {
+        isBulkEditing = false
+        selectedSessionIDs = []
+        lastSelectedSessionID = nil
+        pendingBulkProjectID = nil
+        pendingBulkPhaseID = nil
+        pendingBulkMood = nil
+    }
+    
+    /// Toggle selection for a session, with shift-click range support
+    func toggleSessionSelection(_ sessionID: String, isShiftHeld: Bool = false, in flatSessionOrder: [SessionRecord] = []) {
+        if isShiftHeld, let lastID = lastSelectedSessionID, !flatSessionOrder.isEmpty {
+            // Find range between last selected and this one
+            guard let lastIndex = flatSessionOrder.firstIndex(where: { $0.id == lastID }),
+                  let currentIndex = flatSessionOrder.firstIndex(where: { $0.id == sessionID }) else {
+                // Fall back to simple toggle
+                selectedSessionIDs.insert(sessionID)
+                lastSelectedSessionID = sessionID
+                return
+            }
+            
+            let lower = min(lastIndex, currentIndex)
+            let upper = max(lastIndex, currentIndex)
+            let rangeIDs = flatSessionOrder[lower...upper].map { $0.id }
+            for id in rangeIDs {
+                selectedSessionIDs.insert(id)
+            }
+            lastSelectedSessionID = sessionID
+        } else {
+            if selectedSessionIDs.contains(sessionID) {
+                selectedSessionIDs.remove(sessionID)
+            } else {
+                selectedSessionIDs.insert(sessionID)
+            }
+            lastSelectedSessionID = sessionID
+        }
     }
 }
 
@@ -123,8 +189,15 @@ struct BottomFilterBar: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            mainFilterBarContent
-            customDateRangePicker
+            if filterState.isBulkEditing {
+                bulkEditControls
+            } else {
+                filterControls
+            }
+            
+            if filterState.selectedDateFilter == .custom && !filterState.isBulkEditing {
+                CustomDateRangePicker
+            }
         }
         .transition(
             .asymmetric(
@@ -135,18 +208,18 @@ struct BottomFilterBar: View {
         .animation(.easeInOut(duration: 0.3), value: filterState.isExpanded)
     }
     
-    // MARK: - Main Filter Bar Content
+    // MARK: - Filter Controls (Normal Mode)
     @ViewBuilder
-    private var mainFilterBarContent: some View {
+    private var filterControls: some View {
         HStack(spacing: Theme.spacingSmall) {
             // Project Dropdown
-            projectDropdown()
+            filterProjectDropdown()
             
             // Activity Type Dropdown
-            activityTypeDropdown()
+            filterActivityTypeDropdown()
             
             // Date Filter Dropdown
-            dateFilterDropdown()
+            filterDateDropdown()
             
             // Session Count Badge
             sessionCountBadge
@@ -175,22 +248,239 @@ struct BottomFilterBar: View {
         }
     }
     
-    // MARK: - Custom Date Range Picker
+    // MARK: - Bulk Edit Controls
     @ViewBuilder
-    private var customDateRangePicker: some View {
-        if filterState.selectedDateFilter == .custom {
-            CustomDateRangePicker
+    private var bulkEditControls: some View {
+        HStack(spacing: Theme.spacingSmall) {
+            // Selection count
+            Text("\(filterState.selectedSessionIDs.count) selected")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(Theme.Colors.accentColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Theme.Colors.accentColor.opacity(0.1))
+                .cornerRadius(Theme.Design.cornerRadius)
+            
+            Divider()
+                .frame(height: 20)
+            
+            // Bulk Project dropdown
+            bulkProjectDropdown()
+            
+            // Bulk Phase dropdown
+            bulkPhaseDropdown()
+            
+            // Bulk Mood button
+            bulkMoodButton()
+            
+            Spacer()
+            
+            // Save & Exit button
+            Button(action: {
+                filterState.requestManualRefresh()
+            }) {
+                HStack(spacing: Theme.spacingExtraSmall) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .medium))
+                    Text("Save & Exit")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(Theme.Colors.accentColor)
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
+                        .fill(Theme.Colors.accentColor.opacity(0.1))
+                )
+            }
+            .help("Apply bulk edits and exit bulk edit mode")
+            .buttonStyle(.plain)
+            
+            // Cancel button
+            Button(action: {
+                filterState.exitBulkEditMode()
+            }) {
+                HStack(spacing: Theme.spacingExtraSmall) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .medium))
+                    Text("Cancel")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(Theme.Colors.textSecondary)
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
+                        .fill(Theme.Colors.divider.opacity(0.2))
+                )
+            }
+            .help("Exit bulk edit mode without saving")
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, Theme.spacingMedium)
+        .padding(.vertical, Theme.spacingSmall)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Row.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
+                .stroke(Theme.Colors.accentColor.opacity(0.4), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
     
-    // MARK: - Project Dropdown
+    // MARK: - Bulk Project Dropdown
     @ViewBuilder
-    private func projectDropdown() -> some View {
+    private func bulkProjectDropdown() -> some View {
+        Menu {
+            ForEach(projects.filter { !$0.archived }) { project in
+                Button(action: {
+                    filterState.pendingBulkProjectID = project.id
+                    filterState.pendingBulkPhaseID = nil // Reset phase when project changes
+                }) {
+                    HStack {
+                        Circle()
+                            .fill(project.swiftUIColor)
+                            .frame(width: 8, height: 8)
+                        Text(project.name)
+                        if filterState.pendingBulkProjectID == project.id {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(Theme.Colors.accentColor)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "folder")
+                    .font(.system(size: 10))
+                if let pid = filterState.pendingBulkProjectID,
+                   let project = projects.first(where: { $0.id == pid }) {
+                    Text(project.name)
+                        .font(.caption.weight(.medium))
+                } else {
+                    Text("Project")
+                        .font(.caption.weight(.medium))
+                }
+            }
+            .foregroundColor(Theme.Colors.textPrimary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Theme.Colors.divider.opacity(0.2))
+            .cornerRadius(Theme.Design.cornerRadius)
+        }
+        .frame(minWidth: 120)
+        .help("Set project for all selected sessions")
+    }
+    
+    // MARK: - Bulk Phase Dropdown
+    @ViewBuilder
+    private func bulkPhaseDropdown() -> some View {
+        let sameProjectInfo = resolveBulkPhaseProject()
+        
+        Menu {
+            if sameProjectInfo.same, let project = sameProjectInfo.project {
+                ForEach(project.phases.filter { !$0.archived }) { phase in
+                    Button(action: {
+                        filterState.pendingBulkPhaseID = phase.id
+                    }) {
+                        HStack {
+                            Text(phase.name)
+                            if filterState.pendingBulkPhaseID == phase.id {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(Theme.Colors.accentColor)
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "play.circle")
+                    .font(.system(size: 10))
+                if let pid = filterState.pendingBulkPhaseID,
+                   let project = sameProjectInfo.project,
+                   let phase = project.phases.first(where: { $0.id == pid }) {
+                    Text(phase.name)
+                        .font(.caption.weight(.medium))
+                } else {
+                    Text("Phase")
+                        .font(.caption.weight(.medium))
+                }
+            }
+            .foregroundColor(sameProjectInfo.same ? Theme.Colors.textPrimary : Theme.Colors.textSecondary.opacity(0.5))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Theme.Colors.divider.opacity(0.2))
+            .cornerRadius(Theme.Design.cornerRadius)
+        }
+        .disabled(!sameProjectInfo.same)
+        .frame(minWidth: 100)
+        .help(sameProjectInfo.same ? "Set phase for all selected sessions" : "All sessions must be same project to edit phase")
+    }
+    
+    /// Resolves the project to use for phase editing.
+    /// Uses the pending bulk project if set; otherwise checks if all selected sessions belong to the same project.
+    /// This is a simplified version that will be wired up properly when sessions data is available.
+    private func resolveBulkPhaseProject() -> (same: Bool, project: Project?) {
+        if let pendingID = filterState.pendingBulkProjectID {
+            // A bulk project has been selected, use that
+            let project = projects.first(where: { $0.id == pendingID })
+            return (project != nil, project)
+        }
+        // Without session data, we assume mixed projects -> phase disabled
+        // This will be overridden when sessions are passed in
+        return (false, nil)
+    }
+    
+    // MARK: - Bulk Mood Button
+    @State private var showingBulkMoodPopover = false
+    
+    @ViewBuilder
+    private func bulkMoodButton() -> some View {
+        Button(action: {
+            showingBulkMoodPopover = true
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: "bolt")
+                    .font(.system(size: 10))
+                if let mood = filterState.pendingBulkMood {
+                    Text("\(mood)/10")
+                        .font(.caption.weight(.medium))
+                } else {
+                    Text("Mood")
+                        .font(.caption.weight(.medium))
+                }
+            }
+            .foregroundColor(Theme.Colors.textPrimary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Theme.Colors.divider.opacity(0.2))
+            .cornerRadius(Theme.Design.cornerRadius)
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showingBulkMoodPopover) {
+            MoodSelectionPopover(
+                currentMood: filterState.pendingBulkMood,
+                onMoodSelected: { mood in
+                    filterState.pendingBulkMood = mood
+                    showingBulkMoodPopover = false
+                },
+                onDismiss: {
+                    showingBulkMoodPopover = false
+                }
+            )
+            .padding()
+        }
+        .help("Set mood for all selected sessions")
+    }
+    
+    // MARK: - Filter Project Dropdown
+    @ViewBuilder
+    private func filterProjectDropdown() -> some View {
         Menu {
             Button(action: { onProjectFilterChange("All") }) {
                 Text("All Projects")
             }
-            // Only show active (non-archived) projects
             ForEach(projects.filter { !$0.archived }) { project in
                 Button(action: { onProjectFilterChange(project.id) }) {
                     Text(project.name)
@@ -206,7 +496,6 @@ struct BottomFilterBar: View {
                 if filterState.projectFilter == "All" {
                     Text("All Projects")
                 } else {
-                    // Find the project by ID and display only its name (no emoji)
                     if let project = projects.first(where: { $0.id == filterState.projectFilter }) {
                         Text(project.name)
                             .font(Theme.Fonts.body.weight(.medium))
@@ -214,7 +503,6 @@ struct BottomFilterBar: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                     } else {
-                        // Fallback if project not found - show ID in red to indicate issue
                         Text("❌")
                         Text("Project not found: \(filterState.projectFilter)")
                             .foregroundColor(Theme.Colors.error)
@@ -232,14 +520,13 @@ struct BottomFilterBar: View {
         .frame(minWidth: 240)
     }
     
-    // MARK: - Activity Type Dropdown
+    // MARK: - Filter Activity Type Dropdown
     @ViewBuilder
-    private func activityTypeDropdown() -> some View {
+    private func filterActivityTypeDropdown() -> some View {
         Menu {
             Button(action: { onActivityTypeFilterChange("All") }) {
                 Text("All Activities")
             }
-            // Add "Uncategorized" option to filter sessions with no activity type
             Button(action: { onActivityTypeFilterChange("Uncategorized") }) {
                 HStack {
                     Text("Uncategorized")
@@ -251,7 +538,6 @@ struct BottomFilterBar: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            // Only show active (non-archived) activity types
             ForEach(activityTypes.filter { !$0.archived }) { type in
                 Button(action: { onActivityTypeFilterChange(type.id) }) {
                     Text(type.name)
@@ -273,7 +559,6 @@ struct BottomFilterBar: View {
                             .foregroundColor(Theme.Colors.textPrimary)
                     }
                 } else {
-                    // Find the activity type by ID and display only its name (no emoji)
                     if let activityType = activityTypes.first(where: { $0.id == filterState.activityTypeFilter }) {
                         Text(activityType.name)
                             .font(Theme.Fonts.body.weight(.medium))
@@ -281,7 +566,6 @@ struct BottomFilterBar: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                     } else {
-                        // Fallback if activity type not found - show ID in red to indicate issue
                         Text("❌")
                         Text("Activity type not found: \(filterState.activityTypeFilter)")
                             .foregroundColor(Theme.Colors.error)
@@ -299,9 +583,9 @@ struct BottomFilterBar: View {
         .frame(minWidth: 240)
     }
     
-    // MARK: - Date Filter Dropdown
+    // MARK: - Filter Date Dropdown
     @ViewBuilder
-    private func dateFilterDropdown() -> some View {
+    private func filterDateDropdown() -> some View {
         Menu {
             ForEach(SessionsDateFilter.allCases.filter { $0 != .clear }, id: \.id) { filter in
                 Button(action: { onDateFilterChange(filter) }) {
@@ -335,7 +619,6 @@ struct BottomFilterBar: View {
     // MARK: - Confirm Button
     private var ConfirmButton: some View {
         Button(action: {
-            // Apply temporary custom date range to filter state when Confirm is clicked
             if filterState.selectedDateFilter == .custom {
                 let newRange = DateRange(startDate: tempCustomStartDate, endDate: tempCustomEndDate)
                 filterState.customDateRange = newRange
@@ -407,7 +690,6 @@ struct BottomFilterBar: View {
                 
                 Spacer()
                 
-                // Session count badge
                 Text("\(filteredSessionsCount) sessions")
                     .font(.caption.weight(.medium))
                     .foregroundColor(Theme.Colors.textSecondary)
@@ -415,7 +697,6 @@ struct BottomFilterBar: View {
                     .padding(.vertical, 4)
             }
             
-            // Show validation for temporary dates
             let tempRange = DateRange(startDate: tempCustomStartDate, endDate: tempCustomEndDate)
             if !tempRange.isValid {
                 Text("Invalid date range")

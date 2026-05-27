@@ -115,6 +115,11 @@ struct SessionsRowView: View {
     let onShowNoteOverlay: ((SessionRecord) -> Void)? // Callback to show overlay in SessionsView
     let onProjectChanged: (() -> Void)? // New callback to notify parent when project changes
     
+    // Bulk edit support
+    var isSelected: Bool = false
+    var isBulkEditing: Bool = false
+    var onTapForSelection: (() -> Void)? = nil
+    
     // Interactive state for hover effects
     @State private var isHovering = false
     @State private var isProjectHovering = false
@@ -180,7 +185,10 @@ struct SessionsRowView: View {
     @State private var projectDataVersion: UUID = UUID()
     
     // Initialize with session observer
-    init(session: SessionRecord, projects: [Project], activityTypes: [ActivityType], onDelete: ((SessionRecord) -> Void)? = nil, onNotesChanged: ((String) -> Void)? = nil, onShowNoteOverlay: ((SessionRecord) -> Void)? = nil, onProjectChanged: (() -> Void)? = nil) {
+    init(session: SessionRecord, projects: [Project], activityTypes: [ActivityType], onDelete: ((SessionRecord) -> Void)? = nil, onNotesChanged: ((String) -> Void)? = nil, onShowNoteOverlay: ((SessionRecord) -> Void)? = nil, onProjectChanged: (() -> Void)? = nil, isSelected: Bool = false, isBulkEditing: Bool = false, onTapForSelection: (() -> Void)? = nil) {
+        self.isSelected = isSelected
+        self.isBulkEditing = isBulkEditing
+        self.onTapForSelection = onTapForSelection
         self.session = session
         self.projects = projects
         self.activityTypes = activityTypes
@@ -199,6 +207,15 @@ struct SessionsRowView: View {
         ZStack(alignment: .topLeading) {
             // Main row content - Grid-aligned 2-line layout
             VStack(spacing: 0) {
+                // Selection indicator - thin accent bar on the left when selected
+                if isBulkEditing && isSelected {
+                    HStack(spacing: 0) {
+                        Rectangle()
+                            .fill(Theme.Colors.accentColor)
+                            .frame(width: 3)
+                        Spacer()
+                    }
+                }
                 // LINE 1: Project Colour | Project Name | Activity Type | Phase | Action | Delete
                 HStack(spacing: 8) {
                     // Column 1: Project colour dot + Project name

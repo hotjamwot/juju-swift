@@ -1,5 +1,7 @@
 # Juju Architecture Documentation
 
+**Purpose**: Single source of truth for the system architecture, data models, component relationships, and data flow patterns. Any new developer or AI should start here to understand how Juju is structured.
+
 ## 🤖 How to Use This Documentation
 
 **For AI Assistants and Developers:**
@@ -12,13 +14,14 @@
 - This file combines architecture patterns, data models, and data flow
 - All data_packet types are defined in this file
 - Component names map to actual Swift classes in the codebase
-- DATA_FLOW.yaml provides machine-readable data flow specification
+- See SWIFT_PATTERNS.md for coding conventions, threading, and antipatterns
+- See AI_DEVELOPMENT_GUIDE.md for step-by-step feature development workflows
 
 **When making changes:**
 1. Update type definitions here when adding new business entities
-2. Update DATA_FLOW.yaml to reflect new data_packet types
-3. Update AI_DEVELOPMENT_GUIDE.md for new development patterns
-4. When changing **session CSV format or `SessionDataParser`**, update or add **unit tests** under `JujuTests/` (see **AI_DEVELOPMENT_GUIDE.md → Testing**)
+2. Update AI_DEVELOPMENT_GUIDE.md for new development patterns
+3. When changing **session CSV format or `SessionDataParser`**, update or add **unit tests** under `JujuTests/` (see **AI_DEVELOPMENT_GUIDE.md → Testing**)
+4. Update **SWIFT_PATTERNS.md** if the change introduces a new pattern or antipattern
 
 ---
 
@@ -183,7 +186,7 @@ init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int =
 
 **Initializer**: `init(id: String = UUID().uuidString, name: String, order: Int = 0, archived: Bool = false)`
 
-**Integrity**: Archiving a phase keeps session `projectPhaseID` valid and still resolves in the sessions table; removing a phase clears that field on affected sessions on save. See **PHASE_ID_DATA_INTEGRITY.md**.
+**Integrity**: Archiving a phase keeps session `projectPhaseID` valid and still resolves in the sessions table; removing a phase clears that field on affected sessions on save. Deleting a project migrates all associated sessions to another project first (see `ProjectsViewModel.deleteProjectWithMigration`). The only remaining edge case is bulk-imported CSV rows referencing unknown phase IDs (reported by `DataValidator` on load).
 
 ---
 
@@ -475,6 +478,23 @@ This flow ensures that `sessionManager.allSessions` serves as the single source 
   - Enhanced AI-friendliness with clear method boundaries
   - Better testability with focused, single-purpose methods
 
+### 8. **Bulk Session Editing Architecture**
+- **Purpose**: Allow users to select multiple sessions and apply bulk changes to Project, Phase, or Mood fields.
+- **Activation**: Double-click any session row enters bulk edit mode and selects that session. The filter bar auto-opens and transforms into a bulk action bar.
+- **Selection Mechanism**: 
+  - `FilterExportState` holds `selectedSessionIDs: Set<String>`, `lastSelectedSessionID`, and `isBulkEditing`
+  - Single click in bulk edit mode toggles selection; shift-click selects a contiguous range using a flat ordered list of visible sessions
+  - The `toggleSessionSelection()` method on `FilterExportState` handles both single and shift-click logic
+- **Visual Feedback**: Selected rows display a 3px accent-coloured bar on their left edge (rendered in `SessionsRowView` when `isSelected && isBulkEditing`)
+- **Bulk Action Bar** (within `BottomFilterBar`):
+  - Replaces the normal filter dropdowns with: selection count badge, Project dropdown, Phase dropdown (greyed out if mixed projects), Mood popover button, Save & Exit button, Cancel button
+  - The bar uses an accent-coloured border to distinguish from filter mode
+- **Save Flow**: 
+  1. **Save & Exit** triggers `handleManualRefresh()`, which detects `isBulkEditing`
+  2. Iterates over all selected sessions, calling `updateSessionFull()` with pending bulk values (or preserving existing if no change)
+  3. Calls `exitBulkEditMode()` to reset state, then refreshes the filtered view
+- **Phase Rules**: Phase editing disabled when sessions span multiple projects (checked via `resolveBulkPhaseProject()`). A bulk project selection overrides and enables that project's phases.
+- **Dependencies**: Uses existing `MoodSelectionPopover`, `updateSessionFull()`, and the `BottomFilterBar` UI infrastructure.
 ---
 
 ## 📋 Coding Conventions

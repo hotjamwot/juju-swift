@@ -103,6 +103,10 @@ public struct SessionsView: View {
         let onNotesChanged: ((SessionRecord, String) -> Void)
         let onProjectChanged: (() -> Void)
         
+        // Bulk edit support
+        let filterState: FilterExportState
+        let flatSessionOrder: [SessionRecord]
+        
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
                 // Day Header - now integrated directly into SessionsView
@@ -149,8 +153,28 @@ public struct SessionsView: View {
                             onNotesChanged: { newNotes in
                                 onNotesChanged(session, newNotes)
                             },
-                            onProjectChanged: onProjectChanged
+                            onProjectChanged: onProjectChanged,
+                            isSelected: filterState.selectedSessionIDs.contains(session.id),
+                            isBulkEditing: filterState.isBulkEditing,
+                            onTapForSelection: {
+                                // Check if NSEvent modifier flags contains shift
+                                let isShiftHeld = NSEvent.modifierFlags.contains(.shift)
+                                filterState.toggleSessionSelection(session.id, isShiftHeld: isShiftHeld, in: flatSessionOrder)
+                            }
                         )
+                        .onTapGesture(count: 2) {
+                            // Double-click enters bulk edit mode
+                            if !filterState.isBulkEditing {
+                                filterState.enterBulkEditMode(firstSessionID: session.id)
+                            }
+                        }
+                        .onTapGesture(count: 1) {
+                            // Single click in bulk edit mode toggles selection
+                            if filterState.isBulkEditing {
+                                let isShiftHeld = NSEvent.modifierFlags.contains(.shift)
+                                filterState.toggleSessionSelection(session.id, isShiftHeld: isShiftHeld, in: flatSessionOrder)
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, Theme.spacingMedium)
@@ -320,6 +344,10 @@ public struct SessionsView: View {
         // and properly display archived project names with grey styling
         let allProjects = projectsViewModel.projects
         let activeActivityTypes = activityTypesViewModel.activeActivityTypes
+        
+        // Build flat ordered list of visible sessions for shift-click range selection
+        let flatOrderedSessions: [SessionRecord] = currentWeekSessions.flatMap { $0.sessions }
+        
         return ForEach(currentWeekSessions, id: \.id) { group in
             GroupedSessionView(
                 group: group,
@@ -328,7 +356,9 @@ public struct SessionsView: View {
                 sidebarState: sidebarState,
                 onDelete: handleDeleteSession,
                 onNotesChanged: handleNotesChanged,
-                onProjectChanged: handleProjectChanged
+                onProjectChanged: handleProjectChanged,
+                filterState: filterState,
+                flatSessionOrder: flatOrderedSessions
             )
         }
         .id(lastRefreshTime) // Force refresh when lastRefreshTime changes
@@ -709,10 +739,69 @@ public struct SessionsView: View {
     }
     
     private func handleManualRefresh() {
-        Task {
-            await applyFiltersPreservingState()
-            await MainActor.run {
-                updateSessionCount()
+        if filterState.isBulkEditing {
+            // Bulk edit save: apply pending changes to all selected sessions
+            Task {
+                let selectedIDs = filterState.selectedSessionIDs
+                let sessions = sessionManager.allSessions.filter { selectedIDs.contains($0.id) }
+                
+                let pendingProjectID = filterState.pendingBulkProjectID
+                let pendingPhaseID = filterState.pendingBulkPhaseID
+                let pendingMood = filterState.pendingBulkMood
+                
+                for session in sessions {
+                    let resolvedProjectID = pendingProjectID ?? session.projectID
+                    let resolvedPhaseID = pendingPhaseID ?? session.projectPhaseID
+                    let resolvedMood = pendingMood ?? session.mood
+                    
+                    // Determine project name for the resolved project ID
+                    let projectName: String
+                    if let pid = pendingProjectID,
+                       let project = projectsViewModel.projects.first(where: { $0.id == pid }) {
+                        projectName = project.name
+                    } else if let sessionProject = projectsViewModel.projects.first(where: { $0.id == session.projectID }) {
+                        projectName = sessionProject.name
+                    } else {
+                        projectName = session.projectID
+                    }
+                    
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    
+                    let timeFormatter = DateFormatter()
+                    timeFormatter.dateFormat = "HH:mm"
+                    
+                    let success = SessionManager.shared.updateSessionFull(
+                        id: session.id,
+                        date: dateFormatter.string(from: session.startDate),
+                        startTime: timeFormatter.string(from: session.startDate),
+                        endTime: timeFormatter.string(from: session.endDate),
+                        projectName: projectName,
+                        notes: session.notes,
+                        mood: resolvedMood,
+                        activityTypeID: session.activityTypeID,
+                        projectPhaseID: resolvedPhaseID,
+                        action: session.action,
+                        isMilestone: session.isMilestone,
+                        projectID: resolvedProjectID
+                    )
+                    if !success {
+                        print("❌ Failed to bulk update session \(session.id)")
+                    }
+                }
+                
+                await MainActor.run {
+                    filterState.exitBulkEditMode()
+                    updateSessionCount()
+                }
+                await applyFiltersPreservingState()
+            }
+        } else {
+            Task {
+                await applyFiltersPreservingState()
+                await MainActor.run {
+                    updateSessionCount()
+                }
             }
         }
     }

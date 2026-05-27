@@ -1,6 +1,6 @@
 # Juju Swift Development Patterns
 
-**Purpose**: Single reference for code patterns, naming, threading, and workflows. Optimized for AI tools.
+**Purpose**: Definitive reference for code patterns, naming conventions, threading rules, error handling, and project workflows. Read this alongside ARCHITECTURE.md before writing any code so your contributions match the project style. Optimized for AI tools.
 
 **[AI_QUICK_START]**
 - **Architecture**: MVVM + Managers + SwiftUI
@@ -269,8 +269,8 @@ ProjectManager.shared.updateProject(project)
 ## 📖 QUICK REFERENCES
 
 - **ARCHITECTURE.md**: System design, data models, flows
-- **DATA_FLOW.yaml**: Component dependencies
 - **AI_DEVELOPMENT_GUIDE.md**: Feature development workflow
+- **ROADMAP.md**: Project status, completed features, ongoing work, deferred priorities
 
 ---
 

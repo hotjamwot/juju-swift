@@ -1,5 +1,7 @@
 # AI Development Guide: Adding Features to Juju
 
+**Purpose**: Step-by-step guide for adding features, fixing bugs, and following the Juju development workflow. Start here when you need to implement something new or debug an issue.
+
 **[AI_QUICK_REFERENCE]** Step-by-step feature development. For code patterns, see SWIFT_PATTERNS.md.
 
 ---
@@ -7,9 +9,8 @@
 ## 🎯 BEFORE STARTING
 
 Read these in order:
-1. **ARCHITECTURE.md** - System design
-2. **SWIFT_PATTERNS.md** - Coding standards & threading
-3. **DATA_FLOW.yaml** - Component relationships
+1. **ARCHITECTURE.md** - System design, data models, and flows
+2. **SWIFT_PATTERNS.md** - Coding standards, threading, antipatterns
 
 ---
 
@@ -22,7 +23,6 @@ Read these in order:
 
 ### Step 2: Design Data Model
 - Add to ARCHITECTURE.md
-- Update DATA_FLOW.yaml if new component
 
 ### Step 3: Implement Manager Methods
 ```swift
@@ -136,7 +136,7 @@ SessionManager.shared.deleteSession(id: "session-uuid")
 
 ## 📈 PROJECT OPERATIONS
 
-**Phases:** Sessions reference phases by `projectPhaseID`. **Archived** phases remain valid for validation and session row display; pickers only offer non-archived phases. Removing a phase from a project (sidebar editor on save, or `deletePhase`) must clear `projectPhaseID` on affected sessions—use `SessionManager.shared.clearProjectPhaseForSessions(projectID:phaseIDs:)` when batching; it posts `.sessionDidEnd` with `userInfo["sessionID"] == "bulkPhaseClear"` so `SessionsView` can reload. Details: **Documentation/PHASE_ID_DATA_INTEGRITY.md**.
+**Phases:** Sessions reference phases by `projectPhaseID`. **Archived** phases remain valid for validation and session row display; pickers only offer non-archived phases. Removing a phase from a project (sidebar editor on save, or `deletePhase`) must clear `projectPhaseID` on affected sessions—use `SessionManager.shared.clearProjectPhaseForSessions(projectID:phaseIDs:)` when batching; it posts `.sessionDidEnd` with `userInfo["sessionID"] == "bulkPhaseClear"` so `SessionsView` can reload. The clearing logic is in `SessionPhaseIntegrity.clearingPhaseReferences()` (sets `projectPhaseID` to `nil`); tested in `JujuTests/PhaseDataIntegrityTests.swift`.
 
 ```swift
 let projects = ProjectManager.shared.projects
@@ -237,8 +237,8 @@ do {
 | File | Purpose |
 |------|---------|
 | **ARCHITECTURE.md** | Data models, design, test layout summary |
-| **SWIFT_PATTERNS.md** | Coding standards; testing patterns |
-| **DATA_FLOW.yaml** | Component relationships |
+| **SWIFT_PATTERNS.md** | Coding standards, threading, antipatterns |
+| **ROADMAP.md** | Project status, completed features, ongoing work, deferred priorities |
 
 ---
 
