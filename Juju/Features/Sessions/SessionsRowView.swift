@@ -119,6 +119,9 @@ struct SessionsRowView: View {
     var isSelected: Bool = false
     var isBulkEditing: Bool = false
     var onTapForSelection: (() -> Void)? = nil
+    var pendingBulkProjectID: String? = nil
+    var pendingBulkPhaseID: String? = nil
+    var pendingBulkMood: Int? = nil
     
     // Interactive state for hover effects
     @State private var isHovering = false
@@ -185,9 +188,12 @@ struct SessionsRowView: View {
     @State private var projectDataVersion: UUID = UUID()
     
     // Initialize with session observer
-    init(session: SessionRecord, projects: [Project], activityTypes: [ActivityType], onDelete: ((SessionRecord) -> Void)? = nil, onNotesChanged: ((String) -> Void)? = nil, onShowNoteOverlay: ((SessionRecord) -> Void)? = nil, onProjectChanged: (() -> Void)? = nil, isSelected: Bool = false, isBulkEditing: Bool = false, onTapForSelection: (() -> Void)? = nil) {
+    init(session: SessionRecord, projects: [Project], activityTypes: [ActivityType], onDelete: ((SessionRecord) -> Void)? = nil, onNotesChanged: ((String) -> Void)? = nil, onShowNoteOverlay: ((SessionRecord) -> Void)? = nil, onProjectChanged: (() -> Void)? = nil, isSelected: Bool = false, isBulkEditing: Bool = false, pendingBulkProjectID: String? = nil, pendingBulkPhaseID: String? = nil, pendingBulkMood: Int? = nil, onTapForSelection: (() -> Void)? = nil) {
         self.isSelected = isSelected
         self.isBulkEditing = isBulkEditing
+        self.pendingBulkProjectID = pendingBulkProjectID
+        self.pendingBulkPhaseID = pendingBulkPhaseID
+        self.pendingBulkMood = pendingBulkMood
         self.onTapForSelection = onTapForSelection
         self.session = session
         self.projects = projects
@@ -207,15 +213,6 @@ struct SessionsRowView: View {
         ZStack(alignment: .topLeading) {
             // Main row content - Grid-aligned 2-line layout
             VStack(spacing: 0) {
-                // Selection indicator - thin accent bar on the left when selected
-                if isBulkEditing && isSelected {
-                    HStack(spacing: 0) {
-                        Rectangle()
-                            .fill(Theme.Colors.accentColor)
-                            .frame(width: 3)
-                        Spacer()
-                    }
-                }
                 // LINE 1: Project Colour | Project Name | Activity Type | Phase | Action | Delete
                 HStack(spacing: 8) {
                     // Column 1: Project colour dot + Project name
@@ -692,7 +689,7 @@ struct SessionsRowView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
+                    .stroke(isSelected && isBulkEditing ? Theme.Colors.accentColor : Theme.Colors.divider, lineWidth: isSelected && isBulkEditing ? 2 : 1)
             )
             .cornerRadius(Theme.Row.cornerRadius)
             // Pulse bar overlay at the bottom of the row
@@ -726,8 +723,13 @@ struct SessionsRowView: View {
     // MARK: - Computed Properties
     
     /// Get project from projectID (includes both active and archived projects)
+    /// Respects pending bulk project ID for dry-run preview
     private var project: Project? {
-        projects.first { $0.id == currentSession.projectID }
+        // In bulk edit mode with a pending project, show the pending project as preview
+        if isBulkEditing, isSelected, let pendingID = pendingBulkProjectID {
+            return projects.first { $0.id == pendingID }
+        }
+        return projects.first { $0.id == currentSession.projectID }
     }
     
     /// Check if the session's project is archived
@@ -736,6 +738,7 @@ struct SessionsRowView: View {
     }
     
     /// Get project name from projectID (looks up project name in projects array)
+    /// Respects pending bulk project ID for dry-run preview
     private var projectName: String {
         project?.name ?? currentSession.projectID
     }

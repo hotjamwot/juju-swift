@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import Combine
 
 // MARK: - Ordinal Helper
 private extension Int {
@@ -29,7 +30,7 @@ private extension Date {
         return "\(weekday), \(day)\(day.ordinalSuffix) \(month)"
     }
     
-    /// "Jan 15, 2024"
+    /// Short header: "Jan 15, 2024"
     var shortHeader: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
@@ -156,6 +157,9 @@ public struct SessionsView: View {
                             onProjectChanged: onProjectChanged,
                             isSelected: filterState.selectedSessionIDs.contains(session.id),
                             isBulkEditing: filterState.isBulkEditing,
+                            pendingBulkProjectID: filterState.pendingBulkProjectID,
+                            pendingBulkPhaseID: filterState.pendingBulkPhaseID,
+                            pendingBulkMood: filterState.pendingBulkMood,
                             onTapForSelection: {
                                 // Check if NSEvent modifier flags contains shift
                                 let isShiftHeld = NSEvent.modifierFlags.contains(.shift)
@@ -225,27 +229,6 @@ public struct SessionsView: View {
     // MARK: - Computed Properties
     
     /// Apply all filters to sessions with consistent logic
-    ///
-    /// **AI Context**: This method provides the main filtering pipeline for sessions,
-    /// applying all active filters in sequence and returning the final filtered results.
-    /// It's the central point where all filter logic comes together.
-    ///
-    /// **Business Rules**:
-    /// - Starts with all sessions as the base
-    /// - Applies project filter if not "All"
-    /// - Applies activity type filter if not "All"
-    /// - Applies date filtering based on selected filter
-    /// - Sorts by start date (newest first) for consistent ordering
-    /// - Returns filtered and sorted session array
-    ///
-    /// **Performance Notes**:
-    /// - Uses optimized Array+SessionExtensions methods
-    /// - Single pass through data for each filter type
-    /// - Minimal memory allocation with method chaining
-    ///
-    /// **Integration**: Leverages Array+SessionExtensions for all filtering operations
-    ///
-    /// - Returns: Filtered and sorted array of SessionRecord objects
     private func getFilteredSessions() -> [SessionRecord] {
         // Start with all sessions
         var sessions = sessionManager.allSessions
@@ -271,10 +254,7 @@ public struct SessionsView: View {
     
     /// Count of sessions based on current filter state
     private var currentSessionCount: Int {
-        // For the filter badge, we want to show the count of sessions that match the current filters
-        // This should reflect what would be shown if the user applied the filters
         let filtered = getFilteredSessions()
-        print("🔢 Current session count: \(filtered.count) sessions")
         return filtered.count
     }
     
@@ -312,7 +292,6 @@ public struct SessionsView: View {
                 return start >= yearRange.start && start <= yearRange.end
             }
         case .allTime:
-            // No date filtering - use all sessions
             return sessions
         case .custom:
             if let customRange = filterState.customDateRange {
@@ -323,7 +302,6 @@ public struct SessionsView: View {
             }
             return sessions
         case .clear:
-            // No additional filtering - use all sessions
             return sessions
         }
     }
@@ -340,12 +318,9 @@ public struct SessionsView: View {
     
     /// Create grouped session views for display
     private var groupedSessionViews: some View {
-        // Pass ALL projects (including archived) so SessionsRowView can look up project names
-        // and properly display archived project names with grey styling
         let allProjects = projectsViewModel.projects
         let activeActivityTypes = activityTypesViewModel.activeActivityTypes
         
-        // Build flat ordered list of visible sessions for shift-click range selection
         let flatOrderedSessions: [SessionRecord] = currentWeekSessions.flatMap { $0.sessions }
         
         return ForEach(currentWeekSessions, id: \.id) { group in
@@ -361,7 +336,7 @@ public struct SessionsView: View {
                 flatSessionOrder: flatOrderedSessions
             )
         }
-        .id(lastRefreshTime) // Force refresh when lastRefreshTime changes
+        .id(lastRefreshTime)
     }
     
     // MARK: - Session Action Handlers
@@ -371,14 +346,12 @@ public struct SessionsView: View {
         showingDeleteAlert = true
     }
 
-    /// Handle session update notifications to refresh specific session rows
     private func handleSessionUpdateNotification(_ notification: Notification) {
         guard let sessionID = notification.userInfo?["sessionID"] as? String else {
             return
         }
 
         if sessionID == "bulkPhaseClear" {
-            print("🔔 Refreshing sessions after bulk phase ID clear")
             Task {
                 await loadCurrentWeekSessions()
                 await MainActor.run { updateSessionCount() }
@@ -386,113 +359,62 @@ public struct SessionsView: View {
             return
         }
 
-        print("🔔 Received session update notification for session ID: \(sessionID)")
+        guard editingSessionID != sessionID else { return }
 
-        // Debounce multiple notifications for the same session
-        guard editingSessionID != sessionID else {
-            print("🔄 Skipping duplicate notification for session \(sessionID)")
-            return
-        }
-
-        // Set the editing session ID to prevent duplicate processing
         editingSessionID = sessionID
 
-        // Small delay to ensure the session manager has the latest data
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Find the updated session in the session manager
             guard let updatedSession = self.sessionManager.allSessions.first(where: { $0.id == sessionID }) else {
-                print("⚠️ Updated session \(sessionID) not found in session manager")
                 self.editingSessionID = nil
                 return
             }
 
-            // Check if this session should be visible with current filters
-            // This ensures we only update sessions that are actually visible in the UI
             let filteredSessions = self.getFilteredSessions()
             let isSessionVisible = filteredSessions.contains(where: { $0.id == updatedSession.id })
 
             if isSessionVisible {
-                print("👀 Session \(updatedSession.id) is visible in current filtered view - updating UI")
-                // Update the specific session in our currentWeekSessions array
                 self.refreshSpecificSession(updatedSession)
-            } else {
-                print("🔍 Session \(updatedSession.id) is not visible in current filtered view - skipping UI update")
-                // Session is filtered out, so we don't need to update the UI
-                // The user can't see this session anyway, so no UI refresh needed
             }
 
-            // Clear the editing session ID after processing
             self.editingSessionID = nil
         }
     }
 
-    /// Refresh a specific session in the UI without affecting filters
     private func refreshSpecificSession(_ updatedSession: SessionRecord) {
-        print("🔄 Refreshing session \(updatedSession.id) in UI")
-
-        // Create a new array with the updated session
         var updatedSessions = currentWeekSessions
 
-        // Find the group that contains this session
         for groupIndex in updatedSessions.indices {
             var group = updatedSessions[groupIndex]
-
-            // Create a mutable copy of the sessions array
             var mutableSessions = group.sessions
 
-            // Check if this group contains our session
             if let sessionIndex = mutableSessions.firstIndex(where: { $0.id == updatedSession.id }) {
-                // Replace the old session with the updated one
                 mutableSessions[sessionIndex] = updatedSession
-
-                // Create a new group with the updated sessions
                 let updatedGroup = GroupedSession(date: group.date, sessions: mutableSessions)
-
-                // Update the group in our array
                 updatedSessions[groupIndex] = updatedGroup
 
-                print("✅ Successfully updated session \(updatedSession.id) in group \(group.date)")
-
-                // Update the state to trigger UI refresh
                 DispatchQueue.main.async {
                     self.currentWeekSessions = updatedSessions
-                    self.lastRefreshTime = Date() // Force refresh timestamp
+                    self.lastRefreshTime = Date()
                 }
-
                 return
             }
         }
-
-        print("ℹ️ Session \(updatedSession.id) not found in current week sessions - may be filtered out")
     }
     
     private func handleNotesChanged(_ session: SessionRecord, _ newNotes: String) {
-        // Update only the session notes using the single-field update method
-        // This avoids any date/time parsing issues that could cause midnight duration bugs
         let success = sessionManager.updateSession(id: session.id, field: "notes", value: newNotes)
         
         if success {
-            // Trigger refresh to update the UI
-            Task {
-                await loadCurrentWeekSessions()
-            }
+            Task { await loadCurrentWeekSessions() }
         }
     }
     
     private func handleProjectChanged() {
-        print("🔄 Project changed callback triggered in SessionsView")
-        // This callback is triggered when a session is edited, not just when project changes
-        // We need to refresh the session data to show the latest changes
-
-        // Since we don't have the session ID here, we need to force a UI refresh
-        // by updating the lastRefreshTime, which will cause SwiftUI to re-evaluate
-        // the view and pick up the latest session data from SessionManager
         DispatchQueue.main.async {
             self.lastRefreshTime = Date()
         }
     }
     
-    /// Computed property that automatically updates when sessionManager.allSessions changes
     private var groupedCurrentWeekSessions: [GroupedSession] {
         let sessions = getCurrentWeekSessions()
         return groupSessionsByDate(sessions)
@@ -512,11 +434,9 @@ public struct SessionsView: View {
     
     // MARK: - Content Area View Components
     
-    /// Main content area showing sessions grid, loading states, or empty states
     @ViewBuilder
     private var mainContentArea: some View {
         if projectsViewModel.isLoading {
-            // Projects or activity types are loading
             VStack {
                 Spacer()
                 ProgressView("Loading projects and activity types...")
@@ -526,7 +446,6 @@ public struct SessionsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if currentWeekSessions.isEmpty {
             if isLoading {
-                // Loading indicator
                 VStack {
                     Spacer()
                     ProgressView("Loading sessions...")
@@ -535,7 +454,6 @@ public struct SessionsView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                // Empty state view
                 VStack {
                     Spacer()
                     Text("No sessions found for the selected filters.")
@@ -545,7 +463,6 @@ public struct SessionsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
-            // Grid View
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Theme.spacingSmall) {
                     groupedSessionViews
@@ -556,7 +473,6 @@ public struct SessionsView: View {
         }
     }
     
-    /// Floating filter bar that appears when filters are expanded
     @ViewBuilder
     private var floatingFilterBar: some View {
         if filterState.isExpanded {
@@ -568,7 +484,6 @@ public struct SessionsView: View {
         }
     }
     
-    /// Bottom filter bar view (extracted to simplify type checking)
     @ViewBuilder
     private func bottomFilterBarView() -> some View {
         BottomFilterBar(
@@ -576,16 +491,19 @@ public struct SessionsView: View {
             projects: projectsViewModel.activeProjects,
             activityTypes: activityTypesViewModel.activeActivityTypes,
             filteredSessionsCount: currentSessionCount,
+            selectedSessions: sessionManager.allSessions,
             onDateFilterChange: handleDateFilterSelection,
             onCustomDateRangeChange: handleCustomDateRangeChange,
             onProjectFilterChange: handleProjectFilterChange,
             onActivityTypeFilterChange: handleActivityTypeFilterChange,
             onConfirmFilters: confirmFilters,
-            onClose: { filterState.isExpanded = false }
+            onClose: { filterState.isExpanded = false },
+            onBulkEditToggle: {
+                filterState.enterBulkEditMode(firstSessionID: nil)
+            }
         )
     }
     
-    /// Filter toggle button that appears centered at the bottom
     @ViewBuilder
     private var filterToggleButton: some View {
         if !filterState.isExpanded {
@@ -600,12 +518,11 @@ public struct SessionsView: View {
                     )
                     Spacer()
                 }
-                .padding(.bottom, Theme.spacingMedium) // Reduced padding for smaller appearance
+                .padding(.bottom, Theme.spacingMedium)
             }
         }
     }
     
-    // MARK: - Content Area View
     private var contentAreaView: some View {
         ZStack {
             mainContentArea
@@ -621,48 +538,37 @@ public struct SessionsView: View {
 
     @ViewBuilder
     private func mainView() -> some View {
+        contentStack
+            .modifier(EscapeKeyHandlerViewModifier(filterState: filterState))
+    }
+    
+    @ViewBuilder
+    private var contentStack: some View {
         VStack(spacing: 0) {
-            // Header
             headerView
-
-            // Content Area
             contentAreaView
         }
         .background(Theme.Colors.background)
         .task {
-            // Load current week sessions first (essential for display)
             await loadCurrentWeekSessions()
 
-            // Load projects and activity types in background with delays to avoid blocking
-            // Use Task.detached to avoid blocking UI, but ensure UI updates happen on main thread
             Task.detached {
-                // Small delay to let sessions load first
-                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
-
+                try? await Task.sleep(nanoseconds: 50_000_000)
                 await MainActor.run {
                     Task {
                         await projectsViewModel.loadProjects()
-
-                        // Another small delay before loading activity types
-                        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
-
+                        try? await Task.sleep(nanoseconds: 50_000_000)
                         await activityTypesViewModel.loadActivityTypes()
                     }
                 }
             }
         }
         .onAppear {
-            // Initialize with current week filter and apply it immediately
-            filterState.selectedDateFilter = .thisWeek // Ensure default is current week
-            // Apply the default filter to load weekly sessions
+            filterState.selectedDateFilter = .thisWeek
             Task {
-                // First load the current week sessions
                 await loadCurrentWeekSessions()
-                // Then apply filters to ensure everything is properly initialized
                 await applyFiltersPreservingState()
-                await MainActor.run {
-                    updateSessionCount()
-                }
+                await MainActor.run { updateSessionCount() }
             }
         }
         .onChange(of: activityTypesViewModel.activityTypes) { _ in
@@ -675,28 +581,13 @@ public struct SessionsView: View {
             handleManualRefresh()
         }
         .onChange(of: filterState.selectedDateFilter) { _, _ in
-            // When date filter changes, update the session count
-            Task {
-                await MainActor.run {
-                    updateSessionCount()
-                }
-            }
+            Task { await MainActor.run { updateSessionCount() } }
         }
         .onChange(of: filterState.projectFilter) { _, _ in
-            // When project filter changes, update the session count
-            Task {
-                await MainActor.run {
-                    updateSessionCount()
-                }
-            }
+            Task { await MainActor.run { updateSessionCount() } }
         }
         .onChange(of: filterState.activityTypeFilter) { _, _ in
-            // When activity type filter changes, update the session count
-            Task {
-                await MainActor.run {
-                    updateSessionCount()
-                }
-            }
+            Task { await MainActor.run { updateSessionCount() } }
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             handleProjectsChange()
@@ -713,34 +604,23 @@ public struct SessionsView: View {
         }
     }
     
-    // MARK: - Helper methods to simplify mainView
+    // MARK: - Helper Handlers
+    
     private func handleActivityTypesChange() {
         Task {
             await loadCurrentWeekSessions()
-            await MainActor.run {
-                updateSessionCount()
-            }
+            await MainActor.run { updateSessionCount() }
         }
     }
     
     private func handleFilterExpansionChange(_ isExpanded: Bool) {
-        // Filter panel toggle should NOT load different data
-        // The panel is just UI controls - data loading happens when filters are applied
         if !isExpanded {
-            // When filter is closed, DO NOT reset filters - preserve current state
-            // Only update the session count to reflect current filters
-            Task {
-                await MainActor.run {
-                    updateSessionCount()
-                }
-            }
+            Task { await MainActor.run { updateSessionCount() } }
         }
-        // When filter is opened, do nothing - keep current data visible
     }
     
     private func handleManualRefresh() {
         if filterState.isBulkEditing {
-            // Bulk edit save: apply pending changes to all selected sessions
             Task {
                 let selectedIDs = filterState.selectedSessionIDs
                 let sessions = sessionManager.allSessions.filter { selectedIDs.contains($0.id) }
@@ -754,7 +634,6 @@ public struct SessionsView: View {
                     let resolvedPhaseID = pendingPhaseID ?? session.projectPhaseID
                     let resolvedMood = pendingMood ?? session.mood
                     
-                    // Determine project name for the resolved project ID
                     let projectName: String
                     if let pid = pendingProjectID,
                        let project = projectsViewModel.projects.first(where: { $0.id == pid }) {
@@ -799,9 +678,7 @@ public struct SessionsView: View {
         } else {
             Task {
                 await applyFiltersPreservingState()
-                await MainActor.run {
-                    updateSessionCount()
-                }
+                await MainActor.run { updateSessionCount() }
             }
         }
     }
@@ -809,47 +686,37 @@ public struct SessionsView: View {
     private func handleProjectsChange() {
         Task {
             await projectsViewModel.loadProjects()
-            await MainActor.run {
-                updateSessionCount()
-            }
+            await MainActor.run { updateSessionCount() }
         }
     }
     
     // MARK: - Data Loading Functions
 
-    /// Load all sessions for default view
     private func loadAllSessions() async {
         isLoading = true
         let sessions = getAllSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
-        // Force session count update
         updateSessionCount()
         isLoading = false
     }
 
-    /// Load only current week sessions for default view
     private func loadCurrentWeekSessions() async {
         isLoading = true
-        // Get current week sessions based on the current date filter
         let sessions = getCurrentWeekSessions()
         currentWeekSessions = groupSessionsByDate(sessions)
-        // Force session count update
         updateSessionCount()
         isLoading = false
     }
     
-    /// Get all sessions (not just current week)
     private func getAllSessions() -> [SessionRecord] {
         return sessionManager.allSessions
     }
     
-    /// Get sessions from current week only
     private func getCurrentWeekSessions() -> [SessionRecord] {
         let calendar = Calendar.current
         let today = Date()
         let weekStart = calendar.startOfDay(for: today)
         
-        // Get start of current week (Sunday)
         let currentWeekStart: Date
         if let weekRange = calendar.dateInterval(of: .weekOfYear, for: today) {
             currentWeekStart = weekRange.start
@@ -863,15 +730,12 @@ public struct SessionsView: View {
         }
     }
     
-    /// Group sessions by date for display
     private func groupSessionsByDate(_ sessions: [SessionRecord]) -> [GroupedSession] {
         let grouped = Dictionary(grouping: sessions) { session -> Date in
             let start = session.startDate
             return Calendar.current.startOfDay(for: start)
         }
         
-        // Sort groups by date in descending order (most recent first)
-        // This will show Monday at the top if it's the most recent day
         let sortedGroups = grouped.sorted(by: { group1, group2 in
             return group1.key > group2.key
         })
@@ -885,19 +749,14 @@ public struct SessionsView: View {
     // MARK: - Data Functions
     
     private func deleteSession(_ session: SessionRecord) {
-        if sessionManager.deleteSession(id: session.id) {
-        }
+        if sessionManager.deleteSession(id: session.id) { }
         toDelete = nil
     }
-    
     
     // MARK: - Filter Handling
     
     private func handleDateFilterSelection(_ filter: SessionsDateFilter) {
         filterState.selectedDateFilter = filter
-        
-        // Note: Date filtering logic simplified for now
-        // Will be reimplemented when needed
     }
     
     private func handleCustomDateRangeChange(_ range: DateRange?) {
@@ -910,21 +769,57 @@ public struct SessionsView: View {
     
     private func handleActivityTypeFilterChange(_ activityType: String) {
         filterState.activityTypeFilter = activityType
-        // Do NOT refresh immediately - wait for user to click "Confirm"
-        // The filter will be applied when confirmFilters() is called
     }
     
     private func confirmFilters() {
         filterState.requestManualRefresh()
     }
     
-    
-    
     /// Apply current filters while preserving filter state (used for auto-refresh)
     private func applyFiltersPreservingState() async {
         let filteredSessions = getFilteredSessions()
         currentWeekSessions = groupSessionsByDate(filteredSessions)
         lastRefreshTime = Date()
+    }
+}
+
+// MARK: - Escape Key Event Handler View Modifier
+private struct EscapeKeyHandlerViewModifier: ViewModifier {
+    @ObservedObject var filterState: FilterExportState
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                KeyEventHandlingView(filterState: filterState)
+                    .frame(width: 0, height: 0)
+            )
+    }
+}
+
+/// NSViewRepresentable that captures key events for Escape handling
+private struct KeyEventHandlingView: NSViewRepresentable {
+    @ObservedObject var filterState: FilterExportState
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = KeyView()
+        view.filterState = filterState
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) { }
+    
+    class KeyView: NSView {
+        weak var filterState: FilterExportState?
+        
+        override var acceptsFirstResponder: Bool { return true }
+        
+        override func keyDown(with event: NSEvent) {
+            if event.keyCode == 53, let filterState = filterState, filterState.isBulkEditing {
+                filterState.exitBulkEditMode()
+                return
+            }
+            super.keyDown(with: event)
+        }
     }
 }
 
@@ -935,7 +830,6 @@ struct SessionsView_Previews: PreviewProvider {
     static var previews: some View {
         SessionsView()
             .onAppear {
-                // Load data just like the main app does
                 Task {
                     await ProjectsViewModel.shared.loadProjects()
                     await SessionManager.shared.loadAllSessions()

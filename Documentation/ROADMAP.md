@@ -64,11 +64,14 @@
 - Bulk selection mode entered via double-click on any session row (which also opens the filter bar in bulk edit mode)
 - When bulk edit mode is active, the filter bar transforms to show bulk action controls (Project, Phase, Mood) plus Save & Exit / Cancel buttons
 - Click-to-select (toggle individual selection) and shift-click range selection across day-grouped sessions
-- Visual selection highlighting (accent-coloured left border bar on selected rows)
+- Visual selection highlighting (accent-coloured outline around selected rows)
 - Bulk update saves by iterating over selected sessions and calling `updateSessionFull()` for each
-- Phase editing greyed out when sessions from multiple projects are selected, or when a bulk project hasn't been chosen yet
+- Phase editing enabled when all selected sessions belong to the same project (or a bulk project has been chosen)
 - Mood editing uses the existing 0-10 grid `MoodSelectionPopover`
 - On save, the current filtered view is refreshed automatically
+- "Bulk Edit" toggle button inside the filter bar
+- Bulk edit mode can be exited via Cancel button or Escape key
+- Bulk edit dropdowns visually persist the selected value so users know what will be applied
 
 ---
 
@@ -88,9 +91,7 @@
 6. When we finish a sessions, the Dashboard doesn't update. It should automatically update to show the new session, as well as the Sessions dashboard should update, too.
 
 #### Sessions
-1. ~~Add the ability to bulk edit sessions.~~ (Completed — see above)
-2. Add the year next to the pretty date headings in the sessions list.
-3. Do we get rid of the date headings and just have it as a list like a csv is shown in Sheets or Excel? Right now the demarcations between days separates the list a lot and takes up space. The Sessions tab should be a place to view and edit sessions, and that's all. It doesn't have to be anything pretty.
+1. Add the year next to the pretty date headings in the sessions list.
 
 #### Notes Modal
 1. Ensure that our Smart Defaults are working for phases. It should always default to the most recently logged phase for that project.
@@ -99,18 +100,9 @@
 
 ## Known Issues / To-Do Items
 
-### Bulk Edit (May 2026)
-- Add a "Bulk Edit" toggle button inside the filter bar so users can also enter bulk edit mode from the filter UI (currently only enterable via double-clicking a session row)
-- Phase dropdown currently relies on a simplified `resolveBulkPhaseProject()` that needs the actual session data wired through for the mixed-projects check
-
 ---
 
 ## Deferred / Future Considerations
-
-### Phase ID Data Integrity
-- **Priority**: Handled (phase deletion clears `projectPhaseID` to nil; project deletion migrates sessions to another project)
-- **What's in place**: Phase removal clears references via `SessionPhaseIntegrity.clearingPhaseReferences()`. Project deletion migrates sessions via `ProjectsViewModel.deleteProjectWithMigration()`. Both tested.
-- **Remaining edge case**: Bulk-imported CSV rows can reference unknown phase IDs (`DataValidator` reports this on load)
 
 ### Testing
 - **Priority**: Medium
@@ -124,6 +116,7 @@
 
 | Date | Change |
 |------|--------|
+| May 2026 | Bulk edit UX improvements: toggle button in filter bar, Escape to exit, accented outline selection, phase dropdown enabled for same-project selections, dropdown values persist visually |
 | May 2026 | Bulk session editing implemented (double-click mode, filter bar integration, shift-click selection) |
 | May 2026 | Documentation cleanup: removed DATA_FLOW.yaml (redundant with ARCHITECTURE.md), added purpose statements to all docs, created ROADMAP.md |
 | May 2026 | Project Story feature implemented (working, UI ongoing) |

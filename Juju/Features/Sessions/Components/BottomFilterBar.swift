@@ -49,9 +49,9 @@ public class FilterExportState: ObservableObject {
     @Published var lastSelectedSessionID: String? = nil // For shift-click range selection
     
     // Bulk edit pending values (nil = no change)
-    var pendingBulkProjectID: String? = nil
-    var pendingBulkPhaseID: String? = nil
-    var pendingBulkMood: Int? = nil
+    @Published var pendingBulkProjectID: String? = nil
+    @Published var pendingBulkPhaseID: String? = nil
+    @Published var pendingBulkMood: Int? = nil
     
     // Manual refresh control
     @Published var shouldRefresh: Bool = false
@@ -137,6 +137,7 @@ struct BottomFilterBar: View {
     private let projects: [Project]
     private let activityTypes: [ActivityType]
     private let filteredSessionsCount: Int
+    private let selectedSessions: [SessionRecord]
     
     // Callbacks
     let onDateFilterChange: (SessionsDateFilter) -> Void
@@ -145,6 +146,7 @@ struct BottomFilterBar: View {
     let onActivityTypeFilterChange: (String) -> Void
     let onConfirmFilters: () -> Void
     let onClose: () -> Void
+    let onBulkEditToggle: (() -> Void)? // Callback for toggling bulk edit mode
     
     // Animation
     @State private var isHovering = false
@@ -158,23 +160,27 @@ struct BottomFilterBar: View {
         projects: [Project],
         activityTypes: [ActivityType],
         filteredSessionsCount: Int,
+        selectedSessions: [SessionRecord] = [],
         onDateFilterChange: @escaping (SessionsDateFilter) -> Void,
         onCustomDateRangeChange: @escaping (DateRange?) -> Void,
         onProjectFilterChange: @escaping (String) -> Void,
         onActivityTypeFilterChange: @escaping (String) -> Void,
         onConfirmFilters: @escaping () -> Void,
-        onClose: @escaping () -> Void
+        onClose: @escaping () -> Void,
+        onBulkEditToggle: (() -> Void)? = nil
     ) {
         self.filterState = filterState
         self.projects = projects
         self.activityTypes = activityTypes
         self.filteredSessionsCount = filteredSessionsCount
+        self.selectedSessions = selectedSessions
         self.onDateFilterChange = onDateFilterChange
         self.onCustomDateRangeChange = onCustomDateRangeChange
         self.onProjectFilterChange = onProjectFilterChange
         self.onActivityTypeFilterChange = onActivityTypeFilterChange
         self.onConfirmFilters = onConfirmFilters
         self.onClose = onClose
+        self.onBulkEditToggle = onBulkEditToggle
         
         // Initialize temporary state with current filter state
         if let customRange = filterState.customDateRange {
@@ -212,6 +218,9 @@ struct BottomFilterBar: View {
     @ViewBuilder
     private var filterControls: some View {
         HStack(spacing: Theme.spacingSmall) {
+            // Bulk Edit Toggle Button (left side, before project dropdown)
+            bulkEditToggleButton
+            
             // Project Dropdown
             filterProjectDropdown()
             
@@ -227,8 +236,8 @@ struct BottomFilterBar: View {
             // Spacer to push buttons to right
             Spacer()
             
-            // Confirm Button
-            ConfirmButton
+            // Confirm Button (no text, just icon)
+            confirmButton
             
             // Close Button
             CloseButton
@@ -246,6 +255,31 @@ struct BottomFilterBar: View {
         .onHover { hovering in
             isHovering = hovering
         }
+    }
+    
+    // MARK: - Bulk Edit Toggle Button
+    private var bulkEditToggleButton: some View {
+        Button(action: {
+            onBulkEditToggle?()
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: "pencil")
+                    .font(.system(size: 10, weight: .medium))
+                Text("Bulk Edit")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundColor(Theme.Colors.accentColor)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
+                    .stroke(Theme.Colors.accentColor.opacity(0.4), lineWidth: 1)
+                    .background(Theme.Colors.accentColor.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2))
+            )
+        }
+        .help("Enter bulk edit mode")
+        .buttonStyle(.plain)
     }
     
     // MARK: - Bulk Edit Controls
@@ -275,44 +309,36 @@ struct BottomFilterBar: View {
             
             Spacer()
             
-            // Save & Exit button
+            // Save & Exit button (icon only)
             Button(action: {
                 filterState.requestManualRefresh()
             }) {
-                HStack(spacing: Theme.spacingExtraSmall) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .medium))
-                    Text("Save & Exit")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .foregroundColor(Theme.Colors.accentColor)
-                .padding(.horizontal, Theme.spacingSmall)
-                .padding(.vertical, Theme.spacingExtraSmall)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                        .fill(Theme.Colors.accentColor.opacity(0.1))
-                )
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(Theme.Colors.accentColor)
+                    .padding(.horizontal, Theme.spacingSmall)
+                    .padding(.vertical, Theme.spacingExtraSmall)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
+                            .fill(Theme.Colors.accentColor.opacity(0.1))
+                    )
             }
             .help("Apply bulk edits and exit bulk edit mode")
             .buttonStyle(.plain)
             
-            // Cancel button
+            // Cancel button (icon only)
             Button(action: {
                 filterState.exitBulkEditMode()
             }) {
-                HStack(spacing: Theme.spacingExtraSmall) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .medium))
-                    Text("Cancel")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .foregroundColor(Theme.Colors.textSecondary)
-                .padding(.horizontal, Theme.spacingSmall)
-                .padding(.vertical, Theme.spacingExtraSmall)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                        .fill(Theme.Colors.divider.opacity(0.2))
-                )
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .padding(.horizontal, Theme.spacingSmall)
+                    .padding(.vertical, Theme.spacingExtraSmall)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
+                            .fill(Theme.Colors.divider.opacity(0.2))
+                    )
             }
             .help("Exit bulk edit mode without saving")
             .buttonStyle(.plain)
@@ -420,15 +446,18 @@ struct BottomFilterBar: View {
     
     /// Resolves the project to use for phase editing.
     /// Uses the pending bulk project if set; otherwise checks if all selected sessions belong to the same project.
-    /// This is a simplified version that will be wired up properly when sessions data is available.
     private func resolveBulkPhaseProject() -> (same: Bool, project: Project?) {
         if let pendingID = filterState.pendingBulkProjectID {
             // A bulk project has been selected, use that
             let project = projects.first(where: { $0.id == pendingID })
             return (project != nil, project)
         }
-        // Without session data, we assume mixed projects -> phase disabled
-        // This will be overridden when sessions are passed in
+        // Check if all selected sessions belong to the same project
+        let selectedProjectIDs = Set(selectedSessions.filter { filterState.selectedSessionIDs.contains($0.id) }.map { $0.projectID })
+        if selectedProjectIDs.count == 1, let projectID = selectedProjectIDs.first {
+            let project = projects.first(where: { $0.id == projectID })
+            return (project != nil, project)
+        }
         return (false, nil)
     }
     
@@ -616,8 +645,8 @@ struct BottomFilterBar: View {
             .padding(.vertical, 4)
     }
     
-    // MARK: - Confirm Button
-    private var ConfirmButton: some View {
+    // MARK: - Confirm Button (no text label, just icon)
+    private var confirmButton: some View {
         Button(action: {
             if filterState.selectedDateFilter == .custom {
                 let newRange = DateRange(startDate: tempCustomStartDate, endDate: tempCustomEndDate)
@@ -629,8 +658,6 @@ struct BottomFilterBar: View {
             HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 16, weight: .medium))
-                Text("Confirm")
-                    .font(.system(size: 12, weight: .medium))
             }
             .foregroundColor(Theme.Colors.accentColor)
             .padding(.horizontal, Theme.spacingSmall)
