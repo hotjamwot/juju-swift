@@ -236,19 +236,18 @@ private struct NarrativeSummaryCard: View {
                                 .foregroundColor(Theme.Colors.textSecondary)
                                 .tracking(1.0)
 
-                            HStack(spacing: 6) {
-                                Image(systemName: headline.topActivity.sfSymbol)
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                                Text(headline.topActivity.name)
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                            }
-                                .foregroundColor(Theme.Colors.accentColor)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.center)
+                            Image(systemName: headline.topActivity.sfSymbol)
+                                .font(.system(size: 32))
+
+                            Text(headline.topActivity.name)
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .lineLimit(1)
 
                             Spacer()
                         }
                         .frame(width: colWidth)
+                        .foregroundColor(Theme.Colors.accentColor)
 
                         // Column 3: Top Project
                         VStack(spacing: Theme.Spacing.xxs) {

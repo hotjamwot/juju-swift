@@ -9,6 +9,69 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var projects: [Project] = []
     var dashboardWindowController: DashboardWindowController?
     
+    /// Tracks the number of Juju windows (dashboard, notes) that are currently open.
+    /// When > 0, the app uses .regular activation policy (visible in Cmd+Tab).
+    /// When 0, the app uses .accessory activation policy (menu bar only, hidden from Cmd+Tab).
+    private var openWindowCount = 0 {
+        didSet {
+            // Clamp to zero
+            if openWindowCount < 0 { openWindowCount = 0 }
+            updateActivationPolicyIfNeeded()
+        }
+    }
+    
+    /// Registers the app as having an open window, making it visible in Cmd+Tab.
+    func registerWindowOpened() {
+        openWindowCount += 1
+    }
+    
+    /// Registers the app as having closed a window, potentially hiding it from Cmd+Tab.
+    func registerWindowClosed() {
+        openWindowCount -= 1
+    }
+    
+    /// Updates the app's activation policy based on whether any windows are open.
+    private func updateActivationPolicyIfNeeded() {
+        let shouldBeRegular = openWindowCount > 0
+        let isCurrentlyRegular = NSApp.activationPolicy() == .regular
+        
+        guard shouldBeRegular != isCurrentlyRegular else { return }
+        
+        if shouldBeRegular {
+            // Switch to regular: app appears in Dock and Cmd+Tab
+            NSApp.setActivationPolicy(.regular)
+            // Recreate the status item as it may be removed when switching to .regular
+            recreateStatusItem()
+        } else {
+            // Switch to accessory: app is menu bar only, hidden from Cmd+Tab and Dock
+            NSApp.setActivationPolicy(.accessory)
+            // Recreate the status item as it may be removed when switching to .accessory
+            recreateStatusItem()
+        }
+    }
+    
+    /// Recreates the menu bar status item. Switching activation policies can remove
+    /// the existing status item, so we need to rebuild it.
+    private func recreateStatusItem() {
+        // Remove old status item if it exists
+        if let existingItem = statusItem {
+            NSStatusBar.system.removeStatusItem(existingItem)
+        }
+        
+        // Create new status item
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        
+        if let button = statusItem.button {
+            IconManager.updateIcon(for: button, isActive: SessionManager.shared.isSessionActive)
+            
+            button.action = #selector(toggleMenu)
+            button.target = self
+        }
+        
+        // Re-attach the menu to the new status item
+        menuManager.refreshMenu()
+    }
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Load projects
         projects = ProjectManager.shared.loadProjects()
@@ -152,6 +215,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         print("[AppDelegate] windowWillClose called for dashboard window")
         if let window = notification.object as? NSWindow, let controller = dashboardWindowController, controller.window == window {
             dashboardWindowController = nil
+            // Note: registerWindowClosed() is called from DashboardWindowController.deinit
         }
     }
 }

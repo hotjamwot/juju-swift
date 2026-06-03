@@ -33,6 +33,11 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
         window.delegate = self
         window.center()
         window.contentViewController = hostingController
+        
+        // Register window as opened so the app appears in Cmd+Tab
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.registerWindowOpened()
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -62,5 +67,8 @@ class DashboardWindowController: NSWindowController, NSWindowDelegate {
 
     deinit {
         print("[DashboardWindowController] deinit")
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.registerWindowClosed()
+        }
     }
 }

@@ -7,7 +7,7 @@ class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
     @Published var selectedProject: Project?
     @Published var isLoading = false
-    @Published var showArchivedProjects = true
+    @Published var showArchivedProjects = false
     
     /// Sort projects by last session date descending, with fallback to order
     private func sortProjectsByLastSession(_ projects: [Project]) -> [Project] {

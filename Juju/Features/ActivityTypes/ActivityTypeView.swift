@@ -56,7 +56,9 @@ struct ActivityTypeView: View {
                             }
                         }
                     }
-                    .padding()
+                    // Generous horizontal padding for cleaner layout — ~20% less content width
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, Theme.spacingSmall)
                 }
             }
         }
@@ -74,28 +76,27 @@ struct ActivityTypeView: View {
                     )
                     sidebarState.show(.newActivityType(newActivityType))
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                        Text("Add")
-                    }
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Theme.Colors.accentColor)
-                    .cornerRadius(8)
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Theme.Colors.accentColor)
+                        .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
+                .symbolEffect(.bounce, value: viewModel.activityTypes.count)
                 .accessibilityLabel("Add Activity Type")
                 .accessibilityHint("Creates a new activity type")
                 
                 // Archive toggle button
                 Button(action: {
-                    viewModel.showArchivedActivityTypes.toggle()
+                    withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.6)) {
+                        viewModel.showArchivedActivityTypes.toggle()
+                    }
                 }) {
                     Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.divider.opacity(0.3))
@@ -103,8 +104,14 @@ struct ActivityTypeView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
+                .contentTransition(.symbolEffect(.replace))
                 .accessibilityLabel(viewModel.showArchivedActivityTypes ? "Hide Archived Activity Types" : "Show Archived Activity Types")
                 .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
+                .onHover { hovering in
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        // handled by pointingHandOnHover
+                    }
+                }
             }
             .padding(.bottom, Theme.spacingLarge)
             .padding(.leading, Theme.spacingLarge),

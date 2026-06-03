@@ -65,6 +65,11 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         createHostingWindow(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
         
         isPresented = true
+        
+        // Register window as opened so the app appears in Cmd+Tab
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.registerWindowOpened()
+        }
     }
     
     private func createHostingWindow(
@@ -169,6 +174,11 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         
         // Hide the window instead of closing it
         hostingWindow?.orderOut(nil)
+        
+        // Register window as closed so the app may hide from Cmd+Tab
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.registerWindowClosed()
+        }
     }
     
     // MARK: - Public Interface
