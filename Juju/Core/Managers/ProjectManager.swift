@@ -579,7 +579,7 @@ class ProjectManager {
             
             // Ensure project has an emoji field (use default folder emoji)
             if project.emoji.isEmpty {
-                project.emoji = "📁"
+                project.emoji = Project.defaultEmoji
                 needsRewrite = true
                 print("Adding missing 'emoji' field to project \(project.name)")
             }
@@ -626,7 +626,7 @@ class ProjectManager {
             Project(name: "Work", color: "#4E79A7", emoji: "💼"),
             Project(name: "Personal", color: "#F28E2C", emoji: "🏠"),
             Project(name: "Learning", color: "#E15759", emoji: "📚"),
-            Project(name: "Other", color: "#76B7B2", emoji: "📁")
+            Project(name: "Other", color: "#76B7B2", emoji: Project.defaultEmoji)
         ]
         print("Created default projects")
         

@@ -545,7 +545,7 @@ extension Array where Element == SessionRecord {
         
         for session in sessions {
             // Determine activity type ID (handle nil values)
-            let activityTypeID = session.activityTypeID ?? "uncategorized"
+            let activityTypeID = session.activityTypeID ?? ActivityType.uncategorizedID
             
             // Convert session minutes to hours and add to total
             let hours = Double(session.durationMinutes) / 60.0

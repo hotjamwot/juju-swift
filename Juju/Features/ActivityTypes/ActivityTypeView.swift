@@ -355,9 +355,8 @@ struct ActivityTypeView_Previews: PreviewProvider {
             .previewDisplayName("Live Data (from file)")
 
         // Preview with mock data
-        let mockActivityTypes = [
-            ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil", description: "Drafting and creating new content", archived: false),
-            ActivityType(id: "editing", name: "Editing", sfSymbol: "scissors", description: "Refining and improving existing content", archived: false),
+        let mockActivityTypes: [ActivityType] = [
+            .previewWriting, .previewEditing,
             ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Writing and debugging code", archived: true)
         ]
 

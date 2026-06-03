@@ -383,7 +383,7 @@ class DataValidator {
                     color: "#808080", // Grey color for auto-created projects
                     about: "Auto-created from session data",
                     order: 0,
-                    emoji: "📁",
+                    emoji: Project.defaultEmoji,
                     phases: []
                 )
                 

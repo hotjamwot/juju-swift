@@ -23,9 +23,9 @@
 
 ---
 
-## 2. Duplicated Emoji Fallback Defaults
+## 2. Duplicated Emoji Fallback Defaults ✅ COMPLETED
 
-**What I found**: The default emoji/SF Symbol values (e.g., `"📁"` for projects, `"📝"` for uncategorized) are hardcoded in **at least 6 separate locations**:
+**What I found**: The default emoji/SF Symbol values (e.g., `"📁"` for projects, `"📝"` for uncategorized) were hardcoded in **at least 6 separate locations**:
 
 - `ActivityTypeManager.createDefaultActivityTypes()`
 - `ActivityTypeManager.getUncategorizedActivityType()`
@@ -34,19 +34,24 @@
 - `SessionsRowView.projectEmoji` computed property
 - Multiple preview/mock data blocks
 
-**Opportunity**: Define these as static constants on the model types:
+**What was done**: Defined static constants on the model types and replaced all hardcoded values across 9 files:
 
 ```swift
-extension ActivityType {
+// ActivityType.swift
+struct ActivityType: Codable, Identifiable, Hashable {
+    static let uncategorizedID = "uncategorized"
     static let defaultSFSymbol = "doc.plaintext"
+    // ...
 }
 
-extension Project {
+// Project.swift
+struct Project: Codable, Identifiable, Hashable {
     static let defaultEmoji = "📁"
+    // ...
 }
 ```
 
-This would prevent drift and make future migrations far easier.
+**Files updated**: `ActivityType.swift`, `Project.swift`, `ActivityTypesViewModel.swift`, `SessionsRowView.swift`, `NarrativeEngine.swift`, `ChartDataPreparer.swift`, `ProjectManager.swift`, `Array+SessionExtensions.swift`, `DataValidator.swift`.
 
 **Risk**: Low. Pure refactoring with no behavioral change.
 
@@ -117,6 +122,8 @@ This is repeated in `updateSessionProject`, `updateSessionPhase`, `updateSession
 
 **Risk**: Medium. The current approach works but is fragile. A notification-based approach would be more robust but requires careful testing.
 
+**What was done (Jun 2026)**: Replaced the triple-`DispatchQueue` retry in `refreshSessionData()` with a single immediate read from `SessionManager.shared.allSessions`, followed by a single `DispatchQueue.main.async` to bump the `refreshTrigger` and `refreshKey`. `SessionManager.updateSessionFull` / `updateSession` already mutate the in-memory `allSessions` array synchronously, so the timing-based retries were always a workaround for a race that doesn't exist. Also stripped the stale "robust synchronization approach" comments from all 8 update methods in `SessionsRowView.swift`.
+
 ---
 
 ## 6. Mock Data Sprawl in Previews
@@ -137,6 +144,12 @@ extension ActivityType {
 This would centralize mock data and prevent the kind of drift we saw during this migration.
 
 **Risk**: Low. No production impact.
+
+**What was done (Jun 2026)**: Added `#if DEBUG` preview extensions on the model types:
+- `ActivityType`: `previewWriting`, `previewCoding`, `previewEditing`, `previewResearch`, `previewMeeting`, `previewDesign` plus a `previewActivityTypes` array.
+- `Project`: `previewWork`, `previewPersonal`, `previewLearning` plus a `previewProjects` array.
+
+Updated 3 call sites that previously inlined mock data to consume the shared constants: `InlineSelectionPopover_Previews`, `BottomFilterBar_Previews`, and `ActivityTypeView_Previews`. Future schema changes (e.g., adding a field) only need to be made in one place.
 
 ---
 
@@ -193,17 +206,24 @@ The `ActivityTypePieSlice.label` is particularly problematic because it returns 
 
 ## Summary
 
-| Finding | Priority | Effort | Impact |
+| Finding | Priority | Effort | Status |
 |---------|----------|--------|--------|
-| Consolidate chart data models | Medium | Medium | Reduces duplication, simplifies future migrations |
-| Static default constants | High | Low | Prevents drift, simplifies migrations |
-| Refactor SelectionItem protocol | Low | Medium | Cleaner rendering logic |
-| Replace NarrativeEngine tuples | Medium | Low | Better type safety, readability |
-| Simplify session refresh pattern | Medium | Medium | Reduces fragility, code duplication |
-| Centralize mock data | Low | Low | Easier maintenance |
-| JSON schema migration | High | Medium | Prevents silent data loss |
-| Audit rendering consistency | Low | Low | Already partially done |
+| Consolidate chart data models | Medium | Medium | ✅ Done |
+| Static default constants | High | Low | ✅ Done |
+| Refactor SelectionItem protocol | Low | Medium | 🔲 Open (working as-is) |
+| Replace NarrativeEngine tuples | Medium | Low | ✅ Done |
+| Simplify session refresh pattern | Medium | Medium | ✅ Done |
+| Centralize mock data | Low | Low | ✅ Done |
+| JSON schema migration | N/A | N/A | ⏭️ Not needed (single-user app, already migrated) |
+| Audit rendering consistency | Low | Low | 🔲 Open (ActivityType pie label still stringly-typed) |
 
 ---
 
-*Generated during the activity type SF Symbol migration, June 2026.*
+## Additional Fixes (Jun 2026)
+
+- **MoodItem SelectionItem conformance**: Added missing `displaySFSymbol` property to `MoodItem` struct (returns `nil` — moods use emoji).
+- **activityTypes.json restoration**: Restored original user activity types from backup with `emoji` → `sfSymbol` field conversion.
+
+---
+
+*Generated during the activity type SF Symbol migration, June 2026. Updated June 2026.*

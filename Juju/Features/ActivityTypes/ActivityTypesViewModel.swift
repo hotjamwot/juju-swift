@@ -57,7 +57,7 @@ class ActivityTypesViewModel: ObservableObject {
     
     func deleteActivityType(_ activityType: ActivityType) {
         // Prevent deletion of uncategorized fallback
-        guard activityType.id != "uncategorized" else { return }
+        guard activityType.id != ActivityType.uncategorizedID else { return }
         ActivityTypeManager.shared.deleteActivityType(id: activityType.id)
         loadActivityTypes()
     }

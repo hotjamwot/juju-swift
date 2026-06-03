@@ -809,33 +809,21 @@ struct InlineSelectionPopover_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
             InlineSelectionPopover(
-                items: [
-                    Project(name: "Work", color: "#4E79A7", emoji: "💼"),
-                    Project(name: "Personal", color: "#F28E2C", emoji: "🏠"),
-                    Project(name: "Learning", color: "#E15759", emoji: "📚")
-                ],
+                items: Project.previewProjects,
                 currentID: "1",
                 onItemSelected: { _ in },
                 onDismiss: {}
             )
             
             ProjectSelectionPopover(
-                projects: [
-                    Project(name: "Work", color: "#4E79A7", emoji: "💼"),
-                    Project(name: "Personal", color: "#F28E2C", emoji: "🏠"),
-                    Project(name: "Learning", color: "#E15759", emoji: "📚")
-                ],
+                projects: Project.previewProjects,
                 currentProjectID: "1",
                 onProjectSelected: { _ in },
                 onDismiss: {}
             )
             
             ActivityTypeSelectionPopover(
-                activityTypes: [
-                    ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil"),
-                    ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right"),
-                    ActivityType(id: "editing", name: "Editing", sfSymbol: "scissors")
-                ],
+                activityTypes: ActivityType.previewActivityTypes,
                 currentActivityTypeID: "1",
                 onActivityTypeSelected: { _ in },
                 onDismiss: {}
@@ -843,8 +831,11 @@ struct InlineSelectionPopover_Previews: PreviewProvider {
             
             PhaseSelectionPopover(
                 project: Project(
+                    id: "test-project",
                     name: "Test Project",
                     color: "#4E79A7",
+                    about: nil,
+                    order: 0,
                     emoji: "💼",
                     phases: [
                         Phase(name: "Planning", order: 0, archived: false),

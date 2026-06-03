@@ -334,7 +334,7 @@ struct SessionsRowView: View {
                             selectedActivityTypeID = currentSession.activityTypeID
                         }) {
                             HStack(spacing: 4) {
-                                Image(systemName: "doc.plaintext")
+                                Image(systemName: ActivityType.defaultSFSymbol)
                                     .font(.system(size: 10))
                                 Text("Activity Type")
                                     .font(Theme.Fonts.caption)
@@ -748,7 +748,7 @@ struct SessionsRowView: View {
     }
     
     private var projectEmoji: String {
-        project?.emoji ?? "📁"
+        project?.emoji ?? Project.defaultEmoji
     }
     
     /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
@@ -904,8 +904,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new project")
-            // Force immediate refresh of the session observer to update the UI
-            // Use a more robust synchronization approach with multiple refresh attempts
             refreshSessionData()
             
             // Force the phase popover to refresh by changing the key
@@ -919,32 +917,20 @@ struct SessionsRowView: View {
         }
     }
     
-    /// Refresh session data with robust synchronization
-    /// This method ensures that the session data is properly updated before refreshing the UI
+    /// Refresh session data from the in-memory store and trigger a UI update.
+    ///
+    /// `SessionManager.updateSessionFull` / `updateSession` both synchronously
+    /// update `allSessions` *and* persist to disk, so a single immediate read
+    /// is sufficient — no delayed retries needed.
     private func refreshSessionData() {
-        // Reload the session from SessionManager to get updated values
         if let updatedSession = SessionManager.shared.allSessions.first(where: { $0.id == session.id }) {
             currentSession = updatedSession
-            // Also update the sessionIsMilestone state from the reloaded session
             sessionIsMilestone = updatedSession.isMilestone
         }
         
-        // First attempt: immediate refresh
         DispatchQueue.main.async {
             self.sessionObserver.refreshTrigger = UUID()
-            self.refreshKey = UUID() // Force UI refresh
-        }
-        
-        // Second attempt: after a short delay to ensure data store is updated
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.sessionObserver.refreshTrigger = UUID()
-            self.refreshKey = UUID() // Force UI refresh
-        }
-        
-        // Third attempt: after a longer delay for full synchronization
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.sessionObserver.refreshTrigger = UUID()
-            self.refreshKey = UUID() // Force UI refresh
+            self.refreshKey = UUID()
         }
     }
     
@@ -976,8 +962,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new phase")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as project updates
             refreshSessionData()
             
             // Force the phase popover to refresh by changing the key
@@ -1019,8 +1003,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new activity type")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as project and phase updates
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view
@@ -1044,11 +1026,7 @@ struct SessionsRowView: View {
         let success = SessionManager.shared.updateSession(id: session.id, field: "mood", value: String(mood))
         
         if success {
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as project, phase, and activity type updates
             refreshSessionData()
-            
-            // Notify parent that project has changed so it can refresh the view
             onProjectChanged?()
         }
     }
@@ -1085,8 +1063,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new start date and time")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as other updates
             refreshSessionData()
         }
     }
@@ -1121,8 +1097,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new end date and time")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as other updates
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view
@@ -1147,8 +1121,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new notes")
-            // Force immediate refresh of the session observer to update the UI
-            // Use the same robust synchronization approach as other updates
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view
@@ -1186,9 +1158,6 @@ struct SessionsRowView: View {
         
         if success {
             print("✅ Successfully updated session \(session.id) with new action and milestone state")
-            // Force immediate refresh of the session observer to update the UI
-            // The refreshSessionData() call will reload the session from the data store
-            // which will reflect the new milestone state
             refreshSessionData()
             
             // Notify parent that project has changed so it can refresh the view

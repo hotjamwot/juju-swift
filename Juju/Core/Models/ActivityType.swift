@@ -2,6 +2,10 @@ import Foundation
 
 // MARK: - Activity Type Model
 struct ActivityType: Codable, Identifiable, Hashable {
+    // MARK: - Default Constants
+    static let uncategorizedID = "uncategorized"
+    static let defaultSFSymbol = "doc.plaintext"
+    
     let id: String
     var name: String
     var sfSymbol: String
@@ -210,7 +214,7 @@ class ActivityTypeManager {
     
     private func createDefaultActivityTypes() -> [ActivityType] {
         let defaults = [
-            ActivityType(id: "uncategorized", name: "Uncategorized", sfSymbol: "doc.plaintext", description: "Fallback for legacy sessions without activity type", archived: true),
+            ActivityType(id: ActivityType.uncategorizedID, name: "Uncategorized", sfSymbol: ActivityType.defaultSFSymbol, description: "Fallback for legacy sessions without activity type", archived: true),
             ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil", description: "Drafting and creating new content", archived: false),
             ActivityType(id: "outlining", name: "Outlining / Brainstorming", sfSymbol: "brain.head.profile", description: "Planning and organizing ideas", archived: false),
             ActivityType(id: "editing", name: "Editing / Rewriting", sfSymbol: "scissors", description: "Refining and improving existing content", archived: false),
@@ -230,7 +234,7 @@ class ActivityTypeManager {
     /// Get the "Uncategorized" activity type (fallback for legacy sessions)
     func getUncategorizedActivityType() -> ActivityType {
         let types = loadActivityTypes()
-        return types.first { $0.id == "uncategorized" } ?? ActivityType(id: "uncategorized", name: "Uncategorized", sfSymbol: "doc.plaintext", description: "Fallback for legacy sessions without activity type", archived: false)
+        return types.first { $0.id == ActivityType.uncategorizedID } ?? ActivityType(id: ActivityType.uncategorizedID, name: "Uncategorized", sfSymbol: ActivityType.defaultSFSymbol, description: "Fallback for legacy sessions without activity type", archived: false)
     }
     
     /// Get activity type display info, with fallback to "Uncategorized" for nil or missing IDs
@@ -242,3 +246,20 @@ class ActivityTypeManager {
         return (activityType.name, activityType.sfSymbol)
     }
 }
+
+// MARK: - Shared Preview Data
+#if DEBUG
+extension ActivityType {
+    static let previewWriting = ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil", description: "Drafting and creating new content")
+    static let previewCoding = ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Writing and debugging code")
+    static let previewEditing = ActivityType(id: "editing", name: "Editing", sfSymbol: "scissors", description: "Refining and improving existing content")
+    static let previewResearch = ActivityType(id: "research", name: "Research", sfSymbol: "magnifyingglass", description: "Investigating and learning")
+    static let previewMeeting = ActivityType(id: "meeting", name: "Meeting", sfSymbol: "person.2", description: "Collaborative discussions")
+    static let previewDesign = ActivityType(id: "design", name: "Design", sfSymbol: "paintbrush", description: "UI/UX design")
+
+    static let previewActivityTypes: [ActivityType] = [
+        .previewWriting, .previewCoding, .previewEditing,
+        .previewResearch, .previewMeeting, .previewDesign
+    ]
+}
+#endif

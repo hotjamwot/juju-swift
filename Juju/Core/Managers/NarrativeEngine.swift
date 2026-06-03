@@ -60,6 +60,27 @@ enum ChartTimePeriod: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Narrative Summary Types
+
+/// Represents the top activity for a period, replacing the tuple anti-pattern.
+struct ActivitySummary: Equatable {
+    let name: String
+    let sfSymbol: String
+}
+
+/// Represents the top project for a period, replacing the tuple anti-pattern.
+struct ProjectSummary: Equatable {
+    let name: String
+    let emoji: String
+}
+
+/// Represents a trend comparison between two periods, replacing the tuple anti-pattern.
+struct TrendChange: Equatable {
+    let from: String
+    let to: String
+    let change: Double
+}
+
 // MARK: - Narrative Models
 struct Milestone: Identifiable, Hashable, Equatable {
     let id = UUID()
@@ -80,8 +101,8 @@ struct PeriodSessionData: Identifiable {
     let period: ChartTimePeriod
     let sessions: [SessionRecord]
     let totalHours: Double
-    let topActivity: (name: String, sfSymbol: String)
-    let topProject: (name: String, emoji: String)
+    let topActivity: ActivitySummary
+    let topProject: ProjectSummary
     let milestones: [Milestone]
     let averageDailyHours: Double
     let activityDistribution: [String: Double]
@@ -99,8 +120,8 @@ struct ComparativeAnalytics: Identifiable {
 struct AnalyticsTrends: Identifiable {
     let id = UUID()
     let totalHoursChange: Double
-    let topActivityChange: (from: String, to: String, change: Double)
-    let topProjectChange: (from: String, to: String, change: Double)
+    let topActivityChange: TrendChange
+    let topProjectChange: TrendChange
     let milestoneCountChange: Int
     let averageDailyHoursChange: Double
     let activityDistributionChanges: [String: Double]
@@ -109,20 +130,12 @@ struct AnalyticsTrends: Identifiable {
 
 struct NarrativeHeadline: Equatable {
     let totalHours: Double
-    let topActivity: (name: String, sfSymbol: String)
-    let topProject: (name: String, emoji: String)
+    let topActivity: ActivitySummary
+    let topProject: ProjectSummary
     let milestone: Milestone?
     let period: String
     
-    static func == (lhs: NarrativeHeadline, rhs: NarrativeHeadline) -> Bool {
-        lhs.totalHours == rhs.totalHours &&
-        lhs.topActivity.name == rhs.topActivity.name &&
-        lhs.topActivity.sfSymbol == rhs.topActivity.sfSymbol &&
-        lhs.topProject.name == rhs.topProject.name &&
-        lhs.topProject.emoji == rhs.topProject.emoji &&
-        lhs.milestone == rhs.milestone &&
-        lhs.period == rhs.period
-    }
+    // Equatable synthesis is automatic — no manual field-by-field comparison needed.
     
     var formattedHours: String {
         let hours = Int(totalHours)
@@ -154,9 +167,9 @@ final class NarrativeEngine: ObservableObject {
             .sorted { $0.startDate > $1.startDate }
             .compactMap { session -> Milestone? in
                 guard let text = session.action else { return nil }
-                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
+                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
-                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
             }
             .first
     }
@@ -258,29 +271,29 @@ final class NarrativeEngine: ObservableObject {
         Double(sessions.reduce(0) { $0 + $1.durationMinutes }) / 60.0
     }
     
-    private func determineTopActivity(from sessions: [SessionRecord]) -> (name: String, sfSymbol: String) {
+    private func determineTopActivity(from sessions: [SessionRecord]) -> ActivitySummary {
         var totals: [String: Double] = [:]
         for session in sessions {
-            let id = session.activityTypeID ?? "uncategorized"
+            let id = session.activityTypeID ?? ActivityType.uncategorizedID
             totals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         guard let topID = totals.max(by: { $0.value < $1.value })?.key else {
-            return ("Uncategorized", "doc.plaintext")
+            return ActivitySummary(name: "Uncategorized", sfSymbol: ActivityType.defaultSFSymbol)
         }
         let activity = activityTypeManager.getActivityType(id: topID) ?? activityTypeManager.getUncategorizedActivityType()
-        return (activity.name, activity.sfSymbol)
+        return ActivitySummary(name: activity.name, sfSymbol: activity.sfSymbol)
     }
     
-    private func determineTopProject(from sessions: [SessionRecord]) -> (name: String, emoji: String) {
+    private func determineTopProject(from sessions: [SessionRecord]) -> ProjectSummary {
         var totals: [String: Double] = [:]
         for session in sessions {
             totals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
         }
         guard let topID = totals.max(by: { $0.value < $1.value })?.key else {
-            return ("No Project", "📁")
+            return ProjectSummary(name: "No Project", emoji: Project.defaultEmoji)
         }
         let project = projectsViewModel.projects.first { $0.id == topID }
-        return (project?.name ?? topID, project?.emoji ?? "📁")
+        return ProjectSummary(name: project?.name ?? topID, emoji: project?.emoji ?? Project.defaultEmoji)
     }
     
     private func detectRecentMilestone(from sessions: [SessionRecord]) -> Milestone? {
@@ -288,9 +301,9 @@ final class NarrativeEngine: ObservableObject {
         let recent = sessions.filter { $0.startDate >= oneWeekAgo && $0.isMilestone && !($0.action?.isEmpty ?? true) }
             .sorted { $0.startDate > $1.startDate }
         guard let session = recent.first, let text = session.action else { return nil }
-        let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
+        let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
         let project = projectsViewModel.projects.first { $0.id == session.projectID }
-        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
+        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
     }
 
     private func detectAllCurrentWeekMilestones() -> [Milestone] {
@@ -301,18 +314,18 @@ final class NarrativeEngine: ObservableObject {
             .sorted { $0.startDate > $1.startDate }
             .compactMap { session -> Milestone? in
                 guard let text = session.action else { return nil }
-                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
+                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
-                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
             }
     }
 
     private func detectMilestones(in sessions: [SessionRecord]) -> [Milestone] {
         sessions.compactMap { session -> Milestone? in
             guard session.isMilestone, let text = session.action else { return nil }
-            let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "uncategorized") ?? activityTypeManager.getUncategorizedActivityType()
+            let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
             let project = projectsViewModel.projects.first { $0.id == session.projectID }
-            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? "📁", activityType: activity.name)
+            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
         }
     }
     
@@ -323,7 +336,7 @@ final class NarrativeEngine: ObservableObject {
     private func calculateActivityDistribution(from sessions: [SessionRecord]) -> [String: Double] {
         var dist: [String: Double] = [:]
         for session in sessions {
-            let id = session.activityTypeID ?? "uncategorized"
+            let id = session.activityTypeID ?? ActivityType.uncategorizedID
             dist[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         return dist
@@ -349,8 +362,8 @@ final class NarrativeEngine: ObservableObject {
     private func calculateTrends(current: PeriodSessionData, previous: PeriodSessionData) -> AnalyticsTrends {
         AnalyticsTrends(
             totalHoursChange: pctChange(current: current.totalHours, previous: previous.totalHours),
-            topActivityChange: (previous.topActivity.name, current.topActivity.name, current.activityDistribution[current.topActivity.name, default: 0] - previous.activityDistribution[previous.topActivity.name, default: 0]),
-            topProjectChange: (previous.topProject.name, current.topProject.name, current.projectDistribution[current.topProject.name, default: 0] - previous.projectDistribution[previous.topProject.name, default: 0]),
+            topActivityChange: TrendChange(from: previous.topActivity.name, to: current.topActivity.name, change: current.activityDistribution[current.topActivity.name, default: 0] - previous.activityDistribution[previous.topActivity.name, default: 0]),
+            topProjectChange: TrendChange(from: previous.topProject.name, to: current.topProject.name, change: current.projectDistribution[current.topProject.name, default: 0] - previous.projectDistribution[previous.topProject.name, default: 0]),
             milestoneCountChange: current.milestones.count - previous.milestones.count,
             averageDailyHoursChange: pctChange(current: current.averageDailyHours, previous: previous.averageDailyHours),
             activityDistributionChanges: distChanges(current: current.activityDistribution, previous: previous.activityDistribution),

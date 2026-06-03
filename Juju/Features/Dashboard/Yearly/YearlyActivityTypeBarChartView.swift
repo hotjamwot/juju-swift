@@ -11,14 +11,14 @@ import SwiftUI
 /// Shows activity names and emojis on the left with left-aligned bars on right using consistent accent color.
 /// Only displays active (non-archived) activity types.
 struct YearlyActivityTypeBarChartView: View {
-    let data: [YearlyActivityTypeChartData]
+    let data: [ActivityDistributionItem]
     @State private var hoveredIndex: Int? = nil
     
-    static let sampleData: [YearlyActivityTypeChartData] = [
-        YearlyActivityTypeChartData(activityName: "Writing", sfSymbol: "pencil", totalHours: 200.0, percentage: 40.0),
-        YearlyActivityTypeChartData(activityName: "Editing", sfSymbol: "scissors", totalHours: 150.0, percentage: 30.0),
-        YearlyActivityTypeChartData(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 100.0, percentage: 20.0),
-        YearlyActivityTypeChartData(activityName: "Admin", sfSymbol: "folder", totalHours: 50.0, percentage: 10.0)
+    static let sampleData: [ActivityDistributionItem] = [
+        ActivityDistributionItem(activityName: "Writing", sfSymbol: "pencil", totalHours: 200.0, percentage: 40.0),
+        ActivityDistributionItem(activityName: "Editing", sfSymbol: "scissors", totalHours: 150.0, percentage: 30.0),
+        ActivityDistributionItem(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 100.0, percentage: 20.0),
+        ActivityDistributionItem(activityName: "Admin", sfSymbol: "folder", totalHours: 50.0, percentage: 10.0)
     ]
     
     var body: some View {

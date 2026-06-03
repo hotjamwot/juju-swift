@@ -35,8 +35,8 @@ import SwiftUI
 /// - [RECEIVES] sessionManager.allSessions (must call loadAllSessions() first)
 /// - [RECEIVES] projectManager.projects for colors and archived status
 /// - [RECEIVES] activityTypeManager.activityTypes for category names
-/// - [OUTPUTS] ActivityChartData[] for pie/bar charts
-/// - [OUTPUTS] ProjectChartData[] for dashboard display
+/// - [OUTPUTS] ActivityDistributionItem[] for pie/bar charts
+/// - [OUTPUTS] YearlyProjectChartData[] for dashboard display
 /// 
 /// **AI Notes**:
 /// - Uses @MainActor for UI-bound operations
@@ -148,7 +148,7 @@ final class ChartDataPreparer: ObservableObject {
             
             let project = projectLookup[session.projectID]
             let projectColor = project?.color ?? "#999999"
-            let projectEmoji = project?.emoji ?? "📁"
+            let projectEmoji = project?.emoji ?? Project.defaultEmoji
             
             let activityTypeManager = ActivityTypeManager.shared
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "") ?? activityTypeManager.getUncategorizedActivityType()
@@ -174,13 +174,13 @@ final class ChartDataPreparer: ObservableObject {
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    func yearlyActivityTypeTotals() -> [YearlyActivityTypeChartData] {
+    func yearlyActivityTypeTotals() -> [ActivityDistributionItem] {
         let activityTypeManager = ActivityTypeManager.shared
         let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
         var totals: [String: Double] = [:]
         for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
-            let id = session.activityTypeID ?? "uncategorized"
+            let id = session.activityTypeID ?? ActivityType.uncategorizedID
             totals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         
@@ -188,7 +188,7 @@ final class ChartDataPreparer: ObservableObject {
         return totals.compactMap { (id, hours) in
             guard hours > 0 else { return nil }
             let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-            return YearlyActivityTypeChartData(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+            return ActivityDistributionItem(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
@@ -218,7 +218,7 @@ final class ChartDataPreparer: ObservableObject {
         return totals
     }
     
-    func monthlyActivityTypeTotals() -> [MonthlyActivityTypeChartData] {
+    func monthlyActivityTypeTotals() -> [MonthlyActivityBreakdown] {
         let activityTypeManager = ActivityTypeManager.shared
         let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
@@ -229,23 +229,23 @@ final class ChartDataPreparer: ObservableObject {
         }
         
         let monthNames = DateFormatter().monthSymbols ?? []
-        return (1...12).compactMap { monthNum -> MonthlyActivityTypeChartData? in
+        return (1...12).compactMap { monthNum -> MonthlyActivityBreakdown? in
             guard monthNum >= 1 && monthNum <= monthNames.count else { return nil }
             let sessions = monthlyData[monthNum] ?? []
             var activityTotals: [String: Double] = [:]
             for session in sessions {
-                let id = session.activityTypeID ?? "uncategorized"
+                let id = session.activityTypeID ?? ActivityType.uncategorizedID
                 activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
             }
             
             let total = activityTotals.values.reduce(0, +)
-            let breakdown = activityTotals.compactMap { (id, hours) -> MonthlyActivityTypeDataPoint? in
+            let breakdown = activityTotals.compactMap { (id, hours) -> ActivityDistributionItem? in
                 guard hours > 0 else { return nil }
                 let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-                return MonthlyActivityTypeDataPoint(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+                return ActivityDistributionItem(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
             }.sorted { $0.totalHours > $1.totalHours }
             
-            return MonthlyActivityTypeChartData(month: monthNames[monthNum - 1], monthNumber: monthNum, activityBreakdown: breakdown, totalHours: total)
+            return MonthlyActivityBreakdown(month: monthNames[monthNum - 1], monthNumber: monthNum, activityBreakdown: breakdown, totalHours: total)
         }
     }
 }

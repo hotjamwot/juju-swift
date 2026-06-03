@@ -757,10 +757,8 @@ struct BottomFilterBar_Previews: PreviewProvider {
             Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0),
             Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0)
         ]
-        let activityTypes = [
-            ActivityType(id: "1", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Software development"),
-            ActivityType(id: "2", name: "Writing", sfSymbol: "pencil", description: "Content creation"),
-            ActivityType(id: "3", name: "Design", sfSymbol: "paintbrush", description: "UI/UX design")
+        let activityTypes: [ActivityType] = [
+            .previewCoding, .previewWriting, .previewDesign
         ]
         
         VStack {

@@ -10,7 +10,27 @@ struct ChartDataPoint: Identifiable {
     let label: String
 }
 
-struct ProjectChartData: Identifiable {
+/// Consolidated activity distribution item — used across yearly, monthly, and pie charts.
+/// Replaces the previous `YearlyActivityTypeChartData`, `YearlyActivityTypeDataPoint`, and `MonthlyActivityTypeDataPoint`.
+struct ActivityDistributionItem: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let sfSymbol: String
+    let totalHours: Double
+    let percentage: Double
+}
+
+/// Monthly activity breakdown — a month's worth of activity distribution data.
+/// Replaces the previous `MonthlyActivityTypeChartData` and `YearlyMonthlyChartData`.
+struct MonthlyActivityBreakdown: Identifiable {
+    let id = UUID()
+    let month: String
+    let monthNumber: Int
+    let activityBreakdown: [ActivityDistributionItem]
+    let totalHours: Double
+}
+
+struct YearlyProjectChartData: Identifiable {
     let id = UUID()
     let projectName: String
     let color: String
@@ -21,14 +41,6 @@ struct ProjectChartData: Identifiable {
     var colorSwiftUI: Color {
         Color(hex: color)
     }
-}
-
-struct ActivityChartData: Identifiable {
-    let id = UUID()
-    let activityName: String
-    let emoji: String
-    let totalHours: Double
-    let percentage: Double
 }
 
 struct TimeSeriesData: Identifiable {
@@ -116,83 +128,4 @@ struct MonthlyActivityHour: Identifiable {
     let monthNumber: Int
     let activityName: String
     let totalHours: Double
-}
-
-// MARK: - Yearly Chart Data Models
-
-/// Yearly project chart data model for project distribution chart
-struct YearlyProjectChartData: Identifiable {
-    let id = UUID()
-    let projectName: String
-    let color: String
-    let emoji: String
-    let totalHours: Double
-    let percentage: Double
-    
-    var colorSwiftUI: Color {
-        Color(hex: color)
-    }
-}
-
-/// Yearly project data point for individual data points
-struct YearlyProjectDataPoint: Identifiable {
-    let id = UUID()
-    let projectName: String
-    let emoji: String
-    let totalHours: Double
-    let percentage: Double
-}
-
-/// Yearly activity type chart data model for activity types distribution chart
-struct YearlyActivityTypeChartData: Identifiable {
-    let id = UUID()
-    let activityName: String
-    let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
-}
-
-/// Yearly activity type data point for individual data points
-struct YearlyActivityTypeDataPoint: Identifiable {
-    let id = UUID()
-    let activityName: String
-    let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
-}
-
-/// Yearly monthly chart data model for monthly activity breakdown chart
-struct YearlyMonthlyChartData: Identifiable {
-    let id = UUID()
-    let month: String
-    let monthNumber: Int
-    let activityBreakdown: [YearlyMonthlyActivityDataPoint]
-    let totalHours: Double
-}
-
-/// Yearly monthly activity data point for individual activity breakdowns within months
-struct YearlyMonthlyActivityDataPoint: Identifiable {
-    let id = UUID()
-    let activityName: String
-    let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
-}
-
-/// Monthly activity type chart data model for monthly activity type grouped bar chart
-struct MonthlyActivityTypeChartData: Identifiable {
-    let id = UUID()
-    let month: String
-    let monthNumber: Int
-    let activityBreakdown: [MonthlyActivityTypeDataPoint]
-    let totalHours: Double
-}
-
-/// Monthly activity type data point for individual activity breakdowns within months
-struct MonthlyActivityTypeDataPoint: Identifiable {
-    let id = UUID()
-    let activityName: String
-    let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
 }

@@ -18,6 +18,9 @@ struct Phase: Codable, Identifiable, Hashable {
 
 // Project structure to match the original app
 struct Project: Codable, Identifiable, Hashable {
+    // MARK: - Default Constants
+    static let defaultEmoji = "📁"
+    
     var id: String
     var name: String
     var color: String
@@ -131,7 +134,7 @@ struct Project: Codable, Identifiable, Hashable {
         Color(hex: color)
     }
     
-    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = "📁", phases: [Phase] = []) {
+    init(name: String, color: String = "#4E79A7", about: String? = nil, order: Int = 0, emoji: String = Project.defaultEmoji, phases: [Phase] = []) {
         self.id = UUID().uuidString
         self.name = name
         self.color = color
@@ -142,7 +145,7 @@ struct Project: Codable, Identifiable, Hashable {
         self.phases = phases
     }
     
-    init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = "📁", phases: [Phase] = []) {
+    init(id: String, name: String, color: String, about: String?, order: Int, emoji: String = Project.defaultEmoji, phases: [Phase] = []) {
         self.id = id
         self.name = name
         self.color = color
@@ -160,7 +163,7 @@ struct Project: Codable, Identifiable, Hashable {
         color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#4E79A7"
         about = try container.decodeIfPresent(String.self, forKey: .about)
         order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
-        emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? "📁"
+        emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? Project.defaultEmoji
         archived = try container.decodeIfPresent(Bool.self, forKey: .archived) ?? false  // Default to false for legacy projects
         phases = try container.decodeIfPresent([Phase].self, forKey: .phases) ?? []  // Default to empty array for legacy projects
     }
@@ -185,3 +188,14 @@ struct Project: Codable, Identifiable, Hashable {
         lhs.id == rhs.id
     }
 }
+
+// MARK: - Shared Preview Data
+#if DEBUG
+extension Project {
+    static let previewWork = Project(name: "Work", color: "#4E79A7", emoji: "💼")
+    static let previewPersonal = Project(name: "Personal", color: "#F28E2C", emoji: "🏠")
+    static let previewLearning = Project(name: "Learning", color: "#E15759", emoji: "📚")
+
+    static let previewProjects: [Project] = [.previewWork, .previewPersonal, .previewLearning]
+}
+#endif

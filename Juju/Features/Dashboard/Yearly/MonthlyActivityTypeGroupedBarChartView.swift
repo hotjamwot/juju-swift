@@ -11,29 +11,29 @@ import SwiftUI
 /// Shows months on Y-axis with grouped bars for each activity type using consistent accent color.
 /// Only displays active (non-archived) activity types.
 struct MonthlyActivityTypeGroupedBarChartView: View {
-    let data: [MonthlyActivityTypeChartData]
+    let data: [MonthlyActivityBreakdown]
     @State private var hoveredIndex: Int? = nil
     
-    static let sampleData: [MonthlyActivityTypeChartData] = [
-        MonthlyActivityTypeChartData(
+    static let sampleData: [MonthlyActivityBreakdown] = [
+        MonthlyActivityBreakdown(
             month: "January",
             monthNumber: 1,
             activityBreakdown: [
-                MonthlyActivityTypeDataPoint(activityName: "Writing", sfSymbol: "pencil", totalHours: 20.0, percentage: 40.0),
-                MonthlyActivityTypeDataPoint(activityName: "Editing", sfSymbol: "scissors", totalHours: 15.0, percentage: 30.0),
-                MonthlyActivityTypeDataPoint(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 10.0, percentage: 20.0),
-                MonthlyActivityTypeDataPoint(activityName: "Admin", sfSymbol: "folder", totalHours: 5.0, percentage: 10.0)
+                ActivityDistributionItem(activityName: "Writing", sfSymbol: "pencil", totalHours: 20.0, percentage: 40.0),
+                ActivityDistributionItem(activityName: "Editing", sfSymbol: "scissors", totalHours: 15.0, percentage: 30.0),
+                ActivityDistributionItem(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 10.0, percentage: 20.0),
+                ActivityDistributionItem(activityName: "Admin", sfSymbol: "folder", totalHours: 5.0, percentage: 10.0)
             ],
             totalHours: 50.0
         ),
-        MonthlyActivityTypeChartData(
+        MonthlyActivityBreakdown(
             month: "February", 
             monthNumber: 2,
             activityBreakdown: [
-                MonthlyActivityTypeDataPoint(activityName: "Writing", sfSymbol: "pencil", totalHours: 18.0, percentage: 36.0),
-                MonthlyActivityTypeDataPoint(activityName: "Editing", sfSymbol: "scissors", totalHours: 16.0, percentage: 32.0),
-                MonthlyActivityTypeDataPoint(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 12.0, percentage: 24.0),
-                MonthlyActivityTypeDataPoint(activityName: "Admin", sfSymbol: "folder", totalHours: 4.0, percentage: 8.0)
+                ActivityDistributionItem(activityName: "Writing", sfSymbol: "pencil", totalHours: 18.0, percentage: 36.0),
+                ActivityDistributionItem(activityName: "Editing", sfSymbol: "scissors", totalHours: 16.0, percentage: 32.0),
+                ActivityDistributionItem(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 12.0, percentage: 24.0),
+                ActivityDistributionItem(activityName: "Admin", sfSymbol: "folder", totalHours: 4.0, percentage: 8.0)
             ],
             totalHours: 50.0
         )
