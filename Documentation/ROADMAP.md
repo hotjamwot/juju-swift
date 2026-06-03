@@ -84,12 +84,10 @@
 - **What works**: Timeline derivation, phase segments, milestone extraction, density calculation
 
 #### Dashboard changes
-1. In the Weekly Calendar view, the bubbles don't appear if a session goes past midnight. Ideally, we'd be able to see the session reflected in the view. Can we look at how this works and how we could implement this simply?
-2. In the HeatMap view, let's add Weekly Total Duration labels to the right hand side of the graph, after the Sunday squares. The labels for the Dates on the left axis and the days of the week on the top axis can be larger, too.
-3. For the HeatMap view, let's look at our comparison calculation to the previous week. It would be ideal if it calculated last week's hours up to the same time as today, instead of doing the total hours of the week up to the end of the same day as today. For example, if today is Wednesday at 3pm, it should compare last week’s hours up to Wednesday at 3pm, instead of the total hours of the week up to Wednesday .
-4. Let's add tool tips to the weekly calendar chart view. The tooltips can be in the same style as the tooltips on the heat map view. They can say what the duration of the session was and the line of action. 
-5. Let's make the buttons for each of the dashboard views on the left hand side more pressed together. I think the whole sidebar should have a slight change up so it's a little bit more clear what things are, and we could add tool tips when you hover for a second that show what they are. Right now the four buttons we have are Charts, Sessions, Projects, and Activity Types. 
-6. When we finish a sessions, the Dashboard doesn't update. It should automatically update to show the new session, as well as the Sessions dashboard should update, too.
+1. For the HeatMap view, let's look at our comparison calculation to the previous week. It would be ideal if it calculated last week's hours up to the same time as today, instead of doing the total hours of the week up to the end of the same day as today. For example, if today is Wednesday at 3pm, it should compare last week’s hours up to Wednesday at 3pm, instead of the total hours of the week up to Wednesday .
+2. Let's add tool tips to the weekly calendar chart view. The tooltips can be in the same style as the tooltips on the heat map view. They can say what the duration of the session was and the line of action. 
+3. Let's make the buttons for each of the dashboard views on the left hand side more pressed together. I think the whole sidebar should have a slight change up so it's a little bit more clear what things are, and we could add tool tips when you hover for a second that show what they are. Right now the four buttons we have are Charts, Sessions, Projects, and Activity Types. 
+4. When we finish a sessions, the Dashboard doesn't update. It should automatically update to show the new session, as well as the Sessions dashboard should update, too.
 
 #### Sessions
 1. Add the year next to the pretty date headings in the sessions list.

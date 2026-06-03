@@ -21,13 +21,14 @@ private extension Int {
 
 // MARK: - Pretty date helper
 private extension Date {
-    /// "Monday, 23rd October"
+    /// "Monday, 23rd October 2024"
     var prettyHeader: String {
         let cal = Calendar.current
         let weekday = cal.weekdaySymbols[cal.component(.weekday, from: self) - 1]
         let day     = cal.component(.day, from: self)
         let month   = cal.monthSymbols[cal.component(.month, from: self) - 1]
-        return "\(weekday), \(day)\(day.ordinalSuffix) \(month)"
+        let year    = cal.component(.year, from: self)
+        return "\(weekday), \(day)\(day.ordinalSuffix) \(month) \(year)"
     }
     
     /// Short header: "Jan 15, 2024"

@@ -125,6 +125,11 @@ final class ChartDataPreparer: ObservableObject {
     /// - Zero total hours results in 0% for all activities
     /// - Uncategorized sessions grouped under "uncategorized" ID
     /// - Missing activity type names fall back to "Uncategorized"
+    /// - Zero-duration sessions (raw start hour == raw end hour) are dropped.
+    /// - Sessions crossing midnight are split into two bubbles: one on the
+    ///   start day (clipped to 24:00) and one on the end day (from 0:00 to
+    ///   the actual end hour). If the end day is outside the current week
+    ///   interval, only the start-day bubble (clipped to 24:00) is shown.
     ///
     /// **Integration**: Uses ActivityTypeManager for activity name/emoji lookup
     ///
@@ -134,26 +139,50 @@ final class ChartDataPreparer: ObservableObject {
         // Filter sessions to only current week sessions
         let currentWeekSessions = viewModel.sessions.filter { currentWeekInterval.contains($0.startDate) }
         
-        return currentWeekSessions.compactMap { session -> WeeklySession? in
+        let dayFormatter = DateFormatter()
+        dayFormatter.dateFormat = "EEEE"
+
+        let activityTypeManager = ActivityTypeManager.shared
+
+        return currentWeekSessions.flatMap { session -> [WeeklySession] in
             let startComp = calendar.dateComponents([.hour, .minute], from: session.startDate)
             let endComp = calendar.dateComponents([.hour, .minute], from: session.endDate)
             let startHour = Double(startComp.hour ?? 0) + Double(startComp.minute ?? 0) / 60.0
-            let endHour = Double(endComp.hour ?? 0) + Double(endComp.minute ?? 0) / 60.0
-            
-            guard endHour > startHour else { return nil }
-            
-            let dayFormatter = DateFormatter()
-            dayFormatter.dateFormat = "EEEE"
-            let day = dayFormatter.string(from: session.startDate)
-            
+            let rawEndHour = Double(endComp.hour ?? 0) + Double(endComp.minute ?? 0) / 60.0
+
+            // Drop zero-duration sessions (same start and end instant).
+            guard rawEndHour != startHour else { return [] }
+
             let project = projectLookup[session.projectID]
             let projectColor = project?.color ?? "#999999"
             let projectEmoji = project?.emoji ?? Project.defaultEmoji
-            
-            let activityTypeManager = ActivityTypeManager.shared
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "") ?? activityTypeManager.getUncategorizedActivityType()
-            
-            return WeeklySession(day: day, startHour: startHour, endHour: endHour, projectName: project?.name ?? session.projectID, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activity.sfSymbol)
+            let projectName = project?.name ?? session.projectID
+            let activitySFSymbol = activity.sfSymbol
+
+            // Normal same-day session: emit a single bubble on the start day.
+            // Cross-midnight session: emit two bubbles — one on the start day
+            // (clipped to 24:00) and one on the end day (from 0:00 to the
+            // actual end hour). The end day must also fall in the current week
+            // interval, otherwise the continuation is not shown.
+            if rawEndHour > startHour {
+                let day = dayFormatter.string(from: session.startDate)
+                return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)]
+            } else {
+                guard let endDate = calendar.date(byAdding: .day, value: 1, to: session.startDate),
+                      currentWeekInterval.contains(endDate) else {
+                    // End day is outside the current week; only show the start day
+                    // bubble, clipped to 24:00.
+                    let day = dayFormatter.string(from: session.startDate)
+                    return [WeeklySession(day: day, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)]
+                }
+                let startDay = dayFormatter.string(from: session.startDate)
+                let endDay = dayFormatter.string(from: endDate)
+                return [
+                    WeeklySession(day: startDay, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol),
+                    WeeklySession(day: endDay, startHour: 0.0, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)
+                ]
+            }
         }
     }
     

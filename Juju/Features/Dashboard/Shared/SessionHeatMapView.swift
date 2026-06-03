@@ -97,7 +97,21 @@ struct SessionHeatMapView: View {
     private var weekCount: Int {
         max(1, (dayCount + 6) / 7)
     }
-    
+
+    /// Sum of `totalHours` for the seven cells in the given week row.
+    /// Used for the right-aligned Weekly Total Duration label.
+    private func weeklyTotalHours(forRow row: Int) -> Double {
+        cells
+            .filter { $0.weekOffset == row }
+            .reduce(0.0) { $0 + $1.totalHours }
+    }
+
+    /// Formatted weekly total duration (e.g. "12.5h") shown to the right of each week row.
+    private func weeklyTotalText(forRow row: Int) -> String {
+        let total = weeklyTotalHours(forRow: row)
+        return String(format: "%.1fh", total)
+    }
+
      private func intensityLevel(for hours: Double) -> Int {
          if hours <= 0 { return 0 }
          if hours < thresholds[0] { return 1 }
@@ -144,17 +158,22 @@ private func heatColor(level: Int) -> Color {
                     let availableH = geo.size.height
 
                     let rows = weekCount
-                    let topLabelsH: CGFloat = 12
+                    let topLabelsH: CGFloat = 14
                     let outerPadding: CGFloat = 6
                     let minGap: CGFloat = 2
                     let maxGap: CGFloat = 5
+                    let dateLabelWidth: CGFloat = 34
+                    let weeklyTotalWidth: CGFloat = 42
 
                     // Subtract outer padding for the graph area
                     let graphW = availableW - 2 * outerPadding
                     let graphH = availableH - topLabelsH - 2 * outerPadding
 
+                    // Cell area is the graph area minus the side columns (date label + weekly total)
+                    // and the two inner spacers separating them from the 7 day cells.
+                    let cellAreaW = graphW - dateLabelWidth - weeklyTotalWidth - 2 * outerPadding
                     // Calculate cell size — aim for square cells by using the more constraining dimension
-                    let widthBasedCell = (graphW - 6 * minGap) / 7
+                    let widthBasedCell = max(1, (cellAreaW - 6 * minGap) / 7)
                     let heightBasedCell = (graphH - CGFloat(rows - 1) * minGap) / CGFloat(rows)
                     // Square cells: use the smaller of the two, capped reasonably
                     let rawCellSize = min(widthBasedCell, heightBasedCell)
@@ -174,30 +193,40 @@ private func heatColor(level: Int) -> Color {
                         // Left-aligned Monday date label for this week
                         if let firstDayOfWeek = calendar.date(byAdding: .day, value: row * 7, to: startMonday) {
                             Text(firstDayOfWeek.formatted(.dateTime.month(.abbreviated).day()))
-                                .font(.system(size: 7, weight: .medium))
+                                .font(.system(size: 10, weight: .medium))
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
-                                .frame(width: 25, alignment: .trailing)
+                                .frame(width: dateLabelWidth, alignment: .trailing)
                         }
-                        
+
                         Spacer().frame(width: outerPadding)
                         ForEach(0..<7, id: \.self) { dayIdx in
                             cellView(day: dayIdx, week: row, cellSize: cellSize, rowIndex: row, totalRows: rows)
                         }
                         Spacer().frame(width: outerPadding)
+                        // Right-aligned weekly total duration label
+                        Text(weeklyTotalText(forRow: row))
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .frame(width: weeklyTotalWidth, alignment: .leading)
                     }
                 }
             }
-            
+
             // Top axis labels (moved to bottom to keep original layout concept)
             HStack(spacing: hGap) {
-                Spacer().frame(width: outerPadding + 25) // Account for date label width
+                Spacer().frame(width: dateLabelWidth) // Account for date label width
                 ForEach(0..<7, id: \.self) { col in
                     Text(dayLabels[col])
-                        .font(.system(size: 7, weight: .medium))
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
                         .frame(width: cellSize)
                 }
                 Spacer().frame(width: outerPadding)
+                // Header for the weekly total duration column
+                Text("Total")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
+                    .frame(width: weeklyTotalWidth, alignment: .leading)
             }
             .frame(height: topLabelsH)
         }
