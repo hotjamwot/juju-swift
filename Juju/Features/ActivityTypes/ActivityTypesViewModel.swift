@@ -38,11 +38,11 @@ class ActivityTypesViewModel: ObservableObject {
         activityTypes = ActivityTypeManager.shared.getAllActivityTypes()
     }
     
-    func addActivityType(name: String, emoji: String, description: String = "") {
+    func addActivityType(name: String, sfSymbol: String, description: String = "") {
         let newActivityType = ActivityType(
             id: UUID().uuidString,
             name: name,
-            emoji: emoji,
+            sfSymbol: sfSymbol,
             description: description,
             archived: false
         )
@@ -66,7 +66,7 @@ class ActivityTypesViewModel: ObservableObject {
         let updated = ActivityType(
             id: activityType.id,
             name: activityType.name,
-            emoji: activityType.emoji,
+            sfSymbol: activityType.sfSymbol,
             description: activityType.description,
             archived: !activityType.archived
         )

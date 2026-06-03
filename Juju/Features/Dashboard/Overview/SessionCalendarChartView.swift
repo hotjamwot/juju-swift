@@ -88,7 +88,7 @@ struct SessionCalendarChartView: View {
         .annotation(position: .overlay, alignment: .center) {
             VStack(spacing: 6) {
                 // Activity emoji on top (larger and prominent)
-                Text(session.activityEmoji)
+                Image(systemName: session.activitySFSymbol)
                     .font(.title2)
                     .fontWeight(.semibold)
                 
@@ -174,13 +174,13 @@ struct SessionCalendarChartView: View {
 
 #Preview(body: {
     let mockSessions: [WeeklySession] = [
-        WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activityEmoji: "🎬"),
-        WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activityEmoji: "✍️"),
-        WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activityEmoji: "🗂️"),
-        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activityEmoji: "🎬"),
+        WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film"),
+        WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activitySFSymbol: "pencil"),
+        WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activitySFSymbol: "folder"),
+        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film"),
         // Session that crosses midnight (starts Monday 11 PM, ends Tuesday 1 AM)
-        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activityEmoji: "🎧"),
-        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activityEmoji: "🎧")
+        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones"),
+        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones")
     ]
     return SessionCalendarChartView(sessions: mockSessions)
         .frame(width: 800, height: 350)

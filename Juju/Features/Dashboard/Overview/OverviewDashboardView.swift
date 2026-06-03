@@ -236,8 +236,12 @@ private struct NarrativeSummaryCard: View {
                                 .foregroundColor(Theme.Colors.textSecondary)
                                 .tracking(1.0)
 
-                            Text("\(headline.topActivity.emoji) \(headline.topActivity.name)")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                            HStack(spacing: 6) {
+                                Image(systemName: headline.topActivity.sfSymbol)
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                Text(headline.topActivity.name)
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                            }
                                 .foregroundColor(Theme.Colors.accentColor)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)

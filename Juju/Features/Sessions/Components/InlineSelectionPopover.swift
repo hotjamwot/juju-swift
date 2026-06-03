@@ -4,6 +4,7 @@ import SwiftUI
 protocol SelectionItem: Identifiable, Hashable {
     var displayName: String { get }
     var displayEmoji: String? { get }
+    var displaySFSymbol: String? { get }
     var displayColor: Color? { get }
 }
 
@@ -24,6 +25,10 @@ struct SelectionItemWrapper<Item: SelectionItem>: SelectionItem {
         wrapped.displayEmoji
     }
     
+    var displaySFSymbol: String? {
+        wrapped.displaySFSymbol
+    }
+    
     var displayColor: Color? {
         wrapped.displayColor
     }
@@ -37,6 +42,10 @@ extension Project: SelectionItem {
     
     var displayEmoji: String? {
         emoji
+    }
+    
+    var displaySFSymbol: String? {
+        nil
     }
     
     var displayColor: Color? {
@@ -114,8 +123,12 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
                         .frame(width: 10, height: 10)
                 }
                 
-                // Emoji (if available)
-                if let emoji = item.displayEmoji {
+                // Icon (SF Symbol or emoji)
+                if let sfSymbol = item.displaySFSymbol {
+                    Image(systemName: sfSymbol)
+                        .font(.system(size: 12))
+                        .padding(.trailing, 4)
+                } else if let emoji = item.displayEmoji {
                     Text(emoji)
                         .font(.system(size: 12))
                         .padding(.trailing, 4)
@@ -174,7 +187,11 @@ extension ActivityType: SelectionItem {
     }
     
     var displayEmoji: String? {
-        return emoji
+        return nil
+    }
+    
+    var displaySFSymbol: String? {
+        return sfSymbol
     }
     
     var displayColor: Color? {
@@ -190,6 +207,10 @@ extension Phase: SelectionItem {
     
     var displayEmoji: String? {
         return nil // Phases don't have emojis
+    }
+    
+    var displaySFSymbol: String? {
+        return nil
     }
     
     var displayColor: Color? {
@@ -209,6 +230,10 @@ struct MoodItem: SelectionItem {
     
     var displayEmoji: String? {
         moodEmoji(for: moodValue)
+    }
+    
+    var displaySFSymbol: String? {
+        nil // Moods use emoji, not SF Symbols
     }
     
     var displayColor: Color? {
@@ -807,9 +832,9 @@ struct InlineSelectionPopover_Previews: PreviewProvider {
             
             ActivityTypeSelectionPopover(
                 activityTypes: [
-                    ActivityType(id: "writing", name: "Writing", emoji: "✍️"),
-                    ActivityType(id: "coding", name: "Coding", emoji: "💻"),
-                    ActivityType(id: "editing", name: "Editing", emoji: "✂️")
+                    ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil"),
+                    ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right"),
+                    ActivityType(id: "editing", name: "Editing", sfSymbol: "scissors")
                 ],
                 currentActivityTypeID: "1",
                 onActivityTypeSelected: { _ in },

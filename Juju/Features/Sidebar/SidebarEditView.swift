@@ -55,7 +55,7 @@ struct SidebarEditView: View {
                         let newActivityType = ActivityType(
                             id: UUID().uuidString,
                             name: "",
-                            emoji: "⚡",
+                            sfSymbol: "bolt",
                             description: "",
                             archived: false
                         )

@@ -19,10 +19,10 @@ struct MonthlyActivityTypeGroupedBarChartView: View {
             month: "January",
             monthNumber: 1,
             activityBreakdown: [
-                MonthlyActivityTypeDataPoint(activityName: "Writing", emoji: "✍️", totalHours: 20.0, percentage: 40.0),
-                MonthlyActivityTypeDataPoint(activityName: "Editing", emoji: "✂️", totalHours: 15.0, percentage: 30.0),
-                MonthlyActivityTypeDataPoint(activityName: "Planning", emoji: "🧠", totalHours: 10.0, percentage: 20.0),
-                MonthlyActivityTypeDataPoint(activityName: "Admin", emoji: "🗂️", totalHours: 5.0, percentage: 10.0)
+                MonthlyActivityTypeDataPoint(activityName: "Writing", sfSymbol: "pencil", totalHours: 20.0, percentage: 40.0),
+                MonthlyActivityTypeDataPoint(activityName: "Editing", sfSymbol: "scissors", totalHours: 15.0, percentage: 30.0),
+                MonthlyActivityTypeDataPoint(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 10.0, percentage: 20.0),
+                MonthlyActivityTypeDataPoint(activityName: "Admin", sfSymbol: "folder", totalHours: 5.0, percentage: 10.0)
             ],
             totalHours: 50.0
         ),
@@ -30,10 +30,10 @@ struct MonthlyActivityTypeGroupedBarChartView: View {
             month: "February", 
             monthNumber: 2,
             activityBreakdown: [
-                MonthlyActivityTypeDataPoint(activityName: "Writing", emoji: "✍️", totalHours: 18.0, percentage: 36.0),
-                MonthlyActivityTypeDataPoint(activityName: "Editing", emoji: "✂️", totalHours: 16.0, percentage: 32.0),
-                MonthlyActivityTypeDataPoint(activityName: "Planning", emoji: "🧠", totalHours: 12.0, percentage: 24.0),
-                MonthlyActivityTypeDataPoint(activityName: "Admin", emoji: "🗂️", totalHours: 4.0, percentage: 8.0)
+                MonthlyActivityTypeDataPoint(activityName: "Writing", sfSymbol: "pencil", totalHours: 18.0, percentage: 36.0),
+                MonthlyActivityTypeDataPoint(activityName: "Editing", sfSymbol: "scissors", totalHours: 16.0, percentage: 32.0),
+                MonthlyActivityTypeDataPoint(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 12.0, percentage: 24.0),
+                MonthlyActivityTypeDataPoint(activityName: "Admin", sfSymbol: "folder", totalHours: 4.0, percentage: 8.0)
             ],
             totalHours: 50.0
         )
@@ -78,7 +78,7 @@ struct MonthlyActivityTypeGroupedBarChartView: View {
                                                 .frame(width: max(6, width), height: 6)
                                                 .cornerRadius(3)
                                             
-                                            Text(activity.emoji)
+                                            Image(systemName: activity.sfSymbol)
                                                 .font(.system(size: 21, design: .rounded)) // 1.5x larger (14 * 1.5 = 21)
                                                 .offset(x: 0, y: 0) // Centered both horizontally and vertically
                                         }

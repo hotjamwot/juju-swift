@@ -80,7 +80,7 @@ struct PeriodSessionData: Identifiable {
     let period: ChartTimePeriod
     let sessions: [SessionRecord]
     let totalHours: Double
-    let topActivity: (name: String, emoji: String)
+    let topActivity: (name: String, sfSymbol: String)
     let topProject: (name: String, emoji: String)
     let milestones: [Milestone]
     let averageDailyHours: Double
@@ -109,7 +109,7 @@ struct AnalyticsTrends: Identifiable {
 
 struct NarrativeHeadline: Equatable {
     let totalHours: Double
-    let topActivity: (name: String, emoji: String)
+    let topActivity: (name: String, sfSymbol: String)
     let topProject: (name: String, emoji: String)
     let milestone: Milestone?
     let period: String
@@ -117,7 +117,7 @@ struct NarrativeHeadline: Equatable {
     static func == (lhs: NarrativeHeadline, rhs: NarrativeHeadline) -> Bool {
         lhs.totalHours == rhs.totalHours &&
         lhs.topActivity.name == rhs.topActivity.name &&
-        lhs.topActivity.emoji == rhs.topActivity.emoji &&
+        lhs.topActivity.sfSymbol == rhs.topActivity.sfSymbol &&
         lhs.topProject.name == rhs.topProject.name &&
         lhs.topProject.emoji == rhs.topProject.emoji &&
         lhs.milestone == rhs.milestone &&
@@ -133,9 +133,9 @@ struct NarrativeHeadline: Equatable {
     var headlineText: String {
         var text = "This \(period) you logged \(formattedHours). "
         if let milestone = milestone {
-            text += "Your focus was **\(topActivity.emoji) \(topActivity.name)** on **\(topProject.emoji) \(topProject.name)**, where you reached a milestone: **'\(milestone.text)'**."
+            text += "Your focus was **\(topActivity.name)** on **\(topProject.emoji) \(topProject.name)**, where you reached a milestone: **'\(milestone.text)'**."
         } else {
-            text += "Your focus was **\(topActivity.emoji) \(topActivity.name)** on **\(topProject.emoji) \(topProject.name)**."
+            text += "Your focus was **\(topActivity.name)** on **\(topProject.emoji) \(topProject.name)**."
         }
         return text
     }
@@ -258,17 +258,17 @@ final class NarrativeEngine: ObservableObject {
         Double(sessions.reduce(0) { $0 + $1.durationMinutes }) / 60.0
     }
     
-    private func determineTopActivity(from sessions: [SessionRecord]) -> (name: String, emoji: String) {
+    private func determineTopActivity(from sessions: [SessionRecord]) -> (name: String, sfSymbol: String) {
         var totals: [String: Double] = [:]
         for session in sessions {
             let id = session.activityTypeID ?? "uncategorized"
             totals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
         guard let topID = totals.max(by: { $0.value < $1.value })?.key else {
-            return ("Uncategorized", "📝")
+            return ("Uncategorized", "doc.plaintext")
         }
         let activity = activityTypeManager.getActivityType(id: topID) ?? activityTypeManager.getUncategorizedActivityType()
-        return (activity.name, activity.emoji)
+        return (activity.name, activity.sfSymbol)
     }
     
     private func determineTopProject(from sessions: [SessionRecord]) -> (name: String, emoji: String) {

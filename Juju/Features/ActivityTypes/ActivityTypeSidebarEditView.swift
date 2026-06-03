@@ -7,7 +7,7 @@ struct ActivityTypeSidebarEditView: View {
     
     @State private var activityType: ActivityType
     @State private var tempName: String
-    @State private var tempEmoji: String
+    @State private var tempSFSymbol: String
     @State private var tempDescription: String
     @State private var tempArchived: Bool
     
@@ -18,16 +18,16 @@ struct ActivityTypeSidebarEditView: View {
     init(activityType: ActivityType) {
         self._activityType = State(initialValue: activityType)
         self._tempName = State(initialValue: activityType.name)
-        self._tempEmoji = State(initialValue: activityType.emoji)
+        self._tempSFSymbol = State(initialValue: activityType.sfSymbol)
         self._tempDescription = State(initialValue: activityType.description)
         self._tempArchived = State(initialValue: activityType.archived)
     }
     
     var body: some View {
         VStack(spacing: Theme.spacingExtraLarge) {
-            // Top section - name, emoji, and description
+            // Top section - name, icon, and description
             VStack(spacing: Theme.spacingExtraLarge) {
-                // Combined basic info section (name and emoji)
+                // Combined basic info section (name and icon)
                 basicInfoSection
                 
                 // Description section
@@ -47,7 +47,7 @@ struct ActivityTypeSidebarEditView: View {
         }
         .padding(Theme.spacingLarge)
         .onChange(of: tempName) { _ in validateChanges() }
-        .onChange(of: tempEmoji) { _ in validateChanges() }
+        .onChange(of: tempSFSymbol) { _ in validateChanges() }
         .onChange(of: tempDescription) { _ in validateChanges() }
         .onChange(of: tempArchived) { _ in validateChanges() }
     }
@@ -68,16 +68,16 @@ struct ActivityTypeSidebarEditView: View {
                     .frame(maxWidth: .infinity)
             }
             
-            // Emoji selection
+            // SF Symbol selection
             HStack {
-                Text("Emoji")
+                Text("Icon")
                     .font(.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                 Spacer()
-                TextField("", text: $tempEmoji)
+                TextField("", text: $tempSFSymbol)
                     .textFieldStyle(.plain)
-                    .font(.title2)
-                    .frame(width: 32, height: 32)
+                    .font(.body)
+                    .frame(width: 120, height: 32)
                     .multilineTextAlignment(.center)
                     .background(Theme.Colors.background)
                     .cornerRadius(Theme.Design.cornerRadius)
@@ -85,6 +85,10 @@ struct ActivityTypeSidebarEditView: View {
                         RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
+                // Preview of the selected SF Symbol
+                Image(systemName: tempSFSymbol)
+                    .font(.title2)
+                    .frame(width: 32, height: 32)
             }
         }
         .padding(Theme.spacingMedium)
@@ -144,7 +148,7 @@ struct ActivityTypeSidebarEditView: View {
     private func validateChanges() {
         hasChanges = (
             tempName != activityType.name ||
-            tempEmoji != activityType.emoji ||
+            tempSFSymbol != activityType.sfSymbol ||
             tempDescription != activityType.description ||
             tempArchived != activityType.archived
         )
@@ -157,7 +161,7 @@ struct ActivityTypeSidebarEditView: View {
         let updatedActivityType = ActivityType(
             id: activityType.id,
             name: tempName,
-            emoji: tempEmoji,
+            sfSymbol: tempSFSymbol,
             description: tempDescription,
             archived: tempArchived
         )
@@ -167,7 +171,7 @@ struct ActivityTypeSidebarEditView: View {
             // Creating new activity type
             activityTypesViewModel.addActivityType(
                 name: tempName,
-                emoji: tempEmoji,
+                sfSymbol: tempSFSymbol,
                 description: tempDescription
             )
         } else {
@@ -196,7 +200,7 @@ struct ActivityTypeSidebarEditView_Previews: PreviewProvider {
         let sampleActivityType = ActivityType(
             id: UUID().uuidString,
             name: "Sample Activity Type",
-            emoji: "⚡",
+            sfSymbol: "bolt",
             description: "",
             archived: false
         )

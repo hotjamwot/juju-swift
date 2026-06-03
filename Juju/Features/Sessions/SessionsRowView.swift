@@ -289,7 +289,7 @@ struct SessionsRowView: View {
                             selectedActivityTypeID = currentSession.activityTypeID
                         }) {
                             HStack(spacing: 4) {
-                                Text(activityType.emoji)
+                                Image(systemName: activityType.sfSymbol)
                                     .font(.system(size: 10))
                                 Text(activityType.name)
                                     .font(Theme.Fonts.caption)
@@ -334,7 +334,7 @@ struct SessionsRowView: View {
                             selectedActivityTypeID = currentSession.activityTypeID
                         }) {
                             HStack(spacing: 4) {
-                                Text("📝")
+                                Image(systemName: "doc.plaintext")
                                     .font(.system(size: 10))
                                 Text("Activity Type")
                                     .font(Theme.Fonts.caption)
@@ -752,17 +752,17 @@ struct SessionsRowView: View {
     }
     
     /// Get activity type display info with fallback to "Uncategorized" for legacy sessions
-    private func getActivityTypeDisplay() -> (name: String, emoji: String)? {
+    private func getActivityTypeDisplay() -> (name: String, sfSymbol: String)? {
         guard let activityTypeID = currentSession.activityTypeID else {
             // Fallback to "Uncategorized" for legacy sessions
             let uncategorized = ActivityTypeManager.shared.getUncategorizedActivityType()
-            return (uncategorized.name, uncategorized.emoji)
+            return (uncategorized.name, uncategorized.sfSymbol)
         }
         
         // Use the passed activity types array to avoid repeated disk access
         let activityType = activityTypes.first { $0.id == activityTypeID }
         if let activityType = activityType {
-            return (activityType.name, activityType.emoji)
+            return (activityType.name, activityType.sfSymbol)
         } else {
             // Fallback to manager if not found in passed array
             return ActivityTypeManager.shared.getActivityTypeDisplay(id: activityTypeID)

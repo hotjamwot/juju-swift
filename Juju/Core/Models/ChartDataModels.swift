@@ -86,7 +86,7 @@ struct WeeklySession: Identifiable {
     let projectName: String
     let projectColor: String
     let projectEmoji: String
-    let activityEmoji: String
+    let activitySFSymbol: String
     var duration: Double { endHour - startHour }
 }
 
@@ -94,13 +94,13 @@ struct WeeklySession: Identifiable {
 struct ActivityTypePieSlice: Identifiable, Equatable {
     let id = UUID()
     let activityName: String
-    let emoji: String
+    let sfSymbol: String
     let totalHours: Double
     let percentage: Double
     let color: Color
     
     var label: String {
-        "\(emoji) \(activityName) - \(String(format: "%.1f", percentage))%"
+        "\(activityName) - \(String(format: "%.1f", percentage))%"
     }
     
     static func == (lhs: ActivityTypePieSlice, rhs: ActivityTypePieSlice) -> Bool {
@@ -147,7 +147,7 @@ struct YearlyProjectDataPoint: Identifiable {
 struct YearlyActivityTypeChartData: Identifiable {
     let id = UUID()
     let activityName: String
-    let emoji: String
+    let sfSymbol: String
     let totalHours: Double
     let percentage: Double
 }
@@ -156,7 +156,7 @@ struct YearlyActivityTypeChartData: Identifiable {
 struct YearlyActivityTypeDataPoint: Identifiable {
     let id = UUID()
     let activityName: String
-    let emoji: String
+    let sfSymbol: String
     let totalHours: Double
     let percentage: Double
 }
@@ -174,7 +174,7 @@ struct YearlyMonthlyChartData: Identifiable {
 struct YearlyMonthlyActivityDataPoint: Identifiable {
     let id = UUID()
     let activityName: String
-    let emoji: String
+    let sfSymbol: String
     let totalHours: Double
     let percentage: Double
 }
@@ -192,7 +192,7 @@ struct MonthlyActivityTypeChartData: Identifiable {
 struct MonthlyActivityTypeDataPoint: Identifiable {
     let id = UUID()
     let activityName: String
-    let emoji: String
+    let sfSymbol: String
     let totalHours: Double
     let percentage: Double
 }

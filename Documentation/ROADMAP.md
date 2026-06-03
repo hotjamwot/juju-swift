@@ -40,6 +40,7 @@
 ### Activity Types
 - Activity type CRUD with JSON persistence
 - Archive support
+- SF Symbols for activity type icons (replaced emoji with native system icons)
 
 ### Project Story
 - Read-only narrative timeline for individual projects
@@ -116,6 +117,7 @@
 
 | Date | Change |
 |------|--------|
+| Jun 2026 | Activity type emoji → SF Symbols migration: renamed `emoji` field to `sfSymbol` across ActivityType model, all chart data models, rendering code, and JSON data. Updated SelectionItem protocol to support SF Symbols alongside emojis. |
 | May 2026 | Bulk edit UX improvements: toggle button in filter bar, Escape to exit, accented outline selection, phase dropdown enabled for same-project selections, dropdown values persist visually |
 | May 2026 | Bulk session editing implemented (double-click mode, filter bar integration, shift-click selection) |
 | May 2026 | Documentation cleanup: removed DATA_FLOW.yaml (redundant with ARCHITECTURE.md), added purpose statements to all docs, created ROADMAP.md |

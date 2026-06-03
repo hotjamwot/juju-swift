@@ -153,7 +153,7 @@ final class ChartDataPreparer: ObservableObject {
             let activityTypeManager = ActivityTypeManager.shared
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? "") ?? activityTypeManager.getUncategorizedActivityType()
             
-            return WeeklySession(day: day, startHour: startHour, endHour: endHour, projectName: project?.name ?? session.projectID, projectColor: projectColor, projectEmoji: projectEmoji, activityEmoji: activity.emoji)
+            return WeeklySession(day: day, startHour: startHour, endHour: endHour, projectName: project?.name ?? session.projectID, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activity.sfSymbol)
         }
     }
     
@@ -188,7 +188,7 @@ final class ChartDataPreparer: ObservableObject {
         return totals.compactMap { (id, hours) in
             guard hours > 0 else { return nil }
             let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-            return YearlyActivityTypeChartData(activityName: activity.name, emoji: activity.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+            return YearlyActivityTypeChartData(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
@@ -242,7 +242,7 @@ final class ChartDataPreparer: ObservableObject {
             let breakdown = activityTotals.compactMap { (id, hours) -> MonthlyActivityTypeDataPoint? in
                 guard hours > 0 else { return nil }
                 let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-                return MonthlyActivityTypeDataPoint(activityName: activity.name, emoji: activity.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+                return MonthlyActivityTypeDataPoint(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
             }.sorted { $0.totalHours > $1.totalHours }
             
             return MonthlyActivityTypeChartData(month: monthNames[monthNum - 1], monthNumber: monthNum, activityBreakdown: breakdown, totalHours: total)

@@ -15,10 +15,10 @@ struct YearlyActivityTypeBarChartView: View {
     @State private var hoveredIndex: Int? = nil
     
     static let sampleData: [YearlyActivityTypeChartData] = [
-        YearlyActivityTypeChartData(activityName: "Writing", emoji: "✍️", totalHours: 200.0, percentage: 40.0),
-        YearlyActivityTypeChartData(activityName: "Editing", emoji: "✂️", totalHours: 150.0, percentage: 30.0),
-        YearlyActivityTypeChartData(activityName: "Planning", emoji: "🧠", totalHours: 100.0, percentage: 20.0),
-        YearlyActivityTypeChartData(activityName: "Admin", emoji: "🗂️", totalHours: 50.0, percentage: 10.0)
+        YearlyActivityTypeChartData(activityName: "Writing", sfSymbol: "pencil", totalHours: 200.0, percentage: 40.0),
+        YearlyActivityTypeChartData(activityName: "Editing", sfSymbol: "scissors", totalHours: 150.0, percentage: 30.0),
+        YearlyActivityTypeChartData(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 100.0, percentage: 20.0),
+        YearlyActivityTypeChartData(activityName: "Admin", sfSymbol: "folder", totalHours: 50.0, percentage: 10.0)
     ]
     
     var body: some View {
@@ -45,7 +45,7 @@ struct YearlyActivityTypeBarChartView: View {
                             HStack(spacing: Theme.spacingMedium) {
                                 // Activity label with emoji (left aligned, smaller font)
                                 HStack(spacing: Theme.spacingSmall) {
-                                    Text(activityData.emoji)
+                                    Image(systemName: activityData.sfSymbol)
                                         .font(.system(size: 16, design: .rounded))
                                     
                                     Text(activityData.activityName)

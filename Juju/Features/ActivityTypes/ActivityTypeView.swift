@@ -68,7 +68,7 @@ struct ActivityTypeView: View {
                     let newActivityType = ActivityType(
                         id: UUID().uuidString,
                         name: "",
-                        emoji: "⚡",
+                        sfSymbol: "bolt",
                         description: "",
                         archived: false
                     )
@@ -127,8 +127,8 @@ struct ActivityTypeRowView: View {
         VStack(spacing: 0) {
             // Main row content - compact design
             HStack(spacing: Theme.Row.compactSpacing) {
-                // Activity type emoji
-                Text(activityType.emoji)
+                // Activity type icon
+                Image(systemName: activityType.sfSymbol)
                     .font(.system(size: 12))
                     .frame(width: 20, alignment: .leading)
                     .padding(.leading, Theme.Row.contentPadding)
@@ -356,9 +356,9 @@ struct ActivityTypeView_Previews: PreviewProvider {
 
         // Preview with mock data
         let mockActivityTypes = [
-            ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
-            ActivityType(id: "editing", name: "Editing", emoji: "✂️", description: "Refining and improving existing content", archived: false),
-            ActivityType(id: "coding", name: "Coding", emoji: "💻", description: "Writing and debugging code", archived: true)
+            ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil", description: "Drafting and creating new content", archived: false),
+            ActivityType(id: "editing", name: "Editing", sfSymbol: "scissors", description: "Refining and improving existing content", archived: false),
+            ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Writing and debugging code", archived: true)
         ]
 
         List(mockActivityTypes) { activityType in

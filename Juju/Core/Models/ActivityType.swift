@@ -4,14 +4,14 @@ import Foundation
 struct ActivityType: Codable, Identifiable, Hashable {
     let id: String
     var name: String
-    var emoji: String
+    var sfSymbol: String
     var description: String
     var archived: Bool
     
-    init(id: String, name: String, emoji: String, description: String = "", archived: Bool = false) {
+    init(id: String, name: String, sfSymbol: String, description: String = "", archived: Bool = false) {
         self.id = id
         self.name = name
-        self.emoji = emoji
+        self.sfSymbol = sfSymbol
         self.description = description
         self.archived = archived
     }
@@ -187,7 +187,7 @@ class ActivityTypeManager {
                 let migratedType = ActivityType(
                     id: type.id,
                     name: type.name,
-                    emoji: type.emoji,
+                    sfSymbol: type.sfSymbol,
                     description: type.description.isEmpty ? "" : type.description,
                     archived: type.archived
                 )
@@ -210,15 +210,15 @@ class ActivityTypeManager {
     
     private func createDefaultActivityTypes() -> [ActivityType] {
         let defaults = [
-            ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: true), // Fallback for legacy data
-            ActivityType(id: "writing", name: "Writing", emoji: "✍️", description: "Drafting and creating new content", archived: false),
-            ActivityType(id: "outlining", name: "Outlining / Brainstorming", emoji: "🧠", description: "Planning and organizing ideas", archived: false),
-            ActivityType(id: "editing", name: "Editing / Rewriting", emoji: "✂️", description: "Refining and improving existing content", archived: false),
-            ActivityType(id: "collaborating", name: "Collaborating", emoji: "🤝", description: "Working with others", archived: false),
-            ActivityType(id: "production", name: "Production Prep / Organising", emoji: "🎬", description: "Preparing for production and organization", archived: false),
-            ActivityType(id: "coding", name: "Coding", emoji: "💻", description: "Writing and debugging code", archived: false),
-            ActivityType(id: "admin", name: "Admin", emoji: "🗂️", description: "Administrative tasks and organization", archived: false),
-            ActivityType(id: "maintenance", name: "Maintenance", emoji: "🧽", description: "Maintenance and cleanup tasks", archived: false)
+            ActivityType(id: "uncategorized", name: "Uncategorized", sfSymbol: "doc.plaintext", description: "Fallback for legacy sessions without activity type", archived: true),
+            ActivityType(id: "writing", name: "Writing", sfSymbol: "pencil", description: "Drafting and creating new content", archived: false),
+            ActivityType(id: "outlining", name: "Outlining / Brainstorming", sfSymbol: "brain.head.profile", description: "Planning and organizing ideas", archived: false),
+            ActivityType(id: "editing", name: "Editing / Rewriting", sfSymbol: "scissors", description: "Refining and improving existing content", archived: false),
+            ActivityType(id: "collaborating", name: "Collaborating", sfSymbol: "person.2", description: "Working with others", archived: false),
+            ActivityType(id: "production", name: "Production Prep / Organising", sfSymbol: "film", description: "Preparing for production and organization", archived: false),
+            ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Writing and debugging code", archived: false),
+            ActivityType(id: "admin", name: "Admin", sfSymbol: "folder", description: "Administrative tasks and organization", archived: false),
+            ActivityType(id: "maintenance", name: "Maintenance", sfSymbol: "wrench", description: "Maintenance and cleanup tasks", archived: false)
         ]
         print("Created default activity types")
         saveActivityTypes(defaults)
@@ -230,15 +230,15 @@ class ActivityTypeManager {
     /// Get the "Uncategorized" activity type (fallback for legacy sessions)
     func getUncategorizedActivityType() -> ActivityType {
         let types = loadActivityTypes()
-        return types.first { $0.id == "uncategorized" } ?? ActivityType(id: "uncategorized", name: "Uncategorized", emoji: "📝", description: "Fallback for legacy sessions without activity type", archived: false)
+        return types.first { $0.id == "uncategorized" } ?? ActivityType(id: "uncategorized", name: "Uncategorized", sfSymbol: "doc.plaintext", description: "Fallback for legacy sessions without activity type", archived: false)
     }
     
     /// Get activity type display info, with fallback to "Uncategorized" for nil or missing IDs
-    func getActivityTypeDisplay(id: String?) -> (name: String, emoji: String) {
+    func getActivityTypeDisplay(id: String?) -> (name: String, sfSymbol: String) {
         guard let id = id, let activityType = getActivityType(id: id) else {
             let uncategorized = getUncategorizedActivityType()
-            return (uncategorized.name, uncategorized.emoji)
+            return (uncategorized.name, uncategorized.sfSymbol)
         }
-        return (activityType.name, activityType.emoji)
+        return (activityType.name, activityType.sfSymbol)
     }
 }

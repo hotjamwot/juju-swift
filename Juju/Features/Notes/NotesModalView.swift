@@ -96,7 +96,10 @@ struct NotesModalView: View {
                         Picker(selection: $viewModel.selectedActivityTypeID) {
                             Text("Select").tag(nil as String?)
                             ForEach(viewModel.mostUsedActivityTypes) { activityType in
-                                Text("\(activityType.emoji) \(activityType.name)").tag(activityType.id as String?)
+                                HStack {
+                                    Image(systemName: activityType.sfSymbol)
+                                    Text(activityType.name)
+                                }.tag(activityType.id as String?)
                             }
                         } label: {
                             Text("Activity Type")

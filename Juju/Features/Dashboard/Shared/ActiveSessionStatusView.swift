@@ -28,7 +28,7 @@ struct ActiveSessionStatusView: View {
             HStack(spacing: Theme.DashboardLayout.chartPadding) {
                 let project = getProjectForSession()
                 let activity = getActivityForSession()
-                Text(activity?.emoji ?? "⚡")
+                Image(systemName: activity?.sfSymbol ?? "bolt")
                     .font(.system(size: 16, weight: .bold))
                 
                 Text(project?.name ?? "Unknown Project")
