@@ -24,10 +24,6 @@ struct DashboardRootView: View {
 
                 // Main content
                 VStack(spacing: 0) {
-                    // Consistent top padding — provides breathing room when no active session bar
-                    // (when active session is present, the bar itself provides this spacing)
-                    Spacer().frame(height: sessionManager.activeSession == nil ? Theme.DashboardLayout.dashboardPadding : 0)
-                    
                     // Main content
                     ZStack {
                         switch selected {

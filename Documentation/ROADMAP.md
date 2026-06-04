@@ -129,6 +129,7 @@
 
 | Date | Change |
 | ------ | -------- |
+| Jun 2026 | **Dashboard layout refactor**: Replaced rigid `DashboardLayout` ratio-based grid system with `ScrollView` + `LazyVStack`. Charts now sit at natural heights with consistent horizontal margins. Removed all card/container backgrounds in favour of Japandi spacing + typography separation. `ActiveSessionStatusView` pushes content naturally in the stack. Reordered Overview dashboard: Narrative → Calendar Chart → Heat Map. Calendar Chart height increased 20%. Deprecated `DashboardLayout` (kept `BottomNavigationCircles`). Japandi styling applied to `NarrativeSummaryCard` — removed all `cardSurface` backgrounds and corner radii. |
 | Jun 2026 | Dynamic Cmd+Tab visibility: app appears in app switcher only when windows (dashboard/notes) are open; switches to `.accessory` activation policy (hidden) when all windows are closed. Status item is recreated on policy switch to maintain menu bar icon. Updated `AppDelegate`, `DashboardWindowController`, `NotesManager` with window counting and `NSApplication.setActivationPolicy(_:)` calls. |
 | Jun 2026 | Activity type emoji → SF Symbols migration: renamed `emoji` field to `sfSymbol` across ActivityType model, all chart data models, rendering code, and JSON data. Updated SelectionItem protocol to support SF Symbols alongside emojis. |
 | May 2026 | Bulk edit UX improvements: toggle button in filter bar, Escape to exit, accented outline selection, phase dropdown enabled for same-project selections, dropdown values persist visually |

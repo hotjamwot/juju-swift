@@ -1,19 +1,24 @@
-// YearlyDashboardView.swift
-// Juju
 //
-// Created by Hayden on 12/12/2025.
+//  YearlyDashboardView.swift
+//  Juju
+//
+//  Created by Hayden on 12/12/2025.
 //
 
 import SwiftUI
 import Charts
 
-/// Yearly Dashboard View
-/// Dedicated view for all yearly charts and metrics
+/// Yearly Dashboard View — a vertical scrolling page within the horizontal
+/// paging container in DashboardRootView.
+///
+/// Charts float freely at their natural height with consistent horizontal margins.
+/// No card backgrounds — visual separation comes from spacing and typography.
+/// The optional ActiveSessionStatusView pushes everything down when a session is live.
 ///
 /// Design Philosophy (Scandinavian-Japanese Minimal):
 /// - Consistent padding with overview dashboard
 /// - Charts breathe with generous whitespace
-/// - No redundant nesting — the layout owns the space fully
+/// - No redundant nesting — charts flow naturally in a LazyVStack
 struct YearlyDashboardView: View {
     // MARK: - State objects (passed from DashboardRootView)
     @ObservedObject var chartDataPreparer: ChartDataPreparer
@@ -21,6 +26,10 @@ struct YearlyDashboardView: View {
     @ObservedObject var projectsViewModel: ProjectsViewModel
     @ObservedObject var narrativeEngine: NarrativeEngine
     
+    // MARK: - Ideal heights
+    private let monthlyChartMinHeight: CGFloat = 520
+    private let projectChartMinHeight: CGFloat = 380
+    private let activityChartMinHeight: CGFloat = 340
     
     // MARK: - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -33,55 +42,43 @@ struct YearlyDashboardView: View {
     
     // MARK: - Component Views
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Main content background
-                Theme.Colors.background
-                
-                // Main content
-                VStack(spacing: 0) {
-                    // Active Session Bar (always visible at top)
-                    if sessionManager.activeSession != nil {
-                        ActiveSessionStatusView(sessionManager: sessionManager)
-                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.top, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.bottom, Theme.DashboardLayout.chartPadding)
-                    }
-                    
-                    // Dashboard charts using optimized two-column layout
-                    DashboardLayout.yearly(
-                        left: {
-                            // Monthly Activity Type Grouped Bar Chart
-                            MonthlyActivityTypeGroupedBarChartView(
-                                data: chartDataPreparer.monthlyActivityTypeTotals()
-                            )
-                        },
-                        rightTop: {
-                            // Project Distribution Chart
-                            YearlyProjectBarChartView(
-                                data: chartDataPreparer.yearlyProjectTotals()
-                            )
-                        },
-                        rightBottom: {
-                            // Activity Types Distribution Chart
-                            YearlyActivityTypeBarChartView(
-                                data: chartDataPreparer.yearlyActivityTypeTotals()
-                            )
-                        }
-                    )
+        ScrollView(.vertical) {
+            LazyVStack(spacing: Theme.DashboardLayout.chartGap) {
+                // Active Session Bar (appears at top when session is live,
+                // naturally pushes all content down)
+                if sessionManager.activeSession != nil {
+                    ActiveSessionStatusView(sessionManager: sessionManager)
                 }
+                
+                // Monthly Activity Type Grouped Bar Chart — full-height left column equivalent
+                MonthlyActivityTypeGroupedBarChartView(
+                    data: chartDataPreparer.monthlyActivityTypeTotals()
+                )
+                .frame(minHeight: monthlyChartMinHeight)
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32) // Extra for nav circles
-                .background(Theme.Colors.background)
+                
+                // Project Distribution Chart
+                YearlyProjectBarChartView(
+                    data: chartDataPreparer.yearlyProjectTotals()
+                )
+                .frame(minHeight: projectChartMinHeight)
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                
+                // Activity Types Distribution Chart
+                YearlyActivityTypeBarChartView(
+                    data: chartDataPreparer.yearlyActivityTypeTotals()
+                )
+                .frame(minHeight: activityChartMinHeight)
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             }
+            .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
         }
+        .background(Theme.Colors.background)
         .onAppear {
             loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            // Update chart data when session starts
             Task {
-                // Filter sessions for the current year from the already loaded allSessions
                 let yearlySessions = sessionManager.allSessions.filter { session in
                     currentYearInterval.contains(session.startDate)
                 }
@@ -92,9 +89,7 @@ struct YearlyDashboardView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            // Update chart data when session ends
             Task {
-                // Filter sessions for the current year from the already loaded allSessions
                 let yearlySessions = sessionManager.allSessions.filter { session in
                     currentYearInterval.contains(session.startDate)
                 }
@@ -105,7 +100,6 @@ struct YearlyDashboardView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
-            // Update chart data when projects change
             Task {
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
@@ -114,9 +108,7 @@ struct YearlyDashboardView: View {
             }
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
-            // Update chart data when session data changes
             Task {
-                // Filter sessions for the current year from the already loaded allSessions
                 let yearlySessions = sessionManager.allSessions.filter { session in
                     currentYearInterval.contains(session.startDate)
                 }
@@ -127,7 +119,6 @@ struct YearlyDashboardView: View {
             }
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
-            // Update chart data when project data changes
             Task {
                 chartDataPreparer.prepareAllTimeData(
                     sessions: sessionManager.allSessions,
@@ -142,11 +133,6 @@ struct YearlyDashboardView: View {
         Task {
             await projectsViewModel.loadProjects()
             
-            // Rely on the fact that DashboardRootView has already called
-            // sessionManager.loadAllSessions() to populate allSessions.
-            // We now filter from this complete dataset.
-            
-            // Filter sessions for the current year from the already loaded allSessions
             let yearlySessions = sessionManager.allSessions.filter { session in
                 currentYearInterval.contains(session.startDate)
             }
@@ -165,8 +151,6 @@ struct YearlyDashboardView: View {
             Text("No data available")
                 .foregroundColor(Theme.Colors.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: minHeight)
-                .background(Theme.Colors.surface)
-                .cornerRadius(Theme.Design.cornerRadius)
         }
     }
 }

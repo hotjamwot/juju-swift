@@ -1,33 +1,27 @@
 import SwiftUI
 
-/// Unified Dashboard Layout
-/// A flexible, responsive layout system for all dashboard charts with configurable parameters
-///
-/// Design Philosophy (Scandinavian-Japanese Minimal):
-/// - Single source of padding: the parent view owns all padding, the layout only manages internal gaps
-/// - Cards float on the surface without borders — subtlety through surface color, not lines
-/// - Generous but controlled whitespace for calm, focused data reading
+// MARK: - Deprecated: Dashboard Layout
+//
+// ⚠️ DashboardLayout has been replaced by direct ScrollView + LazyVStack layouts
+//    in OverviewDashboardView and YearlyDashboardView. Each chart now sits at its
+//    natural height with consistent horizontal padding.
+//
+//    This struct is kept only for the BottomNavigationCircles component below.
+//    Remove the DashboardLayout portion entirely in a future cleanup pass.
+
+@available(*, deprecated, message: "Use ScrollView + LazyVStack directly in OverviewDashboardView/YearlyDashboardView")
 struct DashboardLayout: View {
+    // Legacy — no longer used. Kept to avoid breaking compilation until fully removed.
     enum LayoutType {
-        case weekly(
-            topLeft: AnyView,
-            topRight: AnyView,
-            bottom: AnyView
-        )
-        case yearly(
-            left: AnyView,
-            rightTop: AnyView,
-            rightBottom: AnyView
-        )
+        case weekly(topLeft: AnyView, topRight: AnyView, bottom: AnyView)
+        case yearly(left: AnyView, rightTop: AnyView, rightBottom: AnyView)
     }
     
     let layoutType: LayoutType
-    
-    // Configurable layout parameters
     let topHeightRatio: CGFloat
     let bottomHeightRatio: CGFloat
     let gap: CGFloat
-    let topLeftWidthRatio: CGFloat  // New: controls the left column width in weekly layout
+    let topLeftWidthRatio: CGFloat
 
     init(
         layoutType: LayoutType,
@@ -43,20 +37,6 @@ struct DashboardLayout: View {
         self.topLeftWidthRatio = topLeftWidthRatio
     }
     
-    // Convenience initializers
-    private init(
-        layoutType: LayoutType,
-        topHeightRatio: CGFloat = 0.4,
-        bottomHeightRatio: CGFloat = 0.5
-    ) {
-        self.layoutType = layoutType
-        self.topHeightRatio = topHeightRatio
-        self.bottomHeightRatio = bottomHeightRatio
-        self.gap = Theme.DashboardLayout.chartGap
-        self.topLeftWidthRatio = 0.5
-    }
-    
-    // Convenience initializer for weekly layout
     static func weekly(
         @ViewBuilder topLeft: () -> some View,
         @ViewBuilder topRight: () -> some View,
@@ -79,7 +59,6 @@ struct DashboardLayout: View {
         )
     }
     
-    // Convenience initializer for yearly layout
     static func yearly(
         @ViewBuilder left: () -> some View,
         @ViewBuilder rightTop: () -> some View,
@@ -95,119 +74,21 @@ struct DashboardLayout: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width
-            let height = geometry.size.height
-            
-            // Available space — no horizontal padding since the parent owns that
-            let availableWidth = max(0, width)
-            let availableHeight = max(0, height)
-            
-            switch layoutType {
-            case .weekly(let topLeft, let topRight, let bottom):
-                // Weekly layout: 2-column top row + full-width bottom
-                VStack(spacing: gap) {
-                    HStack(spacing: gap) {
-                        ChartContainer(content: topLeft)
-                            .frame(width: availableWidth * topLeftWidthRatio - gap / 2,
-                                   height: availableHeight * topHeightRatio - gap / 2)
-
-                        ChartContainer(content: topRight)
-                            .frame(width: availableWidth * (1 - topLeftWidthRatio) - gap / 2,
-                                   height: availableHeight * topHeightRatio - gap / 2)
-                    }
-                    .frame(height: availableHeight * topHeightRatio)
-                    
-                    ChartContainer(content: bottom)
-                        .frame(width: availableWidth,
-                               height: availableHeight * bottomHeightRatio - gap)
-                }
-                
-            case .yearly(let left, let rightTop, let rightBottom):
-                // Yearly layout: left column full height, right column stacked
-                HStack(spacing: gap) {
-                    // Left Column: Monthly distribution chart (full height)
-                    ChartContainer(content: left)
-                        .frame(width: availableWidth * Theme.DashboardLayout.yearlyLeftColumnRatio,
-                               height: availableHeight)
-                    
-                    // Right Column: Stacked charts with explicit height allocation
-                    // Top chart gets 60% of right column height, bottom gets 40%
-                    VStack(spacing: gap) {
-                        ChartContainer(content: rightTop)
-                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.6 - gap / 2)
-                        
-                        ChartContainer(content: rightBottom)
-                            .frame(maxWidth: .infinity, maxHeight: availableHeight * 0.4 - gap / 2)
-                    }
-                    .frame(width: availableWidth * Theme.DashboardLayout.yearlyRightColumnRatio,
-                           height: availableHeight)
-                }
-            }
-        }
-    }
-    
-    // Reusable chart container for consistent styling
-    // Uses the new borderless card design: 12pt radius, cardSurface background, no borders
-    private struct ChartContainer<Content: View>: View {
-        let content: Content
-        
-        var body: some View {
-            VStack {
-                content
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .padding(Theme.Spacing.md)  // 16pt — comfortable inner padding for all chart cards
-            .background(Theme.Colors.cardSurface)
-            .cornerRadius(Theme.Design.cornerRadius)
-        }
+        EmptyView()
     }
 }
 
 // MARK: - Preview
 #Preview {
-    DashboardLayout.weekly(
-        topLeft: {
-            VStack {
-                Text("Top Left Chart")
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Text("This is the left chart")
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-        },
-        topRight: {
-            VStack {
-                Text("Top Right Chart")
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Text("This is the right chart")
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-        },
-        bottom: {
-            VStack {
-                Text("Bottom Chart")
-                    .font(Theme.Fonts.header)
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Text("This is the bottom chart")
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-        }
-    )
-    .frame(width: 1200, height: 800)
+    VStack {
+        Text("DashboardLayout is deprecated")
+            .font(Theme.Fonts.header)
+            .foregroundColor(Theme.Colors.textPrimary)
+        Text("Charts now use ScrollView + LazyVStack directly")
+            .font(Theme.Fonts.body)
+            .foregroundColor(Theme.Colors.textSecondary)
+    }
+    .frame(width: 600, height: 300)
     .background(Theme.Colors.background)
 }
 

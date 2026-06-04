@@ -11,6 +11,12 @@ extension Date {
 
 // MARK: - Overview Dashboard View
 
+/// Overview (weekly) dashboard — a vertical scrolling page within the horizontal
+/// paging container in DashboardRootView.
+///
+/// Charts float freely at their natural height with consistent horizontal margins.
+/// No card backgrounds — visual separation comes from spacing and typography.
+/// The optional ActiveSessionStatusView pushes everything down when a session is live.
 struct OverviewDashboardView: View {
     // MARK: - State objects (passed from DashboardRootView)
     @ObservedObject var chartDataPreparer: ChartDataPreparer
@@ -21,132 +27,129 @@ struct OverviewDashboardView: View {
     // MARK: - Loading state
     @State private var isLoading = false
     
+    // MARK: - Ideal heights
+    private let narrativeMinHeight: CGFloat = 220
+    private let calendarMinHeight: CGFloat = 408  // 340 × 1.2 = 20% increase
+    private let heatMapMinHeight: CGFloat = 200
+    
     // MARK - Body
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                VStack(spacing: 0) {
-                    // Active Session Bar (always visible at top)
-                    if sessionManager.activeSession != nil {
-                        ActiveSessionStatusView(sessionManager: sessionManager)
-                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.top, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.bottom, Theme.DashboardLayout.chartPadding)
-                    }
-                    
-                    // ── Dashboard charts ──
-                    DashboardLayout.weekly(
-                        topLeft: {
-                            SessionHeatMapView(
-                                dailyTotals: chartDataPreparer.dailyTotalsForLast(days: 35, sessions: sessionManager.allSessions),
-                                dayCount: 35
-                            )
-                        },
-                        topRight: {
-                            NarrativeSummaryCard(narrativeEngine: narrativeEngine)
-                        },
-                        bottom: {
-                            SessionCalendarChartView(
-                                sessions: chartDataPreparer.currentWeekSessionsForCalendar()
-                            )
-                        },
-                        topHeightRatio: 0.35,
-                        bottomHeightRatio: 0.65,
-                        topLeftWidthRatio: 0.42,
-                        gap: 14
-                    )
+        ScrollView(.vertical) {
+            LazyVStack(spacing: Theme.DashboardLayout.chartGap) {
+                // Active Session Bar (appears at top when session is live,
+                // naturally pushes all content down)
+                if sessionManager.activeSession != nil {
+                    ActiveSessionStatusView(sessionManager: sessionManager)
+                }
+                
+                // Narrative Summary — THIS WEEK | FOCUS | PROJECT + Last Milestone
+                // Placed at top so the story leads the dashboard
+                NarrativeSummaryCard(narrativeEngine: narrativeEngine)
+                    .frame(minHeight: narrativeMinHeight)
                     .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                    .padding(.bottom, Theme.DashboardLayout.dashboardPadding + 32)
-                }
                 
-                // Loading overlay
-                 .overlay(
-                     Group {
-                         if isLoading {
-                             Rectangle()
-                                 .fill(Theme.Colors.background.opacity(0.6))
-                                 .overlay(
-                                     VStack(spacing: 20) {
-                                         ProgressView()
-                                             .scaleEffect(1.5)
-                                         Text("Loading dashboard...")
-                                             .foregroundColor(Theme.Colors.textPrimary)
-                                     }
-                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                     .background(Theme.Colors.surface)
-                                     .cornerRadius(Theme.Design.cornerRadius)
-                                 )
-                         }
-                     }
-                 )
+                // Weekly Calendar Chart — day/hour session blocks
+                SessionCalendarChartView(
+                    sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                )
+                .frame(minHeight: calendarMinHeight)
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 
-                .onAppear {
-                    Task {
-                        await projectsViewModel.loadProjects()
-                        isLoading = true
-                        
-                        chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
-                            projects: projectsViewModel.projects
+                // Session Heat Map — GitHub-style 5-week view (placed at bottom)
+                SessionHeatMapView(
+                    dailyTotals: chartDataPreparer.dailyTotalsForLast(days: 35, sessions: sessionManager.allSessions),
+                    dayCount: 35
+                )
+                .frame(minHeight: heatMapMinHeight)
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+            }
+            .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
+        }
+        // Loading overlay
+        .overlay(
+            Group {
+                if isLoading {
+                    Rectangle()
+                        .fill(Theme.Colors.background.opacity(0.6))
+                        .overlay(
+                            VStack(spacing: 20) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                Text("Loading dashboard...")
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Theme.Colors.surface)
+                            .cornerRadius(Theme.Design.cornerRadius)
                         )
-                        
-                        narrativeEngine.generateWeeklyHeadline()
-                        
-                        isLoading = false
-                    }
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-                    Task {
-                        chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
-                            projects: projectsViewModel.projects
-                        )
-                        narrativeEngine.generateWeeklyHeadline()
-                    }
+            }
+        )
+        .onAppear {
+            Task {
+                await projectsViewModel.loadProjects()
+                isLoading = true
+                
+                chartDataPreparer.prepareWeeklyData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                
+                narrativeEngine.generateWeeklyHeadline()
+                
+                isLoading = false
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
+            Task {
+                chartDataPreparer.prepareWeeklyData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                narrativeEngine.generateWeeklyHeadline()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
+            Task {
+                chartDataPreparer.prepareWeeklyData(
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                narrativeEngine.generateWeeklyHeadline()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
+            Task {
+                await MainActor.run {
+                    chartDataPreparer.prepareWeeklyData(
+                        sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    narrativeEngine.generateWeeklyHeadline()
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-                    Task {
-                        chartDataPreparer.prepareWeeklyData(
-                            sessions: sessionManager.allSessions,
-                            projects: projectsViewModel.projects
-                        )
-                        narrativeEngine.generateWeeklyHeadline()
-                    }
+            }
+        }
+        .onChange(of: sessionManager.allSessions.count) { _ in
+            guard !isLoading else { return }
+            Task {
+                await MainActor.run {
+                    chartDataPreparer.prepareWeeklyData(
+                        sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    narrativeEngine.generateWeeklyHeadline()
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
-                    Task {
-                        await MainActor.run {
-                            chartDataPreparer.prepareWeeklyData(
-                                sessions: sessionManager.allSessions,
-                                projects: projectsViewModel.projects
-                            )
-                            narrativeEngine.generateWeeklyHeadline()
-                        }
-                    }
-                }
-                .onChange(of: sessionManager.allSessions.count) { _ in
-                    guard !isLoading else { return }
-                    Task {
-                        await MainActor.run {
-                            chartDataPreparer.prepareWeeklyData(
-                                sessions: sessionManager.allSessions,
-                                projects: projectsViewModel.projects
-                            )
-                            narrativeEngine.generateWeeklyHeadline()
-                        }
-                    }
-                }
-                .onChange(of: projectsViewModel.projects.count) { _ in
-                    guard !isLoading else { return }
-                    Task {
-                        await MainActor.run {
-                            chartDataPreparer.prepareWeeklyData(
-                                sessions: sessionManager.allSessions,
-                                projects: projectsViewModel.projects
-                            )
-                            narrativeEngine.generateWeeklyHeadline()
-                        }
-                    }
+            }
+        }
+        .onChange(of: projectsViewModel.projects.count) { _ in
+            guard !isLoading else { return }
+            Task {
+                await MainActor.run {
+                    chartDataPreparer.prepareWeeklyData(
+                        sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    narrativeEngine.generateWeeklyHeadline()
                 }
             }
         }
@@ -211,16 +214,13 @@ private struct NarrativeSummaryCard: View {
 
                             if let comparative = comparativeData {
                                 VStack(spacing: 3) {
-                                    Text("Last week: \(formatHours(comparative.previous.totalHours))")                                        .font(Theme.Fonts.caption)
+                                    Text("Last week: \(formatHours(comparative.previous.totalHours))")
+                                        .font(Theme.Fonts.caption)
                                         .foregroundColor(Theme.Colors.textSecondary)
                                     Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
                                         .font(Theme.Fonts.caption.weight(.bold))
                                         .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
                                 }
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 4)
-                                .background(Theme.Colors.cardSurface.opacity(0.5))
-                                .cornerRadius(6)
                             }
 
                             Spacer()
@@ -330,10 +330,7 @@ private struct NarrativeSummaryCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Theme.DashboardLayout.chartPadding)
         .padding(.vertical, 10)
-        .background(Theme.Colors.cardSurface.opacity(0.6))
-        .cornerRadius(Theme.Design.cornerRadius)
     }
 }
 

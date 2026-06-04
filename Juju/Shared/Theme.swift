@@ -22,7 +22,7 @@ public struct Theme {
 
     // MARK: Colors
     public struct Colors {
-        public static let background  = Color("Background")  // #252525
+        public static let background  = Color("Background")  // #161616
         public static let surface     = Color("Surface")  // #191919
         public static let textPrimary = Color("textPrimary")  // #E5E5E7
         public static let textSecondary = Color("textSecondary")  // #9A9AA0
