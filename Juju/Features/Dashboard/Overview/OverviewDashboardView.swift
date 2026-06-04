@@ -11,12 +11,12 @@ extension Date {
 
 // MARK: - Overview Dashboard View
 
-/// Overview (weekly) dashboard — a vertical scrolling page within the horizontal
-/// paging container in DashboardRootView.
+/// Overview (weekly) dashboard — the single dashboard view for the app.
 ///
 /// Charts float freely at their natural height with consistent horizontal margins.
 /// No card backgrounds — visual separation comes from spacing and typography.
 /// The optional ActiveSessionStatusView pushes everything down when a session is live.
+/// At the bottom, yearly project and activity type distribution charts sit side-by-side.
 struct OverviewDashboardView: View {
     // MARK: - State objects (passed from DashboardRootView)
     @ObservedObject var chartDataPreparer: ChartDataPreparer
@@ -28,14 +28,24 @@ struct OverviewDashboardView: View {
     @State private var isLoading = false
     
     // MARK: - Ideal heights
-    private let narrativeMinHeight: CGFloat = 220
-    private let calendarMinHeight: CGFloat = 408  // 340 × 1.2 = 20% increase
-    private let heatMapMinHeight: CGFloat = 200
+    private let narrativeMinHeight: CGFloat = 200
+    private let calendarMinHeight: CGFloat = 380
+    private let heatMapMinHeight: CGFloat = 180
+    private let distributionChartMinHeight: CGFloat = 320
+    
+    // MARK - Date Intervals
+    private var currentYearInterval: DateInterval {
+        let today = Date()
+        guard let year = Calendar.current.dateInterval(of: .year, for: today) else {
+            return DateInterval(start: today, end: today)
+        }
+        return year
+    }
     
     // MARK - Body
     var body: some View {
         ScrollView(.vertical) {
-            LazyVStack(spacing: Theme.DashboardLayout.chartGap) {
+            LazyVStack(spacing: Theme.Spacing.lg) {
                 // Active Session Bar (appears at top when session is live,
                 // naturally pushes all content down)
                 if sessionManager.activeSession != nil {
@@ -61,6 +71,22 @@ struct OverviewDashboardView: View {
                     dayCount: 35
                 )
                 .frame(minHeight: heatMapMinHeight)
+                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                
+                // Yearly Distribution Charts — side-by-side
+                HStack(spacing: Theme.Spacing.lg) {
+                    // Project Distribution Chart
+                    YearlyProjectBarChartView(
+                        data: chartDataPreparer.yearlyProjectTotals()
+                    )
+                    .frame(minHeight: distributionChartMinHeight)
+                    
+                    // Activity Types Distribution Chart
+                    YearlyActivityTypeBarChartView(
+                        data: chartDataPreparer.yearlyActivityTypeTotals()
+                    )
+                    .frame(minHeight: distributionChartMinHeight)
+                }
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             }
             .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
@@ -90,8 +116,17 @@ struct OverviewDashboardView: View {
                 await projectsViewModel.loadProjects()
                 isLoading = true
                 
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
+                
                 chartDataPreparer.prepareWeeklyData(
                     sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
                 
@@ -102,8 +137,15 @@ struct OverviewDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
             Task {
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
                 chartDataPreparer.prepareWeeklyData(
                     sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
                 narrativeEngine.generateWeeklyHeadline()
@@ -111,8 +153,15 @@ struct OverviewDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
             Task {
+                let yearlySessions = sessionManager.allSessions.filter { session in
+                    currentYearInterval.contains(session.startDate)
+                }
                 chartDataPreparer.prepareWeeklyData(
                     sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                chartDataPreparer.prepareAllTimeData(
+                    sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
                 narrativeEngine.generateWeeklyHeadline()
@@ -121,8 +170,15 @@ struct OverviewDashboardView: View {
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             Task {
                 await MainActor.run {
+                    let yearlySessions = sessionManager.allSessions.filter { session in
+                        currentYearInterval.contains(session.startDate)
+                    }
                     chartDataPreparer.prepareWeeklyData(
                         sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    chartDataPreparer.prepareAllTimeData(
+                        sessions: yearlySessions,
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -133,8 +189,15 @@ struct OverviewDashboardView: View {
             guard !isLoading else { return }
             Task {
                 await MainActor.run {
+                    let yearlySessions = sessionManager.allSessions.filter { session in
+                        currentYearInterval.contains(session.startDate)
+                    }
                     chartDataPreparer.prepareWeeklyData(
                         sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    chartDataPreparer.prepareAllTimeData(
+                        sessions: yearlySessions,
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -145,8 +208,15 @@ struct OverviewDashboardView: View {
             guard !isLoading else { return }
             Task {
                 await MainActor.run {
+                    let yearlySessions = sessionManager.allSessions.filter { session in
+                        currentYearInterval.contains(session.startDate)
+                    }
                     chartDataPreparer.prepareWeeklyData(
                         sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
+                    chartDataPreparer.prepareAllTimeData(
+                        sessions: yearlySessions,
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -202,12 +272,12 @@ private struct NarrativeSummaryCard: View {
                             Spacer()
 
                             Text("THIS WEEK")
-                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .font(Theme.Fonts.caption.weight(.medium))
                                 .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.0)
+                                .tracking(1.2)
 
                             Text(headline.formattedHours)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .font(.system(size: 20, weight: .semibold, design: .rounded))
                                 .foregroundColor(Theme.Colors.accentColor)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
@@ -232,15 +302,15 @@ private struct NarrativeSummaryCard: View {
                             Spacer()
 
                             Text("FOCUS")
-                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .font(Theme.Fonts.caption.weight(.medium))
                                 .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.0)
+                                .tracking(1.2)
 
                             Image(systemName: headline.topActivity.sfSymbol)
-                                .font(.system(size: 32))
+                                .font(.system(size: 24, weight: .medium))
 
                             Text(headline.topActivity.name)
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .lineLimit(1)
 
@@ -254,15 +324,15 @@ private struct NarrativeSummaryCard: View {
                             Spacer()
 
                             Text("PROJECT")
-                                .font(Theme.Fonts.caption.weight(.semibold))
+                                .font(Theme.Fonts.caption.weight(.medium))
                                 .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.0)
+                                .tracking(1.2)
 
                             Text(headline.topProject.emoji)
-                                .font(.system(size: 32))
+                                .font(.system(size: 24))
 
                             Text(headline.topProject.name)
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .lineLimit(1)
 
@@ -310,12 +380,12 @@ private struct NarrativeSummaryCard: View {
             // Right: Milestone details
             VStack(alignment: .leading, spacing: 3) {
                 Text("Last Milestone")
-                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .font(Theme.Fonts.caption.weight(.medium))
                     .foregroundColor(Theme.Colors.textSecondary)
                     .tracking(0.5)
 
                 Text(milestone.text)
-                    .font(Theme.Fonts.body.weight(.medium))
+                    .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .lineLimit(2)
 

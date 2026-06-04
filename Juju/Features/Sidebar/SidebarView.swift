@@ -4,84 +4,78 @@ import Combine
 struct SidebarView: View {
     @Binding var selectedView: DashboardView
 
-    // Sidebar width you want to keep
-    private let sidebarWidth: CGFloat = 50
+    private let sidebarWidth: CGFloat = 44
 
     var body: some View {
-        VStack(spacing: Theme.spacingMedium) {
+        VStack(spacing: 0) {
             // Juju logo at the top
             Image("juju_logo")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 28, height: 32)
-                .padding(.top, 64)
-                .padding(.bottom, 32)
-            
-            ForEach(DashboardView.allCases) { view in
-                SidebarButton(
-                    selected: $selectedView,
-                    target:   view
-                )
+                .frame(width: 24, height: 28)
+                .padding(.top, 48)
+                .padding(.bottom, 24)
+
+            // Tight button group
+            VStack(spacing: 2) {
+                ForEach(DashboardView.allCases) { view in
+                    SidebarButton(
+                        selected: $selectedView,
+                        target:   view
+                    )
+                }
             }
-            
-            // Another spacer to keep buttons centered
+
             Spacer()
         }
-        .padding(.top, 32)
         .frame(width: sidebarWidth)
         .background(Theme.Colors.background)
     }
 
-    // MARK: ──  Sidebar button (inner type)
+    // MARK: ── Sidebar button (inner type)
+
     struct SidebarButton: View {
         @Binding var selected: DashboardView
         let target: DashboardView
 
-        @State private var iconScale: CGFloat = 1.0
-        @State private var isHovered = false          // needed for hover‑background
-        @Environment(\.colorScheme) private var colorScheme
+        @State private var isHovered = false
 
         var body: some View {
             Button {
-                selected = target
-            } label: {
-                VStack(alignment: .center) {
-                    Image(systemName: target.icon)
-                        .font(.system(size: 16, weight: .medium))
-                        .frame(width: 32, height: 32)
-                        .background(backgroundView)
-                        .cornerRadius(Theme.Design.cornerRadius)
-                        .scaleEffect(iconScale)
-                        .animation(.easeInOut(duration: Theme.Design.animationDuration),
-                                   value: iconScale)
+                withAnimation(.easeInOut(duration: Theme.Design.animationDuration)) {
+                    selected = target
                 }
-                .foregroundColor(isSelected ? .primary : .secondary)
-                .padding(.vertical, Theme.spacingMedium)
+            } label: {
+                ZStack(alignment: .leading) {
+                    // Left-edge selection pill
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Theme.Colors.accentColor)
+                            .frame(width: 3, height: 20)
+                            .padding(.leading, 2)
+                    }
+
+                    Image(systemName: target.icon)
+                        .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
+                        .frame(width: 32, height: 32)
+                        .background(
+                            isHovered && !isSelected
+                                ? RoundedRectangle(cornerRadius: 8)
+                                    .fill(Theme.Colors.surface.opacity(0.5))
+                                : nil
+                        )
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .foregroundColor(isSelected ? .primary : Theme.Colors.textSecondary)
+                .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .center)
-            } // <-- close label here
+            }
             .buttonStyle(.plain)
             .focusable(false)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .help(target.rawValue)       // native macOS tooltip
+            .help(target.rawValue)
             .onHover { hovering in
-                isHovered = hovering
-                iconScale = hovering ? 1.2 : 1.0
-            }
-        }
-
-        // ----︎ background for selection / hover
-        private var backgroundView: some View {
-            ZStack {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .fill(Theme.Colors.surface)
-                } else if isHovered {
-                    RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                        .fill(
-                            colorScheme == .dark
-                                ? Theme.Colors.surface.opacity(0.3)
-                                : Theme.Colors.textSecondary
-                        )
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isHovered = hovering
                 }
             }
         }

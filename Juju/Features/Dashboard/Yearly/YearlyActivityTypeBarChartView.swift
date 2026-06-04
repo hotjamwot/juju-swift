@@ -55,12 +55,11 @@ struct YearlyActivityTypeBarChartView: View {
                                 }
                                 .frame(width: 160, alignment: .leading)
                                 
-                                // Progress bar using consistent accent color (no individual colors per activity type)
+                                // Progress bar using consistent accent color
                                 Rectangle()
-                                    .fill(Theme.Colors.accentColor) // Use consistent accent color for all bars
-                                    .frame(width: chartWidth * CGFloat(activityData.totalHours / maxHours), height: 6)
-                                    .cornerRadius(3)
-                                    .scaleEffect(hoveredIndex == index ? CGSize(width: 1.05, height: 1.2) : CGSize(width: 1, height: 1))
+                                    .fill(Theme.Colors.accentColor.opacity(hoveredIndex == index ? 1.0 : 0.85))
+                                    .frame(width: chartWidth * CGFloat(activityData.totalHours / maxHours), height: 5)
+                                    .cornerRadius(2.5)
                                     .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
                                     .onHover { hovering in
                                         hoveredIndex = hovering ? index : nil

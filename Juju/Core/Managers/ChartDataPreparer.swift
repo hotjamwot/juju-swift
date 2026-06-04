@@ -20,7 +20,7 @@ import SwiftUI
 /// 
 /// **AI Quick Find (Method Index)**:
 /// - Data Prep: prepareWeeklyData(), prepareAllTimeData()
-/// - Accessors: currentWeekSessionsForCalendar(), yearlyProjectTotals(), yearlyActivityTypeTotals(), monthlyActivityTypeTotals()
+/// - Accessors: currentWeekSessionsForCalendar(), yearlyProjectTotals(), yearlyActivityTypeTotals()
 /// - Utilities: currentWeekInterval (computed), currentYearInterval (computed)
 /// 
 /// **AI Gotchas**:
@@ -247,34 +247,4 @@ final class ChartDataPreparer: ObservableObject {
         return totals
     }
     
-    func monthlyActivityTypeTotals() -> [MonthlyActivityBreakdown] {
-        let activityTypeManager = ActivityTypeManager.shared
-        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
-        
-        var monthlyData: [Int: [SessionRecord]] = [:]
-        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
-            let month = calendar.component(.month, from: session.startDate)
-            monthlyData[month, default: []].append(session)
-        }
-        
-        let monthNames = DateFormatter().monthSymbols ?? []
-        return (1...12).compactMap { monthNum -> MonthlyActivityBreakdown? in
-            guard monthNum >= 1 && monthNum <= monthNames.count else { return nil }
-            let sessions = monthlyData[monthNum] ?? []
-            var activityTotals: [String: Double] = [:]
-            for session in sessions {
-                let id = session.activityTypeID ?? ActivityType.uncategorizedID
-                activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
-            }
-            
-            let total = activityTotals.values.reduce(0, +)
-            let breakdown = activityTotals.compactMap { (id, hours) -> ActivityDistributionItem? in
-                guard hours > 0 else { return nil }
-                let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-                return ActivityDistributionItem(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
-            }.sorted { $0.totalHours > $1.totalHours }
-            
-            return MonthlyActivityBreakdown(month: monthNames[monthNum - 1], monthNumber: monthNum, activityBreakdown: breakdown, totalHours: total)
-        }
-    }
 }

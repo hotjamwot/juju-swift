@@ -20,16 +20,6 @@ struct ActivityDistributionItem: Identifiable {
     let percentage: Double
 }
 
-/// Monthly activity breakdown — a month's worth of activity distribution data.
-/// Replaces the previous `MonthlyActivityTypeChartData` and `YearlyMonthlyChartData`.
-struct MonthlyActivityBreakdown: Identifiable {
-    let id = UUID()
-    let month: String
-    let monthNumber: Int
-    let activityBreakdown: [ActivityDistributionItem]
-    let totalHours: Double
-}
-
 struct YearlyProjectChartData: Identifiable {
     let id = UUID()
     let projectName: String
@@ -121,11 +111,3 @@ struct ActivityTypePieSlice: Identifiable, Equatable {
 }
 
 
-/// Monthly hour data for charts
-struct MonthlyActivityHour: Identifiable {
-    let id = UUID()
-    let month: String
-    let monthNumber: Int
-    let activityName: String
-    let totalHours: Double
-}
