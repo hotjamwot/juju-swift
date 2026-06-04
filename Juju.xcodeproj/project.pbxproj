@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		663354002FB21D140010AB11 /* SessionHeatMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663353FF2FB21D140010AB11 /* SessionHeatMapView.swift */; };
 		663354032FB21E210010AB11 /* OverviewDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663354012FB21E210010AB11 /* OverviewDashboardView.swift */; };
 		663354072FB33C450010AB11 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663354062FB33C440010AB11 /* SessionCalendarChartView.swift */; };
 		6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */; };
@@ -23,6 +22,7 @@
 		667F765E2EF17EDA00C04ADA /* YearlyProjectBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */; };
 		667F76602EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */; };
 		668122432F0FACAB00956B32 /* NarrativeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668122422F0FACAB00956B32 /* NarrativeEngine.swift */; };
+		669AA73F2FD1E2A20032014C /* Session90DayBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */; };
 		669AC6C22F0FC4EF00195AAE /* SessionQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */; };
 		669AC6C32F0FC4EF00195AAE /* JujuError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C12F0FC4EE00195AAE /* JujuError.swift */; };
 		669AC6C52F0FC68500195AAE /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C42F0FC68500195AAE /* SessionManager.swift */; };
@@ -81,7 +81,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		663353FF2FB21D140010AB11 /* SessionHeatMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHeatMapView.swift; sourceTree = "<group>"; };
 		663354012FB21E210010AB11 /* OverviewDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewDashboardView.swift; sourceTree = "<group>"; };
 		663354062FB33C440010AB11 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
 		6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesViewModel.swift; sourceTree = "<group>"; };
@@ -97,6 +96,7 @@
 		667F765D2EF17ED900C04ADA /* YearlyProjectBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyProjectBarChartView.swift; sourceTree = "<group>"; };
 		667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyActivityTypeBarChartView.swift; sourceTree = "<group>"; };
 		668122422F0FACAB00956B32 /* NarrativeEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NarrativeEngine.swift; sourceTree = "<group>"; };
+		669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session90DayBarChartView.swift; sourceTree = "<group>"; };
 		669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionQuery.swift; sourceTree = "<group>"; };
 		669AC6C12F0FC4EE00195AAE /* JujuError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuError.swift; sourceTree = "<group>"; };
 		669AC6C42F0FC68500195AAE /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
@@ -422,7 +422,7 @@
 		66F448342EEC9131008FA5DD /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				663353FF2FB21D140010AB11 /* SessionHeatMapView.swift */,
+				669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */,
 				66F448332EEC9131008FA5DD /* ActiveSessionStatusView.swift */,
 			);
 			path = Shared;
@@ -570,13 +570,13 @@
 				66F448402EEC9145008FA5DD /* DashboardWindowController.swift in Sources */,
 				66B148482EA8EA4B00E9BB4A /* AppDelegate.swift in Sources */,
 				66AF6EB72EF33389008FDCEB /* SessionFilePersistenceManager.swift in Sources */,
-				663354002FB21D140010AB11 /* SessionHeatMapView.swift in Sources */,
 				66B1484E2EA8EA4B00E9BB4A /* IconManager.swift in Sources */,
 				66A2486A2FA6526D004DE871 /* ProjectStoryViewModel.swift in Sources */,
 				66B148532EA8EA4B00E9BB4A /* Project.swift in Sources */,
 				66A248702FA652D0004DE871 /* ProjectStoryContainerView.swift in Sources */,
 				66A248712FA652D0004DE871 /* ProjectStoryView.swift in Sources */,
 				66AF6EBB2EF333A7008FDCEB /* ProjectsView.swift in Sources */,
+				669AA73F2FD1E2A20032014C /* Session90DayBarChartView.swift in Sources */,
 				66A51B1E2EF03779007E2343 /* FilterToggleButton.swift in Sources */,
 				66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */,
 				668122432F0FACAB00956B32 /* NarrativeEngine.swift in Sources */,

@@ -65,10 +65,9 @@ struct OverviewDashboardView: View {
                 .frame(minHeight: calendarMinHeight)
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 
-                // Session Heat Map — GitHub-style 5-week view (placed at bottom)
-                SessionHeatMapView(
-                    dailyTotals: chartDataPreparer.dailyTotalsForLast(days: 35, sessions: sessionManager.allSessions),
-                    dayCount: 35
+                // 90-Day Stacked Bar Chart — daily project breakdown
+                Session90DayBarChartView(
+                    dayStacks: chartDataPreparer.current90DayStacks
                 )
                 .frame(minHeight: heatMapMinHeight)
                 .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
@@ -130,6 +129,12 @@ struct OverviewDashboardView: View {
                     projects: projectsViewModel.projects
                 )
                 
+                chartDataPreparer.stackedDailyProjectTotals(
+                    days: 90,
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
+                
                 narrativeEngine.generateWeeklyHeadline()
                 
                 isLoading = false
@@ -148,6 +153,11 @@ struct OverviewDashboardView: View {
                     sessions: yearlySessions,
                     projects: projectsViewModel.projects
                 )
+                chartDataPreparer.stackedDailyProjectTotals(
+                    days: 90,
+                    sessions: sessionManager.allSessions,
+                    projects: projectsViewModel.projects
+                )
                 narrativeEngine.generateWeeklyHeadline()
             }
         }
@@ -162,6 +172,11 @@ struct OverviewDashboardView: View {
                 )
                 chartDataPreparer.prepareAllTimeData(
                     sessions: yearlySessions,
+                    projects: projectsViewModel.projects
+                )
+                chartDataPreparer.stackedDailyProjectTotals(
+                    days: 90,
+                    sessions: sessionManager.allSessions,
                     projects: projectsViewModel.projects
                 )
                 narrativeEngine.generateWeeklyHeadline()
@@ -179,6 +194,11 @@ struct OverviewDashboardView: View {
                     )
                     chartDataPreparer.prepareAllTimeData(
                         sessions: yearlySessions,
+                        projects: projectsViewModel.projects
+                    )
+                    chartDataPreparer.stackedDailyProjectTotals(
+                        days: 90,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()
@@ -200,6 +220,11 @@ struct OverviewDashboardView: View {
                         sessions: yearlySessions,
                         projects: projectsViewModel.projects
                     )
+                    chartDataPreparer.stackedDailyProjectTotals(
+                        days: 90,
+                        sessions: sessionManager.allSessions,
+                        projects: projectsViewModel.projects
+                    )
                     narrativeEngine.generateWeeklyHeadline()
                 }
             }
@@ -217,6 +242,11 @@ struct OverviewDashboardView: View {
                     )
                     chartDataPreparer.prepareAllTimeData(
                         sessions: yearlySessions,
+                        projects: projectsViewModel.projects
+                    )
+                    chartDataPreparer.stackedDailyProjectTotals(
+                        days: 90,
+                        sessions: sessionManager.allSessions,
                         projects: projectsViewModel.projects
                     )
                     narrativeEngine.generateWeeklyHeadline()

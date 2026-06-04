@@ -37,6 +37,7 @@ import SwiftUI
 /// - [RECEIVES] activityTypeManager.activityTypes for category names
 /// - [OUTPUTS] ActivityDistributionItem[] for pie/bar charts
 /// - [OUTPUTS] YearlyProjectChartData[] for dashboard display
+/// - [OUTPUTS] [DayStack] for 90-day stacked bar chart
 /// 
 /// **AI Notes**:
 /// - Uses @MainActor for UI-bound operations
@@ -55,6 +56,7 @@ struct ChartViewModel {
 @MainActor
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
+    @Published var current90DayStacks: [DayStack] = []
     
     private let calendar = Calendar.current
     
@@ -221,30 +223,63 @@ final class ChartDataPreparer: ObservableObject {
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    /// Compute daily total hours for the last N days from the given sessions.
-    /// Used by the heat map view to show tracked time intensity per day.
+    // MARK: - 90-Day Stacked Bar Chart
+    
+    /// Build per-day, per-project stacked data for the last N days.
     ///
-    /// Unlike other preparer methods which read from `viewModel.sessions` (weekly filtered),
-    /// this takes an explicit sessions array so the heat map gets full-range data.
+    /// Every calendar day in the range is represented — days with no sessions
+    /// get an empty `segments` array, so the chart can render a zero-height bar.
     ///
     /// - Parameters:
-    ///   - days: Number of trailing days to include (default 35)
+    ///   - days: Number of trailing days to include (default 90)
     ///   - sessions: The session records to aggregate (pass sessionManager.allSessions)
-    /// - Returns: Dictionary mapping each calendar date to total hours tracked
-    func dailyTotalsForLast(days: Int = 35, sessions: [SessionRecord]) -> [Date: Double] {
-        let calendar = Calendar.current
+    ///   - projects: All projects (for colour and name lookup)
+    func stackedDailyProjectTotals(
+        days: Int = 90,
+        sessions: [SessionRecord],
+        projects: [Project]
+    ) {
+        let projectLookup = Dictionary(uniqueKeysWithValues: projects.map { ($0.id, $0) })
         let today = calendar.startOfDay(for: Date())
-        guard let startDate = calendar.date(byAdding: .day, value: -days, to: today) else {
-            return [:]
+        let totalDays = days  // include today, so go back (days - 1)
+        guard let startDate = calendar.date(byAdding: .day, value: -(totalDays - 1), to: today) else {
+            current90DayStacks = []
+            return
         }
         
-        var totals: [Date: Double] = [:]
-        for session in sessions where session.startDate >= startDate {
+        // Accumulate: date → projectID → hours
+        var accumulator: [Date: [String: Double]] = [:]
+        
+        for session in sessions where session.startDate >= startDate && session.startDate <= today {
             let day = calendar.startOfDay(for: session.startDate)
-            totals[day, default: 0] += Double(session.durationMinutes) / 60.0
+            let hours = Double(session.durationMinutes) / 60.0
+            accumulator[day, default: [:]][session.projectID, default: 0] += hours
         }
         
-        return totals
+        // Build DayStack for every calendar day in the range
+        var stacks: [DayStack] = []
+        var dayCursor = startDate
+        while dayCursor <= today {
+            let projectHours = accumulator[dayCursor] ?? [:]
+            let segments = projectHours.compactMap { (projectID, hours) -> ProjectSegment? in
+                guard hours > 0, let project = projectLookup[projectID] else { return nil }
+                return ProjectSegment(
+                    projectID: projectID,
+                    projectName: project.name,
+                    emoji: project.emoji,
+                    color: project.color,
+                    hours: hours
+                )
+            }
+            .sorted { $0.hours > $1.hours }  // largest on bottom for visual stability
+            
+            stacks.append(DayStack(date: dayCursor, segments: segments))
+            
+            guard let nextDay = calendar.date(byAdding: .day, value: 1, to: dayCursor) else { break }
+            dayCursor = nextDay
+        }
+        
+        current90DayStacks = stacks
     }
     
 }

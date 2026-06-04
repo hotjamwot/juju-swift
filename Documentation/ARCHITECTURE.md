@@ -304,6 +304,25 @@ struct BubbleChartDataPoint {
     let label: String
     let color: String // hex
 }
+
+/// A single day's project breakdown for the 90-day stacked bar chart.
+struct DayStack: Identifiable {
+    let date: Date
+    let segments: [ProjectSegment]  // sorted bottom-to-top by hours descending
+    var id: Date { date }
+    var totalHours: Double { segments.reduce(0) { $0 + $1.hours } }
+    var isToday: Bool { Calendar.current.isDateInToday(date) }
+}
+
+/// One coloured segment within a day bar.
+struct ProjectSegment: Identifiable {
+    let id: UUID
+    let projectID: String
+    let projectName: String
+    let emoji: String
+    let color: String      // hex
+    let hours: Double
+}
 ```
 
 ### Editorial Engine Data Models
@@ -586,9 +605,15 @@ Juju/
 ├── App/                    # App lifecycle and main entry points
 │   ├── AppDelegate.swift   # App initialization and setup
 │   ├── DashboardWindowController.swift  # Dashboard window management
+│   ├── JujuUtils.swift    # Utility extensions (Color hex init, etc.)
 │   └── main.swift         # Application entry point
 ├── Core/                   # Core business logic and data models
-│   ├── Managers/          # Business logic coordinators
+│   ├── SessionPhaseIntegrity.swift  # Phase integrity checks
+│   ├── Extensions/         # Core-level extensions
+│   │   ├── Array+SessionExtensions.swift
+│   │   ├── Date+SessionExtensions.swift
+│   │   └── SessionRecord+Filtering.swift
+│   ├── Managers/           # Business logic coordinators
 │   │   ├── SessionManager.swift      # Session lifecycle management
 │   │   ├── ProjectManager.swift      # Project CRUD operations
 │   │   ├── ChartDataPreparer.swift   # Dashboard data aggregation
@@ -598,71 +623,71 @@ Juju/
 │   │   ├── MenuManager.swift         # Menu system management
 │   │   ├── IconManager.swift         # Icon management
 │   │   ├── ShortcutManager.swift     # Keyboard shortcuts
-│   │   └── SidebarStateManager.swift # Sidebar state management
-│   ├── Models/            # Data models and value types
+│   │   ├── SidebarStateManager.swift # Sidebar state management
+│   │   ├── Data/            # Data parsing and migration
+│   │   │   ├── SessionDataParser.swift
+│   │   │   └── SessionMigrationManager.swift
+│   │   └── File/            # File I/O operations
+│   │       ├── SessionCSVManager.swift
+│   │       └── SessionFilePersistenceManager.swift
+│   ├── Models/             # Data models and value types
 │   │   ├── SessionModels.swift       # Session data structures
 │   │   ├── Project.swift             # Project data model
-│   │   ├── ChartDataModels.swift     # Chart data structures
+│   │   ├── ActivityType.swift        # Activity type model
+│   │   ├── ChartDataModels.swift     # Chart data structures (incl. DayStack)
 │   │   ├── JujuError.swift           # Error types
-│   │   ├── SessionQuery.swift        # Query parameters
-│   │   └── DashboardViewType.swift   # Dashboard view types
-│   └── ViewModels/        # UI state management
+│   │   └── SessionQuery.swift        # Query parameters
+│   └── ViewModels/         # UI state management
 │       ├── ProjectsViewModel.swift   # Projects UI state
 │       └── ProjectStoryViewModel.swift # Project timeline derivation
-├── Features/              # Feature-specific implementations
-│   ├── Dashboard/         # Dashboard functionality
+├── Features/               # Feature-specific implementations
+│   ├── Dashboard/          # Dashboard functionality
 │   │   ├── DashboardRootView.swift   # Main dashboard container
 │   │   ├── Overview/         # Overview dashboard views (weekly summary)
 │   │   │   ├── OverviewDashboardView.swift
 │   │   │   └── SessionCalendarChartView.swift
 │   │   ├── Shared/           # Shared dashboard components
-│   │   │   ├── DashboardLayout.swift
 │   │   │   ├── ActiveSessionStatusView.swift
-│   │   │   └── SessionHeatMapView.swift
-│   │   ├── Weekly/           # Legacy — use Overview/ instead
-│   │   │   └── WeeklyEditorialView.swift
+│   │   │   └── Session90DayBarChartView.swift
 │   │   └── Yearly/          # Yearly dashboard views
-│   │       ├── YearlyDashboardView.swift
 │   │       ├── YearlyProjectBarChartView.swift
-│   │       ├── YearlyActivityTypeBarChartView.swift
-│   │       └── MonthlyActivityTypeGroupedBarChartView.swift
-│   ├── Sessions/          # Session management UI
+│   │       └── YearlyActivityTypeBarChartView.swift
+│   ├── Sessions/           # Session management UI
 │   │   ├── SessionsView.swift        # Main sessions list
 │   │   ├── SessionsRowView.swift     # Individual session row
 │   │   └── Components/      # Session UI components
 │   │       ├── BottomFilterBar.swift
 │   │       ├── FilterToggleButton.swift
 │   │       └── InlineSelectionPopover.swift
-│   ├── Projects/          # Project management UI
+│   ├── Projects/           # Project management UI
 │   │   ├── ProjectsView.swift        # Main projects list
-│   │   └── ProjectSidebarEditView.swift  # Project editing
-│   ├── ProjectStory/      # Project biography/timeline feature
-│   │   ├── ProjectStoryView.swift    # Main timeline view
-│   │   └── ProjectStoryViewModel.swift # Timeline state & derivation logic
-│   ├── ActivityTypes/     # Activity type management
+│   │   ├── ProjectSidebarEditView.swift  # Project editing
+│   │   └── ProjectStory/      # Project biography/timeline feature
+│   │       ├── ProjectStoryContainerView.swift
+│   │       └── ProjectStoryView.swift
+│   ├── ActivityTypes/      # Activity type management
 │   │   ├── ActivityTypeView.swift    # Activity type list
+│   │   ├── ActivityTypesViewModel.swift  # Activity types state
 │   │   └── ActivityTypeSidebarEditView.swift  # Activity type editing
-│   ├── Notes/             # Notes functionality
+│   ├── Notes/              # Notes functionality
+│   │   ├── NotesManager.swift        # Notes presentation
 │   │   ├── NotesModalView.swift      # Notes modal dialog
 │   │   └── NotesViewModel.swift      # Notes state management
-│   └── Sidebar/           # Sidebar UI
+│   └── Sidebar/            # Sidebar UI
 │       ├── SidebarView.swift         # Main sidebar container
 │       └── SidebarEditView.swift     # Sidebar editing
-├── Shared/                # Cross-cutting concerns
-│   ├── Theme.swift        # App theming and styling
-│   ├── TooltipView.swift  # Tooltip component
-│   ├── Extensions/        # Swift extensions
-│   │   ├── ButtonTheme.swift         # Button theming
-│   │   └── NSColor+SwiftUI.swift     # Color extensions
-│   └── Preview/           # Preview helpers
-│       └── SimplePreviewHelpers.swift  # Preview utilities
-└── Resources/             # App resources
-    └── Assets.xcassets/   # Asset catalog
-        ├── AppIcon.appiconset/       # App icons
-        ├── Icons.imageset/          # UI icons
-        ├── status-active.imageset/  # Active status icon
-        ├── status-idle.imageset/    # Idle status icon
-        └── *.colorset/              # Color definitions
+├── Shared/                 # Cross-cutting concerns
+│   ├── Theme.swift         # App theming, fonts, spacing, layout constants
+│   └── Extensions/
+│       └── ButtonTheme.swift         # Button theming
+└── Resources/              # App resources
+    └── Assets.xcassets/    # Asset catalog
+        ├── AppIcon.appiconset/
+        ├── Icons.imageset/
+        ├── status-active.imageset/
+        ├── status-idle.imageset/
+        ├── juju_logo.imageset/
+        └── *.colorset/               # Color definitions (Background, Surface, etc.)
 ```
 
 #### Key Integration Points
