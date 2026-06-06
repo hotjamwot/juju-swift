@@ -677,25 +677,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
     /// If the resulting color is too dark to be visible against the dark
     /// surface background, blend it toward white to guarantee contrast.
     private func lightenIfNeeded(_ color: Color) -> Color {
-        let nsColor = NSColor(color).usingColorSpace(.deviceRGB) ?? NSColor.gray
-        let r = nsColor.redComponent
-        let g = nsColor.greenComponent
-        let b = nsColor.blueComponent
-        let a = nsColor.alphaComponent
-        // Perceived luminance (rec. 601)
-        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
-        // If luminance is below ~0.35 the bar will be hard to see on dark backgrounds.
-        // Blend toward white proportionally.
-        if luminance < 0.35 {
-            let mix = 1.0 - luminance
-            return Color(
-                red: min(r + mix * 0.55, 1.0),
-                green: min(g + mix * 0.55, 1.0),
-                blue: min(b + mix * 0.55, 1.0),
-                opacity: Double(a)
-            )
-        }
-        return color
+        color.lightenedByLuminance()
     }
 
     private func moodOpacity(_ mood: Double) -> Double {
@@ -757,7 +739,7 @@ private struct NotableMomentCard: View {
         ZStack(alignment: .topTrailing) {
             HStack(alignment: .top, spacing: 12) {
                 Rectangle()
-                    .fill(isHighlighted ? Color(hex: "F5A623") : lightenColor(hex: projectColorHex))
+                    .fill(isHighlighted ? Color(hex: "F5A623") : Color.lightenedHex(projectColorHex))
                     .frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -782,7 +764,7 @@ private struct NotableMomentCard: View {
 
             Image(systemName: "star.fill")
                 .font(.system(size: 11))
-                .foregroundColor(isHighlighted ? Color(hex: "FFD060") : lightenColor(hex: projectColorHex))
+                .foregroundColor(isHighlighted ? Color(hex: "FFD060") : Color.lightenedHex(projectColorHex))
                 .padding(10)
         }
         .onHover { hovering in
@@ -798,33 +780,12 @@ private struct PhasePill: View {
     var body: some View {
         Text(title)
             .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(lightenColor(hex: colorHex))
+            .foregroundColor(Color.lightenedHex(colorHex))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(lightenColor(hex: colorHex).opacity(0.15))
+            .background(Color.lightenedHex(colorHex).opacity(0.15))
             .cornerRadius(999)
     }
-}
-
-/// Lighten a hex color so it remains visible against dark backgrounds.
-/// Uses Rec. 601 perceived luminance; if below a threshold, blends toward white.
-private func lightenColor(hex: String) -> Color {
-    guard let nsColor = NSColor(hex: hex)?.usingColorSpace(.deviceRGB) else {
-        return Color(hex: hex)
-    }
-    let r = nsColor.redComponent
-    let g = nsColor.greenComponent
-    let b = nsColor.blueComponent
-    let luminance = 0.299 * r + 0.587 * g + 0.114 * b
-    if luminance < 0.35 {
-        let mix = 1.0 - luminance
-        return Color(
-            red: min(r + mix * 0.55, 1.0),
-            green: min(g + mix * 0.55, 1.0),
-            blue: min(b + mix * 0.55, 1.0)
-        )
-    }
-    return Color(hex: hex)
 }
 
 private enum ColorFamily {

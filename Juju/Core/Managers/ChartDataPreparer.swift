@@ -58,7 +58,7 @@ final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
     @Published var current90DayStacks: [DayStack] = []
     /// Milestones that occurred within the 90-day range (newest first)
-    @Published var current90DayMilestones: [Milestone] = []
+    @Published var current90DayMilestones: [DashboardMilestone] = []
     
     private let calendar = Calendar.current
     
@@ -347,11 +347,11 @@ final class ChartDataPreparer: ObservableObject {
         // Build Milestone list (newest first) for the 90-day chart section
         current90DayMilestones = milestoneSessions
             .sorted { $0.startDate > $1.startDate }
-            .compactMap { session -> Milestone? in
+            .compactMap { session -> DashboardMilestone? in
                 guard let text = session.action else { return nil }
                 let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectLookup[session.projectID]
-                return Milestone(
+                return DashboardMilestone(
                     text: text,
                     date: session.startDate,
                     projectID: session.projectID,

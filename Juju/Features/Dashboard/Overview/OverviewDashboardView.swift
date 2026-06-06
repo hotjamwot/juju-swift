@@ -14,7 +14,7 @@ extension Date {
 /// Overview (weekly) dashboard — the single dashboard view for the app.
 ///
 /// Charts float freely at their natural height with consistent horizontal margins.
-/// No card backgrounds — visual separation comes from spacing and typography.
+/// Narrative metric cards use an explicit `cardSurface` background (#252526) for depth.
 /// The optional ActiveSessionStatusView pushes everything down when a session is live.
 /// At the bottom, yearly project and activity type distribution charts sit side-by-side.
 struct OverviewDashboardView: View {
@@ -143,144 +143,56 @@ struct OverviewDashboardView: View {
             Task {
                 await projectsViewModel.loadProjects()
                 isLoading = true
-                
-                let yearlySessions = sessionManager.allSessions.filter { session in
-                    currentYearInterval.contains(session.startDate)
-                }
-                
-                chartDataPreparer.prepareWeeklyData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: yearlySessions,
-                    projects: projectsViewModel.projects
-                )
-                
-                chartDataPreparer.stackedDailyProjectTotals(
-                    days: 90,
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                
-                narrativeEngine.generateWeeklyHeadline()
-                
+                await refreshDashboardData()
                 isLoading = false
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
-            Task {
-                let yearlySessions = sessionManager.allSessions.filter { session in
-                    currentYearInterval.contains(session.startDate)
-                }
-                chartDataPreparer.prepareWeeklyData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: yearlySessions,
-                    projects: projectsViewModel.projects
-                )
-                chartDataPreparer.stackedDailyProjectTotals(
-                    days: 90,
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                narrativeEngine.generateWeeklyHeadline()
-            }
+            Task { await refreshDashboardData() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidEnd)) { _ in
-            Task {
-                let yearlySessions = sessionManager.allSessions.filter { session in
-                    currentYearInterval.contains(session.startDate)
-                }
-                chartDataPreparer.prepareWeeklyData(
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                chartDataPreparer.prepareAllTimeData(
-                    sessions: yearlySessions,
-                    projects: projectsViewModel.projects
-                )
-                chartDataPreparer.stackedDailyProjectTotals(
-                    days: 90,
-                    sessions: sessionManager.allSessions,
-                    projects: projectsViewModel.projects
-                )
-                narrativeEngine.generateWeeklyHeadline()
-            }
+            Task { await refreshDashboardData() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
-            Task {
-                await MainActor.run {
-                    let yearlySessions = sessionManager.allSessions.filter { session in
-                        currentYearInterval.contains(session.startDate)
-                    }
-                    chartDataPreparer.prepareWeeklyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.prepareAllTimeData(
-                        sessions: yearlySessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.stackedDailyProjectTotals(
-                        days: 90,
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    narrativeEngine.generateWeeklyHeadline()
-                }
-            }
+            Task { await refreshDashboardData() }
         }
         .onChange(of: sessionManager.allSessions.count) { _ in
             guard !isLoading else { return }
-            Task {
-                await MainActor.run {
-                    let yearlySessions = sessionManager.allSessions.filter { session in
-                        currentYearInterval.contains(session.startDate)
-                    }
-                    chartDataPreparer.prepareWeeklyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.prepareAllTimeData(
-                        sessions: yearlySessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.stackedDailyProjectTotals(
-                        days: 90,
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    narrativeEngine.generateWeeklyHeadline()
-                }
-            }
+            Task { await refreshDashboardData() }
         }
         .onChange(of: projectsViewModel.projects.count) { _ in
             guard !isLoading else { return }
-            Task {
-                await MainActor.run {
-                    let yearlySessions = sessionManager.allSessions.filter { session in
-                        currentYearInterval.contains(session.startDate)
-                    }
-                    chartDataPreparer.prepareWeeklyData(
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.prepareAllTimeData(
-                        sessions: yearlySessions,
-                        projects: projectsViewModel.projects
-                    )
-                    chartDataPreparer.stackedDailyProjectTotals(
-                        days: 90,
-                        sessions: sessionManager.allSessions,
-                        projects: projectsViewModel.projects
-                    )
-                    narrativeEngine.generateWeeklyHeadline()
-                }
+            Task { await refreshDashboardData() }
+        }
+    }
+    
+    // MARK: - Data Refresh
+    
+    /// Refresh all dashboard data — chart data preparation and narrative headline.
+    /// Extracted from inline closures to eliminate ~60 lines of duplication.
+    private func refreshDashboardData() async {
+        await MainActor.run {
+            let yearlySessions = sessionManager.allSessions.filter { session in
+                currentYearInterval.contains(session.startDate)
             }
+            
+            chartDataPreparer.prepareWeeklyData(
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
+            
+            chartDataPreparer.prepareAllTimeData(
+                sessions: yearlySessions,
+                projects: projectsViewModel.projects
+            )
+            
+            chartDataPreparer.stackedDailyProjectTotals(
+                days: 90,
+                sessions: sessionManager.allSessions,
+                projects: projectsViewModel.projects
+            )
+            
+            narrativeEngine.generateWeeklyHeadline()
         }
     }
     
@@ -400,12 +312,6 @@ private struct NarrativeMetricCard<Content: View>: View {
     let emoji: String?
     @ViewBuilder let content: () -> Content
 
-    /// JapaScandi card surface — just a step lighter than the deep background (#1B1B1B),
-    /// enough to float the card without breaking the muted palette.
-    private let cardBackground = Color(
-        red: 0.145, green: 0.145, blue: 0.150, opacity: 1.0   // ~#252526
-    )
-
     init(title: String, iconName: String? = nil, emoji: String? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.iconName = iconName
@@ -444,7 +350,7 @@ private struct NarrativeMetricCard<Content: View>: View {
         .frame(minHeight: 180)
         .background(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .fill(cardBackground)
+                .fill(Theme.Colors.cardSurface)
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
     }
@@ -457,7 +363,7 @@ private struct NarrativeMetricCard<Content: View>: View {
 /// Hovering a milestone turns the left pill gold and highlights the corresponding
 /// day in the 90-day chart (dimming all other bars).
 private struct RecentMilestonesSection: View {
-    let milestones: [Milestone]
+    let milestones: [DashboardMilestone]
     @Binding var highlightedMilestoneDate: Date?
 
     private let df: DateFormatter = {
@@ -483,7 +389,7 @@ private struct RecentMilestonesSection: View {
     }
 
     @ViewBuilder
-    private func milestoneRow(_ milestone: Milestone) -> some View {
+    private func milestoneRow(_ milestone: DashboardMilestone) -> some View {
         MilestoneRowView(
             milestone: milestone,
             dateText: df.string(from: milestone.date),
@@ -504,7 +410,7 @@ private struct RecentMilestonesSection: View {
 /// A single milestone row with hover interaction — mimics NotableMomentCard from ProjectStoryView.
 /// Left accent bar uses project color by default; turns gold on hover.
 private struct MilestoneRowView: View {
-    let milestone: Milestone
+    let milestone: DashboardMilestone
     let dateText: String
     let isHighlighted: Bool
     let onHover: (Bool) -> Void
@@ -513,7 +419,7 @@ private struct MilestoneRowView: View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             // Left accent bar — project color or gold when highlighted
             RoundedRectangle(cornerRadius: 1)
-                .fill(isHighlighted ? Color(hex: "F5A623") : lightenColor(hex: milestone.projectColor))
+                .fill(isHighlighted ? Color(hex: "F5A623") : Color.lightenedHex(milestone.projectColor))
                 .frame(width: 3)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
@@ -546,29 +452,6 @@ private struct MilestoneRowView: View {
             onHover(hovering)
         }
     }
-}
-
-// MARK: - Color Helpers
-
-/// Lighten a hex color so it remains visible against dark backgrounds.
-/// Uses Rec. 601 perceived luminance; if below a threshold, blends toward white.
-private func lightenColor(hex: String) -> Color {
-    guard let nsColor = NSColor(hex: hex)?.usingColorSpace(.deviceRGB) else {
-        return Color(hex: hex)
-    }
-    let r = nsColor.redComponent
-    let g = nsColor.greenComponent
-    let b = nsColor.blueComponent
-    let luminance = 0.299 * r + 0.587 * g + 0.114 * b
-    if luminance < 0.35 {
-        let mix = 1.0 - luminance
-        return Color(
-            red: min(r + mix * 0.55, 1.0),
-            green: min(g + mix * 0.55, 1.0),
-            blue: min(b + mix * 0.55, 1.0)
-        )
-    }
-    return Color(hex: hex)
 }
 
 // MARK: - Preview

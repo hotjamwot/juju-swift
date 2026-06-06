@@ -33,10 +33,9 @@ public struct Theme {
 
         /// Subtle card surface — slightly lighter than background but still distinct
         /// Used for card containers and chart areas to create depth without borders
+        /// Matches the ~#252526 card surface used by narrative metric cards
         public static let cardSurface: Color = {
-            // Create a subtle elevation by blending background and surface
-            // This creates a card that's slightly lifted from the background
-            Color(NSColor(calibratedRed: 0.100, green: 0.100, blue: 0.106, alpha: 1.0))
+            Color(NSColor(calibratedRed: 0.145, green: 0.145, blue: 0.150, alpha: 1.0))
         }()
 
         /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)
@@ -106,8 +105,6 @@ public struct Theme {
         // Core spacing system - single source of truth
         /// Outer padding applied by chartContainer — generous for JapaScandi breathing room
         public static let chartPadding: CGFloat = 20
-        /// Gap between major dashboard sections (charts, narrative, etc.)
-        public static let chartGap: CGFloat = 32
         /// Page-level horizontal + vertical padding for the dashboard scroll view
         public static let dashboardPadding: CGFloat = 48
         /// Chart corner radius — now uses the standard 12pt
@@ -127,14 +124,6 @@ public struct Theme {
             medium: 1200,
             large: 1600
         )
-        
-        // Chart aspect ratios
-        public static let topChartAspectRatio: CGFloat = 0.6
-        public static let bottomChartAspectRatio: CGFloat = 0.4
-        
-        // Yearly layout ratios
-        public static let yearlyLeftColumnRatio: CGFloat = 0.45
-        public static let yearlyRightColumnRatio: CGFloat = 0.55
     }
 
     // MARK: Row-specific styling for list layout
