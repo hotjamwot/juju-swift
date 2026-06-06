@@ -230,6 +230,7 @@ struct SessionCalendarChartView: View {
                 .chartPlotStyle { plotArea in
                     plotArea
                         .background(.clear)
+                        .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
                 }
                 .chartXScale(domain: weekDays)
                 .chartOverlay { proxy in

@@ -36,12 +36,12 @@ struct YearlyProjectBarChartView: View {
                     let visibleData = Array(data.prefix(maxVisibleProjects))
                     let hiddenData = Array(data.dropFirst(maxVisibleProjects))
                     
-                    let totalSpacing = CGFloat(visibleData.count - 1) * 12
+                    let totalSpacing = CGFloat(visibleData.count - 1) * Theme.Spacing.sm
                     let availableHeight = geometry.size.height - totalSpacing
-                    let itemHeight = max(28, availableHeight / CGFloat(visibleData.count))
+                    let itemHeight = max(30, availableHeight / CGFloat(visibleData.count))
                     
                     ZStack(alignment: .topLeading) {
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             ForEach(Array(visibleData.enumerated()), id: \.offset) { index, projectData in
                                 HStack(spacing: Theme.spacingMedium) {
                                     HStack(spacing: Theme.spacingSmall) {
@@ -57,8 +57,8 @@ struct YearlyProjectBarChartView: View {
                                     
                                     Rectangle()
                                         .fill(projectData.colorSwiftUI.opacity(hoveredIndex == index ? 1.0 : 0.85))
-                                        .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 5)
-                                        .cornerRadius(2.5)
+                                        .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 6)
+                                        .cornerRadius(3)
                                         .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
                                     
                                     Text("\(projectData.totalHours, specifier: "%.1f") h")
@@ -84,7 +84,7 @@ struct YearlyProjectBarChartView: View {
                             let projectData = visibleData[index]
                             tooltipContent(for: projectData)
                                 .fixedSize()
-                                .position(x: geometry.size.width * 0.35, y: CGFloat(index) * (itemHeight + 12) + itemHeight / 2 - 20)
+                                .position(x: geometry.size.width * 0.35, y: CGFloat(index) * (itemHeight + Theme.Spacing.sm) + itemHeight / 2 - 20)
                                 .allowsHitTesting(false)
                                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         }
@@ -113,7 +113,7 @@ struct YearlyProjectBarChartView: View {
                         }
                     }
                 }
-                .padding(.vertical, Theme.spacingExtraSmall)
+                .padding(.vertical, Theme.Spacing.xs)
             }
         }
         .padding(Theme.DashboardLayout.chartPadding)

@@ -27,11 +27,19 @@ struct OverviewDashboardView: View {
     // MARK: - Loading state
     @State private var isLoading = false
     
+    // MARK: - Milestone hover state
+    @State private var highlightedMilestoneDate: Date? = nil
+    
     // MARK: - Ideal heights
-    private let narrativeMinHeight: CGFloat = 200
-    private let calendarMinHeight: CGFloat = 380
-    private let heatMapMinHeight: CGFloat = 180
-    private let distributionChartMinHeight: CGFloat = 320
+    private let calendarMinHeight: CGFloat = 400
+    private let stackedBarMinHeight: CGFloat = 200
+    private let distributionChartMinHeight: CGFloat = 340
+    
+    // MARK: - Spacing
+    /// Space between a section header and its content
+    private let headerToContentGap: CGFloat = Theme.Spacing.xs
+    /// Space between the bottom of one section and the next section's header
+    private let sectionGap: CGFloat = Theme.Spacing.xxl + 8  // ~56pt
     
     // MARK - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -45,48 +53,69 @@ struct OverviewDashboardView: View {
     // MARK - Body
     var body: some View {
         ScrollView(.vertical) {
-            LazyVStack(spacing: Theme.Spacing.xl) {
+            LazyVStack(spacing: sectionGap) {
                 // Active Session Bar (appears at top when session is live,
                 // naturally pushes all content down)
                 if sessionManager.activeSession != nil {
                     ActiveSessionStatusView(sessionManager: sessionManager)
                 }
                 
-                // Narrative Summary — THIS WEEK | FOCUS | PROJECT + Last Milestone
-                // Placed at top so the story leads the dashboard
+                // Narrative Summary — THIS WEEK | FOCUS | PROJECT as metric cards
                 NarrativeSummaryCard(narrativeEngine: narrativeEngine)
-                    .frame(minHeight: narrativeMinHeight)
                     .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 
                 // Weekly Calendar Chart — day/hour session blocks
-                SessionCalendarChartView(
-                    sessions: chartDataPreparer.currentWeekSessionsForCalendar()
-                )
-                .frame(minHeight: calendarMinHeight)
-                .chartContainer()
+                VStack(spacing: headerToContentGap) {
+                    chartSectionHeader("This Week")
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    SessionCalendarChartView(
+                        sessions: chartDataPreparer.currentWeekSessionsForCalendar()
+                    )
+                    .frame(minHeight: calendarMinHeight)
+                    .chartContainer()
+                }
                 
                 // 90-Day Stacked Bar Chart — daily project breakdown
-                Session90DayBarChartView(
-                    dayStacks: chartDataPreparer.current90DayStacks
-                )
-                .frame(minHeight: heatMapMinHeight)
-                .chartContainer()
+                VStack(spacing: headerToContentGap) {
+                    chartSectionHeader("90-Day Overview")
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    VStack(spacing: Theme.Spacing.sm) {
+                        Session90DayBarChartView(
+                            dayStacks: chartDataPreparer.current90DayStacks,
+                            highlightedDate: highlightedMilestoneDate
+                        )
+                        .frame(minHeight: stackedBarMinHeight)
+                        
+                        // Milestones that fall within the 90-day range
+                        if !chartDataPreparer.current90DayMilestones.isEmpty {
+                            RecentMilestonesSection(
+                                milestones: chartDataPreparer.current90DayMilestones,
+                                highlightedMilestoneDate: $highlightedMilestoneDate
+                            )
+                        }
+                    }
+                    .chartContainer()
+                }
                 
                 // Yearly Distribution Charts — side-by-side
-                HStack(spacing: Theme.Spacing.lg) {
-                    // Project Distribution Chart
-                    YearlyProjectBarChartView(
-                        data: chartDataPreparer.yearlyProjectTotals()
-                    )
-                    .frame(minHeight: distributionChartMinHeight)
-                    
-                    // Activity Types Distribution Chart
-                    YearlyActivityTypeBarChartView(
-                        data: chartDataPreparer.yearlyActivityTypeTotals()
-                    )
-                    .frame(minHeight: distributionChartMinHeight)
+                VStack(spacing: headerToContentGap) {
+                    chartSectionHeader("Yearly Totals")
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    HStack(spacing: Theme.Spacing.lg) {
+                        // Project Distribution Chart
+                        YearlyProjectBarChartView(
+                            data: chartDataPreparer.yearlyProjectTotals()
+                        )
+                        .frame(minHeight: distributionChartMinHeight)
+                        
+                        // Activity Types Distribution Chart
+                        YearlyActivityTypeBarChartView(
+                            data: chartDataPreparer.yearlyActivityTypeTotals()
+                        )
+                        .frame(minHeight: distributionChartMinHeight)
+                    }
+                    .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
-                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             }
             .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
         }
@@ -254,20 +283,24 @@ struct OverviewDashboardView: View {
             }
         }
     }
+    
+    // MARK: - Section Header
+    
+    private func chartSectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .foregroundColor(Theme.Colors.textSecondary)
+            .tracking(0.5)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
-// MARK: - 3-Column Narrative Summary Card
+// MARK: - Narrative Summary Card (3 metric cards)
 
-/// Displays THIS WEEK | FOCUS | PROJECT in three centered columns.
-/// No vertical dividers — clean white space separates them.
-/// Values use the accent color except project which uses its own project color.
+/// Displays THIS WEEK | FOCUS | PROJECT as individual rounded metric cards.
+/// Each card has a visible surface, an SF Symbol, and primary data below.
 private struct NarrativeSummaryCard: View {
     @ObservedObject var narrativeEngine: NarrativeEngine
-
-    /// The most recent milestone from all sessions
-    private var lastMilestone: Milestone? {
-        narrativeEngine.mostRecentMilestone
-    }
 
     /// Comparison data for the current week vs same elapsed period last week
     private var comparativeData: ComparativeAnalytics? {
@@ -291,147 +324,251 @@ private struct NarrativeSummaryCard: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            if let headline = narrativeEngine.currentHeadline {
-                VStack(spacing: Theme.Spacing.sm) {
-                    let colWidth = (geometry.size.width - Theme.Spacing.xs * 2) / 3
+        if let headline = narrativeEngine.currentHeadline {
+            HStack(spacing: Theme.Spacing.sm) {
+                // Card 1: Total Duration
+                NarrativeMetricCard(title: "THIS WEEK", iconName: "clock.fill") {
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Text(headline.formattedHours)
+                            .font(.system(size: 28, weight: .semibold, design: .rounded))
+                            .foregroundColor(Theme.Colors.accentColor)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
 
-                    HStack(spacing: Theme.Spacing.xs) {
-                        // Column 1: Total Duration + Comparison
-                        VStack(spacing: Theme.Spacing.xxs) {
-                            Spacer()
-
-                            Text("THIS WEEK")
-                                .font(Theme.Fonts.caption.weight(.medium))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.2)
-
-                            Text(headline.formattedHours)
-                                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                                .foregroundColor(Theme.Colors.accentColor)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.center)
-
-                            if let comparative = comparativeData {
-                                VStack(spacing: 3) {
-                                    Text("Last week: \(formatHours(comparative.previous.totalHours))")
-                                        .font(Theme.Fonts.caption)
-                                        .foregroundColor(Theme.Colors.textSecondary)
-                                    Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
-                                        .font(Theme.Fonts.caption.weight(.bold))
-                                        .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
-                                }
+                        if let comparative = comparativeData {
+                            VStack(spacing: Theme.Spacing.micro) {
+                                Text("vs \(formatHours(comparative.previous.totalHours)) last week")
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
+                                    .font(Theme.Fonts.caption.weight(.bold))
+                                    .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
                             }
-
-                            Spacer()
                         }
-                        .frame(width: colWidth)
-
-                        // Column 2: Focus Activity
-                        VStack(spacing: Theme.Spacing.xxs) {
-                            Spacer()
-
-                            Text("FOCUS")
-                                .font(Theme.Fonts.caption.weight(.medium))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.2)
-
-                            Image(systemName: headline.topActivity.sfSymbol)
-                                .font(.system(size: 24, weight: .medium))
-
-                            Text(headline.topActivity.name)
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .lineLimit(1)
-
-                            Spacer()
-                        }
-                        .frame(width: colWidth)
-                        .foregroundColor(Theme.Colors.accentColor)
-
-                        // Column 3: Top Project
-                        VStack(spacing: Theme.Spacing.xxs) {
-                            Spacer()
-
-                            Text("PROJECT")
-                                .font(Theme.Fonts.caption.weight(.medium))
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .tracking(1.2)
-
-                            Text(headline.topProject.emoji)
-                                .font(.system(size: 24))
-
-                            Text(headline.topProject.name)
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .lineLimit(1)
-
-                            Spacer()
-                        }
-                        .frame(width: colWidth)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                    // Last Milestone detail section at the bottom
-                    if let milestone = lastMilestone {
-                        lastMilestoneView(milestone: milestone)
                     }
                 }
-            } else {
+
+                // Card 2: Focus Activity
+                NarrativeMetricCard(title: "FOCUS", iconName: "target") {
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: headline.topActivity.sfSymbol)
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundColor(Theme.Colors.accentColor)
+                        Text(headline.topActivity.name)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+
+                // Card 3: Top Project
+                NarrativeMetricCard(title: "PROJECT", iconName: "folder.fill") {
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Text(headline.topProject.emoji)
+                            .font(.system(size: 22))
+                        Text(headline.topProject.name)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            }
+        } else {
+            HStack {
+                Spacer()
                 VStack(spacing: Theme.Spacing.xs) {
-                    Spacer()
                     ProgressView()
                         .scaleEffect(0.8)
                     Text("Loading your story...")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
-                    Spacer()
                 }
+                Spacer()
+            }
+        }
+    }
+}
+
+/// A single metric card in the narrative strip.
+/// Layout: title + symbol at top-left, main content centred vertically and horizontally.
+/// Uses a visible elevated card surface and generous vertical padding for equal height.
+private struct NarrativeMetricCard<Content: View>: View {
+    let title: String
+    let iconName: String?
+    let emoji: String?
+    @ViewBuilder let content: () -> Content
+
+    /// JapaScandi card surface — just a step lighter than the deep background (#1B1B1B),
+    /// enough to float the card without breaking the muted palette.
+    private let cardBackground = Color(
+        red: 0.145, green: 0.145, blue: 0.150, opacity: 1.0   // ~#252526
+    )
+
+    init(title: String, iconName: String? = nil, emoji: String? = nil, @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.iconName = iconName
+        self.emoji = emoji
+        self.content = content
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Top: title + symbol, left-aligned
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                Text(title)
+                    .font(Theme.Fonts.caption.weight(.semibold))
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .tracking(0.8)
+
+                if let iconName = iconName {
+                    Image(systemName: iconName)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Theme.Colors.accentColor)
+                } else if let emoji = emoji {
+                    Text(emoji)
+                        .font(.system(size: 18))
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.top, Theme.Spacing.md)
+
+            // Centre: main content
+            Spacer(minLength: Theme.Spacing.xxs)
+            content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.md)
+        }
+        .frame(minHeight: 180)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                .fill(cardBackground)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
+    }
+}
+
+// MARK: - Recent Milestones Section
+
+/// Displays recent milestones from the 90-day period below the chart.
+/// Uses the same card pattern as ProjectStoryView's NotableMomentCard.
+/// Hovering a milestone turns the left pill gold and highlights the corresponding
+/// day in the 90-day chart (dimming all other bars).
+private struct RecentMilestonesSection: View {
+    let milestones: [Milestone]
+    @Binding var highlightedMilestoneDate: Date?
+
+    private let df: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d MMM yyyy"
+        return f
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Recent milestones")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(Theme.Colors.textSecondary)
+                .tracking(0.5)
+
+            VStack(spacing: Theme.Spacing.xs) {
+                // Reverse so most recent is at the bottom
+                ForEach(milestones.prefix(5).reversed()) { milestone in
+                    milestoneRow(milestone)
+                }
             }
         }
     }
 
-    /// Displays the most recent milestone with project on left and details on right
     @ViewBuilder
-    private func lastMilestoneView(milestone: Milestone) -> some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            // Left: Project emoji and name
-            VStack(alignment: .leading, spacing: 2) {
-                Text(milestone.projectEmoji)
-                    .font(.system(size: 16))
-                Text(milestone.projectName)
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                    .lineLimit(1)
+    private func milestoneRow(_ milestone: Milestone) -> some View {
+        MilestoneRowView(
+            milestone: milestone,
+            dateText: df.string(from: milestone.date),
+            isHighlighted: highlightedMilestoneDate.map { Calendar.current.isDate($0, inSameDayAs: milestone.date) } ?? false,
+            onHover: { hovering in
+                withAnimation(.easeOut(duration: 0.15)) {
+                    if hovering {
+                        highlightedMilestoneDate = milestone.date
+                    } else {
+                        highlightedMilestoneDate = nil
+                    }
+                }
             }
-            .frame(width: 50, alignment: .leading)
+        )
+    }
+}
 
-            // Right: Milestone details
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Last Milestone")
-                    .font(Theme.Fonts.caption.weight(.medium))
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .tracking(0.5)
+/// A single milestone row with hover interaction — mimics NotableMomentCard from ProjectStoryView.
+/// Left accent bar uses project color by default; turns gold on hover.
+private struct MilestoneRowView: View {
+    let milestone: Milestone
+    let dateText: String
+    let isHighlighted: Bool
+    let onHover: (Bool) -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            // Left accent bar — project color or gold when highlighted
+            RoundedRectangle(cornerRadius: 1)
+                .fill(isHighlighted ? Color(hex: "F5A623") : lightenColor(hex: milestone.projectColor))
+                .frame(width: 3)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Text(milestone.projectEmoji)
+                        .font(.system(size: 12))
+                    Text(milestone.projectName)
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Text(dateText)
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.65))
+                }
 
                 Text(milestone.text)
                     .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textPrimary)
+                    .foregroundColor(Theme.Colors.textSecondary)
                     .lineLimit(2)
-
-                HStack(spacing: Theme.Spacing.xxs) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 10))
-                    Text(milestone.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 10)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.xs)
+        .background(isHighlighted ? Theme.Colors.surface.opacity(0.85) : Theme.Colors.surface.opacity(0.5))
+        .cornerRadius(10)
+        .onHover { hovering in
+            onHover(hovering)
+        }
     }
+}
+
+// MARK: - Color Helpers
+
+/// Lighten a hex color so it remains visible against dark backgrounds.
+/// Uses Rec. 601 perceived luminance; if below a threshold, blends toward white.
+private func lightenColor(hex: String) -> Color {
+    guard let nsColor = NSColor(hex: hex)?.usingColorSpace(.deviceRGB) else {
+        return Color(hex: hex)
+    }
+    let r = nsColor.redComponent
+    let g = nsColor.greenComponent
+    let b = nsColor.blueComponent
+    let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+    if luminance < 0.35 {
+        let mix = 1.0 - luminance
+        return Color(
+            red: min(r + mix * 0.55, 1.0),
+            green: min(g + mix * 0.55, 1.0),
+            blue: min(b + mix * 0.55, 1.0)
+        )
+    }
+    return Color(hex: hex)
 }
 
 // MARK: - Preview
@@ -444,6 +581,8 @@ struct OverviewDashboardView_Previews: PreviewProvider {
             projectsViewModel: ProjectsViewModel.shared,
             narrativeEngine: NarrativeEngine()
         )
-            .frame(width: 1200, height: 1200)
+        .frame(width: 1200, height: 1200)
+        .background(Theme.Colors.background)
+        .preferredColorScheme(.dark)
     }
 }

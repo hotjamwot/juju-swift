@@ -89,6 +89,7 @@ struct Milestone: Identifiable, Hashable, Equatable {
     let projectID: String
     let projectName: String
     let projectEmoji: String
+    let projectColor: String
     let activityType: String
 
     static func == (lhs: Milestone, rhs: Milestone) -> Bool {
@@ -169,7 +170,7 @@ final class NarrativeEngine: ObservableObject {
                 guard let text = session.action else { return nil }
                 let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
-                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, projectColor: project?.color ?? "#999999", activityType: activity.name)
             }
             .first
     }
@@ -303,7 +304,7 @@ final class NarrativeEngine: ObservableObject {
         guard let session = recent.first, let text = session.action else { return nil }
         let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
         let project = projectsViewModel.projects.first { $0.id == session.projectID }
-        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
+        return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, projectColor: project?.color ?? "#999999", activityType: activity.name)
     }
 
     private func detectAllCurrentWeekMilestones() -> [Milestone] {
@@ -316,7 +317,7 @@ final class NarrativeEngine: ObservableObject {
                 guard let text = session.action else { return nil }
                 let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
                 let project = projectsViewModel.projects.first { $0.id == session.projectID }
-                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
+                return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, projectColor: project?.color ?? "#999999", activityType: activity.name)
             }
     }
 
@@ -325,7 +326,7 @@ final class NarrativeEngine: ObservableObject {
             guard session.isMilestone, let text = session.action else { return nil }
             let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
             let project = projectsViewModel.projects.first { $0.id == session.projectID }
-            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, activityType: activity.name)
+            return Milestone(text: text, date: session.startDate, projectID: session.projectID, projectName: project?.name ?? "Unknown Project", projectEmoji: project?.emoji ?? Project.defaultEmoji, projectColor: project?.color ?? "#999999", activityType: activity.name)
         }
     }
     

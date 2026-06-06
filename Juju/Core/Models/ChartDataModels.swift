@@ -120,6 +120,8 @@ struct ActivityTypePieSlice: Identifiable, Equatable {
 struct DayStack: Identifiable {
     let date: Date
     let segments: [ProjectSegment]  // sorted bottom-to-top by hours descending
+    /// True when this day contains a milestone session (set by ChartDataPreparer)
+    var isMilestone: Bool = false
     
     var id: Date { date }
     var totalHours: Double { segments.reduce(0) { $0 + $1.hours } }

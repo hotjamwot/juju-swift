@@ -104,16 +104,22 @@ public struct Theme {
     // Single source of truth for all dashboard layout values
     public struct DashboardLayout {
         // Core spacing system - single source of truth
-        public static let chartPadding: CGFloat = 12
-        public static let chartGap: CGFloat = 24
-        public static let dashboardPadding: CGFloat = 24
+        /// Outer padding applied by chartContainer — generous for JapaScandi breathing room
+        public static let chartPadding: CGFloat = 20
+        /// Gap between major dashboard sections (charts, narrative, etc.)
+        public static let chartGap: CGFloat = 32
+        /// Page-level horizontal + vertical padding for the dashboard scroll view
+        public static let dashboardPadding: CGFloat = 48
         /// Chart corner radius — now uses the standard 12pt
         public static let chartCornerRadius: CGFloat = 12
         /// Border width set to 0 for the borderless card look
         public static let chartBorderWidth: CGFloat = 0
         
+        /// Internal padding inside each chart's plot area — keeps data from touching edges
+        public static let chartInnerPadding: CGFloat = 16
+        
         /// Padding between narrative strip and dashboard charts
-        public static let narrativeToContentGap: CGFloat = 20
+        public static let narrativeToContentGap: CGFloat = 24
         
         // Responsive breakpoints
         public static let breakpoints = (
@@ -330,8 +336,6 @@ extension View {
     /// - Returns: View styled as chart container
     func chartContainer() -> some View {
         self
-            .background(Theme.Colors.cardSurface)
-            .cornerRadius(Theme.Design.cornerRadius)
             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }

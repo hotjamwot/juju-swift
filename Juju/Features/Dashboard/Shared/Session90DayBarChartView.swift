@@ -7,6 +7,8 @@ import SwiftUI
 /// A tooltip appears on hover showing the date, total hours, and per-project breakdown.
 struct Session90DayBarChartView: View {
     let dayStacks: [DayStack]
+    /// When set, all bars except the one on this date are dimmed.
+    var highlightedDate: Date? = nil
     
     // MARK: - Layout Constants
     
@@ -15,6 +17,7 @@ struct Session90DayBarChartView: View {
     private let minBarWidth: CGFloat = 2
     private let emptyDayHeight: CGFloat = 1
     private let segmentOpacity: Double = 0.85
+    private let dimmedOpacity: Double = 0.2
     private let dividerWidth: CGFloat = 1
     
     // MARK: - State
@@ -35,7 +38,8 @@ struct Session90DayBarChartView: View {
                 Spacer()
             } else {
                 GeometryReader { geo in
-                    let availableWidth = geo.size.width
+                    let paddedWidth = geo.size.width - Theme.DashboardLayout.chartInnerPadding * 2
+                    let availableWidth = paddedWidth
                     let availableHeight = geo.size.height
                     
                     // Calculate bar dimensions
@@ -163,6 +167,17 @@ struct Session90DayBarChartView: View {
         let isToday = day.isToday
         let isHovered = hoveredDay?.id == day.id
         
+        // Dimming: if a highlighted date is set, dim all bars except that day
+        let isDimmed: Bool = {
+            guard let highlighted = highlightedDate else { return false }
+            return !Calendar.current.isDate(day.date, inSameDayAs: highlighted)
+        }()
+        
+        let barOpacity: Double = {
+            if isDimmed { return dimmedOpacity }
+            return 1.0
+        }()
+        
         VStack(spacing: 0) {
             if hasData {
                 // Stacked segments — proportional to max hours in the dataset
@@ -195,12 +210,21 @@ struct Session90DayBarChartView: View {
             }
         }
         .frame(width: barWidth, alignment: .bottom)
+        .opacity(barOpacity)
         .background(alignment: .bottom) {
             if isToday {
                 Rectangle()
                     .fill(Theme.Colors.accentColor)
                     .frame(width: barWidth, height: 2)
                     .offset(y: 1)
+            }
+        }
+        .overlay(alignment: .top) {
+            if day.isMilestone {
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: 6))
+                    .foregroundColor(Color(hex: "F5A623"))
+                    .offset(y: -3)
             }
         }
         .overlay(alignment: .top) {
