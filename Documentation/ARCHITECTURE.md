@@ -323,6 +323,27 @@ struct ProjectSegment: Identifiable {
     let color: String      // hex
     let hours: Double
 }
+
+/// Project distribution with per-activity-type breakdown (for hover tooltips).
+struct YearlyProjectChartData: Identifiable {
+    let id = UUID()
+    let projectName: String
+    let color: String
+    let emoji: String
+    let totalHours: Double
+    let percentage: Double
+    let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)]
+}
+
+/// Activity type distribution with per-project breakdown (for hover tooltips).
+struct ActivityDistributionItem: Identifiable {
+    let id = UUID()
+    let activityName: String
+    let sfSymbol: String
+    let totalHours: Double
+    let percentage: Double
+    let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)]
+}
 ```
 
 ### Editorial Engine Data Models
@@ -585,6 +606,36 @@ DashboardRootView → SessionManager (loadAllSessions) → [SessionRecord] (allS
   UI Display → Views (consume chart data) → User Interface
 ```
 
+#### Tooltip Pattern (Unified Across All Charts)
+```
+Hover → onHover/onContinuousHover → Set @State hoveredItem
+  → TooltipContainer (shared style) → TooltipRow per breakdown item
+```
+
+**Tooltip Component Stack** (defined in `TooltipViews.swift`):
+- **TooltipContainer<Content>**: Wraps any content in consistent surface, cornerRadius, shadow, and border
+- **TooltipRow**: Color dot + emoji + name + hours
+- **TooltipDivider**: Matched divider styling
+
+Reused identically by: `Session90DayBarChartView`, `SessionCalendarChartView`, `YearlyProjectBarChartView`, `YearlyActivityTypeBarChartView`.
+
+#### 90-Day Bar Chart Layout
+- Bars now fill the full container width (no maxBarWidth cap)
+- `barGap: 2`, `barCornerRadius: 2`, `minBarWidth: 2`
+- Month divider lines rendered as vertical rules (1pt, 30% divider opacity) at month boundaries
+- First month label skipped for divider positioning (no divider before day 0)
+
+#### Calendar Chart Hover Behavior
+- `chartBackground` captures plot frame → stored in `@State plotFrame`
+- `onContinuousHover` on a transparent overlay converts pixel coords to chart values
+- Hovered session gets full opacity (1.0), others 0.85
+- Floating tooltip at cursor position with `TooltipContainer` styling
+
+#### Yearly Chart Cross-Breakdown Tooltips
+- `yearlyProjectTotals()`: Builds per-project per-activity-type breakdown dictionary in one O(n) pass
+- `yearlyActivityTypeTotals()`: Builds per-activity-type per-project breakdown dictionary in one O(n) pass
+- Breakdowns stored directly in chart data models; no separate lookup needed in views
+
 #### Project Management Flow
 ```
 ProjectsView → ProjectsViewModel → ProjectManager → JSON Files
@@ -648,7 +699,8 @@ Juju/
 │   │   │   └── SessionCalendarChartView.swift
 │   │   ├── Shared/           # Shared dashboard components
 │   │   │   ├── ActiveSessionStatusView.swift
-│   │   │   └── Session90DayBarChartView.swift
+│   │   │   ├── Session90DayBarChartView.swift
+│   │   │   └── TooltipViews.swift       # Reusable tooltip components (TooltipContainer, TooltipRow, TooltipDivider)
 │   │   └── Yearly/          # Yearly dashboard views
 │   │       ├── YearlyProjectBarChartView.swift
 │   │       └── YearlyActivityTypeBarChartView.swift

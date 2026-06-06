@@ -10,12 +10,12 @@ struct Session90DayBarChartView: View {
     
     // MARK: - Layout Constants
     
-    private let barGap: CGFloat = 1
+    private let barGap: CGFloat = 2
     private let barCornerRadius: CGFloat = 2
-    private let minBarWidth: CGFloat = 4
-    private let maxBarWidth: CGFloat = 7
+    private let minBarWidth: CGFloat = 2
     private let emptyDayHeight: CGFloat = 1
     private let segmentOpacity: Double = 0.85
+    private let dividerWidth: CGFloat = 1
     
     // MARK: - State
     
@@ -41,7 +41,7 @@ struct Session90DayBarChartView: View {
                     // Calculate bar dimensions
                     let totalBars = CGFloat(dayStacks.count)
                     let rawBarWidth = (availableWidth - (totalBars - 1) * barGap) / totalBars
-                    let barWidth = max(minBarWidth, min(rawBarWidth, maxBarWidth))
+                    let barWidth = max(minBarWidth, rawBarWidth)
                     
                     // Month label height
                     let monthLabelHeight: CGFloat = 14
@@ -112,6 +112,14 @@ struct Session90DayBarChartView: View {
         return transitions
     }
     
+    /// The x-position for divider lines that separate months.
+    /// Skips the first transition (day 0) since there's no preceding month to separate from.
+    private func monthDividerPositions(stepWidth: CGFloat) -> [CGFloat] {
+        monthTransitions
+            .dropFirst()  // first entry is the first month itself, not a boundary
+            .map { CGFloat($0.index) * stepWidth - barGap / 2 }
+    }
+    
     // MARK: - Bar Chart Area
     
     @ViewBuilder
@@ -125,6 +133,14 @@ struct Session90DayBarChartView: View {
                 .fill(Theme.Colors.divider.opacity(0.2))
                 .frame(width: totalContentWidth, height: 1)
                 .position(x: totalContentWidth / 2, y: height - 1)
+            
+            // Month divider lines — subtle vertical rules at each month boundary
+            ForEach(Array(monthDividerPositions(stepWidth: stepWidth)), id: \.self) { xPos in
+                Rectangle()
+                    .fill(Theme.Colors.divider.opacity(0.3))
+                    .frame(width: dividerWidth, height: height)
+                    .position(x: xPos, y: height / 2)
+            }
             
             // Bars
             HStack(alignment: .bottom, spacing: barGap) {
@@ -217,48 +233,30 @@ struct Session90DayBarChartView: View {
     
     @ViewBuilder
     private func tooltipView(for day: DayStack) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(Theme.Colors.textPrimary)
-            
-            Text(String(format: "%.1fh total", day.totalHours))
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(day.totalHours > 0 ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
-            
-            if !day.segments.isEmpty {
-                Divider()
-                    .background(Theme.Colors.divider.opacity(0.4))
-                    .padding(.vertical, 1)
+        TooltipContainer {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
-                ForEach(day.segments.sorted(by: { $0.hours > $1.hours })) { segment in
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(Color(hex: segment.color))
-                            .frame(width: 6, height: 6)
-                        Text(segment.emoji)
-                            .font(.system(size: 10))
-                        Text(segment.projectName)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
-                        Spacer(minLength: 4)
-                        Text(String(format: "%.1fh", segment.hours))
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(Theme.Colors.textSecondary)
+                Text(String(format: "%.1fh total", day.totalHours))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(day.totalHours > 0 ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
+                
+                if !day.segments.isEmpty {
+                    TooltipDivider()
+                    
+                    ForEach(day.segments.sorted(by: { $0.hours > $1.hours })) { segment in
+                        TooltipRow(
+                            color: Color(hex: segment.color),
+                            emoji: segment.emoji,
+                            name: segment.projectName,
+                            hours: segment.hours
+                        )
                     }
                 }
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Theme.Colors.surface)
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Theme.Colors.divider.opacity(0.6), lineWidth: 1)
-        )
-        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 6, x: 0, y: 3)
     }
 }
 

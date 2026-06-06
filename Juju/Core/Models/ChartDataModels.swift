@@ -18,6 +18,8 @@ struct ActivityDistributionItem: Identifiable {
     let sfSymbol: String
     let totalHours: Double
     let percentage: Double
+    /// Breakdown of hours by project within this activity type (for tooltips)
+    let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)]
 }
 
 struct YearlyProjectChartData: Identifiable {
@@ -27,6 +29,8 @@ struct YearlyProjectChartData: Identifiable {
     let emoji: String
     let totalHours: Double
     let percentage: Double
+    /// Breakdown of hours by activity type within this project (for tooltips)
+    let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)]
     
     var colorSwiftUI: Color {
         Color(hex: color)

@@ -22,7 +22,7 @@ public struct Theme {
 
     // MARK: Colors
     public struct Colors {
-        public static let background  = Color("Background")  // #161616
+        public static let background  = Color("Background")  // #1B1B1B
         public static let surface     = Color("Surface")  // #191919
         public static let textPrimary = Color("textPrimary")  // #E5E5E7
         public static let textSecondary = Color("textSecondary")  // #9A9AA0
@@ -332,7 +332,8 @@ extension View {
         self
             .background(Theme.Colors.cardSurface)
             .cornerRadius(Theme.Design.cornerRadius)
-            .chartPadding()
+            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+            .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
     
     /// Create a dashboard card with consistent styling

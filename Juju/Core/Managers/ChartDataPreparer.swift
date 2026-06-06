@@ -191,35 +191,82 @@ final class ChartDataPreparer: ObservableObject {
     func yearlyProjectTotals() -> [YearlyProjectChartData] {
         let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.filter { !$0.archived }.map { ($0.id, $0) })
         let activeProjectIDs = Set(projectLookup.keys)
+        let activityTypeManager = ActivityTypeManager.shared
+        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
+        // First pass: project totals
         var totals: [String: Double] = [:]
+        // Second pass: project → activityType → hours (for breakdown tooltips)
+        var projectActivityBreakdown: [String: [String: Double]] = [:]
+        
         for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
             guard activeProjectIDs.contains(session.projectID) else { continue }
-            totals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
+            let hours = Double(session.durationMinutes) / 60.0
+            totals[session.projectID, default: 0] += hours
+            let activityID = session.activityTypeID ?? ActivityType.uncategorizedID
+            projectActivityBreakdown[session.projectID, default: [:]][activityID, default: 0] += hours
         }
         
         let total = totals.values.reduce(0, +)
         return totals.compactMap { (projectID, hours) in
             guard hours > 0, let project = projectLookup[projectID] else { return nil }
-            return YearlyProjectChartData(projectName: project.name, color: project.color, emoji: project.emoji, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+            let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)] =
+                (projectActivityBreakdown[projectID] ?? [:])
+                    .compactMap { (activityID, actHours) in
+                        guard actHours > 0 else { return nil }
+                        let activity = activityLookup[activityID] ?? activityTypeManager.getUncategorizedActivityType()
+                        return (activityName: activity.name, sfSymbol: activity.sfSymbol, hours: actHours)
+                    }
+                    .sorted { $0.hours > $1.hours }
+            
+            return YearlyProjectChartData(
+                projectName: project.name,
+                color: project.color,
+                emoji: project.emoji,
+                totalHours: hours,
+                percentage: total > 0 ? hours / total * 100 : 0,
+                activityBreakdown: activityBreakdown
+            )
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
     func yearlyActivityTypeTotals() -> [ActivityDistributionItem] {
         let activityTypeManager = ActivityTypeManager.shared
         let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
+        let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.filter { !$0.archived }.map { ($0.id, $0) })
         
+        // First pass: activity type totals
         var totals: [String: Double] = [:]
+        // Second pass: activityType → project → hours (for breakdown tooltips)
+        var activityProjectBreakdown: [String: [String: Double]] = [:]
+        
         for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
             let id = session.activityTypeID ?? ActivityType.uncategorizedID
-            totals[id, default: 0] += Double(session.durationMinutes) / 60.0
+            let hours = Double(session.durationMinutes) / 60.0
+            totals[id, default: 0] += hours
+            // Track per-project breakdown even for archived projects so the tooltip is accurate
+            activityProjectBreakdown[id, default: [:]][session.projectID, default: 0] += hours
         }
         
         let total = totals.values.reduce(0, +)
         return totals.compactMap { (id, hours) in
             guard hours > 0 else { return nil }
             let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-            return ActivityDistributionItem(activityName: activity.name, sfSymbol: activity.sfSymbol, totalHours: hours, percentage: total > 0 ? hours / total * 100 : 0)
+            let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)] =
+                (activityProjectBreakdown[id] ?? [:])
+                    .compactMap { (projectID, projHours) in
+                        guard projHours > 0, let project = projectLookup[projectID] else { return nil }
+                        return (projectName: project.name, emoji: project.emoji, color: project.color, hours: projHours)
+                    }
+                    .sorted { $0.hours > $1.hours }
+            
+            return ActivityDistributionItem(
+                activityName: activity.name,
+                sfSymbol: activity.sfSymbol,
+                totalHours: hours,
+                percentage: total > 0 ? hours / total * 100 : 0,
+                projectBreakdown: projectBreakdown
+            )
         }.sorted { $0.totalHours > $1.totalHours }
     }
     

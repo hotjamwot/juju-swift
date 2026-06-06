@@ -45,7 +45,7 @@ struct OverviewDashboardView: View {
     // MARK - Body
     var body: some View {
         ScrollView(.vertical) {
-            LazyVStack(spacing: Theme.Spacing.lg) {
+            LazyVStack(spacing: Theme.Spacing.xl) {
                 // Active Session Bar (appears at top when session is live,
                 // naturally pushes all content down)
                 if sessionManager.activeSession != nil {
@@ -63,14 +63,14 @@ struct OverviewDashboardView: View {
                     sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                 )
                 .frame(minHeight: calendarMinHeight)
-                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                .chartContainer()
                 
                 // 90-Day Stacked Bar Chart — daily project breakdown
                 Session90DayBarChartView(
                     dayStacks: chartDataPreparer.current90DayStacks
                 )
                 .frame(minHeight: heatMapMinHeight)
-                .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                .chartContainer()
                 
                 // Yearly Distribution Charts — side-by-side
                 HStack(spacing: Theme.Spacing.lg) {

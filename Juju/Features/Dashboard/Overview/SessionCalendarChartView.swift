@@ -10,16 +10,20 @@ struct SessionCalendarChartView: View {
     ]
     
     @State private var currentTime = Date()
+    @State private var hoveredSession: WeeklySession? = nil
+    @State private var showTooltip: Bool = false
+    @State private var tooltipPosition: CGPoint = .zero
+    @State private var plotFrame: CGRect = .zero
     
     let dayToLetter: [String: String] = [
-            "Monday":    "MON",
-            "Tuesday":   "TUE",
-            "Wednesday": "WED",
-            "Thursday":  "THU",
-            "Friday":    "FRI",
-            "Saturday":  "SAT",
-            "Sunday":    "SUN"
-        ]
+        "Monday":    "MON",
+        "Tuesday":   "TUE",
+        "Wednesday": "WED",
+        "Thursday":  "THU",
+        "Friday":    "FRI",
+        "Saturday":  "SAT",
+        "Sunday":    "SUN"
+    ]
     
     // Calculate total duration for each day
     private var dailyTotals: [String: Double] {
@@ -58,7 +62,6 @@ struct SessionCalendarChartView: View {
         let currentMinute = Double(calendar.component(.minute, from: currentTime))
         let currentDay = calendar.weekdaySymbols[calendar.component(.weekday, from: currentTime) - 1]
         
-        // Only show on the current day
         if weekDays.contains(currentDay) {
             return RectangleMark(
                 x: .value("Current Day", currentDay),
@@ -67,7 +70,6 @@ struct SessionCalendarChartView: View {
             )
             .foregroundStyle(Theme.Colors.accentColor)
         } else {
-            // Return an empty rectangle mark if not current day (shouldn't happen in normal use)
             return RectangleMark(
                 yStart: .value("Current Time", currentHour + (currentMinute / 60.0) - 0.01),
                 yEnd: .value("Current Time", currentHour + (currentMinute / 60.0) + 0.01)
@@ -76,37 +78,93 @@ struct SessionCalendarChartView: View {
         }
     }
     
-    // Session rectangle for a specific session
+    // Session rectangle for a specific session with compact annotation
     private func sessionRectangle(for session: WeeklySession) -> some ChartContent {
         RectangleMark(
             x: .value("Day", session.day),
             yStart: .value("Start Hour", session.startHour),
             yEnd:   .value("End Hour",   session.endHour)
         )
-        .foregroundStyle(Color(hex: session.projectColor))
-        .cornerRadius(Theme.Design.cornerRadius * 0.5) // Adjusted corner radius (between /4 and full)
+        .foregroundStyle(
+            Color(hex: session.projectColor).opacity(
+                hoveredSession?.id == session.id ? 1.0 : 0.85
+            )
+        )
+        .cornerRadius(Theme.Design.cornerRadius * 0.5)
         .annotation(position: .overlay, alignment: .center) {
-            VStack(spacing: 6) {
-                // Activity emoji on top (larger and prominent)
+            VStack(spacing: 2) {
                 Image(systemName: session.activitySFSymbol)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                // Project name (centered, single line)
+                    .font(.system(size: 10, weight: .semibold))
                 Text(session.projectName)
-                    .font(Theme.Fonts.caption)
-                    .fontWeight(.medium)
+                    .font(.system(size: 8, weight: .medium))
                     .foregroundColor(Theme.Colors.textPrimary)
                     .lineLimit(1)
                     .multilineTextAlignment(.center)
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
         }
     }
     
-// Mark: Body
+    // MARK: - Tooltip Content
+    
+    @ViewBuilder
+    private func tooltipContent(for session: WeeklySession) -> some View {
+        TooltipContainer {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.day)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
+                Text(String(format: "%.0f:00 – %.0f:00 • %.1fh",
+                    session.startHour,
+                    session.endHour,
+                    session.duration))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Theme.Colors.accentColor)
+                
+                TooltipDivider()
+                
+                TooltipRow(
+                    color: Color(hex: session.projectColor),
+                    emoji: session.projectEmoji,
+                    name: session.projectName,
+                    hours: session.duration
+                )
+            }
+        }
+    }
+    
+    // MARK: - Find session at pixel location
+    
+    private func sessionAt(location: CGPoint, in geometry: GeometryProxy) -> WeeklySession? {
+        let chartX = location.x - plotFrame.origin.x
+        let chartY = location.y - plotFrame.origin.y
+        
+        guard plotFrame.width > 0, plotFrame.height > 0,
+              chartX >= 0, chartX <= plotFrame.width,
+              chartY >= 0, chartY <= plotFrame.height else {
+            return nil
+        }
+        
+        let dayWidth = plotFrame.width / CGFloat(weekDays.count)
+        let dayIndex = Int(chartX / dayWidth)
+        
+        guard dayIndex >= 0, dayIndex < weekDays.count else { return nil }
+        
+        let day = weekDays[dayIndex]
+        // Chart Y domain: 5.5 (bottom) to 23.5 (top), total 18 hours
+        let hourValue = 23.5 - (chartY / plotFrame.height) * 18.0
+        
+        return sessions.first { session in
+            session.day == day &&
+            hourValue >= session.startHour &&
+            hourValue <= session.endHour
+        }
+    }
+    
+    // MARK: Body
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if sessions.isEmpty {
@@ -114,57 +172,99 @@ struct SessionCalendarChartView: View {
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {
-                Chart {
-                    // Working hours shaded area (9 AM to 5 PM)
-                    workingHoursShade()
-                    
-                    // Add subtle grid lines only for key hours: 6 AM, 9 AM, 5 PM, 11 PM
-                    gridLine(for: 6.0)
-                    gridLine(for: 23.0)
-                    
-                    // Current time indicator (only appears on current day)
-                    currentTimeIndicator()
-                    
-                    ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
-                        sessionRectangle(for: session)
-                    }
-                }
-                .chartYScale(domain: 5.5 ... 23.5) // Extended domain to create padding at top and bottom
-                .chartYAxis {
-                    AxisMarks(values: .automatic) { value in
-                        if let hour = value.as(Double.self) {
-                            AxisValueLabel(String(format: "%.0f", hour))
+                GeometryReader { outerGeo in
+                    ZStack(alignment: .topLeading) {
+                        Chart {
+                            workingHoursShade()
+                            
+                            gridLine(for: 6.0)
+                            gridLine(for: 23.0)
+                            
+                            currentTimeIndicator()
+                            
+                            ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
+                                sessionRectangle(for: session)
+                            }
                         }
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: weekDays) { value in
-                        let day = value.as(String.self) ?? ""
-                        let label = dayToLetter[day] ?? day
-                        
-                        AxisValueLabel {
-                            VStack(spacing: 2) {
-                                Text(label)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
-                                    Text("\(dailyTotal, specifier: "%.1f")h")
-                                        .font(Theme.Fonts.caption)
-                                        .foregroundColor(Theme.Colors.textPrimary)
+                        .chartYScale(domain: 5.5 ... 23.5)
+                        .chartYAxis {
+                            AxisMarks(values: .automatic) { value in
+                                if let hour = value.as(Double.self) {
+                                    AxisValueLabel(String(format: "%.0f", hour))
                                 }
                             }
                         }
+                        .chartXAxis {
+                            AxisMarks(values: weekDays) { value in
+                                let day = value.as(String.self) ?? ""
+                                let label = dayToLetter[day] ?? day
+                                
+                                AxisValueLabel {
+                                    VStack(spacing: 2) {
+                                        Text(label)
+                                            .font(Theme.Fonts.caption)
+                                            .foregroundColor(Theme.Colors.textSecondary)
+                                        if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
+                                            Text("\(dailyTotal, specifier: "%.1f")h")
+                                                .font(Theme.Fonts.caption)
+                                                .foregroundColor(Theme.Colors.textPrimary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .chartPlotStyle { plotArea in
+                            plotArea
+                                .background(.clear)
+                        }
+                        .chartXScale(domain: weekDays)
+                        .chartBackground { proxy in
+                            GeometryReader { geo in
+                                Color.clear
+                                    .onAppear {
+                                        plotFrame = geo.frame(in: .local)
+                                    }
+                            }
+                        }
+                        
+                        // Hover overlay
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onContinuousHover { phase in
+                                switch phase {
+                                case .active(let location):
+                                    if let matched = sessionAt(location: location, in: outerGeo) {
+                                        withAnimation(.easeOut(duration: 0.1)) {
+                                            hoveredSession = matched
+                                            showTooltip = true
+                                            tooltipPosition = location
+                                        }
+                                    } else {
+                                        showTooltip = false
+                                        hoveredSession = nil
+                                    }
+                                case .ended:
+                                    withAnimation(.easeOut(duration: 0.1)) {
+                                        showTooltip = false
+                                        hoveredSession = nil
+                                    }
+                                }
+                            }
+                        
+                        // Floating tooltip overlay
+                        if showTooltip, let session = hoveredSession {
+                            tooltipContent(for: session)
+                                .fixedSize()
+                                .position(x: min(tooltipPosition.x, 250),
+                                          y: max(tooltipPosition.y - 20, 30))
+                                .allowsHitTesting(false)
+                                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        }
                     }
                 }
-                .chartPlotStyle { plotArea in
-                    plotArea
-                        .background(.clear)
-                }
-                .chartXScale(domain: weekDays)
             }
         }
         .onAppear {
-            // Update current time every minute to keep the indicator accurate
             Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { _ in
                 currentTime = Date()
             }
@@ -178,7 +278,6 @@ struct SessionCalendarChartView: View {
         WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activitySFSymbol: "pencil"),
         WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activitySFSymbol: "folder"),
         WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film"),
-        // Session that crosses midnight (starts Monday 11 PM, ends Tuesday 1 AM)
         WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones"),
         WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones")
     ]
