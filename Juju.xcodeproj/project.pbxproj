@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		663354032FB21E210010AB11 /* OverviewDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663354012FB21E210010AB11 /* OverviewDashboardView.swift */; };
 		663354072FB33C450010AB11 /* SessionCalendarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663354062FB33C440010AB11 /* SessionCalendarChartView.swift */; };
-		664B40D22FD429A000A9CEB0 /* TooltipViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664B40D12FD429A000A9CEB0 /* TooltipViews.swift */; };
+		664B40D42FD42EE600A9CEB0 /* TooltipViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664B40D32FD42EE600A9CEB0 /* TooltipViews.swift */; };
 		6659095F2EE44952007D1303 /* ActivityTypesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */; };
 		665909632EE45EFF007D1303 /* SessionsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909602EE45EFF007D1303 /* SessionsRowView.swift */; };
 		665909672EE47949007D1303 /* SidebarStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665909662EE47949007D1303 /* SidebarStateManager.swift */; };
@@ -84,7 +84,7 @@
 /* Begin PBXFileReference section */
 		663354012FB21E210010AB11 /* OverviewDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewDashboardView.swift; sourceTree = "<group>"; };
 		663354062FB33C440010AB11 /* SessionCalendarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCalendarChartView.swift; sourceTree = "<group>"; };
-		664B40D12FD429A000A9CEB0 /* TooltipViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TooltipViews.swift; sourceTree = "<group>"; };
+		664B40D32FD42EE600A9CEB0 /* TooltipViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TooltipViews.swift; sourceTree = "<group>"; };
 		6659095B2EE44952007D1303 /* ActivityTypesViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityTypesViewModel.swift; sourceTree = "<group>"; };
 		665909602EE45EFF007D1303 /* SessionsRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionsRowView.swift; sourceTree = "<group>"; };
 		665909662EE47949007D1303 /* SidebarStateManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidebarStateManager.swift; sourceTree = "<group>"; };
@@ -376,6 +376,7 @@
 		66B148462EA8EA4B00E9BB4A /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				664B40D32FD42EE600A9CEB0 /* TooltipViews.swift */,
 				66B148452EA8EA4B00E9BB4A /* Theme.swift */,
 				66B148442EA8EA4B00E9BB4A /* Extensions */,
 			);
@@ -424,7 +425,6 @@
 		66F448342EEC9131008FA5DD /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				664B40D12FD429A000A9CEB0 /* TooltipViews.swift */,
 				669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */,
 				66F448332EEC9131008FA5DD /* ActiveSessionStatusView.swift */,
 			);
@@ -622,7 +622,7 @@
 				66D9D0D32EEED4C500D06502 /* DataValidator.swift in Sources */,
 				66E746792EE3249200A353C1 /* ActivityType.swift in Sources */,
 				666C39502EAFB54700B408B8 /* ButtonTheme.swift in Sources */,
-				664B40D22FD429A000A9CEB0 /* TooltipViews.swift in Sources */,
+				664B40D42FD42EE600A9CEB0 /* TooltipViews.swift in Sources */,
 				66EF3E7B2EC5F2B200A6952E /* SessionDataParser.swift in Sources */,
 				66AF6EBD2EF333B2008FDCEB /* ActivityTypeView.swift in Sources */,
 			);

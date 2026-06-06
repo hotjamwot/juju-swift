@@ -12,6 +12,7 @@ struct ProjectStoryView: View {
     @StateObject private var sessionManager = SessionManager.shared
 
     @StateObject private var viewModel: ProjectStoryViewModel
+    @State private var highlightedMilestoneSessionID: String? = nil
 
     init(projectID: String, onExit: @escaping () -> Void) {
         self.projectID = projectID
@@ -59,7 +60,8 @@ struct ProjectStoryView: View {
                             ProjectStoryIntensityMoodChartView(
                                 sessions: viewModel.projectSessions,
                                 orderedPhaseIDs: viewModel.phaseTimeline.map(\.id),
-                                projectColorHex: header.colorHex
+                                projectColorHex: header.colorHex,
+                                highlightedSessionID: highlightedMilestoneSessionID
                             )
                         }
 
@@ -69,7 +71,8 @@ struct ProjectStoryView: View {
                         if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
                             ProjectStoryNotableMomentsView(
                                 milestones: viewModel.allMilestones,
-                                projectColorHex: header.colorHex
+                                projectColorHex: header.colorHex,
+                                highlightedSessionID: $highlightedMilestoneSessionID
                             )
                         }
                     }
@@ -281,6 +284,9 @@ private struct ProjectStoryPhaseTimelineView: View {
     let headerStartDate: Date?
     let headerEndDate: Date?
 
+    @State private var hoveredSegmentID: String?
+    @State private var showPhaseTooltip: Bool = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Phase timeline")
@@ -293,10 +299,36 @@ private struct ProjectStoryPhaseTimelineView: View {
                     HStack(spacing: 0) {
                         ForEach(segments.indices, id: \.self) { idx in
                             let seg = segments[idx]
+                            let isHovered = hoveredSegmentID == seg.id
+
                             Rectangle()
                                 .fill(phaseColor(index: seg.phaseIndex ?? 0, for: seg))
-                                .opacity(seg.isArchivedPhase ? 0.45 : 1.0)
+                                .opacity(seg.isArchivedPhase ? 0.45 : (isHovered ? 1.0 : 0.85))
                                 .frame(width: max(1, geo.size.width * seg.fractionOfTotal))
+                                .overlay(alignment: .top) {
+                                    if showPhaseTooltip, isHovered {
+                                        phaseTooltip(for: seg)
+                                            .offset(y: -8)
+                                            .fixedSize()
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                                .zIndex(showPhaseTooltip && isHovered ? 10 : 0)
+                                .onHover { hovering in
+                                    if hovering {
+                                        hoveredSegmentID = seg.id
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [segID = seg.id] in
+                                            if hoveredSegmentID == segID {
+                                                withAnimation(.easeOut(duration: 0.1)) {
+                                                    showPhaseTooltip = true
+                                                }
+                                            }
+                                        }
+                                    } else if hoveredSegmentID == seg.id {
+                                        showPhaseTooltip = false
+                                        hoveredSegmentID = nil
+                                    }
+                                }
                         }
                     }
                     .frame(height: 34)
@@ -339,6 +371,31 @@ private struct ProjectStoryPhaseTimelineView: View {
         .padding(.horizontal, 12)
         .background(Theme.Colors.surface.opacity(0.6))
         .cornerRadius(10)
+    }
+
+    @ViewBuilder
+    private func phaseTooltip(for seg: ProjectStoryViewModel.PhaseSegment) -> some View {
+        let minutes = seg.durationMinutes
+        let hours = Double(minutes) / 60.0
+        let percentage = seg.fractionOfTotal * 100
+
+        TooltipContainer {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(seg.title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+
+                Text(String(format: "%.1fh (%.0f%%)", hours, percentage))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Theme.Colors.accentColor)
+
+                if seg.isArchivedPhase {
+                    Text("Archived phase")
+                        .font(.system(size: 9))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+            }
+        }
     }
 
     private func phaseColor(index: Int, for seg: ProjectStoryViewModel.PhaseSegment) -> Color {
@@ -479,13 +536,15 @@ private struct ProjectStoryIntensityMoodChartView: View {
     let sessions: [SessionRecord]
     let orderedPhaseIDs: [String]
     let projectColorHex: String
+    var highlightedSessionID: String? = nil
 
     private let phaseIndexByID: [String: Int]
 
-    init(sessions: [SessionRecord], orderedPhaseIDs: [String], projectColorHex: String) {
+    init(sessions: [SessionRecord], orderedPhaseIDs: [String], projectColorHex: String, highlightedSessionID: String? = nil) {
         self.sessions = sessions
         self.orderedPhaseIDs = orderedPhaseIDs
         self.projectColorHex = projectColorHex
+        self.highlightedSessionID = highlightedSessionID
         self.phaseIndexByID = Dictionary(uniqueKeysWithValues: orderedPhaseIDs.enumerated().map { ($0.element, $0.offset) })
     }
 
@@ -500,6 +559,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
             GeometryReader { geo in
                 ZStack(alignment: .bottomLeading) {
                     let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
+                    let hasHighlight = highlightedSessionID != nil
 
                     // Chronological bar chart: each bar is positioned proportionally
                     // to its start date within the overall session time range.
@@ -516,8 +576,15 @@ private struct ProjectStoryIntensityMoodChartView: View {
                             let w = max(2.0, geo.size.width * CGFloat(wFrac))
                             let h = barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes)
 
+                            let isHighlighted = highlightedSessionID == s.id
+                            let barOpacity: Double = {
+                                if !hasHighlight { return 1.0 }
+                                return isHighlighted ? 1.0 : 0.2
+                            }()
+
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(barFill(for: s, projectColorHex: projectColorHex))
+                                .fill(barFill(for: s, projectColorHex: projectColorHex, isHighlighted: isHighlighted))
+                                .opacity(barOpacity)
                                 .frame(width: w, height: h)
                                 .position(x: x + w / 2, y: geo.size.height - h / 2 - 4)
                         }
@@ -530,8 +597,10 @@ private struct ProjectStoryIntensityMoodChartView: View {
 
                         HStack(alignment: .bottom, spacing: gap) {
                             ForEach(sessions, id: \.id) { s in
+                                let isHighlighted = highlightedSessionID == s.id
                                 RoundedRectangle(cornerRadius: 1)
-                                    .fill(barFill(for: s, projectColorHex: projectColorHex))
+                                    .fill(barFill(for: s, projectColorHex: projectColorHex, isHighlighted: isHighlighted))
+                                    .opacity(hasHighlight ? (isHighlighted ? 1.0 : 0.2) : 1.0)
                                     .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
                             }
                         }
@@ -586,9 +655,10 @@ private struct ProjectStoryIntensityMoodChartView: View {
         return 6 + (t * (48 - 6))
     }
 
-    private func barFill(for session: SessionRecord, projectColorHex: String) -> Color {
+    private func barFill(for session: SessionRecord, projectColorHex: String, isHighlighted: Bool = false) -> Color {
         if session.isMilestone {
-            return Color(hex: "F5A623")
+            // Glow brighter when highlighted by a Notable Moment hover
+            return isHighlighted ? Color(hex: "FFD060") : Color(hex: "F5A623")
         }
 
         let base = Color(hex: projectColorHex)
@@ -644,6 +714,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
 private struct ProjectStoryNotableMomentsView: View {
     let milestones: [ProjectStoryViewModel.Milestone]
     let projectColorHex: String
+    var highlightedSessionID: Binding<String?>? = nil
 
     private let df: DateFormatter = {
         let f = DateFormatter()
@@ -659,7 +730,15 @@ private struct ProjectStoryNotableMomentsView: View {
 
             VStack(spacing: Theme.spacingSmall) {
                 ForEach(milestones) { m in
-                    NotableMomentCard(milestone: m, projectColorHex: projectColorHex, dateText: df.string(from: m.date))
+                    NotableMomentCard(
+                        milestone: m,
+                        projectColorHex: projectColorHex,
+                        dateText: df.string(from: m.date),
+                        isHighlighted: highlightedSessionID?.wrappedValue == m.id,
+                        onHover: { hovering in
+                            highlightedSessionID?.wrappedValue = hovering ? m.id : nil
+                        }
+                    )
                 }
             }
         }
@@ -671,12 +750,14 @@ private struct NotableMomentCard: View {
     let milestone: ProjectStoryViewModel.Milestone
     let projectColorHex: String
     let dateText: String
+    let isHighlighted: Bool
+    let onHover: (Bool) -> Void
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             HStack(alignment: .top, spacing: 12) {
                 Rectangle()
-                    .fill(lightenColor(hex: projectColorHex))
+                    .fill(isHighlighted ? Color(hex: "F5A623") : lightenColor(hex: projectColorHex))
                     .frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -696,13 +777,16 @@ private struct NotableMomentCard: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 12)
-            .background(Theme.Colors.surface.opacity(0.65))
+            .background(isHighlighted ? Theme.Colors.surface.opacity(0.85) : Theme.Colors.surface.opacity(0.65))
             .cornerRadius(10)
 
             Image(systemName: "star.fill")
                 .font(.system(size: 11))
-                .foregroundColor(lightenColor(hex: projectColorHex))
+                .foregroundColor(isHighlighted ? Color(hex: "FFD060") : lightenColor(hex: projectColorHex))
                 .padding(10)
+        }
+        .onHover { hovering in
+            onHover(hovering)
         }
     }
 }
@@ -776,6 +860,149 @@ private extension Array {
     subscript(safe index: Int) -> Element? {
         guard indices.contains(index) else { return nil }
         return self[index]
+    }
+}
+
+// MARK: - Preview
+
+#Preview("ProjectStory – Dashboard Size") {
+    let calendar = Calendar.current
+    let now = Date()
+
+    // Mock project with phases
+    let phaseA = Phase(id: "phase-a", name: "Discovery", order: 0, archived: false)
+    let phaseB = Phase(id: "phase-b", name: "Development", order: 1, archived: false)
+    let phaseC = Phase(id: "phase-c", name: "Launch", order: 2, archived: false)
+    let project = Project(
+        id: "preview-project",
+        name: "Juju App",
+        color: "#E15759",
+        about: "A macOS time-tracking app with narrative project stories.",
+        order: 0,
+        emoji: "🦊",
+        phases: [phaseA, phaseB, phaseC]
+    )
+
+    // Generate mock sessions across phases over ~120 days
+    var mockSessions: [SessionRecord] = []
+    for dayOffset in stride(from: 120, through: 0, by: -1) {
+        guard let day = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+
+        // Pick phase based on day range
+        let phaseID: String?
+        let action: String?
+        let isMilestone: Bool
+        if dayOffset > 80 {
+            phaseID = "phase-a"
+            action = nil
+            isMilestone = (dayOffset == 81)
+        } else if dayOffset > 30 {
+            phaseID = "phase-b"
+            action = nil
+            isMilestone = (dayOffset == 31)
+        } else {
+            phaseID = "phase-c"
+            action = nil
+            isMilestone = (dayOffset == 0)
+        }
+
+        // Random session count per day (0–2)
+        let sessionCount = Int.random(in: 0...2)
+        for s in 0..<sessionCount {
+            let hour = Int.random(in: 9...17)
+            let duration = Int.random(in: 15...180) // minutes
+            guard let start = calendar.date(bySetting: .hour, value: hour, of: day),
+                  let end = calendar.date(byAdding: .minute, value: duration, to: start) else { continue }
+
+            mockSessions.append(SessionRecord(
+                id: "session-\(dayOffset)-\(s)",
+                startDate: start,
+                endDate: end,
+                projectID: "preview-project",
+                activityTypeID: nil,
+                projectPhaseID: phaseID,
+                action: isMilestone ? "Completed major milestone" : nil,
+                isMilestone: isMilestone,
+                mood: Int.random(in: 4...9)
+            ))
+        }
+    }
+
+    let viewModel = ProjectStoryViewModel(
+        projectID: "preview-project",
+        projectsProvider: { [project] },
+        sessionsProvider: { mockSessions }
+    )
+    viewModel.reload()
+
+    return ProjectStoryPreviewCanvas(viewModel: viewModel)
+        .frame(width: 1200, height: 900)
+        .background(Theme.Colors.background)
+}
+
+/// Wrapper that uses a pre-built view model (for preview purposes).
+private struct ProjectStoryPreviewCanvas: View {
+    @StateObject private var viewModel: ProjectStoryViewModel
+    @State private var highlightedMilestoneSessionID: String? = nil
+
+    init(viewModel: ProjectStoryViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.spacingLarge) {
+                    if let header = viewModel.header {
+                        ProjectStoryHeaderView(header: header)
+                            .padding(.top, Theme.spacingLarge)
+                    }
+
+                    if viewModel.isEmpty {
+                        Text("No Sessions Yet")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 80)
+                    } else {
+                        if let summary = viewModel.summary, let header = viewModel.header {
+                            ProjectStorySummaryRowView(summary: summary, projectColorHex: header.colorHex)
+                        }
+
+                        if let header = viewModel.header, !viewModel.phaseTimeline.isEmpty {
+                            ProjectStoryPhaseTimelineView(
+                                segments: viewModel.phaseTimeline,
+                                phaseBoundaries: viewModel.phaseBoundaries,
+                                projectColorHex: header.colorHex,
+                                headerStartDate: header.startDate,
+                                headerEndDate: header.endDate
+                            )
+                        }
+
+                        if let header = viewModel.header, !viewModel.projectSessions.isEmpty {
+                            ProjectStoryIntensityMoodChartView(
+                                sessions: viewModel.projectSessions,
+                                orderedPhaseIDs: viewModel.phaseTimeline.map(\.id),
+                                projectColorHex: header.colorHex,
+                                highlightedSessionID: highlightedMilestoneSessionID
+                            )
+                        }
+
+                        if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
+                            ProjectStoryNotableMomentsView(
+                                milestones: viewModel.allMilestones,
+                                projectColorHex: header.colorHex,
+                                highlightedSessionID: $highlightedMilestoneSessionID
+                            )
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.spacingLarge)
+                .padding(.bottom, Theme.spacingLarge)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .background(Theme.Colors.background)
     }
 }
 

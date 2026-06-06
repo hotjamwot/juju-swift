@@ -13,7 +13,6 @@ struct SessionCalendarChartView: View {
     @State private var hoveredSession: WeeklySession? = nil
     @State private var showTooltip: Bool = false
     @State private var tooltipPosition: CGPoint = .zero
-    @State private var plotFrame: CGRect = .zero
     
     let dayToLetter: [String: String] = [
         "Monday":    "MON",
@@ -136,31 +135,48 @@ struct SessionCalendarChartView: View {
         }
     }
     
-    // MARK: - Find session at pixel location
+    // MARK: - Tooltip Positioning
     
-    private func sessionAt(location: CGPoint, in geometry: GeometryProxy) -> WeeklySession? {
-        let chartX = location.x - plotFrame.origin.x
-        let chartY = location.y - plotFrame.origin.y
-        
-        guard plotFrame.width > 0, plotFrame.height > 0,
-              chartX >= 0, chartX <= plotFrame.width,
-              chartY >= 0, chartY <= plotFrame.height else {
+    private let tooltipWidth: CGFloat = 200
+    private let tooltipHeight: CGFloat = 80
+    private let tooltipPadding: CGFloat = 14
+    
+    private func tooltipTooltipX(in size: CGSize) -> CGFloat {
+        let maxX = size.width - tooltipWidth / 2
+        let minX = tooltipWidth / 2
+        let idealX = tooltipPosition.x + tooltipPadding + tooltipWidth / 2
+        // If tooltip would go off the right edge, place it to the left of cursor
+        if idealX + tooltipWidth / 2 > size.width {
+            return max(tooltipPosition.x - tooltipPadding - tooltipWidth / 2, minX)
+        }
+        return min(idealX, maxX)
+    }
+    
+    private func tooltipTooltipY(in size: CGSize) -> CGFloat {
+        let maxY = size.height - tooltipHeight / 2
+        let minY = tooltipHeight / 2
+        let idealY = tooltipPosition.y + tooltipHeight / 2 + 8
+        // If tooltip would go off the bottom, place it above the cursor
+        if idealY + tooltipHeight / 2 > size.height {
+            return max(tooltipPosition.y - tooltipHeight / 2 - 8, minY)
+        }
+        return min(idealY, maxY)
+    }
+    
+    // MARK: - Find session at pixel location (via ChartProxy)
+    
+    private func sessionAt(location: CGPoint, proxy: ChartProxy) -> WeeklySession? {
+        // ChartProxy.value(atX:) and value(atY:) convert pixel positions
+        // to chart domain values using the chart's own coordinate system.
+        guard let day: String = proxy.value(atX: location.x),
+              let hour: Double = proxy.value(atY: location.y) else {
             return nil
         }
         
-        let dayWidth = plotFrame.width / CGFloat(weekDays.count)
-        let dayIndex = Int(chartX / dayWidth)
-        
-        guard dayIndex >= 0, dayIndex < weekDays.count else { return nil }
-        
-        let day = weekDays[dayIndex]
-        // Chart Y domain: 5.5 (bottom) to 23.5 (top), total 18 hours
-        let hourValue = 23.5 - (chartY / plotFrame.height) * 18.0
-        
         return sessions.first { session in
             session.day == day &&
-            hourValue >= session.startHour &&
-            hourValue <= session.endHour
+            hour >= session.startHour &&
+            hour <= session.endHour
         }
     }
     
@@ -172,76 +188,68 @@ struct SessionCalendarChartView: View {
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {
-                GeometryReader { outerGeo in
-                    ZStack(alignment: .topLeading) {
-                        Chart {
-                            workingHoursShade()
-                            
-                            gridLine(for: 6.0)
-                            gridLine(for: 23.0)
-                            
-                            currentTimeIndicator()
-                            
-                            ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
-                                sessionRectangle(for: session)
-                            }
+                Chart {
+                    workingHoursShade()
+                    
+                    gridLine(for: 6.0)
+                    gridLine(for: 23.0)
+                    
+                    currentTimeIndicator()
+                    
+                    ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
+                        sessionRectangle(for: session)
+                    }
+                }
+                .chartYScale(domain: 5.5 ... 23.5)
+                .chartYAxis {
+                    AxisMarks(values: .automatic) { value in
+                        if let hour = value.as(Double.self) {
+                            AxisValueLabel(String(format: "%.0f", hour))
                         }
-                        .chartYScale(domain: 5.5 ... 23.5)
-                        .chartYAxis {
-                            AxisMarks(values: .automatic) { value in
-                                if let hour = value.as(Double.self) {
-                                    AxisValueLabel(String(format: "%.0f", hour))
-                                }
-                            }
-                        }
-                        .chartXAxis {
-                            AxisMarks(values: weekDays) { value in
-                                let day = value.as(String.self) ?? ""
-                                let label = dayToLetter[day] ?? day
-                                
-                                AxisValueLabel {
-                                    VStack(spacing: 2) {
-                                        Text(label)
-                                            .font(Theme.Fonts.caption)
-                                            .foregroundColor(Theme.Colors.textSecondary)
-                                        if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
-                                            Text("\(dailyTotal, specifier: "%.1f")h")
-                                                .font(Theme.Fonts.caption)
-                                                .foregroundColor(Theme.Colors.textPrimary)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .chartPlotStyle { plotArea in
-                            plotArea
-                                .background(.clear)
-                        }
-                        .chartXScale(domain: weekDays)
-                        .chartBackground { proxy in
-                            GeometryReader { geo in
-                                Color.clear
-                                    .onAppear {
-                                        plotFrame = geo.frame(in: .local)
-                                    }
-                            }
-                        }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: weekDays) { value in
+                        let day = value.as(String.self) ?? ""
+                        let label = dayToLetter[day] ?? day
                         
-                        // Hover overlay
+                        AxisValueLabel {
+                            VStack(spacing: 2) {
+                                Text(label)
+                                    .font(Theme.Fonts.caption)
+                                    .foregroundColor(Theme.Colors.textSecondary)
+                                if let dailyTotal = dailyTotals[day], dailyTotal > 0 {
+                                    Text("\(dailyTotal, specifier: "%.1f")h")
+                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartPlotStyle { plotArea in
+                    plotArea
+                        .background(.clear)
+                }
+                .chartXScale(domain: weekDays)
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
                         Color.clear
                             .contentShape(Rectangle())
                             .onContinuousHover { phase in
                                 switch phase {
                                 case .active(let location):
-                                    if let matched = sessionAt(location: location, in: outerGeo) {
+                                    if let matched = sessionAt(location: location, proxy: proxy) {
                                         withAnimation(.easeOut(duration: 0.1)) {
                                             hoveredSession = matched
                                             showTooltip = true
                                             tooltipPosition = location
                                         }
                                     } else {
-                                        showTooltip = false
-                                        hoveredSession = nil
+                                        withAnimation(.easeOut(duration: 0.1)) {
+                                            showTooltip = false
+                                            hoveredSession = nil
+                                        }
                                     }
                                 case .ended:
                                     withAnimation(.easeOut(duration: 0.1)) {
@@ -255,8 +263,10 @@ struct SessionCalendarChartView: View {
                         if showTooltip, let session = hoveredSession {
                             tooltipContent(for: session)
                                 .fixedSize()
-                                .position(x: min(tooltipPosition.x, 250),
-                                          y: max(tooltipPosition.y - 20, 30))
+                                .position(
+                                    x: tooltipTooltipX(in: geo.size),
+                                    y: tooltipTooltipY(in: geo.size)
+                                )
                                 .allowsHitTesting(false)
                                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         }
