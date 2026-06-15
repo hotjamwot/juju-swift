@@ -58,6 +58,7 @@ struct OverviewDashboardView: View {
                 // naturally pushes all content down)
                 if sessionManager.activeSession != nil {
                     ActiveSessionStatusView(sessionManager: sessionManager)
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
                 
                 // Narrative Summary — THIS WEEK | FOCUS | PROJECT as metric cards

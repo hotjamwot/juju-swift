@@ -100,16 +100,34 @@ class NotesViewModel: ObservableObject {
         projectID: String?,
         projectName: String?,
         projects: [Project],
+        prefillNotes: String = "",
+        prefillAction: String = "",
+        prefillMood: Int? = nil,
+        prefillActivityTypeID: String? = nil,
+        prefillProjectPhaseID: String? = nil,
+        prefillIsMilestone: Bool = false,
         completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
         // Set completion first
         self.completion = completion
 
-        // Prepare the view model for the provided project
+        // Prepare the view model for the provided project (runs Smart Defaults)
         prepareForPresentation(projectID: projectID, projectName: projectName, projects: projects)
 
         // Reset ephemeral content (notes, mood, action, milestone)
         resetContent()
+        
+        // Apply live-session prefill values (override Smart Defaults)
+        notesText = prefillNotes
+        action = prefillAction
+        mood = prefillMood
+        isMilestone = prefillIsMilestone
+        if prefillActivityTypeID != nil {
+            selectedActivityTypeID = prefillActivityTypeID
+        }
+        if prefillProjectPhaseID != nil {
+            selectedProjectPhaseID = prefillProjectPhaseID
+        }
 
         // Show the modal
         isPresented = true

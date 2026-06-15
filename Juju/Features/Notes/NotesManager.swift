@@ -45,12 +45,18 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
+        prefillNotes: String = "",
+        prefillAction: String = "",
+        prefillMood: Int? = nil,
+        prefillActivityTypeID: String? = nil,
+        prefillProjectPhaseID: String? = nil,
+        prefillIsMilestone: Bool = false,
         completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void // notes, mood, activityTypeID, projectPhaseID, action, isMilestone
     ) {
         // Ensure we're on main thread
         guard Thread.isMainThread else {
             DispatchQueue.main.async {
-                self.presentNotes(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
+                self.presentNotes(projectID: projectID, projectName: projectName, projects: projects, prefillNotes: prefillNotes, prefillAction: prefillAction, prefillMood: prefillMood, prefillActivityTypeID: prefillActivityTypeID, prefillProjectPhaseID: prefillProjectPhaseID, prefillIsMilestone: prefillIsMilestone, completion: completion)
             }
             return
         }
@@ -62,7 +68,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         setupAppLifecycleObservers()
         
         // Create and configure the hosting window
-        createHostingWindow(projectID: projectID, projectName: projectName, projects: projects, completion: completion)
+        createHostingWindow(projectID: projectID, projectName: projectName, projects: projects, prefillNotes: prefillNotes, prefillAction: prefillAction, prefillMood: prefillMood, prefillActivityTypeID: prefillActivityTypeID, prefillProjectPhaseID: prefillProjectPhaseID, prefillIsMilestone: prefillIsMilestone, completion: completion)
         
         isPresented = true
         
@@ -76,6 +82,12 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
         projectID: String?,
         projectName: String?,
         projects: [Project],
+        prefillNotes: String = "",
+        prefillAction: String = "",
+        prefillMood: Int? = nil,
+        prefillActivityTypeID: String? = nil,
+        prefillProjectPhaseID: String? = nil,
+        prefillIsMilestone: Bool = false,
         completion: @escaping (String, Int?, String?, String?, String, Bool) -> Void
     ) {
         // If window already exists, just bring it to front and update context
@@ -86,8 +98,7 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             // Use a centralized helper on the view model to prepare project-related state
             notesViewModel.prepareForPresentation(projectID: projectID, projectName: projectName, projects: projects)
 
-            // Always reset ephemeral content (notes, action) when presenting for a new session
-            // Smart defaults will still apply for activityType and phase
+            // Reset ephemeral content (notes, action) when presenting for a new session
             notesViewModel.resetContent()
 
             // Update completion handler with wrapper that hides window
@@ -160,11 +171,17 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             completion(notes, mood, activityTypeID, projectPhaseID, action, isMilestone)
         }
         
-        // Present the notes modal with wrapped completion handler
+        // Present the notes modal with wrapped completion handler and prefill values
         notesViewModel.present(
             projectID: projectID,
             projectName: projectName,
             projects: projects,
+            prefillNotes: prefillNotes,
+            prefillAction: prefillAction,
+            prefillMood: prefillMood,
+            prefillActivityTypeID: prefillActivityTypeID,
+            prefillProjectPhaseID: prefillProjectPhaseID,
+            prefillIsMilestone: prefillIsMilestone,
             completion: wrappedCompletion
         )
     }

@@ -136,32 +136,38 @@ class MenuManager {
         let projectID = sessionManager.currentProjectID
         let projectName = sessionManager.currentProjectName
         
-        print("[MenuManager] Presenting SwiftUI Notes modal")
-        // Show the new SwiftUI-based modal
+        print("[MenuManager] Presenting SwiftUI Notes modal with live prefill")
+        // Show the new SwiftUI-based modal with live session values pre-filled
         NotesManager.shared.presentNotes(
-                    projectID: projectID,
-                    projectName: projectName,
-                    projects: self.projects
-                ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, action: String, isMilestone: Bool) in
-                    print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Action: \(action) IsMilestone: \(isMilestone)")
-                    // Only end the session if notes are provided (not empty) and action is provided
-                    if let note = note, !note.isEmpty, !action.isEmpty {
-                        self?.sessionManager.endSession(
-                            notes: note,
-                            mood: mood,
-                            activityTypeID: activityTypeID,
-                            projectPhaseID: projectPhaseID,
-                            action: action,
-                            isMilestone: isMilestone
-                        )
-                        self?.appDelegate?.updateMenuBarIcon(isActive: false)
-                        self?.refreshMenu()
-                    } else {
-                        // Session was cancelled or action was missing, restart the update timer and keep session active
-                        print("[MenuManager] Session cancelled or action missing, keeping session active")
-                        self?.startUpdateTimer()
-                    }
-                }
+            projectID: projectID,
+            projectName: projectName,
+            projects: self.projects,
+            prefillNotes: sessionManager.currentNotes,
+            prefillAction: sessionManager.currentAction,
+            prefillMood: sessionManager.currentMood,
+            prefillActivityTypeID: sessionManager.currentActivityTypeID,
+            prefillProjectPhaseID: sessionManager.currentProjectPhaseID,
+            prefillIsMilestone: sessionManager.currentIsMilestone
+        ) { [weak self] (note: String?, mood: Int?, activityTypeID: String?, projectPhaseID: String?, action: String, isMilestone: Bool) in
+            print("[MenuManager] Notes modal completion handler called. Note: \(note ?? "nil") Mood: \(mood.map { String($0) } ?? "nil") Activity: \(activityTypeID ?? "nil") Phase: \(projectPhaseID ?? "nil") Action: \(action) IsMilestone: \(isMilestone)")
+            // Only end the session if notes are provided (not empty) and action is provided
+            if let note = note, !note.isEmpty, !action.isEmpty {
+                self?.sessionManager.endSession(
+                    notes: note,
+                    mood: mood,
+                    activityTypeID: activityTypeID,
+                    projectPhaseID: projectPhaseID,
+                    action: action,
+                    isMilestone: isMilestone
+                )
+                self?.appDelegate?.updateMenuBarIcon(isActive: false)
+                self?.refreshMenu()
+            } else {
+                // Session was cancelled or action was missing, restart the update timer and keep session active
+                print("[MenuManager] Session cancelled or action missing, keeping session active")
+                self?.startUpdateTimer()
+            }
+        }
         print("[MenuManager] SwiftUI Notes modal presentation completed")
     }
     

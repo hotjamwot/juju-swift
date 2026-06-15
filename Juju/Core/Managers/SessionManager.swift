@@ -55,6 +55,12 @@ class SessionManager: ObservableObject {
     @Published var currentProjectPhaseID: String?
     @Published var sessionStartTime: Date?
     
+    // MARK: - Live Session Metadata (captured during active session, no CSV writes until endSession)
+    @Published var currentNotes: String = ""
+    @Published var currentAction: String = ""
+    @Published var currentMood: Int? = nil
+    @Published var currentIsMilestone: Bool = false
+    
     // MARK: - Active Session Property
     var activeSession: SessionRecord? {
         get {
@@ -72,10 +78,10 @@ class SessionManager: ObservableObject {
                 projectID: currentProjectID ?? "",
                 activityTypeID: currentActivityTypeID,
                 projectPhaseID: currentProjectPhaseID,
-                action: nil, // Active session doesn't have a final action yet
-                isMilestone: false, // Active session isn't a milestone until saved
-                notes: "",
-                mood: nil
+                action: currentAction.isEmpty ? nil : currentAction,
+                isMilestone: currentIsMilestone,
+                notes: currentNotes,
+                mood: currentMood
             )
         }
     }
@@ -220,6 +226,12 @@ class SessionManager: ObservableObject {
         currentProjectPhaseID = nil
         sessionStartTime = Date()
         
+        // Reset live-capture fields
+        currentNotes = ""
+        currentAction = ""
+        currentMood = nil
+        currentIsMilestone = false
+        
         // Notify that session started
         NotificationCenter.default.post(name: .sessionDidStart, object: nil)
     }
@@ -359,6 +371,12 @@ class SessionManager: ObservableObject {
                 self.currentActivityTypeID = nil
                 self.currentProjectPhaseID = nil
                 self.sessionStartTime = nil
+                
+                // Reset live-capture fields
+                self.currentNotes = ""
+                self.currentAction = ""
+                self.currentMood = nil
+                self.currentIsMilestone = false
                 
                 // Update timestamp to trigger UI refresh
                 self.lastUpdated = Date()
