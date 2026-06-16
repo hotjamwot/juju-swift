@@ -46,7 +46,7 @@ struct YearlyProjectBarChartView: View {
                                 HStack(spacing: Theme.spacingMedium) {
                                     HStack(spacing: Theme.spacingSmall) {
                                         Text(projectData.emoji)
-                                            .font(.system(size: 16, design: .rounded))
+                                            .font(.system(size: 16, design: .default))
                                         
                                         Text(projectData.projectName)
                                             .font(.system(size: 12, weight: .semibold))

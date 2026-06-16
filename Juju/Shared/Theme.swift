@@ -3,122 +3,194 @@ import AppKit
 
 /// All colours, fonts, spacing, etc. lives here – no magic strings elsewhere.
 ///
-/// DESIGN RULES:
-/// - Minimalist aesthetic: clean, uncluttered interface with generous whitespace
-/// - Japanese-inspired wabi-sabi: subtle imperfections, natural flow, calming
-/// - Dark theme consistency: deep background (#181818), soft surface (#1C1C1C)
-/// - Typography hierarchy: rounded headers, clean body text, compact captions
-/// - Spacing rhythm: 8pt/16pt/24pt system creates visual breathing room
-/// - Rounded corners: 12pt for cards, 10pt for rows, 5pt for bars (soft edges)
-/// - Charts: minimalist with subtle grid lines, working hours shading, clear data
-/// - Lists: compact 44pt rows with subtle hover states, emoji integration
-/// - Color philosophy: project colors for data, accent (#E100FF) for actions
-/// - Divider subtlety: 10% opacity for backgrounds, 20% for interactions
-/// - Animation philosophy: smooth 0.2s transitions, no jarring movements
-/// - Emoji integration: consistent sizing (16pt charts, 14pt lists) for personality
-/// - Responsive design: fluid layouts that adapt gracefully to screen size
-/// - Visual hierarchy: use opacity and spacing over heavy borders and shadows
+/// DESIGN PHILOSOPHY — "The Editor"
+///
+/// Juju's visual language is editorial and personal: a dark journal you love cracking open.
+/// It draws from Monocle's confident restraint and A24's intentional use of colour.
+///
+/// The core principle: the UI chrome should nearly disappear.
+/// Backgrounds, surfaces, and cards are warm near-blacks with low chroma —
+/// they recede so that project colours arrive with full force.
+///
+/// COLOUR RULES:
+/// - No global accent colour. Project colours ARE the accent system.
+/// - Interactive states (buttons, selection, focus) use off-white — weight and opacity shifts only.
+/// - Saturation lives exclusively in the data layer: project bars, session blocks, chart fills.
+/// - Surfaces are warm but desaturated — enough to feel human, not enough to compete.
+///
+/// TYPOGRAPHY RULES:
+/// - Design: .default throughout. No .rounded — it reads as "app-like"; we want editorial.
+/// - Two weights only: .regular for body, .semibold for headers.
+/// - Size hierarchy: 16 → 14 → 13 → 10. No magic sizes outside this scale.
+///
+/// SPACING RULES:
+/// - 8pt grid system. Every gap is a multiple of 4.
+/// - Generous outer padding (48pt) creates breathing room.
+/// - No card borders. Depth comes from the subtle step between background and surface.
 public struct Theme {
 
-    // MARK: Colors
+    // MARK: - Colors
     public struct Colors {
-        public static let background  = Color("Background")  // #1B1B1B
-        public static let surface     = Color("Surface")  // #191919
-        public static let textPrimary = Color("textPrimary")  // #E5E5E7
-        public static let textSecondary = Color("textSecondary")  // #9A9AA0
-        public static let divider     = Color("Divider")  // rgba(255,255,255,0.1)
-        public static let foreground  = Color("foreground") // #E5E5E7
-        public static let error       = Color("Error")  // #B02A21
-        public static let accentColor       = Color("AppAccentColor")  // #E100FF or #C800C8 in dark mode
 
-        /// Subtle card surface — slightly lighter than background but still distinct
-        /// Used for card containers and chart areas to create depth without borders
-        /// Matches the ~#252526 card surface used by narrative metric cards
-        public static let cardSurface: Color = {
-            Color(NSColor(calibratedRed: 0.145, green: 0.145, blue: 0.150, alpha: 1.0))
-        }()
+        /// Page background — warm near-black, the darkest layer.
+        /// Brown-tinted rather than blue-cold. Feels like good newsprint in low light.
+        /// Xcode asset: "Background" → #1A1714
+        public static let background = Color("Background")
 
-        /// Convert a SwiftUI `Color` to the underlying `NSColor` (macOS only)
+        /// Chart and panel surface — same warmth, significantly lower chroma.
+        /// Almost neutral so it doesn't compete with project colours sitting on top.
+        /// Xcode asset: "Surface" → #1E1C1A
+        public static let surface = Color("Surface")
+
+        /// Primary text — warm cream. Not pure white; not yellow. Sits naturally
+        /// against the warm background without the harshness of #FFFFFF.
+        /// Xcode asset: "textPrimary" → #EAE4DA
+        public static let textPrimary = Color("textPrimary")
+
+        /// Secondary text — muted warm grey. Labels, captions, metadata.
+        /// Xcode asset: "textSecondary" → #7A7268
+        public static let textSecondary = Color("textSecondary")
+
+        /// Divider — very low opacity warm white. Hairline rules only.
+        /// Xcode asset: "Divider" → rgba(234, 228, 218, 0.10)
+        public static let divider = Color("Divider")
+
+        /// Foreground alias — same value as textPrimary. Kept for legacy compatibility.
+        public static let foreground = Color("foreground")
+
+        /// Error — retained for destructive actions only.
+        /// Xcode asset: "Error" → #B02A21
+        public static let error = Color("Error")
+
+        /// Accent — DEPRECATED. No longer used for UI chrome.
+        /// Retained only for any legacy call sites that haven't been migrated.
+        /// Do not introduce new uses. Project colours own this role.
+        /// If you find yourself reaching for accentColor, ask: can a project colour
+        /// or an off-white opacity shift do this job instead?
+        @available(*, deprecated, message: "Use project colour or off-white opacity shift instead. See Theme philosophy.")
+        public static let accentColor = Color("AppAccentColor")
+
+        /// Interactive off-white — used for buttons, selected states, focus rings.
+        /// Same colour family as textPrimary but slightly brighter.
+        /// Weight and opacity shifts carry all interactive meaning — no hue change needed.
+        public static let interactive: Color = Color(NSColor(
+            srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 1.0
+        )) // #EAE3DC
+
+        /// Interactive hover — off-white at reduced opacity. For hover backgrounds.
+        public static let interactiveHover: Color = Color(NSColor(
+            srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 0.08
+        ))
+
+        /// Interactive selected — off-white at medium opacity. For selected row backgrounds.
+        public static let interactiveSelected: Color = Color(NSColor(
+            srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 0.12
+        ))
+
+        /// Card surface — one step above surface. Very low chroma warm grey.
+        /// Used for metric cards and chart containers.
+        /// The step between surface and cardSurface is intentionally small —
+        /// depth without borders, as per the design philosophy.
+        public static let cardSurface: Color = Color(NSColor(
+            srgbRed: 0.141, green: 0.133, blue: 0.125, alpha: 1.0
+        )) // ~#241F1E, desaturated warm
+
+        /// Convert a SwiftUI Color to NSColor (macOS only).
         public static func nsColor(_ color: Color) -> NSColor? {
-            #if arch(x86_64) || arch(arm64) // macOS build
             if let cg = color.cgColor {
                 let comps = cg.components ?? [0, 0, 0, 1]
                 return NSColor(srgbRed: comps[0], green: comps[1], blue: comps[2], alpha: comps[3])
             }
             return nil
-            #else
-            return nil
-            #endif
         }
     }
 
-    // MARK: Typography
+    // MARK: - Typography
+    //
+    // Design: .default throughout — editorial, not "app-like".
+    // Two weights only: .regular and .semibold.
+    // If you need to express hierarchy, use size and opacity — not weight proliferation.
     public struct Fonts {
-        public static let header   = Font.system(size: 16, weight: .semibold, design: .rounded)
-        public static let body     = Font.system(size: 14, weight: .regular)
-        public static let caption  = Font.system(size: 10, weight: .medium)
-        public static let icon     = Font.system(size: 20, weight: .regular)
-        
-        // New: Compact narrative strip fonts
-        public static let narrative = Font.system(size: 13, weight: .medium, design: .rounded)
-        public static let narrativeAccent = Font.system(size: 14, weight: .semibold, design: .rounded)
+        /// Section headers and card titles — 16pt semibold, default design.
+        public static let header = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Body text — 14pt regular. The workhorse.
+        public static let body = Font.system(size: 14, weight: .regular, design: .default)
+
+        /// Captions, labels, metadata — 10pt medium. Use sparingly.
+        public static let caption = Font.system(size: 10, weight: .medium, design: .default)
+
+        /// Icon font size reference — 20pt regular.
+        public static let icon = Font.system(size: 20, weight: .regular, design: .default)
+
+        /// Narrative strip text — 13pt medium. For summary stat labels.
+        public static let narrative = Font.system(size: 13, weight: .medium, design: .default)
+
+        /// Narrative strip accent — 14pt semibold. For summary stat values.
+        public static let narrativeAccent = Font.system(size: 14, weight: .semibold, design: .default)
+
+        /// Mono — for timestamps, durations, precise numeric data.
+        /// .monospaced keeps numbers from jumping in width as they update.
+        public static let mono = Font.system(size: 13, weight: .regular, design: .monospaced)
     }
 
-    // MARK: Spacing & Sizing
+    // MARK: - Spacing
+    //
+    // 8pt grid. Every value is a multiple of 4.
+    // Use named constants — never magic numbers in layout code.
     public static let spacingExtraSmall = CGFloat(4)
     public static let spacingSmall      = CGFloat(8)
     public static let spacingMedium     = CGFloat(16)
     public static let spacingLarge      = CGFloat(24)
     public static let spacingExtraLarge = CGFloat(32)
-    
-    // MARK: Spacing scale for Japanese/Scandinavian minimal design
-    // Inspired by the 8pt grid system — consistent, calm, breathing room
+
     public struct Spacing {
-        /// 2pt — micro spacing, almost invisible
+        /// 2pt — micro gaps, almost invisible.
         public static let micro: CGFloat = 2
-        /// 4pt — very tight, for inline elements
+        /// 4pt — very tight, for inline elements.
         public static let xxs: CGFloat = 4
-        /// 8pt — small, for compact content
+        /// 8pt — small, for compact content.
         public static let xs: CGFloat = 8
-        /// 12pt — standard inner padding
+        /// 12pt — standard inner padding.
         public static let sm: CGFloat = 12
-        /// 16pt — medium, for section gaps
+        /// 16pt — medium, for section gaps.
         public static let md: CGFloat = 16
-        /// 24pt — large, for major section breaks
+        /// 24pt — large, for major section breaks.
         public static let lg: CGFloat = 24
-        /// 32pt — extra large, for page-level padding
+        /// 32pt — extra large, for page-level padding.
         public static let xl: CGFloat = 32
-        /// 48pt — spacious, for deep breathing room
+        /// 48pt — outer dashboard padding. Generous breathing room.
         public static let xxl: CGFloat = 48
     }
 
-    // MARK: Corners / Animation
+    // MARK: - Design
     public struct Design {
-        /// Standard corner radius for cards and containers (reduced from 18pt for a cleaner look)
-        public static let cornerRadius     = CGFloat(12)
+        /// Standard corner radius — 12pt for cards and containers.
+        public static let cornerRadius = CGFloat(12)
+        /// Reduced corner radius for session blocks — more editorial, less "bubbly".
+        public static let blockCornerRadius = CGFloat(5)
+        /// Standard animation duration.
         public static let animationDuration = 0.2
     }
 
-    // MARK: Dashboard Layout Constants
-    // Single source of truth for all dashboard layout values
+    // MARK: - Dashboard Layout
+    //
+    // Single source of truth for all dashboard layout values.
+    // Charts declare their own ideal height and fill full width.
     public struct DashboardLayout {
-        // Core spacing system - single source of truth
-        /// Outer padding applied by chartContainer — generous for JapaScandi breathing room
+        /// Outer padding applied by chartContainer.
         public static let chartPadding: CGFloat = 20
-        /// Page-level horizontal + vertical padding for the dashboard scroll view
+        /// Page-level horizontal + vertical padding for the dashboard scroll view.
         public static let dashboardPadding: CGFloat = 48
-        /// Chart corner radius — now uses the standard 12pt
+        /// Chart corner radius.
         public static let chartCornerRadius: CGFloat = 12
-        /// Border width set to 0 for the borderless card look
+        /// Border width — 0 for the borderless look.
         public static let chartBorderWidth: CGFloat = 0
-        
-        /// Internal padding inside each chart's plot area — keeps data from touching edges
+        /// Internal padding inside each chart's plot area.
         public static let chartInnerPadding: CGFloat = 16
-        
-        /// Padding between narrative strip and dashboard charts
+        /// Gap between narrative strip and dashboard charts.
         public static let narrativeToContentGap: CGFloat = 24
-        
-        // Responsive breakpoints
+
         public static let breakpoints = (
             small: 800,
             medium: 1200,
@@ -126,12 +198,12 @@ public struct Theme {
         )
     }
 
-    // MARK: Row-specific styling for list layout
+    // MARK: - Row
     public struct Row {
         public static let height: CGFloat = 44
         public static let expandedHeight: CGFloat = 90
         public static let cornerRadius: CGFloat = 10
-        public static let hoverOpacity: CGFloat = 0.2
+        public static let hoverOpacity: CGFloat = 0.08   // Reduced — more subtle than before
         public static let separatorHeight: CGFloat = 1
         public static let projectDotSize: CGFloat = 6
         public static let emojiSize: CGFloat = 14
@@ -139,49 +211,57 @@ public struct Theme {
         public static let contentPadding: CGFloat = 8
     }
 
-    // MARK: Tab‑Bar specific colours
+    // MARK: - Tab Bar
+    //
+    // Tab bar uses NSColor directly for AppKit compatibility.
+    // Interactive states use off-white rather than the former accent colour.
     public struct Tab {
-        // Use the helper so both `Color` (SwiftUI) and `NSColor` are available
-        public static let background      = Colors.nsColor(Colors.background)!
-        public static let hoverBackground = Colors.nsColor(Colors.background)!.withAlphaComponent(0.8)  // Subtle hover
-        public static let selectedBackground = Colors.nsColor(Colors.accentColor)!
-        public static let icon            = NSColor(srgbRed: 0.929, green: 0.929, blue: 0.929, alpha: 1.0)  // #EDEDED
-        public static let selectedIcon    = NSColor.white
-        public static let glow            = Colors.nsColor(Colors.accentColor)!.withAlphaComponent(0.3)
+        public static let background = NSColor(srgbRed: 0.102, green: 0.090, blue: 0.078, alpha: 1.0)         // #1A1714
+        public static let hoverBackground = NSColor(srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 0.08)   // off-white 8%
+        public static let selectedBackground = NSColor(srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 0.15) // off-white 15%
+        public static let icon = NSColor(srgbRed: 0.475, green: 0.447, blue: 0.408, alpha: 1.0)               // #796F68 — muted
+        public static let selectedIcon = NSColor(srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 1.0)       // #EAE4DA — cream
+        /// No glow. Removed — glow required the accent colour and read as decorative noise.
     }
 }
 
-// MARK: - NSColor Extensions (Consolidated from NSColor+SwiftUI.swift)
+// MARK: - Xcode Asset Catalogue reference
+//
+// Update your .xcassets to match these values.
+// All colours are sRGB. Dark mode only — Juju has no light mode.
+//
+// "Background"   Any: #1A1714  (r:0.102 g:0.090 b:0.078)
+// "Surface"      Any: #1E1C1A  (r:0.118 g:0.110 b:0.102)
+// "textPrimary"  Any: #EAE4DA  (r:0.918 g:0.894 b:0.855)
+// "textSecondary"Any: #7A7268  (r:0.478 g:0.447 b:0.408)
+// "Divider"      Any: rgba(234,228,218, 0.10)
+// "foreground"   Any: #EAE4DA  (same as textPrimary)
+// "Error"        Any: #B02A21  (unchanged)
+// "AppAccentColor" Any: #E100FF (retained for legacy — do not use in new code)
+//
+// cardSurface and interactive are defined programmatically above
+// and do not require asset catalogue entries.
+
+// MARK: - NSColor Extensions
 extension NSColor {
-    /// Converts an NSColor to SwiftUI Color
-    var swiftUIColor: Color {
-        Color(self)
-    }
+    var swiftUIColor: Color { Color(self) }
 }
 
-// MARK: - Simple Preview Helpers (Consolidated from SimplePreviewHelpers.swift)
+// MARK: - Preview Helpers
 public enum SimplePreviewHelpers {
-    
-    /// Creates a standard preview with modal frame size (750x450)
-    /// - Parameter view: The view to preview
+
     public static func modal(_ view: @escaping () -> some View) -> some View {
         view().frame(width: 750, height: 450)
     }
-    
-    /// Creates a notes modal preview with notes modal frame size (900x700)
-    /// - Parameter view: The view to preview
+
     public static func notesModal(_ view: @escaping () -> some View) -> some View {
         view().frame(width: 900, height: 700)
     }
-    
-    /// Creates a project preview with project frame size (650x600)
-    /// - Parameter view: The view to preview
+
     public static func project(_ view: @escaping () -> some View) -> some View {
         view().frame(width: 650, height: 600)
     }
-    
-    /// Creates a chart preview with chart frame size and background
-    /// - Parameter view: The chart view to preview
+
     public static func chart(_ view: @escaping () -> some View) -> some View {
         ZStack {
             Color(NSColor.windowBackgroundColor)
@@ -190,93 +270,28 @@ public enum SimplePreviewHelpers {
                 .padding()
         }
     }
-    
-    /// Creates a session preview with session frame size (450x600)
-    /// - Parameter view: The view to preview
+
     public static func session(_ view: @escaping () -> some View) -> some View {
         view().frame(width: 450, height: 600)
     }
 }
 
-// MARK: - Dashboard View Extensions (Consolidated from View+DashboardExtensions.swift)
+// MARK: - View Extensions
 extension View {
-    /// Apply consistent dashboard padding using Theme constants
-    ///
-    /// **AI Context**: This modifier provides standardized padding for all dashboard views,
-    /// ensuring consistent spacing and layout across the application. It's used as the
-    /// base padding for dashboard content areas.
-    ///
-    /// **Business Rules**:
-    /// - Uses Theme.DashboardLayout.dashboardPadding for consistent spacing
-    /// - Applies padding to all sides (horizontal and vertical)
-    /// - Can be chained with other modifiers
-    ///
-    /// **Performance Notes**:
-    /// - SwiftUI modifier is highly optimized
-    /// - Minimal memory allocation
-    /// - No layout calculations performed
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be applied multiple times (accumulates)
-    /// - Compatible with all other view modifiers
-    ///
-    /// - Returns: View with dashboard padding applied
+
+    /// Standard outer padding for dashboard views.
     func dashboardPadding() -> some View {
         self.padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
     }
-    
-    /// Apply consistent chart padding using Theme constants
-    ///
-    /// **AI Context**: This modifier provides standardized padding specifically for chart
-    /// components within dashboard views. It's used for individual chart views to ensure
-    /// consistent spacing between chart elements.
-    ///
-    /// **Business Rules**:
-    /// - Uses Theme.DashboardLayout.chartPadding for chart-specific spacing
-    /// - Applies padding to all sides (horizontal and vertical)
-    /// - Designed for use with chart components
-    ///
-    /// **Performance Notes**:
-    /// - SwiftUI modifier is highly optimized
-    /// - Minimal memory allocation
-    /// - No layout calculations performed
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be applied multiple times (accumulates)
-    /// - Compatible with all other view modifiers
-    ///
-    /// - Returns: View with chart padding applied
+
+    /// Standard inner padding for chart components.
     func chartPadding() -> some View {
         self.padding(.horizontal, Theme.DashboardLayout.chartPadding)
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
-    
-     /// Create a loading overlay for dashboard views
-    ///
-    /// **AI Context**: This modifier provides a standardized loading state for dashboard views
-    /// when data is being fetched or processed. It shows a progress indicator with a message
-    /// while blocking interaction with the underlying content.
-    ///
-    /// **Business Rules**:
-    /// - Shows overlay when isLoading is true
-    /// - Displays progress indicator and loading message
-    /// - Blocks interaction with underlying content
-    /// - Uses Theme constants for consistent styling
-    ///
-    /// **Performance Notes**:
-    /// - Conditional overlay (no overhead when not loading)
-    /// - Uses efficient overlay composition
-    /// - Minimal memory allocation
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be applied multiple times (last one wins)
-    /// - Compatible with most other view modifiers
-    ///
-    /// - Returns: View with conditional loading overlay
+
+    /// Loading overlay for dashboard views while data is being prepared.
     @ViewBuilder
     func loadingOverlay(isLoading: Bool, message: String = "Loading...") -> some View {
         if isLoading {
@@ -299,115 +314,28 @@ extension View {
             self
         }
     }
-    
-    /// Create a chart container with consistent styling
-    ///
-    /// **AI Context**: This modifier provides standardized styling for chart containers,
-    /// including background, corner radius. It's used to create visually
-    /// consistent chart components across dashboard views.
-    ///
-    /// **Business Rules**:
-    /// - Applies cardSurface background color for the new borderless card look
-    /// - No border stroke — content floats on the surface for a cleaner aesthetic
-    /// - Uses reduced corner radius (12pt) for a more modern feel
-    /// - Provides chart-specific padding
-    ///
-    /// **Performance Notes**:
-    /// - SwiftUI modifiers are highly optimized
-    /// - Minimal memory allocation
-    /// - Efficient layer composition
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be combined with other modifiers
-    /// - Maintains view hierarchy for accessibility
-    ///
-    /// - Returns: View styled as chart container
+
+    /// Chart container — no border, depth from background step alone.
     func chartContainer() -> some View {
         self
             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
-    
-    /// Create a dashboard card with consistent styling
-    ///
-    /// **AI Context**: This modifier provides standardized styling for dashboard cards,
-    /// which are used to group related content and visualizations. It creates a
-    /// visually distinct container that stands out from the background.
-    ///
-    /// **Business Rules**:
-    /// - Applies cardSurface background — subtle differentiation without borders
-    /// - No border stroke for a cleaner, more modern card look
-    /// - Uses reduced corner radius (12pt)
-    /// - Provides dashboard-specific padding
-    ///
-    /// **Performance Notes**:
-    /// - SwiftUI modifiers are highly optimized
-    /// - Minimal memory allocation
-    /// - Efficient layer composition
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be combined with other modifiers
-    /// - Maintains view hierarchy for accessibility
-    ///
-    /// - Returns: View styled as dashboard card
+
+    /// Dashboard card — cardSurface background, standard corner radius, no border.
     func dashboardCard() -> some View {
         self
             .background(Theme.Colors.cardSurface)
             .cornerRadius(Theme.Design.cornerRadius)
             .dashboardPadding()
     }
-    
-    /// Add a subtle shadow for depth effect
-    ///
-    /// **AI Context**: This modifier adds a subtle shadow to views to create a sense
-    /// of depth and separation from the background. It's used for important UI
-    /// elements that should stand out visually.
-    ///
-    /// **Business Rules**:
-    /// - Uses Theme divider color with opacity for subtle effect
-    /// - Applies standard shadow radius for consistency
-    /// - Can be combined with other styling modifiers
-    ///
-    /// **Performance Notes**:
-    /// - SwiftUI shadow is hardware accelerated
-    /// - Minimal performance impact
-    /// - Efficient rendering
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can be applied multiple times (last one wins)
-    /// - Compatible with most other view modifiers
-    ///
-    /// - Returns: View with subtle shadow effect
+
+    /// Subtle shadow for depth — uses divider colour family.
     func subtleShadow() -> some View {
         self.shadow(color: Theme.Colors.divider.opacity(0.3), radius: 8, x: 0, y: 4)
     }
-    
-    /// Create a responsive dashboard layout container
-    ///
-    /// **AI Context**: This modifier provides a responsive container that adapts to
-    /// different screen sizes and orientations. It's used as the base container
-    /// for dashboard views to ensure proper layout behavior.
-    ///
-    /// **Business Rules**:
-    /// - Uses ZStack for layered layout
-    /// - Provides full width and height
-    /// - Applies background color
-    /// - Supports responsive design patterns
-    ///
-    /// **Performance Notes**:
-    /// - ZStack is highly optimized for layering
-    /// - Minimal memory allocation
-    /// - Efficient layout calculations
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Adapts to different container sizes
-    /// - Maintains aspect ratio when needed
-    ///
-    /// - Returns: View wrapped in responsive dashboard container
+
+    /// Full-bleed dashboard container with background fill.
     func dashboardContainer() -> some View {
         ZStack {
             Theme.Colors.background
@@ -415,78 +343,29 @@ extension View {
         }
         .ignoresSafeArea()
     }
-    
-    /// Add a header with title and optional subtitle
-    ///
-    /// **AI Context**: This modifier adds a standardized header section to views,
-    /// commonly used in dashboard views to provide context and navigation.
-    /// It creates a visually distinct header area with consistent styling.
-    ///
-    /// **Business Rules**:
-    /// - Uses large, bold text for title
-    /// - Optional subtitle with smaller text
-    /// - Aligned to leading edge
-    /// - Provides appropriate spacing
-    ///
-    /// **Performance Notes**:
-    /// - VStack is highly optimized for vertical layouts
-    /// - Minimal memory allocation
-    /// - Efficient text rendering
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Optional subtitle can be nil
-    /// - Maintains accessibility for text content
-    ///
-    /// - Parameters:
-    ///   - title: Main header title
-    ///   - subtitle: Optional subtitle (defaults to nil)
-    /// - Returns: View with header section
+
+    /// Section header with optional subtitle and divider rule below.
     func withHeader(title: String, subtitle: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
             Text(title)
                 .font(Theme.Fonts.header)
                 .foregroundColor(Theme.Colors.textPrimary)
-            
+
             if let subtitle = subtitle {
                 Text(subtitle)
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
             }
-            
+
             Divider()
                 .background(Theme.Colors.divider)
-            
+
             self
         }
         .dashboardPadding()
     }
-    
-    /// Create a section with consistent styling
-    ///
-    /// **AI Context**: This modifier creates a visually distinct section within
-    /// a larger view, commonly used to group related content or separate
-    /// different types of information.
-    ///
-    /// **Business Rules**:
-    /// - Adds top and bottom spacing
-    /// - Can include optional section title
-    /// - Maintains consistent styling
-    /// - Works with any view type
-    ///
-    /// **Performance Notes**:
-    /// - VStack is highly optimized for vertical layouts
-    /// - Minimal memory allocation
-    /// - Efficient layout calculations
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Optional title can be nil
-    /// - Maintains accessibility for content
-    ///
-    /// - Parameters:
-    ///   - title: Optional section title (defaults to nil)
-    /// - Returns: View wrapped in styled section
+
+    /// Section wrapper with optional title label.
     func section(title: String? = nil) -> some View {
         VStack(spacing: Theme.spacingSmall) {
             if let title = title {
@@ -495,37 +374,12 @@ extension View {
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
             self
         }
         .padding(.vertical, Theme.spacingMedium)
     }
-    
-    /// Add a footer with action buttons
-    
-    /// **AI Context**: This modifier adds a footer section with action buttons,
-    /// commonly used in dashboard views for navigation or additional actions.
-    /// It provides a consistent pattern for footer actions.
-    ///
-    /// **Business Rules**:
-    /// - Places buttons at bottom of view
-    /// - Uses HStack for horizontal button layout
-    /// - Provides appropriate spacing between buttons
-    /// - Maintains consistent styling
-    ///
-    /// **Performance Notes**:
-    /// - VStack is highly optimized for vertical layouts
-    /// - HStack is highly optimized for horizontal layouts
-    /// - Minimal memory allocation
-    ///
-    /// **Edge Cases**:
-    /// - Works with any view type
-    /// - Can accommodate multiple buttons
-    /// - Maintains accessibility for button actions
-    ///
-    /// - Parameters:
-    ///   - buttons: ViewBuilder for footer buttons
-    /// - Returns: View with footer section
+
+    /// Footer with action buttons separated by a hairline rule.
     @ViewBuilder
     func withFooter(@ViewBuilder buttons: @escaping () -> some View) -> some View {
         VStack(spacing: 0) {

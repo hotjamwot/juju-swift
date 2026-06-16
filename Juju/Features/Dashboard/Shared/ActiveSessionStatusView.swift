@@ -52,7 +52,7 @@ struct ActiveSessionStatusView: View {
                             .frame(width: 12, height: 12)
                     )
                 Text("Live")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold, design: .default))
                     .foregroundColor(Theme.Colors.accentColor)
             }
             
@@ -69,7 +69,7 @@ struct ActiveSessionStatusView: View {
                 .foregroundColor(Theme.Colors.textSecondary)
             
             Text(project?.name ?? "Unknown Project")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(size: 13, weight: .medium, design: .default))
                 .foregroundColor(Theme.Colors.textPrimary)
                 .lineLimit(1)
             
@@ -273,7 +273,7 @@ struct LiveTimerView: View {
     
     var body: some View {
         Text(formatDurationWithSeconds(liveDurationSeconds))
-            .font(.system(size: 12, weight: .medium, design: .rounded))
+            .font(.system(size: 12, weight: .medium, design: .default))
             .foregroundColor(Theme.Colors.textSecondary)
             .monospacedDigit()
             .onAppear {

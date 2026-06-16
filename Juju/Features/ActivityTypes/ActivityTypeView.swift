@@ -10,7 +10,7 @@ struct ActivityTypeView: View {
             VStack(spacing: Theme.spacingMedium) {
                 HStack {
                     Text("Activity Types")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: 32, weight: .bold, design: .default))
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .center)
                     

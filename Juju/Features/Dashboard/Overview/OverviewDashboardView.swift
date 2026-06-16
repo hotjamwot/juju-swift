@@ -201,7 +201,7 @@ struct OverviewDashboardView: View {
     
     private func chartSectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .font(.system(size: 13, weight: .semibold, design: .default))
             .foregroundColor(Theme.Colors.textSecondary)
             .tracking(0.5)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -243,8 +243,8 @@ private struct NarrativeSummaryCard: View {
                 NarrativeMetricCard(title: "THIS WEEK", iconName: "clock.fill") {
                     VStack(spacing: Theme.Spacing.xs) {
                         Text(headline.formattedHours)
-                            .font(.system(size: 28, weight: .semibold, design: .rounded))
-                            .foregroundColor(Theme.Colors.accentColor)
+                            .font(.system(size: 28, weight: .semibold, design: .default))
+                            .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(2)
                             .multilineTextAlignment(.center)
 
@@ -268,7 +268,7 @@ private struct NarrativeSummaryCard: View {
                             .font(.system(size: 22, weight: .medium))
                             .foregroundColor(Theme.Colors.accentColor)
                         Text(headline.topActivity.name)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .font(.system(size: 18, weight: .semibold, design: .default))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .multilineTextAlignment(.center)
@@ -281,7 +281,7 @@ private struct NarrativeSummaryCard: View {
                         Text(headline.topProject.emoji)
                             .font(.system(size: 22))
                         Text(headline.topProject.name)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .font(.system(size: 18, weight: .semibold, design: .default))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .multilineTextAlignment(.center)
@@ -376,7 +376,7 @@ private struct RecentMilestonesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Recent milestones")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .semibold, design: .default))
                 .foregroundColor(Theme.Colors.textSecondary)
                 .tracking(0.5)
 

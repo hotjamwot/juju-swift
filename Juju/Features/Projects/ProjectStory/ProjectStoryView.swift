@@ -120,7 +120,7 @@ struct ProjectStoryView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.spacingMedium) {
             Text("No Sessions Yet")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.system(size: 24, weight: .bold, design: .default))
                 .foregroundColor(Theme.Colors.textPrimary)
 
             Text("When you record time against this project, its story will appear here.")
@@ -153,7 +153,7 @@ private struct ProjectStoryHeaderView: View {
                     .font(.system(size: 28))
 
                 Text(header.projectName)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .default))
                     .foregroundColor(Theme.Colors.textPrimary)
             }
 
@@ -213,18 +213,18 @@ private struct ProjectStorySummaryRowView: View {
         HStack(spacing: Theme.spacingSmall) {
             StoryMetricCard(title: "Total time") {
                 Text(durationString(fromMinutes: summary.totalDurationMinutes))
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .default))
                     .foregroundColor(Theme.Colors.textPrimary)
             }
             StoryMetricCard(title: "Sessions") {
                 Text("\(summary.totalSessions)")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .default))
                     .foregroundColor(Theme.Colors.textPrimary)
             }
             StoryMetricCard(title: "Average mood") {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(moodValueString(summary.averageMood))
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(size: 20, weight: .bold, design: .default))
                         .foregroundColor(Theme.Colors.textPrimary)
                     Text("/10")
                         .font(Theme.Fonts.caption)
@@ -233,7 +233,7 @@ private struct ProjectStorySummaryRowView: View {
             }
             StoryMetricCard(title: "Phases") {
                 Text("\(summary.phaseCount)")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .default))
                     .foregroundColor(Theme.Colors.textPrimary)
             }
         }
@@ -707,7 +707,7 @@ private struct ProjectStoryNotableMomentsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             Text("Notable moments")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(size: 18, weight: .bold, design: .default))
                 .foregroundColor(Theme.Colors.textPrimary)
 
             VStack(spacing: Theme.spacingSmall) {
@@ -921,7 +921,7 @@ private struct ProjectStoryPreviewCanvas: View {
 
                     if viewModel.isEmpty {
                         Text("No Sessions Yet")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 24, weight: .bold, design: .default))
                             .foregroundColor(Theme.Colors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 80)

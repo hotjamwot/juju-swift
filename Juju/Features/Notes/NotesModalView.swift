@@ -74,7 +74,7 @@ struct NotesModalView: View {
 
                 Text("Ooh yeah, nice work on the \(viewModel.currentProjectName ?? "Project") Juju session!")
             }
-            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .font(.system(size: 28, weight: .bold, design: .default))
             .foregroundColor(Theme.Colors.textPrimary)
 
         
@@ -333,7 +333,7 @@ private struct AddPhaseDialogModifier: ViewModifier {
                             
                             VStack(spacing: Theme.spacingMedium) {
                                 Text("Add New Phase")
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                                    .font(.system(size: 20, weight: .bold, design: .default))
                                     .foregroundColor(Theme.Colors.textPrimary)
                                 
                                 Text("Create a new phase for \(projectName ?? "this project")")

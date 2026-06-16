@@ -46,7 +46,7 @@ struct YearlyActivityTypeBarChartView: View {
                                 HStack(spacing: Theme.spacingMedium) {
                                     HStack(spacing: Theme.spacingSmall) {
                                         Image(systemName: activityData.sfSymbol)
-                                            .font(.system(size: 16, design: .rounded))
+                                            .font(.system(size: 16, design: .default))
                                         
                                         Text(activityData.activityName)
                                             .font(.system(size: 12, weight: .semibold))
