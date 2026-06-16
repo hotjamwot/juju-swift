@@ -102,10 +102,10 @@ struct ProjectStoryView: View {
                 Image(systemName: "chevron.left")
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .padding(.vertical, Theme.Spacing.xs)
                     .background(Theme.Colors.divider.opacity(0.25))
-                    .cornerRadius(8)
+                    .cornerRadius(Theme.Design.blockCornerRadius)
             }
             .buttonStyle(.plain)
             .pointingHandOnHover()
@@ -120,7 +120,7 @@ struct ProjectStoryView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.spacingMedium) {
             Text("No Sessions Yet")
-                .font(.system(size: 24, weight: .bold, design: .default))
+                .font(Theme.Fonts.title)
                 .foregroundColor(Theme.Colors.textPrimary)
 
             Text("When you record time against this project, its story will appear here.")
@@ -148,12 +148,12 @@ private struct ProjectStoryHeaderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
                 Text(header.emoji)
-                    .font(.system(size: 28))
+                    .font(Theme.Fonts.hero)
 
                 Text(header.projectName)
-                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .font(Theme.Fonts.hero)
                     .foregroundColor(Theme.Colors.textPrimary)
             }
 
@@ -163,10 +163,10 @@ private struct ProjectStoryHeaderView: View {
                     .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 2)
+                    .padding(.top, Theme.Spacing.micro)
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: Theme.Spacing.sm) {
                 if let start = header.startDate {
                     Text("Started \(dateFormatter.string(from: start))")
                         .font(Theme.Fonts.caption)
@@ -213,18 +213,18 @@ private struct ProjectStorySummaryRowView: View {
         HStack(spacing: Theme.spacingSmall) {
             StoryMetricCard(title: "Total time") {
                 Text(durationString(fromMinutes: summary.totalDurationMinutes))
-                    .font(.system(size: 20, weight: .bold, design: .default))
+                    .font(Theme.Fonts.title)
                     .foregroundColor(Theme.Colors.textPrimary)
             }
             StoryMetricCard(title: "Sessions") {
                 Text("\(summary.totalSessions)")
-                    .font(.system(size: 20, weight: .bold, design: .default))
+                    .font(Theme.Fonts.title)
                     .foregroundColor(Theme.Colors.textPrimary)
             }
             StoryMetricCard(title: "Average mood") {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xxs) {
                     Text(moodValueString(summary.averageMood))
-                        .font(.system(size: 20, weight: .bold, design: .default))
+                        .font(Theme.Fonts.title)
                         .foregroundColor(Theme.Colors.textPrimary)
                     Text("/10")
                         .font(Theme.Fonts.caption)
@@ -233,7 +233,7 @@ private struct ProjectStorySummaryRowView: View {
             }
             StoryMetricCard(title: "Phases") {
                 Text("\(summary.phaseCount)")
-                    .font(.system(size: 20, weight: .bold, design: .default))
+                    .font(Theme.Fonts.title)
                     .foregroundColor(Theme.Colors.textPrimary)
             }
         }
@@ -262,18 +262,18 @@ private struct StoryMetricCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
             Text(title)
                 .font(Theme.Fonts.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.textSecondary)
 
             content()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.surface.opacity(0.7))
-        .cornerRadius(10)
+        .cornerRadius(Theme.Row.cornerRadius)
     }
 }
 
@@ -288,7 +288,7 @@ private struct ProjectStoryPhaseTimelineView: View {
     @State private var showPhaseTooltip: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             Text("Phase timeline")
                 .font(Theme.Fonts.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.textSecondary)
@@ -333,8 +333,8 @@ private struct ProjectStoryPhaseTimelineView: View {
                     }
                     .frame(height: 34)
                     .background(Theme.Colors.surface.opacity(0.5))
-                    .cornerRadius(6)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .cornerRadius(Theme.Design.blockCornerRadius)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius))
                 }
             }
             .frame(height: 34)
@@ -350,7 +350,7 @@ private struct ProjectStoryPhaseTimelineView: View {
 
                         if w >= 50 {
                             Text(seg.title)
-                                .font(.system(size: 10))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                                 .position(x: mid, y: 8)
                         }
@@ -367,10 +367,10 @@ private struct ProjectStoryPhaseTimelineView: View {
                 projectColorHex: projectColorHex
             )
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
+        .padding(.vertical, Theme.Spacing.sm)
+        .padding(.horizontal, Theme.Spacing.sm)
         .background(Theme.Colors.surface.opacity(0.6))
-        .cornerRadius(10)
+        .cornerRadius(Theme.Row.cornerRadius)
     }
 
     @ViewBuilder
@@ -379,19 +379,19 @@ private struct ProjectStoryPhaseTimelineView: View {
         let hours = Double(minutes) / 60.0
         let percentage = seg.fractionOfTotal * 100
 
-        TooltipContainer {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(seg.title)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(Theme.Colors.textPrimary)
+                TooltipContainer {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                        Text(seg.title)
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textPrimary)
 
                 Text(String(format: "%.1fh (%.0f%%)", hours, percentage))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.accentColor)
 
                 if seg.isArchivedPhase {
                     Text("Archived phase")
-                        .font(.system(size: 9))
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                 }
             }
@@ -409,58 +409,6 @@ private struct ProjectStoryPhaseTimelineView: View {
     }
 }
 
-private struct ProjectStoryGapView: View {
-    let gap: ProjectStoryViewModel.Gap
-
-    private let dateFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.dateStyle = .medium
-        df.timeStyle = .none
-        return df
-    }()
-
-    var body: some View {
-        HStack(spacing: 12) {
-            DashedDivider()
-            VStack(spacing: 6) {
-                Text(gapDurationDescription(days: gap.days))
-                    .font(.system(size: 13))
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                Text("\(dateFormatter.string(from: gap.startDate)) → \(dateFormatter.string(from: gap.endDate))")
-                    .font(.system(size: 10))
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.65))
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-            DashedDivider()
-        }
-        .padding(.vertical, 26)
-    }
-
-    private func gapDurationDescription(days: Int) -> String {
-        if days < 14 { return "\(days) days away" }
-        if days < 60 {
-            let weeks = Int(Double(days) / 7.0.rounded(.down))
-            return "\(max(weeks, 2)) weeks away"
-        }
-        let months = Int(Double(days) / 30.0.rounded(.down))
-        return "\(max(months, 2)) months away"
-    }
-}
-
-private struct DashedDivider: View {
-    var body: some View {
-        Rectangle()
-            .fill(Color.clear)
-            .frame(height: 1)
-            .overlay(
-                Rectangle()
-                    .stroke(style: StrokeStyle(lineWidth: 0.5, dash: [4, 4]))
-                    .foregroundColor(Theme.Colors.divider.opacity(0.7))
-            )
-    }
-}
 
 private struct ProjectStoryTimelineTicksView: View {
     let projectStart: Date?
@@ -485,8 +433,8 @@ private struct ProjectStoryTimelineTicksView: View {
                         if idx == 0 {
                             VStack {
                                 Text(allLabels[idx])
-                                    .font(.system(size: 9))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         } else {
@@ -497,8 +445,8 @@ private struct ProjectStoryTimelineTicksView: View {
                                 .frame(width: geo.size.width * (currentFraction - previousFraction))
                             VStack {
                                 Text(allLabels[idx])
-                                    .font(.system(size: 9))
-                                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
                             }
                             .frame(maxWidth: .infinity, alignment: .center)
                         }
@@ -526,7 +474,7 @@ private struct ProjectStoryTimelineTicksView: View {
 
     private func tick(x: CGFloat, text: String, alignTrailing: Bool = false) -> some View {
         Text(text)
-            .font(.system(size: 9))
+            .font(Theme.Fonts.caption)
             .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
             .position(x: x + (alignTrailing ? -18 : 18), y: 6)
     }
@@ -555,7 +503,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
     }()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             GeometryReader { geo in
                 ZStack(alignment: .bottomLeading) {
                     let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
@@ -608,10 +556,10 @@ private struct ProjectStoryIntensityMoodChartView: View {
                 }
             }
             .frame(height: 72)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 10)
+            .padding(.vertical, Theme.Spacing.xs)
+            .padding(.horizontal, Theme.Spacing.sm)
             .background(Theme.Colors.surface.opacity(0.6))
-            .cornerRadius(10)
+            .cornerRadius(Theme.Row.cornerRadius)
 
             HStack {
                 Text(labelStart)
@@ -620,7 +568,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
                 Spacer()
                 Text(labelEnd)
             }
-            .font(.system(size: 9))
+            .font(Theme.Fonts.caption)
             .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
         }
         .padding(.bottom, Theme.spacingLarge)
@@ -658,7 +606,7 @@ private struct ProjectStoryIntensityMoodChartView: View {
     private func barFill(for session: SessionRecord, projectColorHex: String, isHighlighted: Bool = false) -> Color {
         if session.isMilestone {
             // Glow brighter when highlighted by a Notable Moment hover
-            return isHighlighted ? Color(hex: "FFD060") : Color(hex: "F5A623")
+            return isHighlighted ? Theme.Colors.milestoneHighlight : Theme.Colors.milestone
         }
 
         let base = Color(hex: projectColorHex)
@@ -680,17 +628,6 @@ private struct ProjectStoryIntensityMoodChartView: View {
         color.lightenedByLuminance()
     }
 
-    private func moodOpacity(_ mood: Double) -> Double {
-        switch mood {
-        case ..<0: return 0.45
-        case 0...2: return 0.15
-        case 3...4: return 0.30
-        case 5...6: return 0.50
-        case 7...8: return 0.75
-        case 9...10: return 1.0
-        default: return 1.0
-        }
-    }
 }
 
 private struct ProjectStoryNotableMomentsView: View {
@@ -707,7 +644,7 @@ private struct ProjectStoryNotableMomentsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingMedium) {
             Text("Notable moments")
-                .font(.system(size: 18, weight: .bold, design: .default))
+                .font(Theme.Fonts.subheader)
                 .foregroundColor(Theme.Colors.textPrimary)
 
             VStack(spacing: Theme.spacingSmall) {
@@ -737,35 +674,35 @@ private struct NotableMomentCard: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                 Rectangle()
-                    .fill(isHighlighted ? Color(hex: "F5A623") : Color.lightenedHex(projectColorHex))
+                    .fill(isHighlighted ? Theme.Colors.milestone : Color.lightenedHex(projectColorHex))
                     .frame(width: 3)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    HStack(spacing: Theme.Spacing.xs) {
                         PhasePill(title: milestone.phaseTitle, colorHex: projectColorHex)
                         Text(dateText)
-                            .font(.system(size: 11))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary.opacity(0.65))
                         Spacer()
                     }
 
                     Text(milestone.action)
-                        .font(.system(size: 13))
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.sm)
             .background(isHighlighted ? Theme.Colors.surface.opacity(0.85) : Theme.Colors.surface.opacity(0.65))
-            .cornerRadius(10)
+            .cornerRadius(Theme.Row.cornerRadius)
 
             Image(systemName: "star.fill")
-                .font(.system(size: 11))
-                .foregroundColor(isHighlighted ? Color(hex: "FFD060") : Color.lightenedHex(projectColorHex))
-                .padding(10)
+                .font(Theme.Fonts.caption)
+                .foregroundColor(isHighlighted ? Theme.Colors.milestoneHighlight : Color.lightenedHex(projectColorHex))
+                .padding(Theme.Spacing.sm)
         }
         .onHover { hovering in
             onHover(hovering)
@@ -779,10 +716,10 @@ private struct PhasePill: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 10, weight: .semibold))
+            .font(Theme.Fonts.caption.weight(.semibold))
             .foregroundColor(Color.lightenedHex(colorHex))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.Spacing.xs)
+            .padding(.vertical, Theme.Spacing.xxs)
             .background(Color.lightenedHex(colorHex).opacity(0.15))
             .cornerRadius(999)
     }
@@ -920,8 +857,8 @@ private struct ProjectStoryPreviewCanvas: View {
                     }
 
                     if viewModel.isEmpty {
-                        Text("No Sessions Yet")
-                            .font(.system(size: 24, weight: .bold, design: .default))
+            Text("No Sessions Yet")
+                .font(Theme.Fonts.title)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 80)

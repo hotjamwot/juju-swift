@@ -70,6 +70,19 @@ public struct Theme {
         @available(*, deprecated, message: "Use project colour or off-white opacity shift instead. See Theme philosophy.")
         public static let accentColor = Color("AppAccentColor")
 
+        /// Milestone gold — used for milestone indicators and highlighted accent bars.
+        /// A warm amber that stands out against the dark background.
+        public static let milestone: Color = Color(hex: "F5A623")
+        
+        /// Milestone highlight — brighter gold for active/hovered milestone states.
+        public static let milestoneHighlight: Color = Color(hex: "FFD060")
+
+        /// Positive delta — green for upward comparative trends.
+        public static let positive: Color = Color.green
+
+        /// Negative delta — red for downward comparative trends.
+        public static let negative: Color = Color.red.opacity(0.8)
+
         /// Interactive off-white — used for buttons, selected states, focus rings.
         /// Same colour family as textPrimary but slightly brighter.
         /// Weight and opacity shifts carry all interactive meaning — no hue change needed.
@@ -110,28 +123,52 @@ public struct Theme {
     // Design: .default throughout — editorial, not "app-like".
     // Two weights only: .regular and .semibold.
     // If you need to express hierarchy, use size and opacity — not weight proliferation.
+    //
+    // Size hierarchy: 16 → 14 → 13 → 10. No magic sizes outside this scale.
     public struct Fonts {
+        /// Hero page titles — 16pt semibold. For "Sessions", "Projects", "Activity Types" page titles.
+        public static let hero = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Metric value — 16pt semibold. For large numeric displays (FOCUS hours, THIS WEEK value).
+        public static let metricValue = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Dialog title — 16pt semibold. For modal titles like "Delete Project".
+        public static let dialogTitle = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Title — 16pt semibold. For metric values, dialog titles, prominent numbers.
+        public static let title = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Icon — 14pt regular. Standard SF Symbol size for icons.
+        public static let icon = Font.system(size: 14, weight: .regular, design: .default)
+
+        /// Icon large — 16pt regular. Larger SF Symbol size for overview card icons.
+        public static let iconLarge = Font.system(size: 16, weight: .regular, design: .default)
+
+        /// Subheader — 14pt semibold. For section headings like "Notable moments".
+        public static let subheader = Font.system(size: 14, weight: .semibold, design: .default)
+
         /// Section headers and card titles — 16pt semibold, default design.
         public static let header = Font.system(size: 16, weight: .semibold, design: .default)
+
+        /// Sidebar — 14pt regular/semibold toggle. For sidebar item labels.
+        public static let sidebar = Font.system(size: 14, weight: .regular, design: .default)
 
         /// Body text — 14pt regular. The workhorse.
         public static let body = Font.system(size: 14, weight: .regular, design: .default)
 
-        /// Captions, labels, metadata — 10pt medium. Use sparingly.
-        public static let caption = Font.system(size: 10, weight: .medium, design: .default)
+        /// Narrative strip text — 13pt regular. For summary stat labels.
+        public static let narrative = Font.system(size: 13, weight: .regular, design: .default)
 
-        /// Icon font size reference — 20pt regular.
-        public static let icon = Font.system(size: 20, weight: .regular, design: .default)
+        /// Narrative strip accent — 13pt semibold. For summary stat values.
+        public static let narrativeAccent = Font.system(size: 13, weight: .semibold, design: .default)
 
-        /// Narrative strip text — 13pt medium. For summary stat labels.
-        public static let narrative = Font.system(size: 13, weight: .medium, design: .default)
-
-        /// Narrative strip accent — 14pt semibold. For summary stat values.
-        public static let narrativeAccent = Font.system(size: 14, weight: .semibold, design: .default)
-
-        /// Mono — for timestamps, durations, precise numeric data.
+        /// Mono — 13pt regular monospaced. For timestamps, durations, precise numeric data.
         /// .monospaced keeps numbers from jumping in width as they update.
         public static let mono = Font.system(size: 13, weight: .regular, design: .monospaced)
+
+        /// Caption — 10pt regular. The single smallest size. For badges, metadata, SF Symbol icons,
+        /// chart labels, timestamps, and all minimal UI chrome. Use sparingly.
+        public static let caption = Font.system(size: 10, weight: .regular, design: .default)
     }
 
     // MARK: - Spacing
@@ -165,9 +202,9 @@ public struct Theme {
 
     // MARK: - Design
     public struct Design {
-        /// Standard corner radius — 12pt for cards and containers.
+        /// Standard corner radius — 12pt for cards, containers, dialogs.
         public static let cornerRadius = CGFloat(12)
-        /// Reduced corner radius for session blocks — more editorial, less "bubbly".
+        /// Reduced corner radius for blocks, bars, buttons, and compact elements — editorial, not "bubbly".
         public static let blockCornerRadius = CGFloat(5)
         /// Standard animation duration.
         public static let animationDuration = 0.2

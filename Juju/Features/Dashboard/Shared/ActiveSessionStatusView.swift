@@ -42,7 +42,7 @@ struct ActiveSessionStatusView: View {
     private var headerRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
             // Live indicator — small pulsing dot
-            HStack(spacing: 6) {
+            HStack(spacing: Theme.Spacing.xs) {
                 Circle()
                     .fill(Theme.Colors.accentColor)
                     .frame(width: 6, height: 6)
@@ -52,7 +52,7 @@ struct ActiveSessionStatusView: View {
                             .frame(width: 12, height: 12)
                     )
                 Text("Live")
-                    .font(.system(size: 11, weight: .semibold, design: .default))
+                    .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.accentColor)
             }
             
@@ -65,11 +65,11 @@ struct ActiveSessionStatusView: View {
             let project = getProjectForSession()
             let activity = getActivityForSession()
             Image(systemName: activity?.sfSymbol ?? "bolt")
-                .font(.system(size: 13, weight: .medium))
+                .font(Theme.Fonts.narrative)
                 .foregroundColor(Theme.Colors.textSecondary)
             
             Text(project?.name ?? "Unknown Project")
-                .font(.system(size: 13, weight: .medium, design: .default))
+                .font(Theme.Fonts.narrative)
                 .foregroundColor(Theme.Colors.textPrimary)
                 .lineLimit(1)
             
@@ -82,7 +82,7 @@ struct ActiveSessionStatusView: View {
             
             // Chevron indicator
             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                .font(.system(size: 10, weight: .medium))
+                .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -95,42 +95,42 @@ struct ActiveSessionStatusView: View {
     private var detailPanel: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Action Field
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 Text("Action")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
                 
                 TextField("What did you accomplish?", text: $sessionManager.currentAction)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(Theme.Fonts.narrative)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .padding(.horizontal, Theme.Spacing.sm)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, Theme.Spacing.xs)
                     .background(Theme.Colors.cardSurface)
-                    .cornerRadius(6)
+                    .cornerRadius(Theme.Design.blockCornerRadius)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
             }
             
             // Notes Field
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 Text("Notes")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
                 
                 TextEditor(text: $sessionManager.currentNotes)
-                    .font(.system(size: 12))
+                    .font(Theme.Fonts.narrative)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .scrollContentBackground(.hidden)
                     .frame(height: 80)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Theme.Spacing.xxs)
+                    .padding(.vertical, Theme.Spacing.xxs)
                     .background(Theme.Colors.cardSurface)
-                    .cornerRadius(6)
+                    .cornerRadius(Theme.Design.blockCornerRadius)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
             }
@@ -138,7 +138,7 @@ struct ActiveSessionStatusView: View {
             // Activity Type & Phase (side-by-side)
             HStack(spacing: Theme.Spacing.md) {
                 // Activity Type Picker
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     Text("Activity Type")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
@@ -158,7 +158,7 @@ struct ActiveSessionStatusView: View {
                 }
                 
                 // Phase Picker
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     Text("Phase")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
@@ -186,7 +186,7 @@ struct ActiveSessionStatusView: View {
             // Mood & Milestone (side-by-side)
             HStack(spacing: Theme.Spacing.md) {
                 // Mood Slider
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     Text("Mood")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
@@ -203,7 +203,7 @@ struct ActiveSessionStatusView: View {
                         .tint(Theme.Colors.accentColor)
                         
                         Text("\(sessionManager.currentMood ?? 5)")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(Theme.Fonts.narrative.weight(.semibold))
                             .foregroundColor(Theme.Colors.accentColor)
                             .frame(width: 24, alignment: .trailing)
                             .monospacedDigit()
@@ -211,7 +211,7 @@ struct ActiveSessionStatusView: View {
                 }
                 
                 // Milestone Toggle
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     Text("Milestone")
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
@@ -273,7 +273,7 @@ struct LiveTimerView: View {
     
     var body: some View {
         Text(formatDurationWithSeconds(liveDurationSeconds))
-            .font(.system(size: 12, weight: .medium, design: .default))
+            .font(Theme.Fonts.narrative)
             .foregroundColor(Theme.Colors.textSecondary)
             .monospacedDigit()
             .onAppear {

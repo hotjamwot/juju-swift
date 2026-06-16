@@ -262,15 +262,15 @@ struct BottomFilterBar: View {
         Button(action: {
             onBulkEditToggle?()
         }) {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "pencil")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Theme.Fonts.caption)
                 Text("Bulk Edit")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Theme.Fonts.caption)
             }
             .foregroundColor(Theme.Colors.accentColor)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingExtraSmall)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
                     .stroke(Theme.Colors.accentColor.opacity(0.4), lineWidth: 1)
@@ -290,8 +290,8 @@ struct BottomFilterBar: View {
             Text("\(filterState.selectedSessionIDs.count) selected")
                 .font(.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.accentColor)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Theme.spacingSmall)
+                .padding(.vertical, Theme.spacingExtraSmall)
                 .background(Theme.Colors.accentColor.opacity(0.1))
                 .cornerRadius(Theme.Design.cornerRadius)
             
@@ -314,7 +314,7 @@ struct BottomFilterBar: View {
                 filterState.requestManualRefresh()
             }) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(Theme.Fonts.subheader)
                     .foregroundColor(Theme.Colors.accentColor)
                     .padding(.horizontal, Theme.spacingSmall)
                     .padding(.vertical, Theme.spacingExtraSmall)
@@ -331,7 +331,7 @@ struct BottomFilterBar: View {
                 filterState.exitBulkEditMode()
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .padding(.horizontal, Theme.spacingSmall)
                     .padding(.vertical, Theme.spacingExtraSmall)
@@ -376,21 +376,21 @@ struct BottomFilterBar: View {
                 }
             }
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "folder")
-                    .font(.system(size: 10))
+                    .font(Theme.Fonts.caption)
                 if let pid = filterState.pendingBulkProjectID,
                    let project = projects.first(where: { $0.id == pid }) {
                     Text(project.name)
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 } else {
                     Text("Project")
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 }
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -420,22 +420,22 @@ struct BottomFilterBar: View {
                 }
             }
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "play.circle")
-                    .font(.system(size: 10))
+                    .font(Theme.Fonts.caption)
                 if let pid = filterState.pendingBulkPhaseID,
                    let project = sameProjectInfo.project,
                    let phase = project.phases.first(where: { $0.id == pid }) {
                     Text(phase.name)
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 } else {
                     Text("Phase")
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 }
             }
             .foregroundColor(sameProjectInfo.same ? Theme.Colors.textPrimary : Theme.Colors.textSecondary.opacity(0.5))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -469,20 +469,20 @@ struct BottomFilterBar: View {
         Button(action: {
             showingBulkMoodPopover = true
         }) {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "bolt")
-                    .font(.system(size: 10))
+                    .font(Theme.Fonts.caption)
                 if let mood = filterState.pendingBulkMood {
                     Text("\(mood)/10")
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 } else {
                     Text("Mood")
-                        .font(.caption.weight(.medium))
+                        .font(Theme.Fonts.caption)
                 }
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -513,7 +513,7 @@ struct BottomFilterBar: View {
             ForEach(projects.filter { !$0.archived }) { project in
                 Button(action: { onProjectFilterChange(project.id) }) {
                     Text(project.name)
-                        .font(Theme.Fonts.body.weight(.medium))
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -527,7 +527,7 @@ struct BottomFilterBar: View {
                 } else {
                     if let project = projects.first(where: { $0.id == filterState.projectFilter }) {
                         Text(project.name)
-                            .font(Theme.Fonts.body.weight(.medium))
+                            .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -538,11 +538,11 @@ struct BottomFilterBar: View {
                     }
                 }
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Theme.Fonts.caption)
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -559,7 +559,7 @@ struct BottomFilterBar: View {
             Button(action: { onActivityTypeFilterChange("Uncategorized") }) {
                 HStack {
                     Text("Uncategorized")
-                        .font(Theme.Fonts.body.weight(.medium))
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textPrimary)
                     Text("(no activity type)")
                         .font(.caption)
@@ -570,7 +570,7 @@ struct BottomFilterBar: View {
             ForEach(activityTypes.filter { !$0.archived }) { type in
                 Button(action: { onActivityTypeFilterChange(type.id) }) {
                     Text(type.name)
-                        .font(Theme.Fonts.body.weight(.medium))
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -584,13 +584,13 @@ struct BottomFilterBar: View {
                 } else if filterState.activityTypeFilter == "Uncategorized" {
                     HStack {
                         Text("Uncategorized")
-                            .font(Theme.Fonts.body.weight(.medium))
+                            .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textPrimary)
                     }
                 } else {
                     if let activityType = activityTypes.first(where: { $0.id == filterState.activityTypeFilter }) {
                         Text(activityType.name)
-                            .font(Theme.Fonts.body.weight(.medium))
+                            .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -601,11 +601,11 @@ struct BottomFilterBar: View {
                     }
                 }
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Theme.Fonts.caption)
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -625,11 +625,11 @@ struct BottomFilterBar: View {
             HStack {
                 Text(filterState.selectedDateFilter.title)
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Theme.Fonts.caption)
             }
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
@@ -639,10 +639,10 @@ struct BottomFilterBar: View {
     // MARK: - Session Count Badge
     private var sessionCountBadge: some View {
         Text("\(filteredSessionsCount) sessions")
-            .font(.caption.weight(.medium))
+            .font(Theme.Fonts.caption)
             .foregroundColor(Theme.Colors.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingExtraSmall)
     }
     
     // MARK: - Confirm Button (no text label, just icon)
@@ -657,7 +657,7 @@ struct BottomFilterBar: View {
         }) {
             HStack(spacing: Theme.spacingExtraSmall) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Theme.Fonts.header)
             }
             .foregroundColor(Theme.Colors.accentColor)
             .padding(.horizontal, Theme.spacingSmall)
@@ -675,7 +675,7 @@ struct BottomFilterBar: View {
     private var CloseButton: some View {
         Button(action: onClose) {
             Image(systemName: "chevron.down")
-                .font(.system(size: 16, weight: .medium))
+                .font(Theme.Fonts.header)
                 .foregroundColor(Theme.Colors.textSecondary)
                 .padding(Theme.spacingExtraSmall)
                 .background(
@@ -718,10 +718,10 @@ struct BottomFilterBar: View {
                 Spacer()
                 
                 Text("\(filteredSessionsCount) sessions")
-                    .font(.caption.weight(.medium))
+                    .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Theme.spacingSmall)
+                    .padding(.vertical, Theme.spacingExtraSmall)
             }
             
             let tempRange = DateRange(startDate: tempCustomStartDate, endDate: tempCustomEndDate)

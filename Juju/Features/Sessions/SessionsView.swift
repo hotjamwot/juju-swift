@@ -425,7 +425,7 @@ public struct SessionsView: View {
     private var headerView: some View {
         HStack {
             Text("Sessions")
-                .font(.system(size: 32, weight: .bold, design: .default))
+                .font(Theme.Fonts.hero)
                 .frame(maxWidth: .infinity)
         }
         .padding(.vertical, Theme.spacingLarge)

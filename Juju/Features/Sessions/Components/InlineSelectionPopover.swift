@@ -85,7 +85,6 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
                     ForEach(filteredItems) { item in
                         ProjectSelectionRow(
                             item: item,
-                            isSelected: false, // Remove the tick - we don't need to show selection
                             onSelected: {
                                 selectedID = String(describing: item.id)
                                 onItemSelected(item)
@@ -108,7 +107,7 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
     
     // MARK: - Project Selection Row
     @ViewBuilder
-    private func ProjectSelectionRow(item: Item, isSelected: Bool, onSelected: @escaping () -> Void) -> some View {
+    private func ProjectSelectionRow(item: Item, onSelected: @escaping () -> Void) -> some View {
         Button(action: onSelected) {
             HStack {
                 // Color indicator (if available)
@@ -126,11 +125,11 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
                 // Icon (SF Symbol or emoji)
                 if let sfSymbol = item.displaySFSymbol {
                     Image(systemName: sfSymbol)
-                        .font(.system(size: 12))
+                        .font(Theme.Fonts.icon)
                         .padding(.trailing, 4)
                 } else if let emoji = item.displayEmoji {
                     Text(emoji)
-                        .font(.system(size: 12))
+                        .font(Theme.Fonts.icon)
                         .padding(.trailing, 4)
                 }
                 
@@ -141,13 +140,6 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
                     .lineLimit(1)
                 
                 Spacer()
-                
-                // Checkmark for selected
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Colors.accentColor)
-                }
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
@@ -237,7 +229,7 @@ struct MoodItem: SelectionItem {
     }
     
     var displayColor: Color? {
-        moodColor(for: moodValue)
+        nil  // Mood items don't have colours — UI chrome uses textPrimary opacity shifts
     }
     
     private func moodEmoji(for mood: Int) -> String {
@@ -251,20 +243,6 @@ struct MoodItem: SelectionItem {
         case 9: return "😁"
         case 10: return "🤩"
         default: return "😊"
-        }
-    }
-    
-    private func moodColor(for mood: Int) -> Color {
-        switch mood {
-        case 0...2: return Theme.Colors.error
-        case 3...4: return Color.orange
-        case 5: return Color.gray
-        case 6: return Color.blue.opacity(0.7)
-        case 7: return Color.green.opacity(0.8)
-        case 8: return Color.green
-        case 9: return Color.yellow
-        case 10: return Theme.Colors.accentColor
-        default: return Color.gray
         }
     }
 }
@@ -290,7 +268,6 @@ struct MoodSelectionPopover: View {
                     ForEach(moodItems) { moodItem in
                         MoodSelectionRow(
                             moodItem: moodItem,
-                            isSelected: false, // Remove the tick - we don't need to show selection
                             onSelected: {
                                 selectedMood = moodItem.moodValue
                                 onMoodSelected(moodItem.moodValue)
@@ -313,12 +290,12 @@ struct MoodSelectionPopover: View {
     
     // MARK: - Mood Selection Row
     @ViewBuilder
-    private func MoodSelectionRow(moodItem: MoodItem, isSelected: Bool, onSelected: @escaping () -> Void) -> some View {
+    private func MoodSelectionRow(moodItem: MoodItem, onSelected: @escaping () -> Void) -> some View {
         Button(action: onSelected) {
             HStack {
                 // Emoji
                 Text(moodItem.displayEmoji ?? "😊")
-                    .font(.system(size: 12))
+                    .font(Theme.Fonts.icon)
                     .padding(.trailing, 4)
                 
                 // Mood value and description
@@ -328,13 +305,6 @@ struct MoodSelectionPopover: View {
                     .lineLimit(1)
                 
                 Spacer()
-                
-                // Checkmark for selected
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Colors.accentColor)
-                }
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
@@ -450,7 +420,6 @@ struct PhaseSelectionPopover: View {
                         ForEach(activePhases) { phase in
                             PhaseSelectionRow(
                                 phase: phase,
-                                isSelected: false, // Remove the tick - we don't need to show selection
                                 onSelected: {
                                     selectedPhaseID = phase.id
                                     onPhaseSelected(phase)
@@ -470,7 +439,7 @@ struct PhaseSelectionPopover: View {
     
     // MARK: - Phase Selection Row
     @ViewBuilder
-    private func PhaseSelectionRow(phase: Phase, isSelected: Bool, onSelected: @escaping () -> Void) -> some View {
+    private func PhaseSelectionRow(phase: Phase, onSelected: @escaping () -> Void) -> some View {
         Button(action: onSelected) {
             HStack {
                 // Phase name
@@ -480,13 +449,6 @@ struct PhaseSelectionPopover: View {
                     .lineLimit(1)
                 
                 Spacer()
-                
-                // Checkmark for selected
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Colors.accentColor)
-                }
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
@@ -564,7 +526,7 @@ struct ActionSelectionPopover: View {
                 
                 if actionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Image(systemName: "info.circle.fill")
-                        .font(.system(size: 10))
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
                 }
             }

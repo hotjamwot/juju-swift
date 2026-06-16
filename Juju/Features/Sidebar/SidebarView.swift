@@ -56,7 +56,7 @@ struct SidebarView: View {
                     }
 
                     Image(systemName: target.icon)
-                        .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
+                        .font(Theme.Fonts.sidebar.weight(isSelected ? .semibold : .regular))
                         .frame(width: 32, height: 32)
                         .background(
                             isHovered && !isSelected

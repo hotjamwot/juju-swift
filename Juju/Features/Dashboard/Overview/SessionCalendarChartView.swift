@@ -93,9 +93,9 @@ struct SessionCalendarChartView: View {
         .annotation(position: .overlay, alignment: .center) {
             VStack(spacing: 2) {
                 Image(systemName: session.activitySFSymbol)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(Theme.Fonts.caption)
                 Text(session.projectName)
-                    .font(.system(size: 8, weight: .medium))
+                    .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textPrimary)
                     .lineLimit(1)
                     .multilineTextAlignment(.center)
@@ -113,14 +113,14 @@ struct SessionCalendarChartView: View {
         TooltipContainer {
             VStack(alignment: .leading, spacing: 4) {
                 Text(session.day)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text(String(format: "%.0f:00 – %.0f:00 • %.1fh",
                     session.startHour,
                     session.endHour,
                     session.duration))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.accentColor)
                 
                 TooltipDivider()

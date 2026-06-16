@@ -50,7 +50,7 @@ public struct IconButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 12))
+            .font(Theme.Fonts.caption)
             .frame(width: 36, height: 36)
             .background(Theme.Colors.surface)
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
@@ -88,7 +88,7 @@ public struct FilterButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Theme.Fonts.caption.weight(.medium))
+            .font(Theme.Fonts.caption)
             .padding(.horizontal, 12)
             .frame(height: 28)
             .background(
@@ -110,7 +110,7 @@ public struct CircularToggleIconStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .medium))
+            .font(Theme.Fonts.body)
             .frame(width: 36, height: 36)
             .background(
                 isEnabled ?
@@ -139,7 +139,7 @@ public struct NavigationButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(Theme.Fonts.header)
             .opacity(0.6) // Reduce chevron opacity even more
             .frame(width: 40, height: 40)
             .background(

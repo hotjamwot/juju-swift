@@ -201,7 +201,7 @@ struct OverviewDashboardView: View {
     
     private func chartSectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 13, weight: .semibold, design: .default))
+            .font(Theme.Fonts.narrative.weight(.semibold))
             .foregroundColor(Theme.Colors.textSecondary)
             .tracking(0.5)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -227,7 +227,7 @@ private struct NarrativeSummaryCard: View {
     }
 
     private func deltaColor(current: Double, previous: Double) -> Color {
-        current > previous ? Color.green : (current < previous ? Color.red.opacity(0.8) : Theme.Colors.textSecondary)
+        current > previous ? Theme.Colors.positive : (current < previous ? Theme.Colors.negative : Theme.Colors.textSecondary)
     }
 
     private func formatHours(_ hours: Double) -> String {
@@ -243,7 +243,7 @@ private struct NarrativeSummaryCard: View {
                 NarrativeMetricCard(title: "THIS WEEK", iconName: "clock.fill") {
                     VStack(spacing: Theme.Spacing.xs) {
                         Text(headline.formattedHours)
-                            .font(.system(size: 28, weight: .semibold, design: .default))
+                            .font(Theme.Fonts.metricValue)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(2)
                             .multilineTextAlignment(.center)
@@ -254,7 +254,7 @@ private struct NarrativeSummaryCard: View {
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary)
                                 Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
-                                    .font(Theme.Fonts.caption.weight(.bold))
+                                    .font(Theme.Fonts.caption.weight(.semibold))
                                     .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
                             }
                         }
@@ -265,10 +265,10 @@ private struct NarrativeSummaryCard: View {
                 NarrativeMetricCard(title: "FOCUS", iconName: "target") {
                     VStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: headline.topActivity.sfSymbol)
-                            .font(.system(size: 22, weight: .medium))
+                            .font(Theme.Fonts.iconLarge)
                             .foregroundColor(Theme.Colors.accentColor)
                         Text(headline.topActivity.name)
-                            .font(.system(size: 18, weight: .semibold, design: .default))
+                            .font(Theme.Fonts.subheader)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .multilineTextAlignment(.center)
@@ -279,9 +279,9 @@ private struct NarrativeSummaryCard: View {
                 NarrativeMetricCard(title: "PROJECT", iconName: "folder.fill") {
                     VStack(spacing: Theme.Spacing.xs) {
                         Text(headline.topProject.emoji)
-                            .font(.system(size: 22))
+                            .font(Theme.Fonts.title)
                         Text(headline.topProject.name)
-                            .font(.system(size: 18, weight: .semibold, design: .default))
+                            .font(Theme.Fonts.subheader)
                             .foregroundColor(Theme.Colors.textPrimary)
                             .lineLimit(1)
                             .multilineTextAlignment(.center)
@@ -331,11 +331,11 @@ private struct NarrativeMetricCard<Content: View>: View {
 
                 if let iconName = iconName {
                     Image(systemName: iconName)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(Theme.Fonts.icon)
                         .foregroundColor(Theme.Colors.accentColor)
                 } else if let emoji = emoji {
                     Text(emoji)
-                        .font(.system(size: 18))
+                        .font(Theme.Fonts.body)
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
@@ -376,7 +376,7 @@ private struct RecentMilestonesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Recent milestones")
-                .font(.system(size: 13, weight: .semibold, design: .default))
+                .font(Theme.Fonts.narrative.weight(.semibold))
                 .foregroundColor(Theme.Colors.textSecondary)
                 .tracking(0.5)
 
@@ -420,13 +420,13 @@ private struct MilestoneRowView: View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             // Left accent bar — project color or gold when highlighted
             RoundedRectangle(cornerRadius: 1)
-                .fill(isHighlighted ? Color(hex: "F5A623") : Color.lightenedHex(milestone.projectColor))
+                .fill(isHighlighted ? Theme.Colors.milestone : Color.lightenedHex(milestone.projectColor))
                 .frame(width: 3)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 HStack(spacing: Theme.Spacing.xs) {
                     Text(milestone.projectEmoji)
-                        .font(.system(size: 12))
+                        .font(Theme.Fonts.caption)
                     Text(milestone.projectName)
                         .font(Theme.Fonts.caption.weight(.semibold))
                         .foregroundColor(Theme.Colors.textPrimary)

@@ -214,7 +214,7 @@ struct SessionsRowView: View {
             // Main row content - Grid-aligned 2-line layout
             VStack(spacing: 0) {
                 // LINE 1: Project Colour | Project Name | Activity Type | Phase | Action | Delete
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Row.compactSpacing) {
                     // Column 1: Project colour dot + Project name
                     Button(action: {
                         showingProjectPopover = true
@@ -228,7 +228,7 @@ struct SessionsRowView: View {
                             
                             // Project emoji
                             Text(projectEmoji)
-                                .font(.system(size: 12))
+                                .font(Theme.Fonts.caption)
                             
                             // Project name with grey styling for archived projects
                             Text(projectName)
@@ -239,7 +239,7 @@ struct SessionsRowView: View {
                             // Archived badge
                             if isProjectArchived {
                                 Text("Archived")
-                                    .font(.system(size: 9, weight: .medium))
+                                    .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.8))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -288,9 +288,9 @@ struct SessionsRowView: View {
                             showingActivityTypePopover = true
                             selectedActivityTypeID = currentSession.activityTypeID
                         }) {
-                            HStack(spacing: 4) {
+                            HStack(spacing: Theme.Spacing.xxs) {
                                 Image(systemName: activityType.sfSymbol)
-                                    .font(.system(size: 10))
+                                    .font(Theme.Fonts.caption)
                                 Text(activityType.name)
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textPrimary)
@@ -333,9 +333,9 @@ struct SessionsRowView: View {
                             showingActivityTypePopover = true
                             selectedActivityTypeID = currentSession.activityTypeID
                         }) {
-                            HStack(spacing: 4) {
+                            HStack(spacing: Theme.Spacing.xxs) {
                                 Image(systemName: ActivityType.defaultSFSymbol)
-                                    .font(.system(size: 10))
+                                    .font(Theme.Fonts.caption)
                                 Text("Activity Type")
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textPrimary.opacity(0.6))
@@ -380,9 +380,9 @@ struct SessionsRowView: View {
                         selectedPhaseID = currentSession.projectPhaseID
                     }) {
                         if let phaseInfo = getProjectPhaseDisplayInfo() {
-                            HStack(spacing: 4) {
+                            HStack(spacing: Theme.Spacing.xxs) {
                                 Image(systemName: "play.circle")
-                                    .font(.system(size: 10))
+                                    .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(phaseInfo.isArchived ? 0.5 : 0.7))
                                 Text(phaseInfo.name)
                                     .font(Theme.Fonts.caption)
@@ -391,7 +391,7 @@ struct SessionsRowView: View {
                         } else {
                             // Empty space when no phase - make it clickable to add a phase
                             Image(systemName: "play.circle")
-                                .font(.system(size: 10))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
                         }
                     }
@@ -439,9 +439,9 @@ struct SessionsRowView: View {
                         if let action = currentSession.action, !action.isEmpty {
                             if currentSession.isMilestone {
                                 // With milestone: just colored flag icon + text (no capsule)
-                                HStack(spacing: 8) {
+                                HStack(spacing: Theme.Row.compactSpacing) {
                                     Image(systemName: "flag.fill")
-                                        .font(.system(size: 10))
+                                        .font(Theme.Fonts.caption)
                                         .foregroundColor(projectColor)
                                     Text(action)
                                         .font(Theme.Fonts.body.weight(.semibold))
@@ -458,7 +458,7 @@ struct SessionsRowView: View {
                         } else {
                             // No text: empty flag icon
                             Image(systemName: "flag")
-                                .font(.system(size: 12))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -493,7 +493,7 @@ struct SessionsRowView: View {
                         onDelete(currentSession)
                     }) {
                         Image(systemName: "trash")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(Theme.Fonts.caption.weight(.semibold))
                             .foregroundColor(Theme.Colors.error)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -502,10 +502,10 @@ struct SessionsRowView: View {
                     .padding(.trailing, Theme.Row.contentPadding)
                     .frame(width: 20, alignment: .center)
                 }
-                .padding(.top, 4)
+                .padding(.top, Theme.Spacing.xxs)
                 
                 // LINE 2: Start-End Time | Duration | Mood | Notes
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.Spacing.xxs) {
                     // Column 1: Start and End Time (under Project Name)
                     HStack(spacing: 0) {
                         // Start Time with combined date/time picker
@@ -587,7 +587,7 @@ struct SessionsRowView: View {
                         .contentShape(Rectangle()) // Make entire area tappable
                     }
                     .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
-                    .padding(.leading, 16) // Align with Project Name text (accounting for circle + spacing)
+                    .padding(.leading, Theme.Spacing.md) // Align with Project Name text (accounting for circle + spacing)
                     
                     // Column 2: Duration (under Activity Type)
                     Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
@@ -601,9 +601,9 @@ struct SessionsRowView: View {
                         showingMoodPopover = true
                         selectedMood = currentSession.mood
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.xxs) {
                             Image(systemName: "bolt")
-                                .font(.system(size: 10))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
                             if let mood = currentSession.mood {
                                 Text("\(mood)/10")
@@ -665,7 +665,7 @@ struct SessionsRowView: View {
                                 showingNotesPopover = false
                             }
                         )
-                        .padding(.leading, 6)
+                        .padding(.leading, Theme.Spacing.xs)
                     }
                     .background(
                         Theme.Colors.textSecondary.opacity(0.05)
@@ -791,14 +791,6 @@ struct SessionsRowView: View {
         return (phase.name, phase.archived)
     }
     
-    private var formattedStartTime: String {
-        formatTime(currentSession.startDate)
-    }
-    
-    private var formattedEndTime: String {
-        formatTime(currentSession.endDate)
-    }
-    
     // MARK: - Helper Methods
     
     private func formatDate(_ date: Date) -> String {
@@ -829,17 +821,6 @@ struct SessionsRowView: View {
     private func formatDurationFromDates(_ startDate: Date, _ endDate: Date) -> String {
         let durationMinutes = Int(endDate.timeIntervalSince(startDate) / 60)
         return formatDuration(durationMinutes)
-    }
-    
-    private func moodColor(for mood: Int) -> Color {
-        switch mood {
-        case 1...4: return Theme.Colors.error
-        case 5...7: return projectColor.opacity(0.8)
-        case 8: return projectColor.opacity(0.8)
-        case 9: return projectColor.opacity(0.9)
-        case 10: return projectColor
-        default: return Theme.Colors.error
-        }
     }
     
     private func moodEmoji(for mood: Int) -> String {
@@ -1217,7 +1198,7 @@ struct DateTimePickerPopover: View {
             Text(formatCombinedDateTime())
                 .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textSecondary)
-                .padding(.top, 4)
+                .padding(.top, Theme.Spacing.xxs)
             
             // Action buttons
             HStack(spacing: 12) {
@@ -1340,7 +1321,7 @@ struct NotesSelectionPopover: View {
             .padding(0)
             
             // Action buttons
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Row.compactSpacing) {
                 Button("Cancel") {
                     onDismiss()
                 }

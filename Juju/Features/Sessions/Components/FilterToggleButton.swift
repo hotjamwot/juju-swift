@@ -19,7 +19,7 @@ struct FilterToggleButton: View {
                     HStack(spacing: Theme.spacingSmall) {
                         // Session count text
                         Text("\(filteredSessionsCount) sessions")
-                            .font(.caption.weight(.medium))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
                             .padding(.horizontal, Theme.spacingSmall)
                             .padding(.vertical, Theme.spacingExtraSmall)
@@ -27,7 +27,7 @@ struct FilterToggleButton: View {
 
                         // Upward chevron with hover effect
                         Image(systemName: "chevron.up")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(isButtonHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                     }
                     .padding(.horizontal, Theme.spacingMedium)

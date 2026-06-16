@@ -46,10 +46,10 @@ struct YearlyActivityTypeBarChartView: View {
                                 HStack(spacing: Theme.spacingMedium) {
                                     HStack(spacing: Theme.spacingSmall) {
                                         Image(systemName: activityData.sfSymbol)
-                                            .font(.system(size: 16, design: .default))
+                                            .font(Theme.Fonts.header)
                                         
                                         Text(activityData.activityName)
-                                            .font(.system(size: 12, weight: .semibold))
+                                            .font(Theme.Fonts.caption.weight(.semibold))
                                             .foregroundColor(Theme.Colors.textPrimary)
                                             .lineLimit(1)
                                     }
@@ -101,7 +101,7 @@ struct YearlyActivityTypeBarChartView: View {
                                             .foregroundColor(Theme.Colors.textSecondary)
                                         
                                         Text(hiddenData.map { $0.activityName }.joined(separator: ", "))
-                                            .font(.system(size: 11, weight: .medium))
+                                            .font(Theme.Fonts.caption.weight(.semibold))
                                             .foregroundColor(Theme.Colors.textPrimary)
                                             .lineLimit(2)
                                     }
@@ -127,11 +127,11 @@ struct YearlyActivityTypeBarChartView: View {
         TooltipContainer {
             VStack(alignment: .leading, spacing: 4) {
                 Text(activityData.activityName)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text(String(format: "%.1fh total", activityData.totalHours))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.accentColor)
                 
                 if !activityData.projectBreakdown.isEmpty {

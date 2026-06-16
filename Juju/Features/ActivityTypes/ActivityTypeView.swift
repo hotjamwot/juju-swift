@@ -10,7 +10,7 @@ struct ActivityTypeView: View {
             VStack(spacing: Theme.spacingMedium) {
                 HStack {
                     Text("Activity Types")
-                        .font(.system(size: 32, weight: .bold, design: .default))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .center)
                     
@@ -77,7 +77,7 @@ struct ActivityTypeView: View {
                     sidebarState.show(.newActivityType(newActivityType))
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.accentColor)
@@ -96,7 +96,7 @@ struct ActivityTypeView: View {
                     }
                 }) {
                     Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.divider.opacity(0.3))
@@ -136,7 +136,7 @@ struct ActivityTypeRowView: View {
             HStack(spacing: Theme.Row.compactSpacing) {
                 // Activity type icon
                 Image(systemName: activityType.sfSymbol)
-                    .font(.system(size: 12))
+                    .font(Theme.Fonts.icon)
                     .frame(width: 20, alignment: .leading)
                     .padding(.leading, Theme.Row.contentPadding)
                 
@@ -183,7 +183,7 @@ struct ActivityTypeRowView: View {
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "arrow.uturn.backward")
-                                    .font(.system(size: 10))
+                                    .font(Theme.Fonts.caption)
                                 Text("Restore")
                                     .font(Theme.Fonts.caption)
                             }
@@ -203,7 +203,7 @@ struct ActivityTypeRowView: View {
                             sidebarState.show(.activityType(activityType))
                         }) {
                             Image(systemName: "pencil")
-                                .font(.system(size: 12))
+                                .font(Theme.Fonts.icon)
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.divider.opacity(0.3))
@@ -213,14 +213,14 @@ struct ActivityTypeRowView: View {
                         .pointingHandOnHover()
                         .accessibilityLabel("Edit Activity Type")
                         .accessibilityHint("Opens the activity type editor")
-                        
+
                         Button(action: {
                             Task {
                                 await ActivityTypesViewModel.shared.archiveActivityType(activityType)
                             }
                         }) {
                             Image(systemName: "archivebox")
-                                .font(.system(size: 12))
+                                .font(Theme.Fonts.icon)
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.divider.opacity(0.3))
@@ -310,26 +310,26 @@ struct ActivityTypeRowView: View {
                             Button(action: {
                                 sidebarState.show(.activityType(activityType))
                             }) {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                    .frame(width: 28, height: 28)
-                                    .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
+                            Image(systemName: "pencil")
+                                .font(Theme.Fonts.icon)
+                                .foregroundColor(Theme.Colors.textPrimary)
+                                .frame(width: 28, height: 28)
+                                .background(Theme.Colors.divider.opacity(0.3))
+                                .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .pointingHandOnHover()
+                        .accessibilityLabel("Edit Activity Type")
+                        .accessibilityHint("Opens the activity type editor")
+
+                        // Archive Button
+                        Button(action: {
+                            Task {
+                                await ActivityTypesViewModel.shared.archiveActivityType(activityType)
                             }
-                            .buttonStyle(PlainButtonStyle())
-                            .pointingHandOnHover()
-                            .accessibilityLabel("Edit Activity Type")
-                            .accessibilityHint("Opens the activity type editor")
-                            
-                            // Archive Button
-                            Button(action: {
-                                Task {
-                                    await ActivityTypesViewModel.shared.archiveActivityType(activityType)
-                                }
-                            }) {
-                                Image(systemName: "archivebox")
-                                    .font(.system(size: 12))
+                        }) {
+                            Image(systemName: "archivebox")
+                                .font(Theme.Fonts.icon)
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))

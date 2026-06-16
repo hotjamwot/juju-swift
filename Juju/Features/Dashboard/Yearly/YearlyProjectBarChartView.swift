@@ -46,10 +46,10 @@ struct YearlyProjectBarChartView: View {
                                 HStack(spacing: Theme.spacingMedium) {
                                     HStack(spacing: Theme.spacingSmall) {
                                         Text(projectData.emoji)
-                                            .font(.system(size: 16, design: .default))
+                                            .font(Theme.Fonts.header)
                                         
                                         Text(projectData.projectName)
-                                            .font(.system(size: 12, weight: .semibold))
+                                            .font(Theme.Fonts.caption.weight(.semibold))
                                             .foregroundColor(Theme.Colors.textPrimary)
                                             .lineLimit(1)
                                     }
@@ -58,7 +58,7 @@ struct YearlyProjectBarChartView: View {
                                     Rectangle()
                                         .fill(projectData.colorSwiftUI.opacity(hoveredIndex == index ? 1.0 : 0.85))
                                         .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 6)
-                                        .cornerRadius(3)
+                                        .cornerRadius(Theme.Design.blockCornerRadius)
                                         .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
                                     
                                     Text("\(projectData.totalHours, specifier: "%.1f") h")
@@ -101,7 +101,7 @@ struct YearlyProjectBarChartView: View {
                                             .foregroundColor(Theme.Colors.textSecondary)
                                         
                                         Text(hiddenData.map { $0.projectName }.joined(separator: ", "))
-                                            .font(.system(size: 11, weight: .medium))
+                                            .font(Theme.Fonts.caption.weight(.semibold))
                                             .foregroundColor(Theme.Colors.textPrimary)
                                             .lineLimit(2)
                                     }
@@ -127,11 +127,11 @@ struct YearlyProjectBarChartView: View {
         TooltipContainer {
             VStack(alignment: .leading, spacing: 4) {
                 Text(projectData.projectName)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text(String(format: "%.1fh total", projectData.totalHours))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.accentColor)
                 
                 if !projectData.activityBreakdown.isEmpty {
@@ -140,15 +140,15 @@ struct YearlyProjectBarChartView: View {
                     ForEach(projectData.activityBreakdown, id: \.activityName) { act in
                         HStack(spacing: 6) {
                             Image(systemName: act.sfSymbol)
-                                .font(.system(size: 10))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary)
                             Text(act.activityName)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .lineLimit(1)
                             Spacer(minLength: 4)
                             Text(String(format: "%.1fh", act.hours))
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(Theme.Fonts.caption.weight(.semibold))
                                 .foregroundColor(Theme.Colors.textSecondary)
                         }
                     }

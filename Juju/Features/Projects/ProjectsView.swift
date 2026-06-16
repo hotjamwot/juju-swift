@@ -20,7 +20,7 @@ struct ProjectsView: View {
             VStack(spacing: Theme.spacingMedium) {
                 HStack {
                     Text("Projects")
-                        .font(.system(size: 32, weight: .bold, design: .default))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .center)
                     
@@ -106,7 +106,7 @@ struct ProjectsView: View {
                     sidebarState.show(.newProject(newProject))
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.accentColor)
@@ -125,7 +125,7 @@ struct ProjectsView: View {
                     }
                 }) {
                     Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(Theme.Fonts.hero)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.divider.opacity(0.3))
@@ -164,11 +164,11 @@ struct DeleteProjectPopover: View {
         VStack(spacing: Theme.spacingLarge) {
             VStack(spacing: Theme.spacingMedium) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 48))
+                    .font(Theme.Fonts.hero)
                     .foregroundColor(Theme.Colors.error)
                 
                 Text("Delete Project")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(Theme.Fonts.title)
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text("Are you sure you want to delete '\(project?.name ?? "")'?")
@@ -280,7 +280,7 @@ struct ProjectRowView: View {
                 
                 // Project emoji
                 Text(project.emoji)
-                    .font(.system(size: 12))
+                    .font(Theme.Fonts.icon)
                     .frame(width: 20, alignment: .leading)
                 
                 // Project details (horizontal layout with flexible spacing)
@@ -296,7 +296,7 @@ struct ProjectRowView: View {
                     if let currentPhase = currentPhase {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
-                                .font(.system(size: 10))
+                                .font(Theme.Fonts.caption)
                                 .foregroundColor(project.swiftUIColor.opacity(0.9))
                             Text(currentPhase.name)
                                 .font(Theme.Fonts.caption)
@@ -349,7 +349,7 @@ struct ProjectRowView: View {
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "arrow.uturn.backward")
-                                    .font(.system(size: 10))
+                                    .font(Theme.Fonts.caption)
                                 Text("Restore")
                                     .font(Theme.Fonts.caption)
                             }
@@ -371,7 +371,7 @@ struct ProjectRowView: View {
                 // Total duration capsule (now at the far right, last element)
                 HStack(spacing: 6) {
                     Image(systemName: "clock.fill")
-                        .font(.system(size: 10))
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                     Text("\(String(format: "%.1f", project.totalDurationHours))h total")
                         .font(Theme.Fonts.caption)
@@ -391,7 +391,7 @@ struct ProjectRowView: View {
                         }
                     } label: {
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(Theme.Fonts.caption.weight(.semibold))
                             .foregroundColor(Theme.Colors.textSecondary)
                             .frame(width: 28, height: 28)
                             .background(Theme.Colors.divider.opacity(0.25))
@@ -493,7 +493,7 @@ struct ProjectRowView: View {
                                 sidebarState.show(.project(project))
                             }) {
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 12))
+                                    .font(Theme.Fonts.icon)
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
@@ -503,7 +503,7 @@ struct ProjectRowView: View {
                             .pointingHandOnHover()
                             .accessibilityLabel("Edit Project")
                             .accessibilityHint("Opens the project editor")
-                            
+
                             // Archive Button
                             Button(action: {
                                 Task {
@@ -511,7 +511,7 @@ struct ProjectRowView: View {
                                 }
                             }) {
                                 Image(systemName: "archivebox")
-                                    .font(.system(size: 12))
+                                    .font(Theme.Fonts.icon)
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
@@ -521,7 +521,7 @@ struct ProjectRowView: View {
                             .pointingHandOnHover()
                             .accessibilityLabel("Archive Project")
                             .accessibilityHint("Archives this project")
-                            
+
                             // Delete Button (Error color) with Popover
                             Button(action: {
                                 // Show delete confirmation popover
@@ -529,7 +529,7 @@ struct ProjectRowView: View {
                                 selectedMigrationTargetForConfirmation = ProjectsViewModel.shared.activeProjects.first { $0.id != project.id }
                             }) {
                                 Image(systemName: "trash")
-                                    .font(.system(size: 12))
+                                    .font(Theme.Fonts.icon)
                                     .foregroundColor(Theme.Colors.error)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))

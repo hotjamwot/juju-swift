@@ -89,8 +89,8 @@ struct Session90DayBarChartView: View {
         ZStack(alignment: .leading) {
             ForEach(Array(monthTransitions.enumerated()), id: \.offset) { _, transition in
                 let x = CGFloat(transition.index) * stepWidth
-                Text(transition.label)
-                    .font(.system(size: 9, weight: .medium))
+                    Text(transition.label)
+                        .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
                     .position(x: x + 16, y: 7)
             }
@@ -222,8 +222,8 @@ struct Session90DayBarChartView: View {
         .overlay(alignment: .top) {
             if day.isMilestone {
                 Image(systemName: "diamond.fill")
-                    .font(.system(size: 6))
-                    .foregroundColor(Color(hex: "F5A623"))
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.milestone)
                     .offset(y: -3)
             }
         }
@@ -260,11 +260,11 @@ struct Session90DayBarChartView: View {
         TooltipContainer {
             VStack(alignment: .leading, spacing: 4) {
                 Text(day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
                 Text(String(format: "%.1fh total", day.totalHours))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(day.totalHours > 0 ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
                 
                 if !day.segments.isEmpty {

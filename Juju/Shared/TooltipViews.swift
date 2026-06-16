@@ -39,15 +39,15 @@ struct TooltipRow: View {
                 .frame(width: 6, height: 6)
             if let emoji = emoji {
                 Text(emoji)
-                    .font(.system(size: 10))
+                    .font(Theme.Fonts.caption)
             }
             Text(name)
-                .font(.system(size: 10, weight: .medium))
+                .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textPrimary)
                 .lineLimit(1)
             Spacer(minLength: 4)
             Text(String(format: "%.1fh", hours))
-                .font(.system(size: 10, weight: .semibold))
+                .font(Theme.Fonts.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.textSecondary)
         }
     }
