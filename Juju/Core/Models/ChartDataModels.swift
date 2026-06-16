@@ -122,6 +122,9 @@ struct DayStack: Identifiable {
     let segments: [ProjectSegment]  // sorted bottom-to-top by hours descending
     /// True when this day contains a milestone session (set by ChartDataPreparer)
     var isMilestone: Bool = false
+    /// Individual session records for this day (set by ChartDataPreparer).
+    /// Used by DaySessionInfoPanel to show per-session details on hover.
+    var sessions: [SessionRecord] = []
     
     var id: Date { date }
     var totalHours: Double { segments.reduce(0) { $0 + $1.hours } }

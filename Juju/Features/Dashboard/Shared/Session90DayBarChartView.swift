@@ -4,11 +4,13 @@ import SwiftUI
 ///
 /// Each day is a vertical bar, segmented by project with project colours.
 /// Empty days render as a thin baseline mark. Today gets an accent underline.
-/// A tooltip appears on hover showing the date, total hours, and per-project breakdown.
+/// Hover state is exposed via a binding so the parent can show an info panel.
 struct Session90DayBarChartView: View {
     let dayStacks: [DayStack]
     /// When set, all bars except the one on this date are dimmed.
     var highlightedDate: Date? = nil
+    /// Binding to the currently hovered day — set by the parent to drive the info panel.
+    @Binding var hoveredDay: DayStack?
     
     // MARK: - Layout Constants
     
@@ -19,11 +21,6 @@ struct Session90DayBarChartView: View {
     private let segmentOpacity: Double = 0.85
     private let dimmedOpacity: Double = 0.2
     private let dividerWidth: CGFloat = 1
-    
-    // MARK: - State
-    
-    @State private var hoveredDay: DayStack? = nil
-    @State private var showTooltip: Bool = false
     
     // MARK: - Body
     
@@ -72,7 +69,6 @@ struct Session90DayBarChartView: View {
                     .onHover { hovering in
                         if !hovering {
                             hoveredDay = nil
-                            showTooltip = false
                         }
                     }
                 }
@@ -227,58 +223,12 @@ struct Session90DayBarChartView: View {
                     .offset(y: -3)
             }
         }
-        .overlay(alignment: .top) {
-            if showTooltip, let hovered = hoveredDay, hovered.id == day.id {
-                tooltipView(for: day)
-                    .offset(y: -8)
-                    .fixedSize()
-                    .allowsHitTesting(false)
-            }
-        }
-        .zIndex(showTooltip && hoveredDay?.id == day.id ? 10 : 0)
+        .zIndex(hoveredDay?.id == day.id ? 10 : 0)
         .onHover { hovering in
             if hovering {
                 hoveredDay = day
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [day] in
-                    if hoveredDay?.id == day.id {
-                        withAnimation(.easeOut(duration: 0.1)) {
-                            showTooltip = true
-                        }
-                    }
-                }
             } else if hoveredDay?.id == day.id {
-                showTooltip = false
                 hoveredDay = nil
-            }
-        }
-    }
-    
-    // MARK: - Tooltip
-    
-    @ViewBuilder
-    private func tooltipView(for day: DayStack) -> some View {
-        TooltipContainer {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
-                Text(String(format: "%.1fh total", day.totalHours))
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(day.totalHours > 0 ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
-                
-                if !day.segments.isEmpty {
-                    TooltipDivider()
-                    
-                    ForEach(day.segments.sorted(by: { $0.hours > $1.hours })) { segment in
-                        TooltipRow(
-                            color: Color(hex: segment.color),
-                            emoji: segment.emoji,
-                            name: segment.projectName,
-                            hours: segment.hours
-                        )
-                    }
-                }
             }
         }
     }
@@ -312,7 +262,8 @@ struct Session90DayBarChartView: View {
         mockStacks.append(DayStack(date: date, segments: segments))
     }
     
-    return Session90DayBarChartView(dayStacks: mockStacks.reversed())
+    @State var hoveredDay: DayStack? = nil
+    return Session90DayBarChartView(dayStacks: mockStacks.reversed(), hoveredDay: $hoveredDay)
         .padding()
         .frame(width: 900, height: 180)
         .background(Theme.Colors.background)

@@ -27,8 +27,9 @@ struct OverviewDashboardView: View {
     // MARK: - Loading state
     @State private var isLoading = false
     
-    // MARK: - Milestone hover state
+    // MARK: - Hover state
     @State private var highlightedMilestoneDate: Date? = nil
+    @State private var hoveredDay: DayStack? = nil
     
     // MARK: - Ideal heights
     private let calendarMinHeight: CGFloat = 400
@@ -40,6 +41,14 @@ struct OverviewDashboardView: View {
     private let headerToContentGap: CGFloat = Theme.Spacing.xs
     /// Space between the bottom of one section and the next section's header
     private let sectionGap: CGFloat = Theme.Spacing.xxl + 8  // ~56pt
+    
+    // MARK: - Info Panel Data
+    
+    /// The effective day stack for the info panel.
+    /// Chart hover takes priority; falls back to milestone-hover day.
+    private var resolvedInfoDayStack: DayStack? {
+        hoveredDay
+    }
     
     // MARK - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -83,17 +92,13 @@ struct OverviewDashboardView: View {
                     VStack(spacing: Theme.Spacing.sm) {
                         Session90DayBarChartView(
                             dayStacks: chartDataPreparer.current90DayStacks,
-                            highlightedDate: highlightedMilestoneDate
+                            highlightedDate: highlightedMilestoneDate,
+                            hoveredDay: $hoveredDay
                         )
                         .frame(minHeight: stackedBarMinHeight)
                         
-                        // Milestones that fall within the 90-day range
-                        if !chartDataPreparer.current90DayMilestones.isEmpty {
-                            RecentMilestonesSection(
-                                milestones: chartDataPreparer.current90DayMilestones,
-                                highlightedMilestoneDate: $highlightedMilestoneDate
-                            )
-                        }
+                        // Info panel + Milestones side by side
+                        milestoneInfoRow
                     }
                     .chartContainer()
                 }
@@ -194,6 +199,36 @@ struct OverviewDashboardView: View {
             )
             
             narrativeEngine.generateWeeklyHeadline()
+        }
+    }
+    
+    // MARK: - Milestone + Info Panel Row
+    
+    private var milestoneInfoRow: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            DaySessionInfoPanel(dayStack: resolvedInfoDayStack)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if !chartDataPreparer.current90DayMilestones.isEmpty {
+                RecentMilestonesSection(
+                    milestones: chartDataPreparer.current90DayMilestones,
+                    highlightedMilestoneDate: $highlightedMilestoneDate,
+                    onMilestoneHover: { date in
+                        self.handleMilestoneHover(date)
+                    }
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+    
+    private func handleMilestoneHover(_ date: Date?) {
+        if let date = date {
+            hoveredDay = chartDataPreparer.current90DayStacks.first { stack in
+                Calendar.current.isDate(stack.date, inSameDayAs: date)
+            }
+        } else {
+            hoveredDay = nil
         }
     }
     
@@ -366,6 +401,7 @@ private struct NarrativeMetricCard<Content: View>: View {
 private struct RecentMilestonesSection: View {
     let milestones: [DashboardMilestone]
     @Binding var highlightedMilestoneDate: Date?
+    var onMilestoneHover: ((Date?) -> Void)? = nil
 
     private let df: DateFormatter = {
         let f = DateFormatter()
@@ -402,6 +438,7 @@ private struct RecentMilestonesSection: View {
                     } else {
                         highlightedMilestoneDate = nil
                     }
+                    onMilestoneHover?(hovering ? milestone.date : nil)
                 }
             }
         )

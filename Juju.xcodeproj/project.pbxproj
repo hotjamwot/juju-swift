@@ -25,6 +25,7 @@
 		667F76602EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */; };
 		668122432F0FACAB00956B32 /* NarrativeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668122422F0FACAB00956B32 /* NarrativeEngine.swift */; };
 		669AA73F2FD1E2A20032014C /* Session90DayBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */; };
+		669AA7412FD1E2A30032014C /* DaySessionInfoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AA7402FD1E2A30032014C /* DaySessionInfoPanel.swift */; };
 		669AC6C22F0FC4EF00195AAE /* SessionQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */; };
 		669AC6C32F0FC4EF00195AAE /* JujuError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C12F0FC4EE00195AAE /* JujuError.swift */; };
 		669AC6C52F0FC68500195AAE /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669AC6C42F0FC68500195AAE /* SessionManager.swift */; };
@@ -101,6 +102,7 @@
 		667F765F2EF1899600C04ADA /* YearlyActivityTypeBarChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyActivityTypeBarChartView.swift; sourceTree = "<group>"; };
 		668122422F0FACAB00956B32 /* NarrativeEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NarrativeEngine.swift; sourceTree = "<group>"; };
 		669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session90DayBarChartView.swift; sourceTree = "<group>"; };
+		669AA7402FD1E2A30032014C /* DaySessionInfoPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaySessionInfoPanel.swift; sourceTree = "<group>"; };
 		669AC6C02F0FC4EE00195AAE /* SessionQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionQuery.swift; sourceTree = "<group>"; };
 		669AC6C12F0FC4EE00195AAE /* JujuError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuError.swift; sourceTree = "<group>"; };
 		669AC6C42F0FC68500195AAE /* SessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
@@ -429,6 +431,7 @@
 			isa = PBXGroup;
 			children = (
 				669AA73E2FD1E2A20032014C /* Session90DayBarChartView.swift */,
+				669AA7402FD1E2A30032014C /* DaySessionInfoPanel.swift */,
 				66F448332EEC9131008FA5DD /* ActiveSessionStatusView.swift */,
 			);
 			path = Shared;
@@ -583,6 +586,7 @@
 				66A248712FA652D0004DE871 /* ProjectStoryView.swift in Sources */,
 				66AF6EBB2EF333A7008FDCEB /* ProjectsView.swift in Sources */,
 				669AA73F2FD1E2A20032014C /* Session90DayBarChartView.swift in Sources */,
+				669AA7412FD1E2A30032014C /* DaySessionInfoPanel.swift in Sources */,
 				66A51B1E2EF03779007E2343 /* FilterToggleButton.swift in Sources */,
 				66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */,
 				668122432F0FACAB00956B32 /* NarrativeEngine.swift in Sources */,

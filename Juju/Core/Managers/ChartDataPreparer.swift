@@ -302,12 +302,15 @@ final class ChartDataPreparer: ObservableObject {
         // Track milestone sessions for marking days and building the list
         var milestoneDays: Set<Date> = []
         var milestoneSessions: [SessionRecord] = []
+        // Track individual sessions per day for the info panel
+        var sessionsByDay: [Date: [SessionRecord]] = [:]
         let activityTypeManager = ActivityTypeManager.shared
         
         for session in sessions where session.startDate >= startDate && session.startDate <= today {
             let day = calendar.startOfDay(for: session.startDate)
             let hours = Double(session.durationMinutes) / 60.0
             accumulator[day, default: [:]][session.projectID, default: 0] += hours
+            sessionsByDay[day, default: []].append(session)
             
             if session.isMilestone, let text = session.action, !text.isEmpty {
                 milestoneDays.insert(day)
@@ -335,7 +338,8 @@ final class ChartDataPreparer: ObservableObject {
             stacks.append(DayStack(
                 date: dayCursor,
                 segments: segments,
-                isMilestone: milestoneDays.contains(dayCursor)
+                isMilestone: milestoneDays.contains(dayCursor),
+                sessions: sessionsByDay[dayCursor] ?? []
             ))
             
             guard let nextDay = calendar.date(byAdding: .day, value: 1, to: dayCursor) else { break }
