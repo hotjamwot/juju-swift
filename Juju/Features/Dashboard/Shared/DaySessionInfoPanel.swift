@@ -2,6 +2,16 @@ import SwiftUI
 
 /// DaySessionInfoPanel.swift
 /// Purpose: Horizontal timeline rail-and-card panel below the 90-day stacked bar chart.
+///
+/// Connector behavior summary:
+/// - Connectors use a vertical-first routing: vertical from the rail, then horizontal to card.
+/// - `anchorOffset` (20px) places the card to the right of its anchor so connectors may start
+///   vertical-only from the rail.
+/// - When a card lies left of its anchor, the connector pivots at a minimum vertical reach
+///   (`minVerticalReach`, ~28px) to avoid drawing underneath the card background.
+/// - When exactly two sessions exist for a day, both default to the upper row.
+///
+/// Tuning knobs: see `anchorOffset`, `minVerticalReach`, `cardHeight`, and `cardToBarGap`.
 /// AI Notes: Pure presentation view — resolves activity types and phase names via
 /// singletons because DayStack does not carry that enriched data. Could be refactored
 /// to accept pre-resolved data if the data model is extended.
@@ -133,14 +143,20 @@ struct DaySessionInfoPanel: View {
     /// Lays out session cards positioned at their time on the rail, alternating above and below.
     /// Cards are aligned to the timeline; overlapping cards are nudged apart.
     /// Subtle neutral anchors and colour dots keep the rail lightweight.
-    @ViewBuilder
     private func timelineContainer(_ sessions: [SessionRecord]) -> some View {
         let sorted = sessions.sorted(by: { $0.startDate < $1.startDate })
-        let aboveSessions = sorted.enumerated().filter { $0.offset % 2 == 0 }.map(\.element)
-        let belowSessions = sorted.enumerated().filter { $0.offset % 2 == 1 }.map(\.element)
+        let aboveSessions: [SessionRecord]
+        let belowSessions: [SessionRecord]
+        if sorted.count == 2 {
+            aboveSessions = sorted
+            belowSessions = []
+        } else {
+            aboveSessions = sorted.enumerated().filter { $0.offset % 2 == 0 }.map(\.element)
+            belowSessions = sorted.enumerated().filter { $0.offset % 2 == 1 }.map(\.element)
+        }
         let range = computeTimelineRange(sessions: sorted)
         
-        GeometryReader { geo in
+        return GeometryReader { geo in
             let width = geo.size.width
             let noteLimit = notePreviewLength(sessionCount: sorted.count)
             let cardW = adaptiveCardWidth(sessionCount: sorted.count)
@@ -168,29 +184,36 @@ struct DaySessionInfoPanel: View {
                     .position(x: width / 2, y: railY)
                 
                 Group {
-                    // Connector lines — above cards (up, then left/right, then up, then right)
+                    // Connector lines — above cards: ensure a minimum upward reach when card lies left of anchor
                     ForEach(Array(aboveSessions.enumerated()), id: \.element.id) { index, session in
                         let cardCenterX = abovePositions[index]
                         let cardLeftX = max(cardCenterX - cardBackgroundWidth / 2, Theme.Spacing.xl)
                         let anchorX = xPosition(for: session, width: width, range: range)
                         let connectorColor = Theme.Colors.textSecondary.opacity(0.18)
                         let segmentColor = Color(hex: dayStack?.segments.first { $0.projectID == session.projectID }?.color ?? "#999999")
-                        let connectorX = max(cardLeftX - 20, Theme.Spacing.xl)
-                        let targetY = aboveCardTopY + cardHeight * 0.2
-                        let verticalReach = max(cardHeight * 0.2 - 10, 10)
-                        let firstPivotY = railY - verticalReach
+                        let targetY = aboveCardTopY + cardHeight * 0.28
 
-                        Path { path in
-                            path.move(to: CGPoint(x: anchorX, y: railY))
-                            path.addLine(to: CGPoint(x: anchorX, y: firstPivotY))
-                            if abs(connectorX - anchorX) > 1 {
-                                path.addLine(to: CGPoint(x: connectorX, y: firstPivotY))
+                        // If the card is to the left of the anchor, force a sensible vertical reach
+                        let minVerticalReach: CGFloat = 28
+                        if cardLeftX < anchorX {
+                            let pivotY = railY - minVerticalReach
+                            Path { path in
+                                path.move(to: CGPoint(x: anchorX, y: railY))
+                                path.addLine(to: CGPoint(x: anchorX, y: pivotY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: pivotY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
                             }
-                            path.addLine(to: CGPoint(x: connectorX, y: targetY))
-                            path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
+                            .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
+                            .foregroundColor(connectorColor)
+                        } else {
+                            Path { path in
+                                path.move(to: CGPoint(x: anchorX, y: railY))
+                                path.addLine(to: CGPoint(x: anchorX, y: targetY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
+                            }
+                            .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
+                            .foregroundColor(connectorColor)
                         }
-                        .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
-                        .foregroundColor(connectorColor)
 
                         Circle()
                             .fill(segmentColor)
@@ -198,29 +221,35 @@ struct DaySessionInfoPanel: View {
                             .position(x: anchorX, y: railY)
                     }
 
-                    // Connector lines — below cards (down, then left/right, then down, then right)
+                    // Connector lines — below cards: ensure a minimum downward reach when card lies left of anchor
                     ForEach(Array(belowSessions.enumerated()), id: \.element.id) { index, session in
                         let cardCenterX = belowPositions[index]
                         let cardLeftX = max(cardCenterX - cardBackgroundWidth / 2, Theme.Spacing.xl)
                         let anchorX = xPosition(for: session, width: width, range: range)
                         let connectorColor = Theme.Colors.textSecondary.opacity(0.18)
                         let segmentColor = Color(hex: dayStack?.segments.first { $0.projectID == session.projectID }?.color ?? "#999999")
-                        let connectorX = max(cardLeftX - 20, Theme.Spacing.xl)
-                        let targetY = belowCardTopY + cardHeight * 0.2
-                        let verticalReach = max(cardHeight * 0.2 - 10, 10)
-                        let firstPivotY = railY + verticalReach
+                        let targetY = belowCardTopY + cardHeight * 0.28
 
-                        Path { path in
-                            path.move(to: CGPoint(x: anchorX, y: railY))
-                            path.addLine(to: CGPoint(x: anchorX, y: firstPivotY))
-                            if abs(connectorX - anchorX) > 1 {
-                                path.addLine(to: CGPoint(x: connectorX, y: firstPivotY))
+                        let minVerticalReach: CGFloat = 28
+                        if cardLeftX < anchorX {
+                            let pivotY = railY + minVerticalReach
+                            Path { path in
+                                path.move(to: CGPoint(x: anchorX, y: railY))
+                                path.addLine(to: CGPoint(x: anchorX, y: pivotY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: pivotY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
                             }
-                            path.addLine(to: CGPoint(x: connectorX, y: targetY))
-                            path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
+                            .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
+                            .foregroundColor(connectorColor)
+                        } else {
+                            Path { path in
+                                path.move(to: CGPoint(x: anchorX, y: railY))
+                                path.addLine(to: CGPoint(x: anchorX, y: targetY))
+                                path.addLine(to: CGPoint(x: cardLeftX, y: targetY))
+                            }
+                            .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
+                            .foregroundColor(connectorColor)
                         }
-                        .strokedPath(StrokeStyle(lineWidth: 1, lineCap: .round, lineJoin: .round))
-                        .foregroundColor(connectorColor)
 
                         Circle()
                             .fill(segmentColor)
@@ -478,39 +507,37 @@ struct DaySessionInfoPanel: View {
         let minSpacing = cardBackgroundWidth + minGap
         let margin = cardBackgroundWidth / 2 + Theme.Spacing.xl
         
-        // Desired center positions based on session time
+        // Desired center positions based on the session start anchor.
+        // Cards sit a fixed distance to the right of the anchor so the connector can
+        // run straight vertical and then turn once to the card's left edge.
+        let anchorOffset: CGFloat = 20
         var desired: [(originalIndex: Int, x: CGFloat)] = sessions.enumerated().map { i, session in
-            let center = xPosition(for: session, width: width, range: range) + barWidth(for: session, width: width, range: range) / 2
+            let anchorX = xPosition(for: session, width: width, range: range)
+            let center = anchorX + anchorOffset + cardBackgroundWidth / 2
             return (originalIndex: i, x: center)
         }
         
-        // Sort by desired position
         desired.sort { $0.x < $1.x }
         
-        // Nudge right to resolve overlaps
-        var positions = desired.map { $0.x }
+        // Start from desired positions and resolve overlaps in both directions.
+        var positions = desired.map { min(max($0.x, margin), width - margin) }
         for i in 1..<positions.count {
-            let minX = positions[i - 1] + minSpacing
-            if positions[i] < minX {
-                positions[i] = minX
-            }
+            positions[i] = max(positions[i], positions[i - 1] + minSpacing)
+        }
+        for i in (0..<(positions.count - 1)).reversed() {
+            positions[i] = min(positions[i], positions[i + 1] - minSpacing)
         }
         
-        // If rightmost overflows, shift everything left equally
-        let maxAllowed = width - margin
-        if let last = positions.last, last > maxAllowed {
-            let overflow = last - maxAllowed
-            for i in positions.indices {
-                positions[i] -= overflow
-            }
-        }
-        
-        // Clamp left edge
+        // Clamp to available width and keep cards within bounds.
         for i in positions.indices {
-            positions[i] = max(margin, positions[i])
+            positions[i] = min(max(positions[i], margin), width - margin)
+        }
+
+        // One final pass to respect both sides after clamping.
+        for i in 1..<positions.count {
+            positions[i] = max(positions[i], positions[i - 1] + minSpacing)
         }
         
-        // Map back to original order
         var result = Array(repeating: CGFloat(0), count: sessions.count)
         for (sortIndex, item) in desired.enumerated() {
             result[item.originalIndex] = positions[sortIndex]
