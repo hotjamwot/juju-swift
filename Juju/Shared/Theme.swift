@@ -62,9 +62,13 @@ public struct Theme {
         /// Xcode asset: "Error" → #B02A21
         public static let error = Color("Error")
 
-        /// Accent — DEPRECATED. No longer used for UI chrome.
-        /// Retained only for any legacy call sites that haven't been migrated.
-        /// Do not introduce new uses. Project colours own this role.
+        /// Accent — DEPRECATED for UI chrome, but kept for legacy compatibility.
+        /// As of June 2026, the AppAccentColor asset has been updated to match textPrimary
+        /// (off-white warm cream #EAE4DA), so references to accentColor now resolve to the
+        /// same value as textPrimary. This means existing call sites (e.g. the projects add
+        /// button) render correctly without breaking.
+        ///
+        /// Do NOT introduce new uses. Project colours own the accent role.
         /// If you find yourself reaching for accentColor, ask: can a project colour
         /// or an off-white opacity shift do this job instead?
         @available(*, deprecated, message: "Use project colour or off-white opacity shift instead. See Theme philosophy.")
@@ -266,7 +270,9 @@ public struct Theme {
 // "Divider"      Any: rgba(234,228,218, 0.10)
 // "foreground"   Any: #EAE4DA  (same as textPrimary)
 // "Error"        Any: #B02A21  (unchanged)
-// "AppAccentColor" Any: #E100FF (retained for legacy — do not use in new code)
+// "AppAccentColor" Any: #EAE4DA (updated June 2026 to match textPrimary — was #E100FF.
+//                              Kept for legacy call sites, not for new uses.)
+//                              See Theme.Colors.accentColor deprecation note.
 //
 // interactive is defined programmatically above
 // and does not require an asset catalogue entry.

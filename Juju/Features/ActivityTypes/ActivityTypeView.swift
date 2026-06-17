@@ -3,7 +3,7 @@ import SwiftUI
 struct ActivityTypeView: View {
     @StateObject private var viewModel = ActivityTypesViewModel.shared
     @EnvironmentObject var sidebarState: SidebarStateManager
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -13,7 +13,7 @@ struct ActivityTypeView: View {
                         .font(Theme.Fonts.hero)
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                    
+
                     Spacer()
                 }
             }
@@ -25,10 +25,10 @@ struct ActivityTypeView: View {
             ScrollView {
                 let shouldShowArchived = viewModel.showArchivedActivityTypes && !viewModel.archivedActivityTypes.isEmpty
                 let hasAnyActivityTypes = !viewModel.activeActivityTypes.isEmpty || shouldShowArchived
-                
+
                 if !hasAnyActivityTypes {
                     Text("No Activity Types Yet")
-                        .foregroundColor(Theme.Colors.surface)
+                        .foregroundColor(Theme.Colors.textSecondary)
                         .padding(40)
                 } else {
                     LazyVStack(spacing: Theme.spacingSmall) {
@@ -43,7 +43,7 @@ struct ActivityTypeView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        
+
                         // Archived Activity Types (only show if toggle is enabled)
                         if shouldShowArchived {
                             ForEach(viewModel.archivedActivityTypes) { activityType in
@@ -64,7 +64,7 @@ struct ActivityTypeView: View {
         }
         .overlay(
             HStack(spacing: Theme.spacingSmall) {
-                // Add Activity Type button with accent color
+                // Add Activity Type button
                 Button {
                     // Create a new activity type instance with proper ID
                     let newActivityType = ActivityType(
@@ -77,18 +77,17 @@ struct ActivityTypeView: View {
                     sidebarState.show(.newActivityType(newActivityType))
                 } label: {
                     Image(systemName: "plus")
-                        .font(Theme.Fonts.hero)
-                        .foregroundColor(.white)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
-                        .background(Theme.Colors.accentColor)
-                        .cornerRadius(8)
+                        .background(Theme.Colors.divider.opacity(0.3))
+                        .cornerRadius(Theme.Design.blockCornerRadius)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
-                .symbolEffect(.bounce, value: viewModel.activityTypes.count)
                 .accessibilityLabel("Add Activity Type")
                 .accessibilityHint("Creates a new activity type")
-                
+
                 // Archive toggle button
                 Button(action: {
                     withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.6)) {
@@ -96,22 +95,17 @@ struct ActivityTypeView: View {
                     }
                 }) {
                     Image(systemName: viewModel.showArchivedActivityTypes ? "archivebox.fill" : "archivebox")
-                        .font(Theme.Fonts.hero)
+                        .font(Theme.Fonts.body.weight(.semibold))
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.divider.opacity(0.3))
-                        .cornerRadius(8)
+                        .cornerRadius(Theme.Design.blockCornerRadius)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
                 .contentTransition(.symbolEffect(.replace))
                 .accessibilityLabel(viewModel.showArchivedActivityTypes ? "Hide Archived Activity Types" : "Show Archived Activity Types")
                 .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
-                .onHover { hovering in
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        // handled by pointingHandOnHover
-                    }
-                }
             }
             .padding(.bottom, Theme.spacingLarge)
             .padding(.leading, Theme.spacingLarge),
@@ -125,11 +119,11 @@ struct ActivityTypeRowView: View {
     let activityType: ActivityType
     var isArchived: Bool = false
     @EnvironmentObject var sidebarState: SidebarStateManager
-    
+
     // Hover state for interactive feedback
     @State private var isHovering = false
     @State private var isExpanded = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Main row content - compact design
@@ -139,7 +133,7 @@ struct ActivityTypeRowView: View {
                     .font(Theme.Fonts.icon)
                     .frame(width: 20, alignment: .leading)
                     .padding(.leading, Theme.Row.contentPadding)
-                
+
                 // Activity type details (horizontal layout with flexible spacing)
                 HStack(spacing: Theme.Row.compactSpacing) {
                     // Activity type name (flexible width with minimum)
@@ -148,7 +142,7 @@ struct ActivityTypeRowView: View {
                         .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(1)
                         .frame(minWidth: 140, maxWidth: 220)
-                    
+
                     // Activity type description (flexible width)
                     if !activityType.description.isEmpty {
                         Text(activityType.description)
@@ -161,9 +155,9 @@ struct ActivityTypeRowView: View {
                         Spacer().frame(minWidth: 180, maxWidth: 380)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Archived status or actions (moved to far right)
                 if isArchived {
                     HStack(spacing: 8) {
@@ -174,7 +168,7 @@ struct ActivityTypeRowView: View {
                             .padding(.vertical, 4)
                             .background(Theme.Colors.divider.opacity(0.3))
                             .clipShape(Capsule())
-                        
+
                         Button(action: {
                             // Restore activity type
                             Task {
@@ -191,7 +185,7 @@ struct ActivityTypeRowView: View {
                             .padding(.vertical, 6)
                             .background(Theme.Colors.divider.opacity(0.3))
                             .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
+                            .cornerRadius(Theme.Design.blockCornerRadius)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .pointingHandOnHover()
@@ -207,7 +201,7 @@ struct ActivityTypeRowView: View {
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.divider.opacity(0.3))
-                                .cornerRadius(8)
+                                .cornerRadius(Theme.Design.blockCornerRadius)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .pointingHandOnHover()
@@ -224,7 +218,7 @@ struct ActivityTypeRowView: View {
                                 .foregroundColor(Theme.Colors.textPrimary)
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.divider.opacity(0.3))
-                                .cornerRadius(8)
+                                .cornerRadius(Theme.Design.blockCornerRadius)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .pointingHandOnHover()
@@ -238,10 +232,6 @@ struct ActivityTypeRowView: View {
             .background(
                 isHovering ? Theme.Colors.surface.opacity(0.9) : Theme.Colors.surface.opacity(0.7)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(Theme.Colors.divider, lineWidth: 1)
-            )
             .cornerRadius(Theme.Row.cornerRadius)
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -254,13 +244,13 @@ struct ActivityTypeRowView: View {
                     }
                 }
             }
-            
+
             // Expanded state - activity type details (only show when expanded for active activity types)
             if isExpanded && !isArchived {
                 VStack(alignment: .leading, spacing: 0) {
                     Divider()
                         .background(Theme.Colors.divider)
-                    
+
                     // Create a two-column layout: 80% details, 20% actions
                     HStack(alignment: .top, spacing: 0) {
                         // Details Column (80%)
@@ -269,10 +259,10 @@ struct ActivityTypeRowView: View {
                                 Text("Activity Type Details")
                                     .font(Theme.Fonts.caption.weight(.semibold))
                                     .foregroundColor(Theme.Colors.textSecondary)
-                                
+
                                 Spacer()
                             }
-                            
+
                             // Activity type description
                             if !activityType.description.isEmpty {
                                 Text(activityType.description)
@@ -287,7 +277,7 @@ struct ActivityTypeRowView: View {
                                     .foregroundColor(Theme.Colors.textSecondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            
+
                             // Activity type ID
                             HStack {
                                 Text("ID:")
@@ -303,37 +293,37 @@ struct ActivityTypeRowView: View {
                         .padding(.horizontal, Theme.Row.contentPadding)
                         .padding(.vertical, Theme.Row.contentPadding)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        
+
                         // Actions Column (20%)
                         VStack(alignment: .trailing, spacing: Theme.spacingSmall) {
                             // Edit Button
                             Button(action: {
                                 sidebarState.show(.activityType(activityType))
                             }) {
-                            Image(systemName: "pencil")
-                                .font(Theme.Fonts.icon)
-                                .foregroundColor(Theme.Colors.textPrimary)
-                                .frame(width: 28, height: 28)
-                                .background(Theme.Colors.divider.opacity(0.3))
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .pointingHandOnHover()
-                        .accessibilityLabel("Edit Activity Type")
-                        .accessibilityHint("Opens the activity type editor")
-
-                        // Archive Button
-                        Button(action: {
-                            Task {
-                                await ActivityTypesViewModel.shared.archiveActivityType(activityType)
-                            }
-                        }) {
-                            Image(systemName: "archivebox")
-                                .font(Theme.Fonts.icon)
+                                Image(systemName: "pencil")
+                                    .font(Theme.Fonts.icon)
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
+                                    .cornerRadius(Theme.Design.blockCornerRadius)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .pointingHandOnHover()
+                            .accessibilityLabel("Edit Activity Type")
+                            .accessibilityHint("Opens the activity type editor")
+
+                            // Archive Button
+                            Button(action: {
+                                Task {
+                                    await ActivityTypesViewModel.shared.archiveActivityType(activityType)
+                                }
+                            }) {
+                                Image(systemName: "archivebox")
+                                    .font(Theme.Fonts.icon)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .frame(width: 28, height: 28)
+                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .cornerRadius(Theme.Design.blockCornerRadius)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -372,10 +362,10 @@ struct ActivityTypeView_Previews: PreviewProvider {
         }
         .frame(width: 650, height: 600)
         .previewDisplayName("Mock Data (for UI testing)")
-        
+
         List {
              Text("No Activity Types Yet")
-                .foregroundColor(.secondary)
+                .foregroundColor(Theme.Colors.textSecondary)
                 .padding(40)
         }
         .frame(width: 650, height: 600)

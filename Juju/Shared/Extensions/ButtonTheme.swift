@@ -218,6 +218,48 @@ public extension ButtonStyle where Self == NavigationButtonStyle {
     static var navigation: NavigationButtonStyle { NavigationButtonStyle() }
 }
 
+public extension ButtonStyle where Self == ConfirmationSecondaryButtonStyle {
+    /// A subtle secondary confirmation button style for dialogs (e.g., "Cancel").
+    static var confirmationSecondary: ConfirmationSecondaryButtonStyle { ConfirmationSecondaryButtonStyle() }
+}
+
+public extension ButtonStyle where Self == ConfirmationDangerButtonStyle {
+    /// A danger confirmation button style for dialogs (e.g., "Delete").
+    static var confirmationDanger: ConfirmationDangerButtonStyle { ConfirmationDangerButtonStyle() }
+}
+
+/// Style for confirmation secondary/cancel buttons — subtle background, body weight.
+/// Use for "Cancel" actions in dialogs.
+public struct ConfirmationSecondaryButtonStyle: ButtonStyle {
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.body)
+            .foregroundColor(Theme.Colors.textPrimary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.Colors.divider.opacity(0.3))
+            .cornerRadius(Theme.Design.blockCornerRadius)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+/// Style for confirmation danger buttons — error background, white text, semibold.
+/// Use for "Delete" (etc.) actions in dialogs.
+public struct ConfirmationDangerButtonStyle: ButtonStyle {
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.body.weight(.semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.Colors.error)
+            .cornerRadius(Theme.Design.blockCornerRadius)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 struct PointingHandOnHover: ViewModifier {
     func body(content: Content) -> some View {
         content

@@ -91,7 +91,7 @@ struct ProjectsView: View {
         }
         .overlay(
             HStack(spacing: Theme.spacingSmall) {
-                // Add Project button with accent color
+                // Add Project button
                 Button {
                     // Create a new project instance with empty ID to indicate it's new
                     let newProject = Project(
@@ -106,15 +106,14 @@ struct ProjectsView: View {
                     sidebarState.show(.newProject(newProject))
                 } label: {
                     Image(systemName: "plus")
-                        .font(Theme.Fonts.hero)
-                        .foregroundColor(.white)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
-                        .background(Theme.Colors.accentColor)
-                        .cornerRadius(8)
+                        .background(Theme.Colors.divider.opacity(0.3))
+                        .cornerRadius(Theme.Design.blockCornerRadius)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
-                .symbolEffect(.bounce, value: viewModel.projects.count)
                 .accessibilityLabel("Add Project")
                 .accessibilityHint("Creates a new project")
                 
@@ -125,11 +124,11 @@ struct ProjectsView: View {
                     }
                 }) {
                     Image(systemName: viewModel.showArchivedProjects ? "archivebox.fill" : "archivebox")
-                        .font(Theme.Fonts.hero)
+                        .font(Theme.Fonts.body.weight(.semibold))
                         .foregroundColor(Theme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.Colors.divider.opacity(0.3))
-                        .cornerRadius(8)
+                        .cornerRadius(Theme.Design.blockCornerRadius)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .pointingHandOnHover()
@@ -207,46 +206,16 @@ struct DeleteProjectPopover: View {
             
             HStack(spacing: Theme.spacingMedium) {
                 Button("Cancel", action: onCancel)
-                    .buttonStyle(ConfirmationSecondaryButtonStyle())
+                    .buttonStyle(.confirmationSecondary)
                 
                 Button("Delete", action: onDelete)
-                    .buttonStyle(ConfirmationDangerButtonStyle())
+                    .buttonStyle(.confirmationDanger)
             }
             .padding(.bottom, Theme.spacingMedium)
         }
         .padding(.horizontal, Theme.spacingLarge)
         .padding(.vertical, Theme.spacingLarge)
-        .background(Theme.Colors.background)
-    }
-}
-
-// MARK: - Custom Button Styles
-
-struct ConfirmationSecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Theme.Fonts.caption)
-            .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Theme.Colors.divider.opacity(0.3))
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-struct ConfirmationDangerButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Theme.Fonts.caption)
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Theme.Colors.error)
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+        .background(Theme.Colors.surface)
     }
 }
 
@@ -357,7 +326,7 @@ struct ProjectRowView: View {
                             .padding(.vertical, 6)
                             .background(Theme.Colors.divider.opacity(0.3))
                             .foregroundColor(Theme.Colors.textPrimary)
-                            .cornerRadius(8)
+                            .cornerRadius(Theme.Design.blockCornerRadius)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .pointingHandOnHover()
@@ -395,7 +364,7 @@ struct ProjectRowView: View {
                             .foregroundColor(Theme.Colors.textSecondary)
                             .frame(width: 28, height: 28)
                             .background(Theme.Colors.divider.opacity(0.25))
-                            .cornerRadius(8)
+                            .cornerRadius(Theme.Design.blockCornerRadius)
                     }
                     .buttonStyle(.plain)
                     .pointingHandOnHover()
@@ -406,10 +375,6 @@ struct ProjectRowView: View {
             .frame(height: Theme.Row.height)
             .background(
                 isHovering ? Theme.Colors.surface.opacity(0.9) : Theme.Colors.surface.opacity(0.7)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(project.swiftUIColor.opacity(0.3), lineWidth: 2)
             )
             .cornerRadius(Theme.Row.cornerRadius)
             .contentShape(Rectangle())
@@ -497,7 +462,7 @@ struct ProjectRowView: View {
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
+                                    .cornerRadius(Theme.Design.blockCornerRadius)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -515,7 +480,7 @@ struct ProjectRowView: View {
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
+                                    .cornerRadius(Theme.Design.blockCornerRadius)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -533,7 +498,7 @@ struct ProjectRowView: View {
                                     .foregroundColor(Theme.Colors.error)
                                     .frame(width: 28, height: 28)
                                     .background(Theme.Colors.divider.opacity(0.3))
-                                    .cornerRadius(8)
+                                    .cornerRadius(Theme.Design.blockCornerRadius)
                             }
                             .buttonStyle(PlainButtonStyle())
                             .pointingHandOnHover()
@@ -559,7 +524,7 @@ struct ProjectRowView: View {
                                     }
                                 )
                                 .padding(20)
-                                .background(Theme.Colors.background)
+                                .background(Theme.Colors.surface)
                             }
                         }
                         .padding(.trailing, Theme.Row.contentPadding)
@@ -627,7 +592,7 @@ struct ProjectsView_Previews: PreviewProvider {
         
         List {
              Text("No Projects Yet")
-                .foregroundColor(.secondary)
+                .foregroundColor(Theme.Colors.textSecondary)
                 .padding(40)
         }
         .frame(width: 650, height: 600)
