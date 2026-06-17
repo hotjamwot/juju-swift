@@ -141,22 +141,3 @@ struct ProjectSegment: Identifiable {
     let hours: Double
 }
 
-// MARK: - Dashboard Milestone Model
-
-/// A milestone displayed in the dashboard's 90-day chart section.
-/// Replaces `NarrativeEngine.Milestone` in chart/dashboard contexts.
-struct DashboardMilestone: Identifiable, Hashable, Equatable {
-    let id = UUID()
-    let text: String
-    let date: Date
-    let projectID: String
-    let projectName: String
-    let projectEmoji: String
-    let projectColor: String
-    let activityType: String
-
-    static func == (lhs: DashboardMilestone, rhs: DashboardMilestone) -> Bool {
-        lhs.id == rhs.id && lhs.text == rhs.text && lhs.date == rhs.date
-    }
-}
-

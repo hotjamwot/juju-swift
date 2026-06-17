@@ -7,8 +7,6 @@ import SwiftUI
 /// Hover state is exposed via a binding so the parent can show an info panel.
 struct Session90DayBarChartView: View {
     let dayStacks: [DayStack]
-    /// When set, all bars except the one on this date are dimmed.
-    var highlightedDate: Date? = nil
     /// Binding to the currently hovered day — set by the parent to drive the info panel.
     @Binding var hoveredDay: DayStack?
     
@@ -19,7 +17,6 @@ struct Session90DayBarChartView: View {
     private let minBarWidth: CGFloat = 2
     private let emptyDayHeight: CGFloat = 1
     private let segmentOpacity: Double = 0.85
-    private let dimmedOpacity: Double = 0.2
     private let dividerWidth: CGFloat = 1
     
     // MARK: - Body
@@ -163,17 +160,6 @@ struct Session90DayBarChartView: View {
         let isToday = day.isToday
         let isHovered = hoveredDay?.id == day.id
         
-        // Dimming: if a highlighted date is set, dim all bars except that day
-        let isDimmed: Bool = {
-            guard let highlighted = highlightedDate else { return false }
-            return !Calendar.current.isDate(day.date, inSameDayAs: highlighted)
-        }()
-        
-        let barOpacity: Double = {
-            if isDimmed { return dimmedOpacity }
-            return 1.0
-        }()
-        
         VStack(spacing: 0) {
             if hasData {
                 // Stacked segments — proportional to max hours in the dataset
@@ -206,7 +192,6 @@ struct Session90DayBarChartView: View {
             }
         }
         .frame(width: barWidth, alignment: .bottom)
-        .opacity(barOpacity)
         .background(alignment: .bottom) {
             if isToday {
                 Rectangle()

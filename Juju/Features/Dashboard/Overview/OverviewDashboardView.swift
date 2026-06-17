@@ -28,7 +28,6 @@ struct OverviewDashboardView: View {
     @State private var isLoading = false
     
     // MARK: - Hover state
-    @State private var highlightedMilestoneDate: Date? = nil
     @State private var hoveredDay: DayStack? = nil
     
     // MARK: - Ideal heights
@@ -41,14 +40,6 @@ struct OverviewDashboardView: View {
     private let headerToContentGap: CGFloat = Theme.Spacing.xs
     /// Space between the bottom of one section and the next section's header
     private let sectionGap: CGFloat = Theme.Spacing.xxl + 8  // ~56pt
-    
-    // MARK: - Info Panel Data
-    
-    /// The effective day stack for the info panel.
-    /// Chart hover takes priority; falls back to milestone-hover day.
-    private var resolvedInfoDayStack: DayStack? {
-        hoveredDay
-    }
     
     // MARK - Date Intervals
     private var currentYearInterval: DateInterval {
@@ -92,13 +83,12 @@ struct OverviewDashboardView: View {
                     VStack(spacing: Theme.Spacing.sm) {
                         Session90DayBarChartView(
                             dayStacks: chartDataPreparer.current90DayStacks,
-                            highlightedDate: highlightedMilestoneDate,
                             hoveredDay: $hoveredDay
                         )
                         .frame(minHeight: stackedBarMinHeight)
                         
-                        // Info panel + Milestones side by side
-                        milestoneInfoRow
+                        // Info panel — full width, no milestone sidebar
+                        DaySessionInfoPanel(dayStack: hoveredDay)
                     }
                     .chartContainer()
                 }
@@ -199,36 +189,6 @@ struct OverviewDashboardView: View {
             )
             
             narrativeEngine.generateWeeklyHeadline()
-        }
-    }
-    
-    // MARK: - Milestone + Info Panel Row
-    
-    private var milestoneInfoRow: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.md) {
-            DaySessionInfoPanel(dayStack: resolvedInfoDayStack)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            if !chartDataPreparer.current90DayMilestones.isEmpty {
-                RecentMilestonesSection(
-                    milestones: chartDataPreparer.current90DayMilestones,
-                    highlightedMilestoneDate: $highlightedMilestoneDate,
-                    onMilestoneHover: { date in
-                        self.handleMilestoneHover(date)
-                    }
-                )
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-    
-    private func handleMilestoneHover(_ date: Date?) {
-        if let date = date {
-            hoveredDay = chartDataPreparer.current90DayStacks.first { stack in
-                Calendar.current.isDate(stack.date, inSameDayAs: date)
-            }
-        } else {
-            hoveredDay = nil
         }
     }
     
@@ -389,106 +349,6 @@ private struct NarrativeMetricCard<Content: View>: View {
                 .fill(Theme.Colors.cardSurface)
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
-    }
-}
-
-// MARK: - Recent Milestones Section
-
-/// Displays recent milestones from the 90-day period below the chart.
-/// Uses the same card pattern as ProjectStoryView's NotableMomentCard.
-/// Hovering a milestone turns the left pill gold and highlights the corresponding
-/// day in the 90-day chart (dimming all other bars).
-private struct RecentMilestonesSection: View {
-    let milestones: [DashboardMilestone]
-    @Binding var highlightedMilestoneDate: Date?
-    var onMilestoneHover: ((Date?) -> Void)? = nil
-
-    private let df: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "d MMM yyyy"
-        return f
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Recent milestones")
-                .font(Theme.Fonts.narrative.weight(.semibold))
-                .foregroundColor(Theme.Colors.textSecondary)
-                .tracking(0.5)
-
-            VStack(spacing: Theme.Spacing.xs) {
-                // Reverse so most recent is at the bottom
-                ForEach(milestones.prefix(5).reversed()) { milestone in
-                    milestoneRow(milestone)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func milestoneRow(_ milestone: DashboardMilestone) -> some View {
-        MilestoneRowView(
-            milestone: milestone,
-            dateText: df.string(from: milestone.date),
-            isHighlighted: highlightedMilestoneDate.map { Calendar.current.isDate($0, inSameDayAs: milestone.date) } ?? false,
-            onHover: { hovering in
-                withAnimation(.easeOut(duration: 0.15)) {
-                    if hovering {
-                        highlightedMilestoneDate = milestone.date
-                    } else {
-                        highlightedMilestoneDate = nil
-                    }
-                    onMilestoneHover?(hovering ? milestone.date : nil)
-                }
-            }
-        )
-    }
-}
-
-/// A single milestone row with hover interaction — mimics NotableMomentCard from ProjectStoryView.
-/// Left accent bar uses project color by default; turns gold on hover.
-private struct MilestoneRowView: View {
-    let milestone: DashboardMilestone
-    let dateText: String
-    let isHighlighted: Bool
-    let onHover: (Bool) -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            // Left accent bar — project color or gold when highlighted
-            RoundedRectangle(cornerRadius: 1)
-                .fill(isHighlighted ? Theme.Colors.milestone : Color.lightenedHex(milestone.projectColor))
-                .frame(width: 3)
-
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                HStack(spacing: Theme.Spacing.xs) {
-                    Text(milestone.projectEmoji)
-                        .font(Theme.Fonts.caption)
-                    Text(milestone.projectName)
-                        .font(Theme.Fonts.caption.weight(.semibold))
-                        .foregroundColor(Theme.Colors.textPrimary)
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Text(dateText)
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.65))
-                }
-
-                Text(milestone.text)
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.sm)
-        .padding(.vertical, Theme.Spacing.xs)
-        .background(isHighlighted ? Theme.Colors.surface.opacity(0.85) : Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(10)
-        .onHover { hovering in
-            onHover(hovering)
-        }
     }
 }
 

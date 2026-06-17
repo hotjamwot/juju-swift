@@ -57,8 +57,6 @@ struct ChartViewModel {
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
     @Published var current90DayStacks: [DayStack] = []
-    /// Milestones that occurred within the 90-day range (newest first)
-    @Published var current90DayMilestones: [DashboardMilestone] = []
     
     private let calendar = Calendar.current
     
@@ -293,18 +291,15 @@ final class ChartDataPreparer: ObservableObject {
         let totalDays = days  // include today, so go back (days - 1)
         guard let startDate = calendar.date(byAdding: .day, value: -(totalDays - 1), to: today) else {
             current90DayStacks = []
-            current90DayMilestones = []
             return
         }
         
         // Accumulate: date → projectID → hours
         var accumulator: [Date: [String: Double]] = [:]
-        // Track milestone sessions for marking days and building the list
+        // Track milestone days for diamond markers on the chart
         var milestoneDays: Set<Date> = []
-        var milestoneSessions: [SessionRecord] = []
         // Track individual sessions per day for the info panel
         var sessionsByDay: [Date: [SessionRecord]] = [:]
-        let activityTypeManager = ActivityTypeManager.shared
         
         for session in sessions where session.startDate >= startDate && session.startDate <= today {
             let day = calendar.startOfDay(for: session.startDate)
@@ -312,9 +307,8 @@ final class ChartDataPreparer: ObservableObject {
             accumulator[day, default: [:]][session.projectID, default: 0] += hours
             sessionsByDay[day, default: []].append(session)
             
-            if session.isMilestone, let text = session.action, !text.isEmpty {
+            if session.isMilestone {
                 milestoneDays.insert(day)
-                milestoneSessions.append(session)
             }
         }
         
@@ -347,24 +341,6 @@ final class ChartDataPreparer: ObservableObject {
         }
         
         current90DayStacks = stacks
-        
-        // Build Milestone list (newest first) for the 90-day chart section
-        current90DayMilestones = milestoneSessions
-            .sorted { $0.startDate > $1.startDate }
-            .compactMap { session -> DashboardMilestone? in
-                guard let text = session.action else { return nil }
-                let activity = activityTypeManager.getActivityType(id: session.activityTypeID ?? ActivityType.uncategorizedID) ?? activityTypeManager.getUncategorizedActivityType()
-                let project = projectLookup[session.projectID]
-                return DashboardMilestone(
-                    text: text,
-                    date: session.startDate,
-                    projectID: session.projectID,
-                    projectName: project?.name ?? "Unknown",
-                    projectEmoji: project?.emoji ?? Project.defaultEmoji,
-                    projectColor: project?.color ?? "#999999",
-                    activityType: activity.name
-                )
-            }
     }
     
 }
