@@ -301,7 +301,7 @@ final class ChartDataPreparer: ObservableObject {
         // Track individual sessions per day for the info panel
         var sessionsByDay: [Date: [SessionRecord]] = [:]
         
-        for session in sessions where session.startDate >= startDate && session.startDate <= today {
+        for session in sessions where session.startDate >= startDate && session.startDate < calendar.date(byAdding: .day, value: 1, to: today)! {
             let day = calendar.startOfDay(for: session.startDate)
             let hours = Double(session.durationMinutes) / 60.0
             accumulator[day, default: [:]][session.projectID, default: 0] += hours

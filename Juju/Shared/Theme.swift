@@ -13,7 +13,7 @@ import AppKit
 /// they recede so that project colours arrive with full force.
 ///
 /// COLOUR RULES:
-/// - No global accent colour. Project colours ARE the accent system.
+/// - No global accent colour. Project colours ARE the accent system. Note: we've kept accentColor in our assets (currently set to textPrimary color)
 /// - Interactive states (buttons, selection, focus) use off-white — weight and opacity shifts only.
 /// - Saturation lives exclusively in the data layer: project bars, session blocks, chart fills.
 /// - Surfaces are warm but desaturated — enough to feel human, not enough to compete.
@@ -99,14 +99,6 @@ public struct Theme {
         public static let interactiveSelected: Color = Color(NSColor(
             srgbRed: 0.918, green: 0.894, blue: 0.863, alpha: 0.12
         ))
-
-        /// Card surface — one step above surface. Very low chroma warm grey.
-        /// Used for metric cards and chart containers.
-        /// The step between surface and cardSurface is intentionally small —
-        /// depth without borders, as per the design philosophy.
-        public static let cardSurface: Color = Color(NSColor(
-            srgbRed: 0.141, green: 0.133, blue: 0.125, alpha: 1.0
-        )) // ~#241F1E, desaturated warm
 
         /// Convert a SwiftUI Color to NSColor (macOS only).
         public static func nsColor(_ color: Color) -> NSColor? {
@@ -276,8 +268,8 @@ public struct Theme {
 // "Error"        Any: #B02A21  (unchanged)
 // "AppAccentColor" Any: #E100FF (retained for legacy — do not use in new code)
 //
-// cardSurface and interactive are defined programmatically above
-// and do not require asset catalogue entries.
+// interactive is defined programmatically above
+// and does not require an asset catalogue entry.
 
 // MARK: - NSColor Extensions
 extension NSColor {
@@ -359,10 +351,10 @@ extension View {
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
 
-    /// Dashboard card — cardSurface background, standard corner radius, no border.
+    /// Dashboard card — surface background, standard corner radius, no border.
     func dashboardCard() -> some View {
         self
-            .background(Theme.Colors.cardSurface)
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
             .dashboardPadding()
     }

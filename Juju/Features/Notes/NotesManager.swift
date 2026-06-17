@@ -101,6 +101,24 @@ class NotesManager: NSObject, ObservableObject, NSWindowDelegate {
             // Reset ephemeral content (notes, action) when presenting for a new session
             notesViewModel.resetContent()
 
+            // Apply live-session prefill values (the dirty-save state from the currently active session)
+            if !prefillNotes.isEmpty {
+                notesViewModel.notesText = prefillNotes
+            }
+            if !prefillAction.isEmpty {
+                notesViewModel.action = prefillAction
+            }
+            if let prefillMood = prefillMood {
+                notesViewModel.mood = prefillMood
+            }
+            notesViewModel.isMilestone = prefillIsMilestone
+            if prefillActivityTypeID != nil {
+                notesViewModel.selectedActivityTypeID = prefillActivityTypeID
+            }
+            if prefillProjectPhaseID != nil {
+                notesViewModel.selectedProjectPhaseID = prefillProjectPhaseID
+            }
+
             // Update completion handler with wrapper that hides window
             let wrappedCompletion: (String, Int?, String?, String?, String, Bool) -> Void = { [weak self] notes, mood, activityTypeID, projectPhaseID, action, isMilestone in
                 self?.dismissNotes()

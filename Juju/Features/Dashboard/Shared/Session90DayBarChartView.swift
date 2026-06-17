@@ -187,7 +187,7 @@ struct Session90DayBarChartView: View {
             } else {
                 // Empty day — thin ghost mark
                 Rectangle()
-                    .fill(Theme.Colors.cardSurface.opacity(0.5))
+                    .fill(Theme.Colors.surface.opacity(0.5))
                     .frame(height: emptyDayHeight)
             }
         }

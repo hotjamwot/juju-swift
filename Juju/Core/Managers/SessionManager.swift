@@ -378,6 +378,23 @@ class SessionManager: ObservableObject {
                 self.currentMood = nil
                 self.currentIsMilestone = false
                 
+                // [FIX] Append the completed session to allSessions so that
+                // dashboard charts and views see it immediately without needing
+                // to wait for a full file re-load.
+                let newSession = SessionRecord(
+                    id: UUID().uuidString,
+                    startDate: startTime,
+                    endDate: endTime,
+                    projectID: projectID,
+                    activityTypeID: activityTypeID,
+                    projectPhaseID: projectPhaseID,
+                    action: action,
+                    isMilestone: isMilestone,
+                    notes: notes,
+                    mood: mood
+                )
+                self.allSessions.insert(newSession, at: 0)
+                
                 // Update timestamp to trigger UI refresh
                 self.lastUpdated = Date()
                 

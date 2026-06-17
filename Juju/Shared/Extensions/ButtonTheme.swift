@@ -2,18 +2,20 @@ import SwiftUI
 
 // MARK: - ButtonStyle Protocol Implementations
 
-/// Primary button style with a prominent background color.
+/// Primary button style with a prominent off-white background.
+/// Uses the interactive off-white per the design philosophy — no accent colour.
+/// Text is dark for maximum contrast against the bright background.
 public struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
-    var backgroundColor: Color = Theme.Colors.accentColor
+    var backgroundColor: Color = Theme.Colors.interactive
     
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.body.weight(.semibold))
             .padding(.horizontal, 16)
             .frame(height: 36)
-            .background(isEnabled ? backgroundColor : Theme.Colors.surface.opacity(0.9))
-            .foregroundColor(Theme.Colors.textPrimary)
+            .background(isEnabled ? backgroundColor : Theme.Colors.interactive.opacity(0.5))
+            .foregroundColor(isEnabled ? Theme.Colors.background : Theme.Colors.background.opacity(0.7))
             .cornerRadius(Theme.Design.cornerRadius)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -65,6 +67,8 @@ public struct IconButtonStyle: ButtonStyle {
 }
 
 /// Style for icon-only buttons with no background (e.g., for inline editing).
+/// Uses textSecondary for the resting state (more contrast than textPrimary at opacity)
+/// and textPrimary for pressed state — no accent colour, no pale-on-pale issues.
 public struct SimpleIconButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     var iconSize: CGFloat
@@ -73,7 +77,7 @@ public struct SimpleIconButtonStyle: ButtonStyle {
             .font(.system(size: iconSize))
             .foregroundColor(
                 isEnabled ?
-                (configuration.isPressed ? Theme.Colors.accentColor : Theme.Colors.textPrimary.opacity(0.6))
+                (configuration.isPressed ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
                 : Theme.Colors.textSecondary.opacity(0.3)
             )
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
@@ -83,6 +87,8 @@ public struct SimpleIconButtonStyle: ButtonStyle {
 }
 
 /// Style for filter or tab-like buttons that can be selected.
+/// Selected state uses the interactive off-white background with dark text —
+/// no accent colour, strong contrast for the active filter.
 public struct FilterButtonStyle: ButtonStyle {
     var isSelected: Bool
 
@@ -92,10 +98,10 @@ public struct FilterButtonStyle: ButtonStyle {
             .padding(.horizontal, 12)
             .frame(height: 28)
             .background(
-                isSelected ? Theme.Colors.accentColor :
+                isSelected ? Theme.Colors.interactive :
                     (configuration.isPressed ? Theme.Colors.surface.opacity(0.8) : Theme.Colors.surface)
             )
-            .foregroundColor(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .foregroundColor(isSelected ? Theme.Colors.background : Theme.Colors.textSecondary)
             .cornerRadius(Theme.Design.cornerRadius)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .animation(.easeInOut(duration: 0.15), value: isSelected)

@@ -86,7 +86,7 @@ struct ActiveSessionStatusView: View {
                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.xs)
+        .padding(.vertical, Theme.Spacing.xxs)
     }
     
     // MARK: - Detail Panel
@@ -106,7 +106,7 @@ struct ActiveSessionStatusView: View {
                     .foregroundColor(Theme.Colors.textPrimary)
                     .padding(.horizontal, Theme.Spacing.sm)
                     .padding(.vertical, Theme.Spacing.xs)
-                    .background(Theme.Colors.cardSurface)
+                    .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.blockCornerRadius)
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
@@ -127,7 +127,7 @@ struct ActiveSessionStatusView: View {
                     .frame(height: 80)
                     .padding(.horizontal, Theme.Spacing.xxs)
                     .padding(.vertical, Theme.Spacing.xxs)
-                    .background(Theme.Colors.cardSurface)
+                    .background(Theme.Colors.surface)
                     .cornerRadius(Theme.Design.blockCornerRadius)
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
@@ -221,7 +221,49 @@ struct ActiveSessionStatusView: View {
                         .disabled(sessionManager.currentAction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            
+            // Save & End Session button
+            HStack {
+                Spacer()
+                Button("Save & End Session") {
+                    endCurrentSession()
+                }
+                .buttonStyle(.primary)
+            }
+            .padding(.top, Theme.Spacing.xs)
         }
+    }
+    
+    // MARK: - Actions
+    
+    /// Ends the current session using the dirty-save state already captured in SessionManager,
+    /// then triggers a dashboard refresh so the new session data appears immediately in charts.
+    private func endCurrentSession() {
+        let projectID = sessionManager.currentProjectID
+        let projectName = sessionManager.currentProjectName
+        
+        // Guard: must have required fields
+        guard sessionManager.isSessionActive,
+              let pid = sessionManager.currentProjectID else { return }
+        
+        let action = sessionManager.currentAction
+        let notes = sessionManager.currentNotes
+        let mood = sessionManager.currentMood
+        let activityTypeID = sessionManager.currentActivityTypeID
+        let projectPhaseID = sessionManager.currentProjectPhaseID
+        let isMilestone = sessionManager.currentIsMilestone
+        
+        // End the session with all current dirty-save data.
+        // endSession() itself appends the session to allSessions and posts .sessionDidEnd on success,
+        // so dashboard charts see the data immediately.
+        sessionManager.endSession(
+            notes: notes,
+            mood: mood,
+            activityTypeID: activityTypeID,
+            projectPhaseID: projectPhaseID,
+            action: action.isEmpty ? nil : action,
+            isMilestone: isMilestone
+        )
     }
     
     // MARK: - Helpers

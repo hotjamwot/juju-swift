@@ -14,7 +14,7 @@ extension Date {
 /// Overview (weekly) dashboard — the single dashboard view for the app.
 ///
 /// Charts float freely at their natural height with consistent horizontal margins.
-/// Narrative metric cards use an explicit `cardSurface` background (#252526) for depth.
+/// Narrative metric cards use an explicit `surface` background for depth.
 /// The optional ActiveSessionStatusView pushes everything down when a session is live.
 /// At the bottom, yearly project and activity type distribution charts sit side-by-side.
 struct OverviewDashboardView: View {
@@ -205,81 +205,83 @@ struct OverviewDashboardView: View {
 
 // MARK: - Narrative Summary Card (3 metric cards)
 
-/// Displays THIS WEEK | FOCUS | PROJECT as individual rounded metric cards.
-/// Each card has a visible surface, an SF Symbol, and primary data below.
+/// Displays THIS WEEK | FOCUS | PROJECT as slim editorial metric cards.
+/// Each card has a subtle surface background, a compact header row with
+/// an SF Symbol icon, and ranked breakdowns (top-3 activity types / projects).
 private struct NarrativeSummaryCard: View {
     @ObservedObject var narrativeEngine: NarrativeEngine
 
-    /// Comparison data for the current week vs same elapsed period last week
-    private var comparativeData: ComparativeAnalytics? {
-        narrativeEngine.getComparativeData(for: .week)
-    }
-
-    private func deltaText(current: Double, previous: Double) -> String {
-        let diff = current - previous
-        let sign = diff >= 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", diff))h"
-    }
-
-    private func deltaColor(current: Double, previous: Double) -> Color {
-        current > previous ? Theme.Colors.positive : (current < previous ? Theme.Colors.negative : Theme.Colors.textSecondary)
-    }
-
-    private func formatHours(_ hours: Double) -> String {
-        let h = Int(hours)
-        let m = Int((hours - Double(h)) * 60)
-        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    private var weekSummary: NarrativeWeekSummary? {
+        narrativeEngine.weekSummary
     }
 
     var body: some View {
-        if let headline = narrativeEngine.currentHeadline {
+        if let summary = weekSummary {
             HStack(spacing: Theme.Spacing.sm) {
-                // Card 1: Total Duration
-                NarrativeMetricCard(title: "THIS WEEK", iconName: "clock.fill") {
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Text(headline.formattedHours)
+                // Card 1: Total Duration — uses clock icon
+                NarrativeMetricCard(title: "THIS WEEK", iconName: "clock") {
+                    VStack(spacing: Theme.Spacing.xxs) {
+                        Text(summary.formattedHours)
                             .font(Theme.Fonts.metricValue)
                             .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.center)
 
-                        if let comparative = comparativeData {
-                            VStack(spacing: Theme.Spacing.micro) {
-                                Text("vs \(formatHours(comparative.previous.totalHours)) last week")
+                        // Delta vs last week
+                        deltaView(delta: summary.deltaHours)
+                    }
+                }
+
+                // Card 2: Focus Activity Types (top 3)
+                NarrativeMetricCard(title: "FOCUS", iconName: "target") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                        ForEach(summary.topActivities.prefix(3)) { activity in
+                            HStack(spacing: Theme.Spacing.xxs) {
+                                Image(systemName: activity.sfSymbol)
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary)
-                                Text(deltaText(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
-                                    .font(Theme.Fonts.caption.weight(.semibold))
-                                    .foregroundColor(deltaColor(current: comparative.current.totalHours, previous: comparative.previous.totalHours))
+                                    .frame(width: 14, alignment: .center)
+                                Text(activity.name)
+                                    .font(Theme.Fonts.narrative)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .lineLimit(1)
+                                Spacer(minLength: 4)
+                                Text(formatCompactHours(activity.hours))
+                                    .font(Theme.Fonts.narrativeAccent)
+                                    .foregroundColor(Theme.Colors.textPrimary)
                             }
+                        }
+                        // If no activities, show placeholder
+                        if summary.topActivities.isEmpty {
+                            Text("No activities logged")
+                                .font(Theme.Fonts.narrative)
+                                .foregroundColor(Theme.Colors.textSecondary)
                         }
                     }
                 }
 
-                // Card 2: Focus Activity
-                NarrativeMetricCard(title: "FOCUS", iconName: "target") {
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Image(systemName: headline.topActivity.sfSymbol)
-                            .font(Theme.Fonts.iconLarge)
-                            .foregroundColor(Theme.Colors.accentColor)
-                        Text(headline.topActivity.name)
-                            .font(Theme.Fonts.subheader)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-
-                // Card 3: Top Project
-                NarrativeMetricCard(title: "PROJECT", iconName: "folder.fill") {
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Text(headline.topProject.emoji)
-                            .font(Theme.Fonts.title)
-                        Text(headline.topProject.name)
-                            .font(Theme.Fonts.subheader)
-                            .foregroundColor(Theme.Colors.textPrimary)
-                            .lineLimit(1)
-                            .multilineTextAlignment(.center)
+                // Card 3: Top Projects (top 3)
+                NarrativeMetricCard(title: "PROJECT", iconName: "folder") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                        ForEach(summary.topProjects.prefix(3)) { project in
+                            HStack(spacing: Theme.Spacing.xxs) {
+                                Text(project.emoji)
+                                    .font(Theme.Fonts.caption)
+                                    .frame(width: 14, alignment: .center)
+                                Text(project.name)
+                                    .font(Theme.Fonts.narrative)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                                    .lineLimit(1)
+                                Spacer(minLength: 4)
+                                Text(formatCompactHours(project.hours))
+                                    .font(Theme.Fonts.narrativeAccent)
+                                    .foregroundColor(Theme.Colors.textPrimary)
+                            }
+                        }
+                        // If no projects, show placeholder
+                        if summary.topProjects.isEmpty {
+                            Text("No projects logged")
+                                .font(Theme.Fonts.narrative)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
                     }
                 }
             }
@@ -297,56 +299,83 @@ private struct NarrativeSummaryCard: View {
             }
         }
     }
+
+    // MARK: - Helpers
+
+    /// Compact hours display: "6.2h" or "45m"
+    private func formatCompactHours(_ hours: Double) -> String {
+        if hours >= 1 {
+            return String(format: "%.1fh", hours)
+        } else {
+            let mins = Int(hours * 60)
+            return "\(mins)m"
+        }
+    }
+
+    /// Delta view — shows "+2.1h" or "-0.5h" vs last week
+    @ViewBuilder
+    private func deltaView(delta: Double) -> some View {
+        if delta == 0 {
+            Text("Same as last week")
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+        } else {
+            let sign = delta > 0 ? "+" : ""
+            let color: Color = delta > 0 ? Theme.Colors.positive : Theme.Colors.negative
+            HStack(spacing: Theme.Spacing.micro) {
+                Image(systemName: delta > 0 ? "arrow.up" : "arrow.down")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(color)
+                Text("\(sign)\(String(format: "%.1f", delta))h vs last week")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(color)
+            }
+        }
+    }
 }
 
 /// A single metric card in the narrative strip.
-/// Layout: title + symbol at top-left, main content centred vertically and horizontally.
-/// Uses a visible elevated card surface and generous vertical padding for equal height.
+/// Layout: icon + title row at top, generous spacing, then main content.
+/// Uses a visible surface background — no divider, no border.
 private struct NarrativeMetricCard<Content: View>: View {
     let title: String
     let iconName: String?
-    let emoji: String?
     @ViewBuilder let content: () -> Content
 
-    init(title: String, iconName: String? = nil, emoji: String? = nil, @ViewBuilder content: @escaping () -> Content) {
+    init(title: String, iconName: String? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.iconName = iconName
-        self.emoji = emoji
         self.content = content
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Top: title + symbol, left-aligned
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+            // Header row — icon + title, left-aligned, muted
+            HStack(spacing: Theme.Spacing.xxs) {
+                if let iconName = iconName {
+                    Image(systemName: iconName)
+                        .font(Theme.Fonts.icon)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
                 Text(title)
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
                     .tracking(0.8)
-
-                if let iconName = iconName {
-                    Image(systemName: iconName)
-                        .font(Theme.Fonts.icon)
-                        .foregroundColor(Theme.Colors.accentColor)
-                } else if let emoji = emoji {
-                    Text(emoji)
-                        .font(Theme.Fonts.body)
-                }
             }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.top, Theme.Spacing.md)
 
-            // Centre: main content
-            Spacer(minLength: Theme.Spacing.xxs)
+            // Breathing room between header and content — no divider needed
+            Spacer().frame(height: Theme.Spacing.sm)
+
+            // Content — fills remaining space
             content()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.bottom, Theme.Spacing.md)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(minHeight: 180)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.md)
+        .frame(minHeight: 110)
         .background(
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
-                .fill(Theme.Colors.cardSurface)
+                .fill(Theme.Colors.surface)
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
     }

@@ -128,10 +128,40 @@ struct NarrativeHeadline: Equatable {
     }
 }
 
+// MARK: - Rich Week Summary Types
+
+/// A ranked activity type within the weekly breakdown with its hours.
+struct ActivityTypeBreakdown: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let sfSymbol: String
+    let hours: Double
+}
+
+/// A ranked project within the weekly breakdown with its hours.
+struct ProjectBreakdown: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let emoji: String
+    let color: String
+    let hours: Double
+}
+
+/// Full weekly summary with top activities, projects, and comparative data.
+struct NarrativeWeekSummary: Equatable {
+    let totalHours: Double
+    let formattedHours: String
+    let topActivities: [ActivityTypeBreakdown]
+    let topProjects: [ProjectBreakdown]
+    let previousTotalHours: Double
+    let deltaHours: Double
+}
+
 // MARK: - Narrative Engine
 @MainActor
 final class NarrativeEngine: ObservableObject {
     @Published var currentHeadline: NarrativeHeadline?
+    @Published var weekSummary: NarrativeWeekSummary?
     
     private let sessionManager: SessionManager
     private let projectsViewModel: ProjectsViewModel
@@ -150,8 +180,10 @@ final class NarrativeEngine: ObservableObject {
     
     func generateWeeklyHeadline() {
         let headline = _generateHeadline(for: .week)
+        let summary = _generateWeekSummary()
         DispatchQueue.main.async {
             self.currentHeadline = headline
+            self.weekSummary = summary
         }
     }
     
@@ -211,6 +243,71 @@ final class NarrativeEngine: ObservableObject {
             topActivity: determineTopActivity(from: sessions),
             topProject: determineTopProject(from: sessions),
             period: period.title.lowercased().replacingOccurrences(of: "this ", with: "")
+        )
+    }
+    
+    /// Builds the rich week summary with top-3 activities and projects.
+    private func _generateWeekSummary() -> NarrativeWeekSummary {
+        let sessions = filterSessions(for: .week)
+        let totalHours = calculateTotalHours(from: sessions)
+        
+        // Compute previous week's hours for delta
+        let calendar = Calendar.current
+        let previousWeekHours: Double
+        if let previousReferenceDate = calendar.date(byAdding: .weekOfYear, value: -1, to: Date()) {
+            let prevSessions = filterSessions(for: .week, referenceDate: previousReferenceDate)
+            previousWeekHours = calculateTotalHours(from: prevSessions)
+        } else {
+            previousWeekHours = 0
+        }
+        
+        // Build sorted activity type breakdown
+        var activityTotals: [String: Double] = [:]
+        for session in sessions {
+            let id = session.activityTypeID ?? ActivityType.uncategorizedID
+            activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
+        }
+        let sortedActivities = activityTotals
+            .filter { $0.value > 0 }
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .compactMap { (id, hours) -> ActivityTypeBreakdown? in
+                let activity = activityTypeManager.getActivityType(id: id) ?? activityTypeManager.getUncategorizedActivityType()
+                return ActivityTypeBreakdown(id: id, name: activity.name, sfSymbol: activity.sfSymbol, hours: hours)
+            }
+        
+        // Build sorted project breakdown
+        var projectTotals: [String: Double] = [:]
+        for session in sessions {
+            projectTotals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
+        }
+        let sortedProjects = projectTotals
+            .filter { $0.value > 0 }
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .compactMap { (id, hours) -> ProjectBreakdown? in
+                let project = projectsViewModel.projects.first { $0.id == id }
+                return ProjectBreakdown(
+                    id: id,
+                    name: project?.name ?? id,
+                    emoji: project?.emoji ?? Project.defaultEmoji,
+                    color: project?.color ?? "#999999",
+                    hours: hours
+                )
+            }
+        
+        // Format hours
+        let h = Int(totalHours)
+        let m = Int((totalHours - Double(h)) * 60)
+        let formatted = h > 0 ? "\(h)h \(m)m" : "\(m)m"
+        
+        return NarrativeWeekSummary(
+            totalHours: totalHours,
+            formattedHours: formatted,
+            topActivities: Array(sortedActivities),
+            topProjects: Array(sortedProjects),
+            previousTotalHours: previousWeekHours,
+            deltaHours: totalHours - previousWeekHours
         )
     }
 

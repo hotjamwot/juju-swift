@@ -108,6 +108,13 @@ struct SessionCalendarChartView: View {
     
     // MARK: - Tooltip Content
     
+    /// Convert a decimal hour (e.g. 9.5) to a formatted time string (e.g. "09:30").
+    private func formatHour(_ hour: Double) -> String {
+        let h = Int(floor(hour))
+        let m = Int((hour - Double(h)) * 60 + 0.5)
+        return String(format: "%02d:%02d", h, m)
+    }
+    
     @ViewBuilder
     private func tooltipContent(for session: WeeklySession) -> some View {
         TooltipContainer {
@@ -116,12 +123,9 @@ struct SessionCalendarChartView: View {
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
-                Text(String(format: "%.0f:00 – %.0f:00 • %.1fh",
-                    session.startHour,
-                    session.endHour,
-                    session.duration))
+                Text("\(formatHour(session.startHour)) – \(formatHour(session.endHour)) • \(session.duration, specifier: "%.1f")h")
                     .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.accentColor)
+                    .foregroundColor(Theme.Colors.textSecondary)
                 
                 TooltipDivider()
                 
