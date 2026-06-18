@@ -69,12 +69,13 @@ public struct IconButtonStyle: ButtonStyle {
 /// Style for icon-only buttons with no background (e.g., for inline editing).
 /// Uses textSecondary for the resting state (more contrast than textPrimary at opacity)
 /// and textPrimary for pressed state — no accent colour, no pale-on-pale issues.
+/// For default 16pt icons, uses Theme.Fonts.iconLarge. For custom sizes, falls back to system font.
 public struct SimpleIconButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     var iconSize: CGFloat
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: iconSize))
+            .font(iconSize == 16 ? Theme.Fonts.iconLarge : .system(size: iconSize))
             .foregroundColor(
                 isEnabled ?
                 (configuration.isPressed ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)

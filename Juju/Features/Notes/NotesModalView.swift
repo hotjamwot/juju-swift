@@ -68,9 +68,9 @@ struct NotesModalView: View {
             HStack(spacing: Theme.spacingMedium) {
                 Image("juju_logo")
                     .resizable()
+                    .interpolation(.high)
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .shadow(radius: 1)
 
                 Text("Ooh yeah, nice work on the \(viewModel.currentProjectName ?? "Project") Juju session!")
             }

@@ -57,7 +57,7 @@ struct ActivityTypeSidebarEditView: View {
             // Name field - label on left, field on right
             HStack {
                 Text("Name")
-                    .font(.body)
+                    .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                     .frame(width: 80, alignment: .leading)
                 TextField("", text: $tempName)
@@ -71,12 +71,12 @@ struct ActivityTypeSidebarEditView: View {
             // SF Symbol selection
             HStack {
                 Text("Icon")
-                    .font(.body)
+                    .font(Theme.Fonts.body)
                     .foregroundColor(Theme.Colors.textSecondary)
                 Spacer()
                 TextField("", text: $tempSFSymbol)
                     .textFieldStyle(.plain)
-                    .font(.body)
+                    .font(Theme.Fonts.body)
                     .frame(width: 120, height: 32)
                     .multilineTextAlignment(.center)
                     .background(Theme.Colors.background)
@@ -87,7 +87,7 @@ struct ActivityTypeSidebarEditView: View {
                     )
                 // Preview of the selected SF Symbol
                 Image(systemName: tempSFSymbol)
-                    .font(.title2)
+                    .font(Theme.Fonts.iconLarge)
                     .frame(width: 32, height: 32)
             }
         }
@@ -99,7 +99,7 @@ struct ActivityTypeSidebarEditView: View {
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSmall) {
             Text("Description")
-                .font(.body)
+                .font(Theme.Fonts.body)
                 .foregroundColor(Theme.Colors.textSecondary)
             TextEditor(text: $tempDescription)
                 .frame(minHeight: 120, maxHeight: 160)
@@ -119,8 +119,8 @@ struct ActivityTypeSidebarEditView: View {
             Toggle("", isOn: $tempArchived)
             Spacer()
             Text(tempArchived ? "Archived" : "Active")
-                .font(.caption)
-                .foregroundColor(tempArchived ? .red : .green)
+                .font(Theme.Fonts.caption)
+                .foregroundColor(tempArchived ? Theme.Colors.error : Theme.Colors.milestone)
         }
         .padding(Theme.spacingMedium)
     }

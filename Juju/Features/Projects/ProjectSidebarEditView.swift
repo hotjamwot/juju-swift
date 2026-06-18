@@ -137,7 +137,7 @@ struct ProjectSidebarEditView: View {
                         .foregroundColor(Theme.Colors.textSecondary)
                     TextField("", text: $tempEmoji)
                         .textFieldStyle(.plain)
-                        .font(.title2)
+                        .font(Theme.Fonts.iconLarge)
                         .frame(width: 32, height: 32)
                         .multilineTextAlignment(.center)
                         .background(Theme.Colors.background)
@@ -186,8 +186,8 @@ struct ProjectSidebarEditView: View {
             ForEach(tempPhases.indices, id: \.self) { index in
                 HStack(spacing: Theme.spacingSmall) {
                     Image(systemName: "line.3.horizontal")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .font(Theme.Fonts.caption)
                         .frame(width: 24)
 
                     TextField("", text: Binding(
@@ -211,7 +211,7 @@ struct ProjectSidebarEditView: View {
                         }
                     )) {
                         Text("Retired")
-                            .font(.caption2)
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
                     }
                     .toggleStyle(.checkbox)
@@ -221,7 +221,7 @@ struct ProjectSidebarEditView: View {
                         self.requestRemovePhase(at: index)
                     }) {
                         Image(systemName: "minus.circle.fill")
-                            .foregroundColor(.red)
+                            .foregroundColor(Theme.Colors.error)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .help("Remove this phase from the project")
@@ -247,9 +247,9 @@ struct ProjectSidebarEditView: View {
             }) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(Theme.Colors.accentColor)
+                        .foregroundColor(Theme.Colors.interactive)
                     Text("Add Phase")
-                        .foregroundColor(Theme.Colors.accentColor)
+                        .foregroundColor(Theme.Colors.interactive)
                 }
             }
             .buttonStyle(PlainButtonStyle())

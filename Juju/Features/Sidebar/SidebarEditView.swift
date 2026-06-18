@@ -73,7 +73,7 @@ struct SidebarEditView: View {
     private func sidebarHeader(_ content: SidebarContent) -> some View {
         HStack {
             Text(sidebarTitle(for: content))
-                .font(.headline)
+                .font(Theme.Fonts.title)
                 .foregroundColor(Theme.Colors.textPrimary)
             
             Spacer()

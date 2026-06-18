@@ -288,7 +288,7 @@ struct BottomFilterBar: View {
         HStack(spacing: Theme.spacingSmall) {
             // Selection count
             Text("\(filterState.selectedSessionIDs.count) selected")
-                .font(.caption.weight(.semibold))
+                .font(Theme.Fonts.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.accentColor)
                 .padding(.horizontal, Theme.spacingSmall)
                 .padding(.vertical, Theme.spacingExtraSmall)
@@ -562,7 +562,7 @@ struct BottomFilterBar: View {
                         .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textPrimary)
                     Text("(no activity type)")
-                        .font(.caption)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -693,7 +693,7 @@ struct BottomFilterBar: View {
             HStack(spacing: Theme.spacingMedium) {
                 VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                     Text("From:")
-                        .font(.caption)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                     DatePicker(
                         "Start Date",
@@ -705,7 +705,7 @@ struct BottomFilterBar: View {
                 
                 VStack(alignment: .leading, spacing: Theme.spacingExtraSmall) {
                     Text("To:")
-                        .font(.caption)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
                     DatePicker(
                         "End Date",
@@ -727,11 +727,11 @@ struct BottomFilterBar: View {
             let tempRange = DateRange(startDate: tempCustomStartDate, endDate: tempCustomEndDate)
             if !tempRange.isValid {
                 Text("Invalid date range")
-                    .font(.caption)
+                    .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.error)
             } else {
-                Text("Range: \(tempRange.durationDescription)")
-                    .font(.caption)
+                    Text("Range: \(tempRange.durationDescription)")
+                        .font(Theme.Fonts.caption)
                     .foregroundColor(Theme.Colors.textSecondary)
             }
         }

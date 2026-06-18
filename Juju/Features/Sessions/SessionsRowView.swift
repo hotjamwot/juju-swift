@@ -220,7 +220,7 @@ struct SessionsRowView: View {
                         showingProjectPopover = true
                         selectedProjectID = currentSession.projectID
                     }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: Theme.Spacing.xxs) {
                             // Project color dot
                             Circle()
                                 .fill(projectColor)
@@ -241,25 +241,20 @@ struct SessionsRowView: View {
                                 Text("Archived")
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.8))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, Theme.Spacing.xxs)
+                                    .padding(.vertical, Theme.Spacing.micro)
                                     .background(Theme.Colors.divider.opacity(0.3))
                                     .clipShape(Capsule())
                             }
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, Theme.Row.contentPadding)
+                        .padding(.vertical, Theme.Spacing.xxs)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
                                 .fill((isProjectArchived ? Theme.Colors.divider : projectColor).opacity(0.1))
                                 .opacity(isProjectHovering ? 1.0 : 0.0)
                         )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke((isProjectArchived ? Theme.Colors.divider : projectColor).opacity(0.3), lineWidth: 1)
-                                .opacity(isProjectHovering ? 1.0 : 0.0)
-                        )
-                        .contentShape(Rectangle()) // Make entire capsule tappable
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
                     .onHover { hovering in
@@ -267,10 +262,9 @@ struct SessionsRowView: View {
                     }
                     .popover(isPresented: $showingProjectPopover) {
                         InlineSelectionPopover(
-                            items: projects.filter { !$0.archived }, // Only show active (non-archived) projects
-                            currentID: currentSession.projectID, // Use current session's projectID directly
+                            items: projects.filter { !$0.archived },
+                            currentID: currentSession.projectID,
                             onItemSelected: { project in
-                                // Update session with new project and reset phase
                                 updateSessionProject(project)
                             },
                             onDismiss: {
@@ -282,7 +276,7 @@ struct SessionsRowView: View {
                     .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
                     .padding(.leading, Theme.Row.contentPadding)
                     
-                    // Column 2: Activity Type (moved before Phase)
+                    // Column 2: Activity Type
                     if let activityType = getActivityTypeDisplay() {
                         Button(action: {
                             showingActivityTypePopover = true
@@ -295,19 +289,13 @@ struct SessionsRowView: View {
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textPrimary)
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Theme.Spacing.xxs)
+                            .padding(.vertical, Theme.Spacing.micro)
                             .background(
-                                Theme.Colors.divider.opacity(0.2)
-                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 999)
-                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                                Theme.Colors.divider.opacity(isActivityTypeHovering ? 0.3 : 0.15)
                             )
                             .clipShape(Capsule())
-                            .contentShape(Rectangle()) // Make entire area tappable
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainButtonStyle())
                         .onHover { hovering in
@@ -338,21 +326,15 @@ struct SessionsRowView: View {
                                     .font(Theme.Fonts.caption)
                                 Text("Activity Type")
                                     .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textPrimary.opacity(0.6))
+                                    .foregroundColor(Theme.Colors.textSecondary)
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Theme.Spacing.xxs)
+                            .padding(.vertical, Theme.Spacing.micro)
                             .background(
-                                Theme.Colors.divider.opacity(0.2)
-                                    .opacity(isActivityTypeHovering ? 0.4 : 0.2)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 999)
-                                    .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                    .opacity(isActivityTypeHovering ? 1.0 : 0.0)
+                                Theme.Colors.divider.opacity(isActivityTypeHovering ? 0.3 : 0.15)
                             )
                             .clipShape(Capsule())
-                            .contentShape(Rectangle()) // Make entire area tappable
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainButtonStyle())
                         .onHover { hovering in
@@ -389,7 +371,6 @@ struct SessionsRowView: View {
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(phaseInfo.isArchived ? 0.55 : 1))
                             }
                         } else {
-                            // Empty space when no phase - make it clickable to add a phase
                             Image(systemName: "play.circle")
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
@@ -400,8 +381,6 @@ struct SessionsRowView: View {
                         isPhaseHovering = hovering
                     }
                     .popover(isPresented: $showingPhasePopover) {
-                        // Always get the current project to ensure we show the correct phases
-                        // Include projectDataVersion as a dependency to force refresh when project data changes
                         if !currentSession.projectID.isEmpty,
                            let project = projects.first(where: { $0.id == currentSession.projectID }) {
                             PhaseSelectionPopover(
@@ -415,20 +394,16 @@ struct SessionsRowView: View {
                                 }
                             )
                             .padding()
-                            .id(projectDataVersion) // Force refresh when project data version changes
+                            .id(projectDataVersion)
                         }
                     }
+                    .padding(.horizontal, Theme.Spacing.xxs)
+                    .padding(.vertical, Theme.Spacing.micro)
                     .background(
-                        Theme.Colors.divider.opacity(0.2)
-                            .opacity(isPhaseHovering ? 0.4 : 0.2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 999)
-                            .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                            .opacity(isPhaseHovering ? 1.0 : 0.0)
+                        Theme.Colors.divider.opacity(isPhaseHovering ? 0.3 : 0.15)
                     )
                     .clipShape(Capsule())
-                    .contentShape(Rectangle()) // Make entire area tappable
+                    .contentShape(Rectangle())
                     .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
                     
                     // Column 4: Action
@@ -438,7 +413,6 @@ struct SessionsRowView: View {
                     }) {
                         if let action = currentSession.action, !action.isEmpty {
                             if currentSession.isMilestone {
-                                // With milestone: just colored flag icon + text (no capsule)
                                 HStack(spacing: Theme.Row.compactSpacing) {
                                     Image(systemName: "flag.fill")
                                         .font(Theme.Fonts.caption)
@@ -449,14 +423,12 @@ struct SessionsRowView: View {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             } else {
-                                // With text (no milestone): plain text, no icon, left-aligned
                                 Text(action)
                                     .font(Theme.Fonts.body.weight(.semibold))
                                     .foregroundColor(Theme.Colors.textPrimary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         } else {
-                            // No text: empty flag icon
                             Image(systemName: "flag")
                                 .font(Theme.Fonts.caption)
                                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
@@ -482,10 +454,10 @@ struct SessionsRowView: View {
                         .padding()
                     }
                     .background(
-                        Theme.Colors.textSecondary.opacity(0.05)
-                            .opacity(isActionHovering ? 0.08 : 0)
+                        Theme.Colors.interactiveHover
+                            .opacity(isActionHovering ? 1.0 : 0.0)
                     )
-                    .contentShape(Rectangle()) // Make entire area tappable
+                    .contentShape(Rectangle())
                     .frame(maxWidth: .infinity)
                     
                     // Column 5: Delete button - appears on hover
@@ -493,7 +465,7 @@ struct SessionsRowView: View {
                         onDelete(currentSession)
                     }) {
                         Image(systemName: "trash")
-                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.error)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -533,21 +505,18 @@ struct SessionsRowView: View {
                             )
                             .padding()
                         }
+                        .padding(.horizontal, Theme.Spacing.xxs)
+                        .padding(.vertical, Theme.Spacing.micro)
                         .background(
-                            Theme.Colors.divider.opacity(0.2)
-                                .opacity(isStartTimeHovering ? 0.4 : 0.2)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 999)
-                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                .opacity(isStartTimeHovering ? 1.0 : 0.0)
+                            Theme.Colors.divider.opacity(isStartTimeHovering ? 0.3 : 0.15)
                         )
                         .clipShape(Capsule())
-                        .contentShape(Rectangle()) // Make entire area tappable
+                        .contentShape(Rectangle())
                         
-                        Text("-")
+                        Text("–")
                             .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.7))
+                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
+                            .padding(.horizontal, Theme.Spacing.micro)
                         
                         // End Time with combined date/time picker
                         Button(action: {
@@ -574,27 +543,22 @@ struct SessionsRowView: View {
                             )
                             .padding()
                         }
+                        .padding(.horizontal, Theme.Spacing.xxs)
+                        .padding(.vertical, Theme.Spacing.micro)
                         .background(
-                            Theme.Colors.divider.opacity(0.2)
-                                .opacity(isEndTimeHovering ? 0.4 : 0.2)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 999)
-                                .stroke(projectColor.opacity(0.3), lineWidth: 1)
-                                .opacity(isEndTimeHovering ? 1.0 : 0.0)
+                            Theme.Colors.divider.opacity(isEndTimeHovering ? 0.3 : 0.15)
                         )
                         .clipShape(Capsule())
-                        .contentShape(Rectangle()) // Make entire area tappable
+                        .contentShape(Rectangle())
                     }
                     .frame(minWidth: 160, maxWidth: 180, alignment: .leading)
-                    .padding(.leading, Theme.Spacing.md) // Align with Project Name text (accounting for circle + spacing)
+                    .padding(.leading, Theme.Spacing.md)
                     
                     // Column 2: Duration (under Activity Type)
                     Text(formatDurationFromDates(currentSession.startDate, currentSession.endDate))
                         .font(Theme.Fonts.caption.weight(.semibold))
                         .foregroundColor(Theme.Colors.textSecondary)
                         .frame(minWidth: 100, maxWidth: 130, alignment: .leading)
-                        .padding(.leading, 0) // Add spacing to align with Activity Type
                     
                     // Column 3: Mood (under Phase)
                     Button(action: {
@@ -610,7 +574,7 @@ struct SessionsRowView: View {
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary)
                             } else {
-                                Text("-")
+                                Text("–")
                                     .font(Theme.Fonts.caption)
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.4))
                             }
@@ -668,10 +632,10 @@ struct SessionsRowView: View {
                         .padding(.leading, Theme.Spacing.xs)
                     }
                     .background(
-                        Theme.Colors.textSecondary.opacity(0.05)
-                            .opacity(isNotesHovering ? 0.08 : 0)
+                        Theme.Colors.interactiveHover
+                            .opacity(isNotesHovering ? 1.0 : 0.0)
                     )
-                    .contentShape(Rectangle()) // Make entire area tappable
+                    .contentShape(Rectangle())
                     .frame(maxWidth: .infinity)
                     
                     // Column 5: Empty space for delete alignment
@@ -682,15 +646,9 @@ struct SessionsRowView: View {
                 }
             }
             
-            // Adjust row height for 2-line layout with better spacing
-            .frame(height: 56) // Compact height with minimal spacing between lines
-            .background(
-                Theme.Colors.surface.opacity(0.7)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(isSelected && isBulkEditing ? Theme.Colors.accentColor : Theme.Colors.divider, lineWidth: isSelected && isBulkEditing ? 2 : 1)
-            )
+            // Row height uses Theme constant; solid surface background, no border
+            .frame(height: Theme.Row.height + Theme.Row.separatorHeight)
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Row.cornerRadius)
             // Pulse bar overlay at the bottom of the row
             .overlay(alignment: .bottom) {

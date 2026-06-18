@@ -21,7 +21,8 @@ import AppKit
 /// TYPOGRAPHY RULES:
 /// - Design: .default throughout. No .rounded — it reads as "app-like"; we want editorial.
 /// - Two weights only: .regular for body, .semibold for headers.
-/// - Size hierarchy: 16 → 14 → 13 → 10. No magic sizes outside this scale.
+/// - Size hierarchy: 16 → 12 → 10. Every size is a multiple of 4 except caption (10pt),
+///   which is kept as a dedicated micro-size for minimal chrome.
 ///
 /// SPACING RULES:
 /// - 8pt grid system. Every gap is a multiple of 4.
@@ -54,9 +55,6 @@ public struct Theme {
         /// Divider — very low opacity warm white. Hairline rules only.
         /// Xcode asset: "Divider" → rgba(234, 228, 218, 0.10)
         public static let divider = Color("Divider")
-
-        /// Foreground alias — same value as textPrimary. Kept for legacy compatibility.
-        public static let foreground = Color("foreground")
 
         /// Error — retained for destructive actions only.
         /// Xcode asset: "Error" → #B02A21
@@ -120,63 +118,81 @@ public struct Theme {
     // Two weights only: .regular and .semibold.
     // If you need to express hierarchy, use size and opacity — not weight proliferation.
     //
-    // Size hierarchy: 16 → 14 → 13 → 10. No magic sizes outside this scale.
+    // Size hierarchy: 16 → 12 → 10. Every size is a multiple of 4 except caption (10pt),
+    // which is kept as a dedicated micro-size for minimal chrome.
     public struct Fonts {
-        /// Hero page titles — 16pt semibold. For "Sessions", "Projects", "Activity Types" page titles.
-        public static let hero = Font.system(size: 16, weight: .semibold, design: .default)
+        // ── 16pt — Titles & Large Icons ──────────────────────────────
+        //
+        //   .title   → page-level titles ("Sessions", "Projects")
+        //   .hero    → greeting in the notes modal
+        //   .metricValue → large numeric displays (THIS WEEK hours)
+        //   .dialogTitle → modal titles
+        //   .header  → section headers
+        //   .iconLarge → larger SF Symbols in overview cards
+        //
+        // These are aliases for the same 16pt size. Use the name that best
+        // describes the content role — no need to break out additional sizes.
 
-        /// Metric value — 16pt semibold. For large numeric displays (FOCUS hours, THIS WEEK value).
-        public static let metricValue = Font.system(size: 16, weight: .semibold, design: .default)
-
-        /// Dialog title — 16pt semibold. For modal titles like "Delete Project".
-        public static let dialogTitle = Font.system(size: 16, weight: .semibold, design: .default)
-
-        /// Title — 16pt semibold. For metric values, dialog titles, prominent numbers.
+        /// 16pt semibold. The largest editorial size — for page titles, dialogs, metrics.
         public static let title = Font.system(size: 16, weight: .semibold, design: .default)
+        /// Same as title — for opening greetings.
+        public static let hero = title
+        /// Same as title — for large numeric values.
+        public static let metricValue = title
+        /// Same as title — for modal dialog titles.
+        public static let dialogTitle = title
+        /// Same as title — for section and card headings.
+        public static let header = title
 
-        /// Icon — 14pt regular. Standard SF Symbol size for icons.
-        public static let icon = Font.system(size: 14, weight: .regular, design: .default)
-
-        /// Icon large — 16pt regular. Larger SF Symbol size for overview card icons.
+        /// 16pt regular. For larger SF Symbols in overview cards and icon buttons.
         public static let iconLarge = Font.system(size: 16, weight: .regular, design: .default)
 
-        /// Subheader — 14pt semibold. For section headings like "Notable moments".
-        public static let subheader = Font.system(size: 14, weight: .semibold, design: .default)
+        // ── 12pt — Body, Narrative, Icons & Subtitles ────────────────
+        //
+        // The single workhorse size. Every text role that isn't a title or
+        // micro-chrome uses 12pt, differentiated by weight or design
+        // (.monospaced for tabular data).
 
-        /// Section headers and card titles — 16pt semibold, default design.
-        public static let header = Font.system(size: 16, weight: .semibold, design: .default)
+        /// 12pt regular. The workhorse — body text, input fields, labels, narrative,
+        /// standard SF Symbol icons, captions, and sidebar labels.
+        public static let body = Font.system(size: 12, weight: .regular, design: .default)
 
-        /// Sidebar — 14pt regular/semibold toggle. For sidebar item labels.
-        public static let sidebar = Font.system(size: 14, weight: .regular, design: .default)
+        /// 12pt regular. Standard SF Symbol size for icons.
+        public static let icon = Font.system(size: 12, weight: .regular, design: .default)
 
-        /// Body text — 14pt regular. The workhorse.
-        public static let body = Font.system(size: 14, weight: .regular, design: .default)
+        /// 12pt semibold. For section subheadings, narrative data values,
+        /// and emphasised labels.
+        public static let subheader = Font.system(size: 12, weight: .semibold, design: .default)
 
-        /// Narrative strip text — 13pt regular. For summary stat labels.
-        public static let narrative = Font.system(size: 13, weight: .regular, design: .default)
+        /// 12pt regular. Narrative strip labels (THIS WEEK, FOCUS, PROJECT) —
+        /// same size as body, kept as a distinct semantic name for clarity.
+        public static let narrative = Font.system(size: 12, weight: .regular, design: .default)
 
-        /// Narrative strip accent — 13pt semibold. For summary stat values.
-        public static let narrativeAccent = Font.system(size: 13, weight: .semibold, design: .default)
+        /// 12pt semibold. Narrative strip values and data highlights —
+        /// identical to subheader, kept as a distinct semantic name.
+        public static let narrativeAccent = Font.system(size: 12, weight: .semibold, design: .default)
 
-        /// Mono — 13pt regular monospaced. For timestamps, durations, precise numeric data.
+        /// 12pt regular monospaced. For timestamps, durations, precise data.
         /// .monospaced keeps numbers from jumping in width as they update.
-        public static let mono = Font.system(size: 13, weight: .regular, design: .monospaced)
+        public static let mono = Font.system(size: 12, weight: .regular, design: .monospaced)
 
-        /// Caption — 10pt regular. The single smallest size. For badges, metadata, SF Symbol icons,
-        /// chart labels, timestamps, and all minimal UI chrome. Use sparingly.
+        // ── 10pt — Caption (micro-chrome) ─────────────────────────────
+
+        /// 10pt regular. The single smallest size, kept outside the 4× grid
+        /// for dedicated micro-chrome: badges, chart labels, timestamps.
+        /// Use sparingly — prefer 12pt body for all readable text.
         public static let caption = Font.system(size: 10, weight: .regular, design: .default)
     }
 
     // MARK: - Spacing
     //
-    // 8pt grid. Every value is a multiple of 4.
-    // Use named constants — never magic numbers in layout code.
-    public static let spacingExtraSmall = CGFloat(4)
-    public static let spacingSmall      = CGFloat(8)
-    public static let spacingMedium     = CGFloat(16)
-    public static let spacingLarge      = CGFloat(24)
-    public static let spacingExtraLarge = CGFloat(32)
-
+    // Single source of truth. Use these constants everywhere — no magic numbers.
+    // 8pt grid: every value is a multiple of 4.
+    //
+    // Two naming styles alias the same values for call-site clarity:
+    //   spacers    → Theme.Spacing.xs  for VStack/HStack spacing parameters
+    //   padding    → Theme.Spacing.xl  for .padding() calls
+    // Both resolve identically. Use whichever reads naturally at the call site.
     public struct Spacing {
         /// 2pt — micro gaps, almost invisible.
         public static let micro: CGFloat = 2
@@ -195,8 +211,26 @@ public struct Theme {
         /// 48pt — outer dashboard padding. Generous breathing room.
         public static let xxl: CGFloat = 48
     }
+}
 
-    // MARK: - Design
+// Provide top-level convenience aliases matching the old Theme.spacingExtraSmall
+// naming convention. New code should prefer Theme.Spacing.*.
+
+extension Theme {
+    /// The old 4pt spacer — use Theme.Spacing.xxs for new code.
+    public static let spacingExtraSmall = Theme.Spacing.xxs
+    /// The old 8pt spacer — use Theme.Spacing.xs for new code.
+    public static let spacingSmall = Theme.Spacing.xs
+    /// The old 16pt spacer — use Theme.Spacing.md for new code.
+    public static let spacingMedium = Theme.Spacing.md
+    /// The old 24pt spacer — use Theme.Spacing.lg for new code.
+    public static let spacingLarge = Theme.Spacing.lg
+    /// The old 32pt spacer — use Theme.Spacing.xl for new code.
+    public static let spacingExtraLarge = Theme.Spacing.xl
+}
+
+// MARK: - Design Constants
+extension Theme {
     public struct Design {
         /// Standard corner radius — 12pt for cards, containers, dialogs.
         public static let cornerRadius = CGFloat(12)
@@ -268,7 +302,6 @@ public struct Theme {
 // "textPrimary"  Any: #EAE4DA  (r:0.918 g:0.894 b:0.855)
 // "textSecondary"Any: #7A7268  (r:0.478 g:0.447 b:0.408)
 // "Divider"      Any: rgba(234,228,218, 0.10)
-// "foreground"   Any: #EAE4DA  (same as textPrimary)
 // "Error"        Any: #B02A21  (unchanged)
 // "AppAccentColor" Any: #EAE4DA (updated June 2026 to match textPrimary — was #E100FF.
 //                              Kept for legacy call sites, not for new uses.)

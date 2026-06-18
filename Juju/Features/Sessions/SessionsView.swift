@@ -111,41 +111,33 @@ public struct SessionsView: View {
         
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
-                // Day Header - now integrated directly into SessionsView
-                HStack {
+                // Day Header — editorial: short date, session count, total duration
+                HStack(alignment: .firstTextBaseline) {
                     // Left section: Date and session count
-                    HStack(spacing: 12) {
-                        // Date text
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(group.date.prettyHeader)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                        }
+                    HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                        // Date — use shortHeader for a clean editorial format
+                        Text(group.date.shortHeader)
+                            .font(Theme.Fonts.subheader)
+                            .foregroundColor(Theme.Colors.textPrimary)
                         
-                        // Session count badge
+                        // Session count — micro label
                         Text("\(group.sessions.count) session\(group.sessions.count != 1 ? "s" : "")")
-                            .font(Theme.Fonts.caption.weight(.semibold))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.textSecondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Theme.Colors.divider.opacity(0.2))
-                            .clipShape(Capsule())
                     }
                     
                     Spacer()
                     
-                    // Total duration badge (right aligned)
+                    // Total duration — micro label, right aligned
                     Text(group.formattedDuration)
                         .font(Theme.Fonts.caption.weight(.semibold))
                         .foregroundColor(Theme.Colors.textSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
                 }
-                .padding(.vertical, Theme.spacingSmall)
-                .padding(.horizontal, Theme.spacingMedium)
+                .padding(.vertical, Theme.Spacing.xs)
+                .padding(.horizontal, Theme.Spacing.md)
                 
-                // Session rows (always visible now - no expansion needed)
-                VStack(spacing: Theme.spacingSmall) {
+                // Session rows
+                VStack(spacing: Theme.Spacing.xs) {
                     ForEach(group.sessions) { session in
                         SessionsRowView(
                             session: session,
@@ -423,14 +415,14 @@ public struct SessionsView: View {
     
     // MARK: - Header View
     private var headerView: some View {
-        HStack {
-            Text("Sessions")
-                .font(Theme.Fonts.hero)
-                .frame(maxWidth: .infinity)
-        }
-        .padding(.vertical, Theme.spacingLarge)
-        .padding(.horizontal, Theme.spacingLarge)
-        .background(Theme.Colors.background)
+        Text("Sessions")
+            .font(Theme.Fonts.title)
+            .foregroundColor(Theme.Colors.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+            .padding(.top, Theme.spacingLarge)
+            .padding(.bottom, Theme.spacingMedium)
+            .background(Theme.Colors.background)
     }
     
     // MARK: - Content Area View Components
@@ -440,8 +432,11 @@ public struct SessionsView: View {
         if projectsViewModel.isLoading {
             VStack {
                 Spacer()
-                ProgressView("Loading projects and activity types...")
-                    .scaleEffect(1.5)
+                ProgressView()
+                Text("Loading projects and activity types…")
+                    .font(Theme.Fonts.body)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .padding(.top, Theme.Spacing.xs)
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -449,8 +444,11 @@ public struct SessionsView: View {
             if isLoading {
                 VStack {
                     Spacer()
-                    ProgressView("Loading sessions...")
-                        .scaleEffect(1.5)
+                    ProgressView()
+                    Text("Loading sessions…")
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.top, Theme.Spacing.xs)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -458,6 +456,7 @@ public struct SessionsView: View {
                 VStack {
                     Spacer()
                     Text("No sessions found for the selected filters.")
+                        .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary)
                     Spacer()
                 }
@@ -465,10 +464,9 @@ public struct SessionsView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: Theme.spacingSmall) {
+                LazyVStack(alignment: .leading, spacing: 0) {
                     groupedSessionViews
                 }
-                .padding(.vertical, Theme.spacingSmall)
             }
             .scrollContentBackground(.hidden)
         }

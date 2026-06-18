@@ -121,8 +121,7 @@ struct DaySessionInfoPanel: View {
             if day.isMilestone {
                 HStack(spacing: Theme.Spacing.micro) {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 8))
-                        .foregroundColor(Theme.Colors.milestone)
+                        .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.milestone)
                     Text("Milestone")
                         .font(Theme.Fonts.caption)
@@ -341,7 +340,7 @@ struct DaySessionInfoPanel: View {
                     
                     if session.isMilestone {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 8))
+                            .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.milestone)
                     }
                 }
