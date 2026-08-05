@@ -31,10 +31,10 @@ private extension Date {
         return "\(weekday), \(day)\(day.ordinalSuffix) \(month) \(year)"
     }
     
-    /// Short header: "Jan 15, 2024"
+    /// Short header with weekday and year: "Monday, Aug 5, 2026"
     var shortHeader: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
+        formatter.dateFormat = "EEEE, MMM d, yyyy"
         return formatter.string(from: self)
     }
     
@@ -117,8 +117,8 @@ public struct SessionsView: View {
                     HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
                         // Date — use shortHeader for a clean editorial format
                         Text(group.date.shortHeader)
-                            .font(Theme.Fonts.subheader)
-                            .foregroundColor(Theme.Colors.textPrimary)
+                            .font(Theme.Fonts.caption)
+                            .foregroundColor(Theme.Colors.textSecondary)
                         
                         // Session count — micro label
                         Text("\(group.sessions.count) session\(group.sessions.count != 1 ? "s" : "")")

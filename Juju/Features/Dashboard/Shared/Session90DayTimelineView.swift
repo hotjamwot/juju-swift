@@ -114,7 +114,6 @@ struct Session90DayTimelineView: View {
         .chartPlotStyle { plotArea in
             plotArea
                 .background(.clear)
-                .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
         }
         .chartOverlay { proxy in
             GeometryReader { geo in
