@@ -293,25 +293,35 @@ struct BubbleChartDataPoint {
     let color: String // hex
 }
 
-/// A single day's project breakdown for the 90-day stacked bar chart.
+/// A single day's project breakdown for the 90-day timeline chart.
 struct DayStack: Identifiable {
     let date: Date
-    let segments: [ProjectSegment]  // sorted bottom-to-top by hours descending
     var isMilestone: Bool = false   // true when this day contains a milestone session
     var sessions: [SessionRecord] = [] // individual session records for the info panel
+    var projects: [DayProjectInfo] = [] // per-project colour/name lookup for the info panel
     var id: Date { date }
-    var totalHours: Double { segments.reduce(0) { $0 + $1.hours } }
-    var isToday: Bool { Calendar.current.isDateInToday(date) }
+    var totalHours: Double { sessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 } }
 }
 
-/// One coloured segment within a day bar.
-struct ProjectSegment: Identifiable {
+/// Per-day project colour/name lookup (avoids file I/O per session card).
+struct DayProjectInfo: Identifiable {
+    let id: String        // project UUID
+    let name: String
+    let color: String     // hex
+    let emoji: String
+}
+
+/// A single session rendered as a thin vertical sliver in the 90-day timeline.
+struct DayTimelineSession: Identifiable {
     let id: UUID
+    let date: Date          // start-of-day for the column
+    let startHour: Double   // decimal hour of session start (e.g. 14.5)
+    let endHour: Double     // decimal hour of session end (e.g. 16.25)
     let projectID: String
     let projectName: String
-    let emoji: String
-    let color: String      // hex
-    let hours: Double
+    let projectColor: String  // hex
+    let projectEmoji: String
+    var duration: Double { endHour - startHour }
 }
 
 /// Project distribution with per-activity-type breakdown (for hover tooltips).
@@ -668,22 +678,22 @@ Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, 
 
 **Rule**: Never create inline tooltip styling. Always reuse these shared components.
 
-**Exception — 90-Day Chart Info Panel**: The 90-Day Stacked Bar Chart no longer uses a floating tooltip. Instead, hover state is lifted to the parent (`OverviewDashboardView`) via a `@Binding var hoveredDay: DayStack?`. A `DaySessionInfoPanel` view sits below the chart and displays a horizontal timeline rail with per-session cards (activity type, action, notes preview, phase pill, time range, duration, milestone badge) for the hovered day. Cards alternate above and below the timeline bar and are positioned proportionally to their start time within a fixed 6am–11pm window.
+**Exception — 90-Day Chart Info Panel**: The 90-Day Timeline Chart does not use a floating tooltip. Instead, hover state is lifted to the parent (`OverviewDashboardView`) via a `@Binding var hoveredDay: DayStack?`. A `DaySessionInfoPanel` view sits below the chart and displays a horizontal timeline rail with per-session cards (activity type, action, notes preview, phase pill, time range, duration, milestone badge) for the hovered day. Cards alternate above and below the timeline bar and are positioned proportionally to their start time within a fixed 6am–11pm window.
 
 **Chart hover detection pattern**: Always use `chartOverlay { proxy in }` with `ChartProxy.value(atX:atY:)` for coordinate conversion. Never use a ZStack sibling with manual `plotFrame` math — it causes coordinate drift and misaligned tooltips.
 
 **Cross-highlight pattern**: When two sibling views need to communicate hover state (e.g., hovering a Notable Moment highlights a bar in the intensity chart), lift a shared `@State` property to the parent view and pass bindings down to both children.
 
-#### 90-Day Bar Chart Layout
-- Bars now fill the full container width (no maxBarWidth cap)
-- `barGap: 2`, `barCornerRadius: 2`, `minBarWidth: 2`
-- Month divider lines rendered as vertical rules (1pt, 30% divider opacity) at month boundaries
-- First month label skipped for divider positioning (no divider before day 0)
-- Hover state is a `@Binding var hoveredDay: DayStack?` controlled by the parent view
-- `DaySessionInfoPanel` sits below the chart, showing a horizontal timeline rail with alternating above/below session cards for the hovered day
-- `DayStack.sessions: [SessionRecord]` provides the raw session records needed by the info panel
-- Timeline range: fixed 6am–11pm (17 hours). Sessions positioned proportionally. Cards adapt in width based on session count (1–2: 180pt, 3–4: 150pt, 5+: 130pt)
-- Session cards show: activity type SF symbol, action text, notes preview, phase pill, time range (HH:mm mono), duration, milestone star badge
+#### 90-Day Timeline Chart Layout
+- Sessions render as thin vertical slivers (`RectangleMark`s) positioned by decimal start/end hour within their calendar-day column
+- Y-axis: fixed 6am–11pm (`6.0...23.0`), matching the weekly calendar chart; grid lines at 6/9/12/15/18/21/23 with 12-hour am/pm labels
+- X-axis: 90-day lookback window with automatic date labels (`MMM d`)
+- Hover anywhere in a day column (not just a sliver) sets the `@Binding var hoveredDay: DayStack?` — slivers in the hovered day brighten to full opacity
+- `DaySessionInfoPanel` sits below the chart, showing the horizontal timeline rail with alternating above/below session cards for the hovered day
+- Cross-midnight sessions split into two slivers: one clipped to 24:00 on the start day and a continuation from 0:00 on the next day
+- Data source: `DayTimelineSession` built by `ChartDataPreparer.prepare90DayTimeline()`; `DayStack.sessions` powers the info panel and `DayStack.projects` provides per-project colour/name lookup (avoids file I/O per session card)
+- Today's column gets a subtle divider-tint highlight behind its slivers
+- Session slivers show: project colour, opacity 0.85 (1.0 when the day is hovered)
 
 #### Calendar Chart Hover Behavior
 - Uses `chartOverlay { proxy in }` for hover detection — the overlay lives **inside** the Chart's coordinate space, ensuring pixel-to-value conversion is accurate
@@ -761,7 +771,7 @@ Juju/
 │   │   │   └── SessionCalendarChartView.swift
 │   │   ├── Shared/           # Shared dashboard components
 │   │   │   ├── ActiveSessionStatusView.swift
-│   │   │   ├── Session90DayBarChartView.swift
+│   │   │   ├── Session90DayTimelineView.swift
 │   │   │   └── DaySessionInfoPanel.swift
 │   │   └── Yearly/          # Yearly dashboard views
 │   │       ├── YearlyProjectBarChartView.swift

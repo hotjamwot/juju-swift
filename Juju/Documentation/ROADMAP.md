@@ -28,11 +28,11 @@
 
 ### Dashboard
 
-- Overview dashboard (weekly calendar chart, 90-day stacked bar chart, yearly distribution charts)
+- Overview dashboard (weekly calendar chart, 90-day timeline chart, yearly distribution charts)
 - Yearly dashboard (project bar chart, activity type bar chart, monthly grouped view)
 - Narrative engine for editorial headlines with comparative analytics
 - `ChartDataPreparer` for data aggregation
-- 90-day milestone tracking with hover-to-highlight interaction
+- 90-day timeline chart showing when sessions happened (time-of-day slivers) with day-column hover → `DaySessionInfoPanel`
 - Narrative metric cards (THIS WEEK / FOCUS / PROJECT) with JapaScandi styling
 
 ### Project Management

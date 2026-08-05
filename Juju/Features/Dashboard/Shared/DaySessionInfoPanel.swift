@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// DaySessionInfoPanel.swift
-/// Purpose: Horizontal timeline rail-and-card panel below the 90-day stacked bar chart.
+/// Purpose: Horizontal timeline rail-and-card panel below the 90-day timeline chart.
 ///
 /// Connector behavior summary:
 /// - Connectors use a vertical-first routing: vertical from the rail, then horizontal to card.
@@ -13,8 +13,8 @@ import SwiftUI
 ///
 /// Tuning knobs: see `anchorOffset`, `minVerticalReach`, `cardHeight`, and `cardToBarGap`.
 /// AI Notes: Pure presentation view — resolves activity types and phase names via
-/// singletons because DayStack does not carry that enriched data. Could be refactored
-/// to accept pre-resolved data if the data model is extended.
+/// singletons because DayStack does not carry that enriched data. Project colours
+/// come from `DayStack.projects` (built by `ChartDataPreparer.prepare90DayTimeline`).
 struct DaySessionInfoPanel: View {
     /// The day stack to display — driven by chart hover.
     let dayStack: DayStack?
@@ -189,7 +189,7 @@ struct DaySessionInfoPanel: View {
                         let cardLeftX = max(cardCenterX - cardBackgroundWidth / 2, Theme.Spacing.xl)
                         let anchorX = xPosition(for: session, width: width, range: range)
                         let connectorColor = Theme.Colors.textSecondary.opacity(0.18)
-                        let segmentColor = Color(hex: dayStack?.segments.first { $0.projectID == session.projectID }?.color ?? "#999999")
+                        let segmentColor = Color(hex: projectInfo(for: session)?.color ?? "#999999")
                         let targetY = aboveCardTopY + cardHeight * 0.28
 
                         // If the card is to the left of the anchor, force a sensible vertical reach
@@ -226,7 +226,7 @@ struct DaySessionInfoPanel: View {
                         let cardLeftX = max(cardCenterX - cardBackgroundWidth / 2, Theme.Spacing.xl)
                         let anchorX = xPosition(for: session, width: width, range: range)
                         let connectorColor = Theme.Colors.textSecondary.opacity(0.18)
-                        let segmentColor = Color(hex: dayStack?.segments.first { $0.projectID == session.projectID }?.color ?? "#999999")
+                        let segmentColor = Color(hex: projectInfo(for: session)?.color ?? "#999999")
                         let targetY = belowCardTopY + cardHeight * 0.28
 
                         let minVerticalReach: CGFloat = 28
@@ -263,7 +263,7 @@ struct DaySessionInfoPanel: View {
                     
                     timelineCard(
                         session: session,
-                        segment: resolved.segment,
+                        project: resolved.project,
                         sessionCount: sorted.count,
                         activityDisplay: resolved.activityDisplay,
                         phaseName: resolved.phaseName,
@@ -280,7 +280,7 @@ struct DaySessionInfoPanel: View {
                     
                     timelineCard(
                         session: session,
-                        segment: resolved.segment,
+                        project: resolved.project,
                         sessionCount: sorted.count,
                         activityDisplay: resolved.activityDisplay,
                         phaseName: resolved.phaseName,
@@ -300,7 +300,7 @@ struct DaySessionInfoPanel: View {
     @ViewBuilder
     private func timelineCard(
         session: SessionRecord,
-        segment: ProjectSegment?,
+        project: DayProjectInfo?,
         sessionCount: Int,
         activityDisplay: (name: String, sfSymbol: String),
         phaseName: String?,
@@ -309,7 +309,7 @@ struct DaySessionInfoPanel: View {
         noteLimit: Int
     ) -> some View {
         let cardW = adaptiveCardWidth(sessionCount: sessionCount)
-        let projectColor = Color(hex: segment?.color ?? "#999999")
+        let projectColor = Color(hex: project?.color ?? "#999999")
         
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             // Row 1: Project emoji + name | Phase pill + milestone
@@ -410,8 +410,7 @@ struct DaySessionInfoPanel: View {
             
             // Coloured segments
             ForEach(sessions) { session in
-                let segment = dayStack?.segments.first { $0.projectID == session.projectID }
-                let projectColor = Color(hex: segment?.color ?? "#999999")
+                let projectColor = Color(hex: projectInfo(for: session)?.color ?? "#999999")
                 let widthForSession = barWidth(for: session, width: width, range: range)
                 let centerX = xPosition(for: session, width: width, range: range) + widthForSession / 2
                 
@@ -472,28 +471,33 @@ struct DaySessionInfoPanel: View {
     
     /// Bundles all resolved data for a session card to avoid repeated lookups in the ForEach body.
     private struct CardData {
-        let segment: ProjectSegment?
+        let project: DayProjectInfo?
         let activityDisplay: (name: String, sfSymbol: String)
         let phaseName: String?
         let projectName: String
         let projectEmoji: String
     }
     
-    /// Resolves segment, activity display, phase name, project name, and emoji for a session.
+    /// Resolves project info, activity display, phase name, project name, and emoji for a session.
     private func resolveCardData(for session: SessionRecord) -> CardData {
-        let segment = dayStack?.segments.first { $0.projectID == session.projectID }
+        let project = projectInfo(for: session)
         let activityDisplay = ActivityTypeManager.shared.getActivityTypeDisplay(id: session.activityTypeID)
         let phaseName = ProjectManager.shared.getPhaseDisplay(projectID: session.projectID, phaseID: session.projectPhaseID)
-        let projectName = segment?.projectName ?? "Unknown"
-        let projectEmoji = segment?.emoji ?? "📁"
+        let projectName = project?.name ?? "Unknown"
+        let projectEmoji = project?.emoji ?? "📁"
         
         return CardData(
-            segment: segment,
+            project: project,
             activityDisplay: activityDisplay,
             phaseName: phaseName,
             projectName: projectName,
             projectEmoji: projectEmoji
         )
+    }
+    
+    /// Looks up the resolved project info for a session from the day's project lookups.
+    private func projectInfo(for session: SessionRecord) -> DayProjectInfo? {
+        dayStack?.projects.first { $0.id == session.projectID }
     }
     
     // MARK: - Positioning Helpers
@@ -667,17 +671,17 @@ struct DaySessionInfoPanel: View {
         notes: "Tightened the middle section and cut redundant paragraphs."
     )
     
-    let segments = [
-        ProjectSegment(projectID: writingProject.id, projectName: writingProject.name, emoji: writingProject.emoji, color: writingProject.color, hours: 4.75),
-        ProjectSegment(projectID: designProject.id, projectName: designProject.name, emoji: designProject.emoji, color: designProject.color, hours: 4.0),
-        ProjectSegment(projectID: codingProject.id, projectName: codingProject.name, emoji: codingProject.emoji, color: codingProject.color, hours: 3.0)
+    let dayProjects = [
+        DayProjectInfo(id: writingProject.id, name: writingProject.name, color: writingProject.color, emoji: writingProject.emoji),
+        DayProjectInfo(id: designProject.id, name: designProject.name, color: designProject.color, emoji: designProject.emoji),
+        DayProjectInfo(id: codingProject.id, name: codingProject.name, color: codingProject.color, emoji: codingProject.emoji)
     ]
     
     let dayStack = DayStack(
         date: today,
-        segments: segments,
         isMilestone: true,
-        sessions: [session1, session2, session3, session4, session5]
+        sessions: [session1, session2, session3, session4, session5],
+        projects: dayProjects
     )
     
     DaySessionInfoPanel(dayStack: dayStack)
@@ -704,8 +708,8 @@ struct DaySessionInfoPanel: View {
     
     let dayStack = DayStack(
         date: today,
-        segments: [ProjectSegment(projectID: project.id, projectName: project.name, emoji: project.emoji, color: project.color, hours: 4.0)],
-        sessions: [session]
+        sessions: [session],
+        projects: [DayProjectInfo(id: project.id, name: project.name, color: project.color, emoji: project.emoji)]
     )
     
     DaySessionInfoPanel(dayStack: dayStack)

@@ -32,7 +32,8 @@ struct OverviewDashboardView: View {
     
     // MARK: - Ideal heights
     private let calendarMinHeight: CGFloat = 400
-    private let stackedBarMinHeight: CGFloat = 200
+    /// Height for the 90-day timeline — a time-of-day Y-axis needs more vertical room.
+    private let stackedBarMinHeight: CGFloat = 280
     private let distributionChartMinHeight: CGFloat = 340
     
     // MARK: - Spacing
@@ -79,18 +80,19 @@ struct OverviewDashboardView: View {
                     .chartContainer()
                 }
                 
-                // 90-Day Stacked Bar Chart — daily project breakdown
+                // 90-Day Timeline — when sessions happened across the day
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("90-Day Overview")
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     VStack(spacing: Theme.Spacing.sm) {
-                        Session90DayBarChartView(
+                        Session90DayTimelineView(
                             dayStacks: chartDataPreparer.current90DayStacks,
+                            sessions: chartDataPreparer.current90DayTimeline,
                             hoveredDay: $hoveredDay
                         )
                         .frame(minHeight: stackedBarMinHeight)
                         
-                        // Info panel — full width, no milestone sidebar
+                        // Info panel — full width, shows hovered day's sessions
                         DaySessionInfoPanel(dayStack: hoveredDay)
                     }
                     .chartContainer()
@@ -185,7 +187,7 @@ struct OverviewDashboardView: View {
                 projects: projectsViewModel.projects
             )
             
-            chartDataPreparer.stackedDailyProjectTotals(
+            chartDataPreparer.prepare90DayTimeline(
                 days: 90,
                 sessions: sessionManager.allSessions,
                 projects: projectsViewModel.projects

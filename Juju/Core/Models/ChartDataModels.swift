@@ -115,30 +115,67 @@ struct ActivityTypePieSlice: Identifiable, Equatable {
     }
 }
 
-// MARK: - 90-Day Stacked Bar Chart Models
+// MARK: - 90-Day Timeline Models
 
-/// A single day's project breakdown for the 90-day stacked bar chart.
+/// Lightweight project lookup for a day's session cards.
+///
+/// Carried on `DayStack` so `DaySessionInfoPanel` can resolve project
+/// colours, names, and emoji without hitting the disk per session card.
+struct DayProjectInfo: Identifiable {
+    let id: String           // projectID
+    let name: String
+    let color: String        // hex
+    let emoji: String
+}
+
+/// A single calendar day in the 90-day timeline.
+///
+/// Carries the raw session records for the day so `DaySessionInfoPanel` can
+/// show per-session details when the day column is hovered. Built by
+/// `ChartDataPreparer.prepare90DayTimeline`.
 struct DayStack: Identifiable {
     let date: Date
-    let segments: [ProjectSegment]  // sorted bottom-to-top by hours descending
     /// True when this day contains a milestone session (set by ChartDataPreparer)
     var isMilestone: Bool = false
     /// Individual session records for this day (set by ChartDataPreparer).
     /// Used by DaySessionInfoPanel to show per-session details on hover.
     var sessions: [SessionRecord] = []
+    /// Project lookups for sessions on this day (set by ChartDataPreparer).
+    /// Used by DaySessionInfoPanel for project colour/name/emoji resolution.
+    var projects: [DayProjectInfo] = []
     
     var id: Date { date }
-    var totalHours: Double { segments.reduce(0) { $0 + $1.hours } }
-    var isToday: Bool { Calendar.current.isDateInToday(date) }
+    /// Total hours across all sessions this day.
+    var totalHours: Double {
+        sessions.reduce(0) { $0 + Double($1.durationMinutes) / 60.0 }
+    }
 }
 
-/// One coloured segment within a day bar.
-struct ProjectSegment: Identifiable {
+// MARK: - 90-Day Timeline Model
+
+/// A single session rendered as a thin vertical sliver in the 90-day timeline.
+///
+/// The sliver is positioned by its decimal start/end hours on the Y-axis
+/// (fixed range matching the weekly calendar chart) within its calendar-day
+/// column on the X-axis. Duration is expressed by sliver height, but the
+/// emphasis is on *when* work happened — early mornings, late evenings,
+/// flow patterns — rather than total hours per day.
+///
+/// Sessions that cross midnight emit two slivers: one clipped to 24:00 on
+/// the start day and a continuation from 0:00 on the following day.
+struct DayTimelineSession: Identifiable {
     let id = UUID()
+    /// Start-of-day for the column this sliver belongs to.
+    let date: Date
+    /// Decimal hour of session start (e.g. 14.5).
+    let startHour: Double
+    /// Decimal hour of session end (e.g. 16.25).
+    let endHour: Double
     let projectID: String
     let projectName: String
-    let emoji: String
-    let color: String      // hex
-    let hours: Double
+    let projectColor: String      // hex
+    let projectEmoji: String
+    
+    var duration: Double { endHour - startHour }
 }
 

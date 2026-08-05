@@ -19,7 +19,7 @@ import SwiftUI
 /// - ChartDataModels: For chart data structures
 /// 
 /// **AI Quick Find (Method Index)**:
-/// - Data Prep: prepareWeeklyData(), prepareAllTimeData()
+/// - Data Prep: prepareWeeklyData(), prepareAllTimeData(), prepare90DayTimeline()
 /// - Accessors: currentWeekSessionsForCalendar(), yearlyProjectTotals(), yearlyActivityTypeTotals()
 /// - Utilities: currentWeekInterval (computed), currentYearInterval (computed)
 /// 
@@ -37,7 +37,8 @@ import SwiftUI
 /// - [RECEIVES] activityTypeManager.activityTypes for category names
 /// - [OUTPUTS] ActivityDistributionItem[] for pie/bar charts
 /// - [OUTPUTS] YearlyProjectChartData[] for dashboard display
-/// - [OUTPUTS] [DayStack] for 90-day stacked bar chart
+/// - [OUTPUTS] [DayStack] for 90-day timeline chart
+/// - [OUTPUTS] [DayTimelineSession] for 90-day timeline chart
 /// 
 /// **AI Notes**:
 /// - Uses @MainActor for UI-bound operations
@@ -57,6 +58,7 @@ struct ChartViewModel {
 final class ChartDataPreparer: ObservableObject {
     @Published var viewModel = ChartViewModel()
     @Published var current90DayStacks: [DayStack] = []
+    @Published var current90DayTimeline: [DayTimelineSession] = []
     
     private let calendar = Calendar.current
     
@@ -270,18 +272,25 @@ final class ChartDataPreparer: ObservableObject {
         }.sorted { $0.totalHours > $1.totalHours }
     }
     
-    // MARK: - 90-Day Stacked Bar Chart
+    // MARK: - 90-Day Timeline
     
-    /// Build per-day, per-project stacked data for the last N days.
+    /// Build per-session sliver data and per-day stacks for the 90-day timeline.
     ///
-    /// Every calendar day in the range is represented — days with no sessions
-    /// get an empty `segments` array, so the chart can render a zero-height bar.
+    /// Emits one `DayTimelineSession` per session, positioned by decimal
+    /// start/end hour within its calendar-day column. Sessions that cross
+    /// midnight are split into two slivers: one clipped to 24:00 on the
+    /// start day and a continuation from 0:00 on the following day (when
+    /// that day falls inside the 90-day range).
+    ///
+    /// Also publishes `current90DayStacks` — one `DayStack` per calendar day
+    /// in the range, with milestone flags, the day's session records, and
+    /// per-day project lookups for `DaySessionInfoPanel` on hover.
     ///
     /// - Parameters:
     ///   - days: Number of trailing days to include (default 90)
     ///   - sessions: The session records to aggregate (pass sessionManager.allSessions)
     ///   - projects: All projects (for colour and name lookup)
-    func stackedDailyProjectTotals(
+    func prepare90DayTimeline(
         days: Int = 90,
         sessions: [SessionRecord],
         projects: [Project]
@@ -290,56 +299,111 @@ final class ChartDataPreparer: ObservableObject {
         let today = calendar.startOfDay(for: Date())
         let totalDays = days  // include today, so go back (days - 1)
         guard let startDate = calendar.date(byAdding: .day, value: -(totalDays - 1), to: today) else {
+            current90DayTimeline = []
+            current90DayStacks = []
+            return
+        }
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else {
+            current90DayTimeline = []
             current90DayStacks = []
             return
         }
         
-        // Accumulate: date → projectID → hours
-        var accumulator: [Date: [String: Double]] = [:]
-        // Track milestone days for diamond markers on the chart
-        var milestoneDays: Set<Date> = []
-        // Track individual sessions per day for the info panel
-        var sessionsByDay: [Date: [SessionRecord]] = [:]
+        func decimalHour(from date: Date) -> Double {
+            let comps = calendar.dateComponents([.hour, .minute], from: date)
+            return Double(comps.hour ?? 0) + Double(comps.minute ?? 0) / 60.0
+        }
         
-        for session in sessions where session.startDate >= startDate && session.startDate < calendar.date(byAdding: .day, value: 1, to: today)! {
-            let day = calendar.startOfDay(for: session.startDate)
-            let hours = Double(session.durationMinutes) / 60.0
-            accumulator[day, default: [:]][session.projectID, default: 0] += hours
-            sessionsByDay[day, default: []].append(session)
+        var timeline: [DayTimelineSession] = []
+        var sessionsByDay: [Date: [SessionRecord]] = [:]
+        var milestoneDays: Set<Date> = []
+        var projectIDsByDay: [Date: Set<String>] = [:]
+        
+        for session in sessions where session.startDate >= startDate && session.startDate < tomorrow {
+            let startHour = decimalHour(from: session.startDate)
+            let rawEndHour = decimalHour(from: session.endDate)
+            let project = projectLookup[session.projectID]
             
+            // Drop zero-duration sessions (same start and end instant).
+            guard rawEndHour != startHour else { continue }
+            
+            func addSliver(day: Date, start: Double, end: Double) {
+                timeline.append(DayTimelineSession(
+                    date: day,
+                    startHour: start,
+                    endHour: end,
+                    projectID: session.projectID,
+                    projectName: project?.name ?? session.projectID,
+                    projectColor: project?.color ?? "#999999",
+                    projectEmoji: project?.emoji ?? Project.defaultEmoji
+                ))
+            }
+            
+            if rawEndHour > startHour {
+                // Normal same-day session: single sliver on the start day.
+                addSliver(
+                    day: calendar.startOfDay(for: session.startDate),
+                    start: startHour,
+                    end: rawEndHour
+                )
+            } else {
+                // Cross-midnight session: start-day sliver clipped to 24:00,
+                // plus a continuation sliver on the following day if it is
+                // within the 90-day range.
+                addSliver(
+                    day: calendar.startOfDay(for: session.startDate),
+                    start: startHour,
+                    end: 24.0
+                )
+                
+                guard let endDate = calendar.date(byAdding: .day, value: 1, to: session.startDate),
+                      endDate <= today else { continue }
+                addSliver(
+                    day: calendar.startOfDay(for: endDate),
+                    start: 0.0,
+                    end: rawEndHour
+                )
+            }
+            
+            // Track per-day data for the info panel.
+            let sessionDay = calendar.startOfDay(for: session.startDate)
+            sessionsByDay[sessionDay, default: []].append(session)
+            projectIDsByDay[sessionDay, default: []].insert(session.projectID)
             if session.isMilestone {
-                milestoneDays.insert(day)
+                milestoneDays.insert(sessionDay)
             }
         }
         
-        // Build DayStack for every calendar day in the range
+        // Sort by day then start hour for stable rendering.
+        current90DayTimeline = timeline.sorted {
+            if $0.date != $1.date { return $0.date < $1.date }
+            return $0.startHour < $1.startHour
+        }
+        
+        // Build DayStack for every calendar day in the range.
         var stacks: [DayStack] = []
         var dayCursor = startDate
         while dayCursor <= today {
-            let projectHours = accumulator[dayCursor] ?? [:]
-            let segments = projectHours.compactMap { (projectID, hours) -> ProjectSegment? in
-                guard hours > 0, let project = projectLookup[projectID] else { return nil }
-                return ProjectSegment(
-                    projectID: projectID,
-                    projectName: project.name,
-                    emoji: project.emoji,
+            let projectIDs = projectIDsByDay[dayCursor] ?? []
+            let dayProjects = projectIDs.compactMap { projectID -> DayProjectInfo? in
+                guard let project = projectLookup[projectID] else { return nil }
+                return DayProjectInfo(
+                    id: projectID,
+                    name: project.name,
                     color: project.color,
-                    hours: hours
+                    emoji: project.emoji
                 )
             }
-            .sorted { $0.hours > $1.hours }  // largest on bottom for visual stability
             
             stacks.append(DayStack(
                 date: dayCursor,
-                segments: segments,
                 isMilestone: milestoneDays.contains(dayCursor),
-                sessions: sessionsByDay[dayCursor] ?? []
+                sessions: sessionsByDay[dayCursor] ?? [],
+                projects: dayProjects
             ))
-            
             guard let nextDay = calendar.date(byAdding: .day, value: 1, to: dayCursor) else { break }
             dayCursor = nextDay
         }
-        
         current90DayStacks = stacks
     }
     

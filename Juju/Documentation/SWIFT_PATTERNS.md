@@ -340,7 +340,7 @@ When a chart needs to show rich detail on hover (more than a tooltip can fit), l
 @State private var hoveredDay: DayStack? = nil
 
 // Chart exposes hover via a binding
-Session90DayBarChartView(dayStacks: stacks, hoveredDay: $hoveredDay)
+Session90DayTimelineView(dayStacks: stacks, sessions: timeline, hoveredDay: $hoveredDay)
 
 // Info panel reads the same state
 DaySessionInfoPanel(dayStack: hoveredDay)
@@ -352,7 +352,7 @@ DaySessionInfoPanel(dayStack: hoveredDay)
 - Sibling views (e.g., milestone list) can also write to the hover state via callbacks
 - The info panel is a pure presentation view — no business logic, no singletons
 
-**Used by**: 90-Day Stacked Bar Chart (`Session90DayBarChartView` → `DaySessionInfoPanel`).
+**Used by**: 90-Day Timeline Chart (`Session90DayTimelineView` → `DaySessionInfoPanel`).
 
 ### Collapsible Dashboard Panel Pattern
 Use `VStack` with a tappable header and conditionally-rendered detail panel for collapsible sections in the dashboard:
