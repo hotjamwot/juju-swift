@@ -353,10 +353,28 @@ struct ActivityDistributionItem: Identifiable {
 /// Populated by NarrativeEngine.generateWeeklyHeadline() and consumed by
 /// NarrativeSummaryCard in OverviewDashboardView.
 /// - Total hours / delta are THIS WEEK.
-/// - Top activities / projects are MONTH-TO-DATE.
+/// - Top activities / projects are for the LAST 30 DAYS (rolling window).
 /// - Delta compares the week against the average active week
 ///   over a rolling 12-month window (weeks with at least one session,
 ///   excluding the current partial week).
+
+struct ActivitySummary: Equatable {
+    let name: String
+    let sfSymbol: String
+}
+
+struct ProjectSummary: Equatable {
+    let name: String
+    let emoji: String
+}
+
+struct NarrativeHeadline: Equatable {
+    let totalHours: Double
+    let topActivity: ActivitySummary
+    let topProject: ProjectSummary
+    let period: String
+    // Computed: formattedHours, headlineText
+}
 
 struct ActivityTypeBreakdown: Identifiable, Equatable {
     let id: String        // activity type UUID or "uncategorized"
@@ -377,45 +395,15 @@ struct ProjectBreakdown: Identifiable, Equatable {
 struct NarrativeWeekSummary: Equatable {
     let totalHours: Double
     let formattedHours: String      // "12h 30m"
-    let topActivities: [ActivityTypeBreakdown]   // sorted descending, top 3 (month-to-date)
-    let topProjects: [ProjectBreakdown]          // sorted descending, top 3 (month-to-date)
+    let topActivities: [ActivityTypeBreakdown]   // sorted descending, top 3 (last 30 days)
+    let topProjects: [ProjectBreakdown]          // sorted descending, top 3 (last 30 days)
     let averageWeeklyHours: Double               // rolling 12-month avg of active weeks
     let deltaHours: Double                       // current week − average weekly hours
 }
 
-struct PeriodSessionData {
-    let id: UUID
-    let period: ChartTimePeriod
-    let sessions: [SessionRecord]
-    let totalHours: Double
-    let topActivity: ActivitySummary
-    let topProject: ProjectSummary
-    let averageDailyHours: Double
-    let activityDistribution: [String: Double]
-    let projectDistribution: [String: Double]
-    let timeRange: DateInterval
-}
-
-struct ComparativeAnalytics {
-    let id: UUID
-    let current: PeriodSessionData
-    let previous: PeriodSessionData
-    let trends: AnalyticsTrends
-}
-
-struct AnalyticsTrends {
-    let id: UUID
-    let totalHoursChange: Double
-    let topActivityChange: TrendChange
-    let topProjectChange: TrendChange
-    let averageDailyHoursChange: Double
-    let activityDistributionChanges: [String: Double]
-    let projectDistributionChanges: [String: Double]
-}
-
 enum ChartTimePeriod {
     case week, month, year, allTime
-    // Computed: previousPeriod, durationInDays, calendarComponent, dateInterval
+    // Computed: title, durationInDays, dateInterval
 }
 ```
 

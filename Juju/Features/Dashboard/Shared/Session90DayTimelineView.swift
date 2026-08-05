@@ -156,10 +156,25 @@ struct Session90DayTimelineView: View {
     }
     
     /// Resolve the hovered day stack from a pixel location via the chart proxy.
+    ///
+    /// The chart's X domain runs from the first day's `startOfDay` to the
+    /// last day's `startOfDay`, and each day's sliver is centred on its
+    /// `startOfDay`. A linear pixel→Date mapping therefore resolves the
+    /// left half of a day's column to the previous day, and the outer
+    /// halves of the first/last columns fall outside the domain entirely.
+    ///
+    /// Snapping to the nearest day stack (with a half-day tolerance) keeps
+    /// the hover tightly aligned with the visual column the cursor is in,
+    /// including the boundary columns, without changing the visual domain.
     private func dayAt(location: CGPoint, proxy: ChartProxy) -> DayStack? {
         guard let date: Date = proxy.value(atX: location.x) else { return nil }
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        return dayStacks.first { Calendar.current.isDate($0.date, inSameDayAs: startOfDay) }
+        guard let nearest = dayStacks.min(by: {
+            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+        }) else { return nil }
+        // Tolerance of half a day: anything further than 12h from the nearest
+        // stack is considered outside any day's column (e.g. far padding).
+        let halfDay: TimeInterval = 12 * 3600
+        return abs(nearest.date.timeIntervalSince(date)) <= halfDay ? nearest : nil
     }
     
     /// Format a decimal hour for the Y-axis (e.g. 14.5 → "14", 6.0 → "6").

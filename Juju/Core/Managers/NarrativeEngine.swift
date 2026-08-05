@@ -4,9 +4,9 @@ import SwiftUI
 // MARK: - Time Period Enum
 enum ChartTimePeriod: String, CaseIterable, Identifiable {
     case week, month, year, allTime
-    
+
     var id: String { rawValue }
-    
+
     var title: String {
         switch self {
         case .week: return "This Week"
@@ -15,23 +15,13 @@ enum ChartTimePeriod: String, CaseIterable, Identifiable {
         case .allTime: return "All Time"
         }
     }
-    
-    var previousPeriod: ChartTimePeriod { self }
+
     var durationInDays: Int {
         switch self {
         case .week: return 7
         case .month: return 30
         case .year: return 365
         case .allTime: return Int.max
-        }
-    }
-
-    var calendarComponent: Calendar.Component? {
-        switch self {
-        case .week: return .weekOfYear
-        case .month: return .month
-        case .year: return .year
-        case .allTime: return nil
         }
     }
 
@@ -74,55 +64,18 @@ struct ProjectSummary: Equatable {
     let emoji: String
 }
 
-/// Represents a trend comparison between two periods, replacing the tuple anti-pattern.
-struct TrendChange: Equatable {
-    let from: String
-    let to: String
-    let change: Double
-}
-
-struct PeriodSessionData: Identifiable {
-    let id = UUID()
-    let period: ChartTimePeriod
-    let sessions: [SessionRecord]
-    let totalHours: Double
-    let topActivity: ActivitySummary
-    let topProject: ProjectSummary
-    let averageDailyHours: Double
-    let activityDistribution: [String: Double]
-    let projectDistribution: [String: Double]
-    let timeRange: DateInterval
-}
-
-struct ComparativeAnalytics: Identifiable {
-    let id = UUID()
-    let current: PeriodSessionData
-    let previous: PeriodSessionData
-    let trends: AnalyticsTrends
-}
-
-struct AnalyticsTrends: Identifiable {
-    let id = UUID()
-    let totalHoursChange: Double
-    let topActivityChange: TrendChange
-    let topProjectChange: TrendChange
-    let averageDailyHoursChange: Double
-    let activityDistributionChanges: [String: Double]
-    let projectDistributionChanges: [String: Double]
-}
-
 struct NarrativeHeadline: Equatable {
     let totalHours: Double
     let topActivity: ActivitySummary
     let topProject: ProjectSummary
     let period: String
-    
+
     var formattedHours: String {
         let hours = Int(totalHours)
         let minutes = Int((totalHours - Double(hours)) * 60)
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
-    
+
     var headlineText: String {
         "This \(period) you logged \(formattedHours). Your focus was **\(topActivity.name)** on **\(topProject.emoji) \(topProject.name)**."
     }
@@ -130,7 +83,7 @@ struct NarrativeHeadline: Equatable {
 
 // MARK: - Rich Week Summary Types
 
-/// A ranked activity type within the weekly breakdown with its hours.
+/// A ranked activity type within the breakdown with its hours.
 struct ActivityTypeBreakdown: Identifiable, Equatable {
     let id: String
     let name: String
@@ -138,7 +91,7 @@ struct ActivityTypeBreakdown: Identifiable, Equatable {
     let hours: Double
 }
 
-/// A ranked project within the weekly breakdown with its hours.
+/// A ranked project within the breakdown with its hours.
 struct ProjectBreakdown: Identifiable, Equatable {
     let id: String
     let name: String
@@ -149,7 +102,7 @@ struct ProjectBreakdown: Identifiable, Equatable {
 
 /// Full narrative summary for the Overview Dashboard metric cards.
 /// - Total hours and delta are for THIS WEEK.
-/// - Top activities and projects are MONTH-TO-DATE.
+/// - Top activities and projects are for the LAST 30 DAYS (rolling window).
 /// - Delta compares this week against the average active week
 ///   over a rolling 12-month window.
 struct NarrativeWeekSummary: Equatable {
@@ -166,11 +119,11 @@ struct NarrativeWeekSummary: Equatable {
 final class NarrativeEngine: ObservableObject {
     @Published var currentHeadline: NarrativeHeadline?
     @Published var weekSummary: NarrativeWeekSummary?
-    
+
     private let sessionManager: SessionManager
     private let projectsViewModel: ProjectsViewModel
     private let activityTypeManager: ActivityTypeManager
-    
+
     init(
         sessionManager: SessionManager? = nil,
         projectsViewModel: ProjectsViewModel? = nil,
@@ -181,7 +134,7 @@ final class NarrativeEngine: ObservableObject {
         self.projectsViewModel = projectsViewModel ?? .shared
         self.activityTypeManager = activityTypeManager ?? .shared
     }
-    
+
     func generateWeeklyHeadline() {
         let headline = _generateHeadline(for: .week)
         let summary = _generateWeekSummary()
@@ -190,56 +143,13 @@ final class NarrativeEngine: ObservableObject {
             self.weekSummary = summary
         }
     }
-    
-    func generateHeadline(for period: ChartTimePeriod) {
-        let headline = _generateHeadline(for: period)
-        DispatchQueue.main.async {
-            self.currentHeadline = headline
-        }
-    }
-    
+
     func getCurrentHeadlineText() -> String {
         currentHeadline?.headlineText ?? "Loading your story..."
     }
-    
-    func getSessionData(for period: ChartTimePeriod, referenceDate: Date = Date()) -> PeriodSessionData {
-        let sessions = filterSessions(for: period, referenceDate: referenceDate)
-        let calendar = Calendar.current
 
-        return PeriodSessionData(
-            period: period,
-            sessions: sessions,
-            totalHours: calculateTotalHours(from: sessions),
-            topActivity: determineTopActivity(from: sessions),
-            topProject: determineTopProject(from: sessions),
-            averageDailyHours: calculateAverageDailyHours(from: sessions, for: period),
-            activityDistribution: calculateActivityDistribution(from: sessions),
-            projectDistribution: calculateProjectDistribution(from: sessions),
-            timeRange: period.dateInterval(endingAt: referenceDate, calendar: calendar) ?? DateInterval(start: referenceDate, end: referenceDate)
-        )
-    }
-
-    func getComparativeData(for period: ChartTimePeriod) -> ComparativeAnalytics {
-        let calendar = Calendar.current
-        let currentDate = Date()
-        let currentData = getSessionData(for: period, referenceDate: currentDate)
-
-        let previousData: PeriodSessionData
-        if period == .week,
-           let previousReferenceDate = calendar.date(byAdding: .weekOfYear, value: -1, to: currentDate) {
-            previousData = getSessionData(for: period, referenceDate: previousReferenceDate)
-        } else if let component = period.calendarComponent,
-                  let previousReferenceDate = calendar.date(byAdding: component, value: -1, to: currentDate) {
-            previousData = getSessionData(for: period, referenceDate: previousReferenceDate)
-        } else {
-            previousData = currentData
-        }
-
-        return ComparativeAnalytics(current: currentData, previous: previousData, trends: calculateTrends(current: currentData, previous: previousData))
-    }
-    
     // MARK: - Private
-    
+
     private func _generateHeadline(for period: ChartTimePeriod, referenceDate: Date = Date()) -> NarrativeHeadline {
         let sessions = filterSessions(for: period, referenceDate: referenceDate)
         return NarrativeHeadline(
@@ -249,20 +159,20 @@ final class NarrativeEngine: ObservableObject {
             period: period.title.lowercased().replacingOccurrences(of: "this ", with: "")
         )
     }
-    
+
     /// Builds the rich week summary.
     /// - Total hours: THIS WEEK (Mon → today)
-    /// - Top activities/projects: MONTH-TO-DATE (1st → today)
+    /// - Top activities/projects: LAST 30 DAYS (rolling window ending today)
     /// - Delta: this week vs average active week over rolling 12-month window
     private func _generateWeekSummary() -> NarrativeWeekSummary {
         let weekSessions = filterSessions(for: .week)
-        let monthSessions = filterSessions(for: .month)
+        let last30DaysSessions = filterSessionsForLast30Days()
         let totalHours = calculateTotalHours(from: weekSessions)
         let averageWeeklyHours = calculateAverageWeeklyHours()
-        
-        // Build sorted activity type breakdown (month-to-date)
+
+        // Build sorted activity type breakdown (last 30 days)
         var activityTotals: [String: Double] = [:]
-        for session in monthSessions {
+        for session in last30DaysSessions {
             let id = session.activityTypeID ?? ActivityType.uncategorizedID
             activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
@@ -274,10 +184,10 @@ final class NarrativeEngine: ObservableObject {
                 let activity = activityTypeManager.getActivityType(id: id) ?? activityTypeManager.getUncategorizedActivityType()
                 return ActivityTypeBreakdown(id: id, name: activity.name, sfSymbol: activity.sfSymbol, hours: hours)
             }
-        
-        // Build sorted project breakdown (month-to-date)
+
+        // Build sorted project breakdown (last 30 days)
         var projectTotals: [String: Double] = [:]
-        for session in monthSessions {
+        for session in last30DaysSessions {
             projectTotals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
         }
         let sortedProjects = projectTotals
@@ -294,12 +204,12 @@ final class NarrativeEngine: ObservableObject {
                     hours: hours
                 )
             }
-        
+
         // Format hours
         let h = Int(totalHours)
         let m = Int((totalHours - Double(h)) * 60)
         let formatted = h > 0 ? "\(h)h \(m)m" : "\(m)m"
-        
+
         return NarrativeWeekSummary(
             totalHours: totalHours,
             formattedHours: formatted,
@@ -309,48 +219,48 @@ final class NarrativeEngine: ObservableObject {
             deltaHours: totalHours - averageWeeklyHours
         )
     }
-    
+
     /// Computes the average weekly hours over a rolling 12-month window,
     /// considering only weeks with at least one session, excluding the current partial week.
     private func calculateAverageWeeklyHours() -> Double {
         let calendar = Calendar.current
         let now = Date()
-        
+
         // Start of current week (Monday)
         let currentWeekStart = mondayBasedWeekInterval(containing: now, calendar: calendar).start
         guard let windowStart = calendar.date(byAdding: .month, value: -12, to: currentWeekStart) else {
             return 0
         }
-        
+
         // Iterate over complete weeks within the rolling 12-month window
         var weekHours: [Double] = []
         var cursor = windowStart
-        
+
         while cursor < currentWeekStart {
             let weekInterval = mondayBasedWeekInterval(containing: cursor, calendar: calendar)
             let weekStart = max(weekInterval.start, windowStart)
             let weekEnd = min(weekInterval.end, currentWeekStart)
-            
+
             // Skip partial weeks at window boundaries
             guard weekStart < weekEnd else {
                 cursor = weekInterval.end
                 continue
             }
-            
+
             let interval = DateInterval(start: weekStart, end: weekEnd)
             let weekSessions = sessionManager.allSessions.filter { interval.contains($0.startDate) }
             let hours = calculateTotalHours(from: weekSessions)
             if hours > 0 {
                 weekHours.append(hours)
             }
-            
+
             cursor = weekInterval.end
         }
-        
+
         guard !weekHours.isEmpty else { return 0 }
         return weekHours.reduce(0, +) / Double(weekHours.count)
     }
-    
+
     /// Returns a Monday-based week interval (start Monday 00:00 → next Monday 00:00)
     /// for the date containing `date`, matching the week boundaries used by `ChartTimePeriod`.
     private func mondayBasedWeekInterval(containing date: Date, calendar: Calendar) -> DateInterval {
@@ -369,11 +279,25 @@ final class NarrativeEngine: ObservableObject {
         }
         return sessionManager.allSessions.filter { interval.contains($0.startDate) }
     }
-    
+
+    /// Filters sessions to a rolling 30-day window ending at the start of tomorrow
+    /// (i.e., includes all of today and the 29 preceding days).
+    /// Used for the FOCUS and PROJECT metric cards so they reflect a consistent
+    /// month-long view rather than resetting on the 1st of each month.
+    private func filterSessionsForLast30Days(referenceDate: Date = Date()) -> [SessionRecord] {
+        let calendar = Calendar.current
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: referenceDate)) ?? referenceDate
+        guard let start = calendar.date(byAdding: .day, value: -30, to: endOfToday) else {
+            return []
+        }
+        let interval = DateInterval(start: start, end: endOfToday)
+        return sessionManager.allSessions.filter { interval.contains($0.startDate) }
+    }
+
     private func calculateTotalHours(from sessions: [SessionRecord]) -> Double {
         Double(sessions.reduce(0) { $0 + $1.durationMinutes }) / 60.0
     }
-    
+
     private func determineTopActivity(from sessions: [SessionRecord]) -> ActivitySummary {
         var totals: [String: Double] = [:]
         for session in sessions {
@@ -386,7 +310,7 @@ final class NarrativeEngine: ObservableObject {
         let activity = activityTypeManager.getActivityType(id: topID) ?? activityTypeManager.getUncategorizedActivityType()
         return ActivitySummary(name: activity.name, sfSymbol: activity.sfSymbol)
     }
-    
+
     private func determineTopProject(from sessions: [SessionRecord]) -> ProjectSummary {
         var totals: [String: Double] = [:]
         for session in sessions {
@@ -397,60 +321,5 @@ final class NarrativeEngine: ObservableObject {
         }
         let project = projectsViewModel.projects.first { $0.id == topID }
         return ProjectSummary(name: project?.name ?? topID, emoji: project?.emoji ?? Project.defaultEmoji)
-    }
-    
-    private func calculateAverageDailyHours(from sessions: [SessionRecord], for period: ChartTimePeriod) -> Double {
-        calculateTotalHours(from: sessions) / Double(period.durationInDays)
-    }
-    
-    private func calculateActivityDistribution(from sessions: [SessionRecord]) -> [String: Double] {
-        var dist: [String: Double] = [:]
-        for session in sessions {
-            let id = session.activityTypeID ?? ActivityType.uncategorizedID
-            dist[id, default: 0] += Double(session.durationMinutes) / 60.0
-        }
-        return dist
-    }
-    
-    private func calculateProjectDistribution(from sessions: [SessionRecord]) -> [String: Double] {
-        var dist: [String: Double] = [:]
-        for session in sessions {
-            dist[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
-        }
-        return dist
-    }
-    
-    private func getTimeRange(for period: ChartTimePeriod, calendar: Calendar) -> DateInterval {
-        switch period {
-        case .week: return calendar.dateInterval(of: .weekOfYear, for: Date()) ?? DateInterval(start: Date(), end: Date())
-        case .month: return calendar.dateInterval(of: .month, for: Date()) ?? DateInterval(start: Date(), end: Date())
-        case .year: return calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
-        case .allTime: return DateInterval(start: .distantPast, end: .distantFuture)
-        }
-    }
-    
-    private func calculateTrends(current: PeriodSessionData, previous: PeriodSessionData) -> AnalyticsTrends {
-        AnalyticsTrends(
-            totalHoursChange: pctChange(current: current.totalHours, previous: previous.totalHours),
-            topActivityChange: TrendChange(from: previous.topActivity.name, to: current.topActivity.name, change: current.activityDistribution[current.topActivity.name, default: 0] - previous.activityDistribution[previous.topActivity.name, default: 0]),
-            topProjectChange: TrendChange(from: previous.topProject.name, to: current.topProject.name, change: current.projectDistribution[current.topProject.name, default: 0] - previous.projectDistribution[previous.topProject.name, default: 0]),
-            averageDailyHoursChange: pctChange(current: current.averageDailyHours, previous: previous.averageDailyHours),
-            activityDistributionChanges: distChanges(current: current.activityDistribution, previous: previous.activityDistribution),
-            projectDistributionChanges: distChanges(current: current.projectDistribution, previous: previous.projectDistribution)
-        )
-    }
-    
-    private func pctChange(current: Double, previous: Double) -> Double {
-        guard previous > 0 else { return current > 0 ? 100.0 : 0.0 }
-        return ((current - previous) / previous) * 100.0
-    }
-    
-    private func distChanges(current: [String: Double], previous: [String: Double]) -> [String: Double] {
-        let allKeys = Set(current.keys).union(Set(previous.keys))
-        var changes: [String: Double] = [:]
-        for key in allKeys {
-            changes[key] = pctChange(current: current[key, default: 0], previous: previous[key, default: 0])
-        }
-        return changes
     }
 }
