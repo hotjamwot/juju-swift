@@ -81,7 +81,6 @@ CocoaPods/
 Pods/
 
 # Documentation files
-CHANGELOG.md
 LICENSE
 CONTRIBUTING.md
 INSTALL.md

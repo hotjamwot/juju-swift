@@ -119,22 +119,16 @@ struct SessionCalendarChartView: View {
     private func tooltipContent(for session: WeeklySession) -> some View {
         TooltipContainer {
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.day)
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textPrimary)
-                
                 Text("\(formatHour(session.startHour)) – \(formatHour(session.endHour)) • \(session.duration, specifier: "%.1f")h")
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textSecondary)
                 
-                TooltipDivider()
-                
-                TooltipRow(
-                    color: Color(hex: session.projectColor),
-                    emoji: session.projectEmoji,
-                    name: session.projectName,
-                    hours: session.duration
-                )
+                if let action = session.action, !action.isEmpty {
+                    Text(action)
+                        .font(Theme.Fonts.body.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .lineLimit(2)
+                }
             }
         }
     }
@@ -142,7 +136,7 @@ struct SessionCalendarChartView: View {
     // MARK: - Tooltip Positioning
     
     private let tooltipWidth: CGFloat = 200
-    private let tooltipHeight: CGFloat = 80
+    private let tooltipHeight: CGFloat = 60
     private let tooltipPadding: CGFloat = 14
     
     private func tooltipTooltipX(in size: CGSize) -> CGFloat {
@@ -289,12 +283,12 @@ struct SessionCalendarChartView: View {
 
 #Preview(body: {
     let mockSessions: [WeeklySession] = [
-        WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film"),
-        WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activitySFSymbol: "pencil"),
-        WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activitySFSymbol: "folder"),
-        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film"),
-        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones"),
-        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones")
+        WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film", action: "Draft intro chapter"),
+        WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activitySFSymbol: "pencil", action: "Research for chapter two"),
+        WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activitySFSymbol: "folder", action: nil),
+        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film", action: "Shipped the feature"),
+        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones", action: nil),
+        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones", action: nil)
     ]
     return SessionCalendarChartView(sessions: mockSessions)
         .frame(width: 800, height: 350)

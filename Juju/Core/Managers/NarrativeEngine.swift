@@ -147,13 +147,17 @@ struct ProjectBreakdown: Identifiable, Equatable {
     let hours: Double
 }
 
-/// Full weekly summary with top activities, projects, and comparative data.
+/// Full narrative summary for the Overview Dashboard metric cards.
+/// - Total hours and delta are for THIS WEEK.
+/// - Top activities and projects are MONTH-TO-DATE.
+/// - Delta compares this week against the average active week
+///   over a rolling 12-month window.
 struct NarrativeWeekSummary: Equatable {
     let totalHours: Double
     let formattedHours: String
     let topActivities: [ActivityTypeBreakdown]
     let topProjects: [ProjectBreakdown]
-    let previousTotalHours: Double
+    let averageWeeklyHours: Double
     let deltaHours: Double
 }
 
@@ -246,24 +250,19 @@ final class NarrativeEngine: ObservableObject {
         )
     }
     
-    /// Builds the rich week summary with top-3 activities and projects.
+    /// Builds the rich week summary.
+    /// - Total hours: THIS WEEK (Mon → today)
+    /// - Top activities/projects: MONTH-TO-DATE (1st → today)
+    /// - Delta: this week vs average active week over rolling 12-month window
     private func _generateWeekSummary() -> NarrativeWeekSummary {
-        let sessions = filterSessions(for: .week)
-        let totalHours = calculateTotalHours(from: sessions)
+        let weekSessions = filterSessions(for: .week)
+        let monthSessions = filterSessions(for: .month)
+        let totalHours = calculateTotalHours(from: weekSessions)
+        let averageWeeklyHours = calculateAverageWeeklyHours()
         
-        // Compute previous week's hours for delta
-        let calendar = Calendar.current
-        let previousWeekHours: Double
-        if let previousReferenceDate = calendar.date(byAdding: .weekOfYear, value: -1, to: Date()) {
-            let prevSessions = filterSessions(for: .week, referenceDate: previousReferenceDate)
-            previousWeekHours = calculateTotalHours(from: prevSessions)
-        } else {
-            previousWeekHours = 0
-        }
-        
-        // Build sorted activity type breakdown
+        // Build sorted activity type breakdown (month-to-date)
         var activityTotals: [String: Double] = [:]
-        for session in sessions {
+        for session in monthSessions {
             let id = session.activityTypeID ?? ActivityType.uncategorizedID
             activityTotals[id, default: 0] += Double(session.durationMinutes) / 60.0
         }
@@ -276,9 +275,9 @@ final class NarrativeEngine: ObservableObject {
                 return ActivityTypeBreakdown(id: id, name: activity.name, sfSymbol: activity.sfSymbol, hours: hours)
             }
         
-        // Build sorted project breakdown
+        // Build sorted project breakdown (month-to-date)
         var projectTotals: [String: Double] = [:]
-        for session in sessions {
+        for session in monthSessions {
             projectTotals[session.projectID, default: 0] += Double(session.durationMinutes) / 60.0
         }
         let sortedProjects = projectTotals
@@ -306,9 +305,61 @@ final class NarrativeEngine: ObservableObject {
             formattedHours: formatted,
             topActivities: Array(sortedActivities),
             topProjects: Array(sortedProjects),
-            previousTotalHours: previousWeekHours,
-            deltaHours: totalHours - previousWeekHours
+            averageWeeklyHours: averageWeeklyHours,
+            deltaHours: totalHours - averageWeeklyHours
         )
+    }
+    
+    /// Computes the average weekly hours over a rolling 12-month window,
+    /// considering only weeks with at least one session, excluding the current partial week.
+    private func calculateAverageWeeklyHours() -> Double {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Start of current week (Monday)
+        let currentWeekStart = mondayBasedWeekInterval(containing: now, calendar: calendar).start
+        guard let windowStart = calendar.date(byAdding: .month, value: -12, to: currentWeekStart) else {
+            return 0
+        }
+        
+        // Iterate over complete weeks within the rolling 12-month window
+        var weekHours: [Double] = []
+        var cursor = windowStart
+        
+        while cursor < currentWeekStart {
+            let weekInterval = mondayBasedWeekInterval(containing: cursor, calendar: calendar)
+            let weekStart = max(weekInterval.start, windowStart)
+            let weekEnd = min(weekInterval.end, currentWeekStart)
+            
+            // Skip partial weeks at window boundaries
+            guard weekStart < weekEnd else {
+                cursor = weekInterval.end
+                continue
+            }
+            
+            let interval = DateInterval(start: weekStart, end: weekEnd)
+            let weekSessions = sessionManager.allSessions.filter { interval.contains($0.startDate) }
+            let hours = calculateTotalHours(from: weekSessions)
+            if hours > 0 {
+                weekHours.append(hours)
+            }
+            
+            cursor = weekInterval.end
+        }
+        
+        guard !weekHours.isEmpty else { return 0 }
+        return weekHours.reduce(0, +) / Double(weekHours.count)
+    }
+    
+    /// Returns a Monday-based week interval (start Monday 00:00 → next Monday 00:00)
+    /// for the date containing `date`, matching the week boundaries used by `ChartTimePeriod`.
+    private func mondayBasedWeekInterval(containing date: Date, calendar: Calendar) -> DateInterval {
+        let day = calendar.startOfDay(for: date)
+        let weekday = calendar.component(.weekday, from: day)
+        let daysSinceMonday = (weekday + 5) % 7
+        let startMonday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: day) ?? day
+        let endNextMonday = calendar.date(byAdding: .day, value: 7, to: startMonday) ?? day
+        return DateInterval(start: startMonday, end: endNextMonday)
     }
 
     private func filterSessions(for period: ChartTimePeriod, referenceDate: Date = Date()) -> [SessionRecord] {

@@ -169,20 +169,20 @@ final class ChartDataPreparer: ObservableObject {
             // interval, otherwise the continuation is not shown.
             if rawEndHour > startHour {
                 let day = dayFormatter.string(from: session.startDate)
-                return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)]
+                return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action)]
             } else {
                 guard let endDate = calendar.date(byAdding: .day, value: 1, to: session.startDate),
                       currentWeekInterval.contains(endDate) else {
                     // End day is outside the current week; only show the start day
                     // bubble, clipped to 24:00.
                     let day = dayFormatter.string(from: session.startDate)
-                    return [WeeklySession(day: day, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)]
+                    return [WeeklySession(day: day, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action)]
                 }
                 let startDay = dayFormatter.string(from: session.startDate)
                 let endDay = dayFormatter.string(from: endDate)
                 return [
-                    WeeklySession(day: startDay, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol),
-                    WeeklySession(day: endDay, startHour: 0.0, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol)
+                    WeeklySession(day: startDay, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action),
+                    WeeklySession(day: endDay, startHour: 0.0, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action)
                 ]
             }
         }

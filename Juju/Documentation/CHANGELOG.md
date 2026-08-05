@@ -1,0 +1,43 @@
+# Juju Changelog
+
+**Purpose**: Chronological log of significant features, changes, and fixes. Updated each time a meaningful change lands. See **ROADMAP.md** for project status and ongoing work.
+
+---
+
+## Aug 2026
+
+- **Narrative engine monthly focus/project + rolling avg week**: The FOCUS and PROJECT metric cards at the top of the Overview Dashboard now rank by **month-to-date** sessions (1st → today) instead of the current week, giving a fairer representation of where you've been. The THIS WEEK card's delta now compares against the **average active week over a rolling 12-month window** (weeks with at least one session, excluding the current partial week) instead of the previous calendar week. UI delta label updated to "vs avg week". Updated `NarrativeEngine`, `OverviewDashboardView`, and `ARCHITECTURE.md`.
+
+## Jun 2026
+
+- **Day Session Info Panel**: swapped out tooltips on our 90 day chart in favour of an info panel that lists the sessions of the day on hover, showing Action and Notes preview, duration and Activity Type. Brilliant insights.
+- **Dashboard visual redesign (JapaScandi)**: Replaced rigid `DashboardLayout` ratio-based grid system with `ScrollView` + `LazyVStack`. Charts float at natural heights with consistent horizontal margins. Section headers left-aligned, 8pt header-to-content gap, 56pt section gap. Overview dashboard reordered: Narrative Cards → Calendar Chart → 90-Day Stacked Bar → Yearly Totals. NarrativeMetricCard redesigned with title+symbol top-left, centred data content, elevated card surface (#252526), equal 180pt minimum height. 90-day chart gains milestone tracking with hover-to-highlight (gold pill, dimmed bars). Dashboard padding increased to 48pt. Deprecated old ratio-based `DashboardLayout` constants.
+- **Dynamic Cmd+Tab visibility**: app appears in app switcher only when windows (dashboard/notes) are open; switches to `.accessory` activation policy (hidden) when all windows are closed. Status item is recreated on policy switch to maintain menu bar icon. Updated `AppDelegate`, `DashboardWindowController`, `NotesManager` with window counting and `NSApplication.setActivationPolicy(_:)` calls.
+- **Activity type emoji → SF Symbols migration**: renamed `emoji` field to `sfSymbol` across ActivityType model, all chart data models, rendering code, and JSON data. Updated SelectionItem protocol to support SF Symbols alongside emojis.
+
+## May 2026
+
+- **Bulk edit UX improvements**: toggle button in filter bar, Escape to exit, accented outline selection, phase dropdown enabled for same-project selections, dropdown values persist visually
+- **Bulk session editing implemented** (double-click mode, filter bar integration, shift-click selection)
+- **Documentation cleanup**: removed DATA_FLOW.yaml (redundant with ARCHITECTURE.md), added purpose statements to all docs, created ROADMAP.md
+- **Project Story feature implemented** (working, UI ongoing)
+
+## Mar 2026
+
+- **Phase ID integrity implemented** (archive + remove-with-clear + display rules)
+
+## Feb 2026
+
+- **Action and milestone fields added to sessions**
+
+## Jan 2026
+
+- **Date-based session migration completed** (startDate/endDate transition)
+
+## Nov 2025
+
+- **Dashboard with overview/yearly views implemented**
+
+---
+
+*This file is updated as significant changes land. Keep entries concise, chronological (newest at top), and cross-reference relevant docs or code files where useful.*

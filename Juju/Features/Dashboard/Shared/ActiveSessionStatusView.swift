@@ -86,7 +86,7 @@ struct ActiveSessionStatusView: View {
                 .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.xxs)
+        .padding(.vertical, Theme.Spacing.sm)
     }
     
     // MARK: - Detail Panel

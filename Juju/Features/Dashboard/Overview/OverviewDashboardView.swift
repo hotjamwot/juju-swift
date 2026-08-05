@@ -54,16 +54,19 @@ struct OverviewDashboardView: View {
     var body: some View {
         ScrollView(.vertical) {
             LazyVStack(spacing: sectionGap) {
-                // Active Session Bar (appears at top when session is live,
-                // naturally pushes all content down)
-                if sessionManager.activeSession != nil {
-                    ActiveSessionStatusView(sessionManager: sessionManager)
+                // Active Session Bar + Narrative Summary — grouped together
+                // with a tighter gap so the live session bar feels connected
+                // to the narrative engine below it.
+                VStack(spacing: Theme.Spacing.md) {
+                    if sessionManager.activeSession != nil {
+                        ActiveSessionStatusView(sessionManager: sessionManager)
+                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    }
+                    
+                    // Narrative Summary — THIS WEEK | FOCUS | PROJECT as metric cards
+                    NarrativeSummaryCard(narrativeEngine: narrativeEngine)
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
-                
-                // Narrative Summary — THIS WEEK | FOCUS | PROJECT as metric cards
-                NarrativeSummaryCard(narrativeEngine: narrativeEngine)
-                    .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 
                 // Weekly Calendar Chart — day/hour session blocks
                 VStack(spacing: headerToContentGap) {
@@ -225,7 +228,7 @@ private struct NarrativeSummaryCard: View {
                             .font(Theme.Fonts.metricValue)
                             .foregroundColor(Theme.Colors.textPrimary)
 
-                        // Delta vs last week
+                        // Delta vs average active week
                         deltaView(delta: summary.deltaHours)
                     }
                 }
@@ -312,11 +315,11 @@ private struct NarrativeSummaryCard: View {
         }
     }
 
-    /// Delta view — shows "+2.1h" or "-0.5h" vs last week
+    /// Delta view — shows "+2.1h" or "-0.5h" vs the average active week
     @ViewBuilder
     private func deltaView(delta: Double) -> some View {
         if delta == 0 {
-            Text("Same as last week")
+            Text("Same as avg week")
                 .font(Theme.Fonts.caption)
                 .foregroundColor(Theme.Colors.textSecondary)
         } else {
@@ -326,7 +329,7 @@ private struct NarrativeSummaryCard: View {
                 Image(systemName: delta > 0 ? "arrow.up" : "arrow.down")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(color)
-                Text("\(sign)\(String(format: "%.1f", delta))h vs last week")
+                Text("\(sign)\(String(format: "%.1f", delta))h vs avg week")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(color)
             }

@@ -93,6 +93,7 @@ struct WeeklySession: Identifiable {
     let projectColor: String
     let projectEmoji: String
     let activitySFSymbol: String
+    let action: String?
     var duration: Double { endHour - startHour }
 }
 
