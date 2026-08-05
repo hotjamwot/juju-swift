@@ -26,7 +26,7 @@ struct Session90DayTimelineView: View {
     /// Background opacity for un-hovered slivers.
     private let sliverOpacity: Double = 0.85
     /// Corner radius for slivers.
-    private let sliverCornerRadius: CGFloat = 1.5
+    private let sliverCornerRadius: CGFloat = 3.0
     
     // MARK: - Derived Data
     

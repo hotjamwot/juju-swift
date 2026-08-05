@@ -34,8 +34,16 @@ struct DaySessionInfoPanel: View {
     
     // MARK: - Dynamic Timeline Range
     
-    /// Computes the rail start/end hours from the actual session times, with padding.
-    /// Returns (startHour, endHour, totalHours) for the timeline window.
+    /// Default day window for the rail — 7am to 7pm.
+    private let defaultDayStartHour: Double = 7.0
+    private let defaultDayEndHour: Double = 19.0
+    
+    /// Computes the rail start/end hours for the timeline window.
+    ///
+    /// The rail defaults to a 7am–7pm day. If any session falls outside that
+    /// window, the rail stretches (with `timelinePaddingHours` of breathing
+    /// room) to accommodate the earliest/latest session, so out-of-hours work
+    /// is still visible without cramping in-hours days.
     private func computeTimelineRange(sessions: [SessionRecord]) -> (start: Double, end: Double, total: Double) {
         let calendar = Calendar.current
         let hours = sessions.flatMap { session -> [Double] in
@@ -46,10 +54,12 @@ struct DaySessionInfoPanel: View {
             return [startHour, endHour]
         }
         guard let minHour = hours.min(), let maxHour = hours.max() else {
-            return (start: 6, end: 23, total: 17)
+            return (start: defaultDayStartHour, end: defaultDayEndHour, total: defaultDayEndHour - defaultDayStartHour)
         }
-        let start = max(minHour - timelinePaddingHours, 0)
-        let end = min(maxHour + timelinePaddingHours, 24)
+        // Start with the default 7am–7pm window, then stretch only as far as
+        // the sessions require (with padding). Clamp to the 0–24 day bounds.
+        let start = max(min(minHour - timelinePaddingHours, defaultDayStartHour), 0)
+        let end = min(max(maxHour + timelinePaddingHours, defaultDayEndHour), 24)
         return (start: start, end: end, total: end - start)
     }
     
