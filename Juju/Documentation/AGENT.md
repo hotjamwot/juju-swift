@@ -235,39 +235,8 @@ ProjectStoryBraidView(
 )
 ```
 
-### SwiftUI Preview Pattern for Complex Views
-For views that depend on singletons (e.g., `ProjectsViewModel.shared`), create a preview-specific wrapper that bypasses singletons:
-
+### State in ViewModel, not View
 ```swift
-#Preview("Feature – Dashboard Size") {
-    // Create mock data
-    let viewModel = FeatureViewModel(
-        dataProvider: { mockData }
-    )
-    viewModel.reload()
-    
-    return FeaturePreviewCanvas(viewModel: viewModel)
-        .frame(width: 1200, height: 900)
-        .background(Theme.Colors.background)
-}
-
-// Wrapper that accepts a pre-built view model
-private struct FeaturePreviewCanvas: View {
-    @StateObject private var viewModel: FeatureViewModel
-    init(viewModel: FeatureViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-    var body: some View { ... }
-}
-```
-
-```swift
-// Use Theme
-.padding(.horizontal, Theme.spacingMedium)
-.background(Theme.Colors.surface)
-.font(Theme.Fonts.body)
-
-// State in ViewModel, not View
 @StateObject private var viewModel = FeatureViewModel()
 
 // Views are pure presentation
@@ -332,6 +301,19 @@ do {
 
 ---
 
+## 🚫 SWIFTUI PREVIEWS
+
+**This project does not use SwiftUI Previews.** All `#Preview` and `PreviewProvider` blocks have been removed from the codebase.
+
+When working on this project:
+- **Do not add new `#Preview` or `PreviewProvider` blocks.**
+- **Do not add preview canvas helpers or preview-specific wrappers.**
+- If you see preview-related sample data (e.g. `previewProjects`, `previewActivityTypes`, `previewCoding`), leave them in place only if they are used by production code. Otherwise, remove them.
+- Run `grep -r "#Preview\|PreviewProvider" Juju/` to verify no previews remain before considering the task complete.
+- If you need to verify UI changes, rely on the running app and unit tests, not Xcode Previews.
+
+---
+
 ## ⚠️ COMMON MISTAKES
 
 1. **projectName instead of projectID** → Use UUID
@@ -340,6 +322,7 @@ do {
 4. **Missing error handling** → Silent crashes
 5. **Race conditions** → Use @MainActor
 6. **No validation before persist** → Corrupted data
+7. **Adding SwiftUI Previews back** → They are intentionally removed; do not re-introduce them.
 
 ---
 

@@ -192,24 +192,3 @@ struct ActivityTypeSidebarEditView: View {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct ActivityTypeSidebarEditView_Previews: PreviewProvider {
-    static var previews: some View {
-        let sampleActivityType = ActivityType(
-            id: UUID().uuidString,
-            name: "Sample Activity Type",
-            sfSymbol: "bolt",
-            description: "",
-            archived: false
-        )
-        
-        return ActivityTypeSidebarEditView(activityType: sampleActivityType)
-            .environmentObject(SidebarStateManager())
-            .environmentObject(ActivityTypesViewModel())
-            .frame(width: 420, height: 900)
-            .padding()
-    }
-}
-#endif

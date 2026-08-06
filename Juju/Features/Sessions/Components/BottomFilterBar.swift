@@ -837,39 +837,3 @@ struct BottomFilterBar: View {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct BottomFilterBar_Previews: PreviewProvider {
-    static var previews: some View {
-        let filterState = FilterExportState()
-        let projects = [
-            Project(id: "1", name: "Project Alpha", color: "#3B82F6", about: nil, order: 0),
-            Project(id: "2", name: "Project Beta", color: "#10B981", about: nil, order: 0),
-            Project(id: "3", name: "Project Gamma", color: "#8B5CF6", about: nil, order: 0)
-        ]
-        let activityTypes: [ActivityType] = [
-            .previewCoding, .previewWriting, .previewDesign
-        ]
-        
-        VStack {
-            Spacer()
-            BottomFilterBar(
-                filterState: filterState,
-                projects: projects,
-                activityTypes: activityTypes,
-                filteredSessionsCount: 42,
-                onDateFilterChange: { _ in },
-                onCustomDateRangeChange: { _ in },
-                onProjectFilterChange: { _ in },
-                onActivityTypeFilterChange: { _ in },
-                onPhaseFilterChange: { _ in },
-                onConfirmFilters: { },
-                onClose: { }
-            )
-        }
-        .padding()
-        .background(Theme.Colors.background)
-    }
-}
-#endif

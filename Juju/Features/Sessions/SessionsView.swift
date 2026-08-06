@@ -845,22 +845,3 @@ private struct KeyEventHandlingView: NSViewRepresentable {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct SessionsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SessionsView()
-            .onAppear {
-                Task {
-                    await ProjectsViewModel.shared.loadProjects()
-                    await SessionManager.shared.loadAllSessions()
-                }
-            }
-            .frame(width: 1200, height: 800)
-            .background(Theme.Colors.background)
-            .padding()
-            .previewLayout(.sizeThatFits)
-    }
-}
-#endif

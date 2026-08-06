@@ -75,17 +75,7 @@ struct DashboardRootView: View {
     }
 }
 
-// MARK: - Preview
 
-struct DashboardRootView_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardRootView()
-            .frame(width: 1400, height: 1000)
-            .preferredColorScheme(.dark)
-    }
-}
-
-// MARK: - Navigation Enum
 
 /// Navigation destinations for the dashboard sidebar.
 enum DashboardView: String, CaseIterable, Identifiable {

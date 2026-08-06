@@ -359,22 +359,3 @@ struct LiveTimerView: View {
 }
 
 
-// MARK: - Preview
-#Preview {
-    return ActiveSessionStatusView_PreviewsContent()
-        .frame(width: 800, height: 100)
-        .background(Color(NSColor.windowBackgroundColor))
-        .padding()
-}
-
-struct ActiveSessionStatusView_PreviewsContent: View {
-    @StateObject var sessionManager = SessionManager.shared
-    
-    var body: some View {
-        ActiveSessionStatusView(sessionManager: sessionManager)
-            .onAppear {
-                // Simulate an active session for preview by starting a session
-                sessionManager.startSession(for: "Sample Project")
-            }
-    }
-}

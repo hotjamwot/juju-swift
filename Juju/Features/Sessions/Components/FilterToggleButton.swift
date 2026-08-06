@@ -77,23 +77,4 @@ struct BottomHoverDetector: View {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct FilterToggleButton_Previews: PreviewProvider {
-    static var previews: some View {
-        let filterState = FilterExportState()
-        
-        VStack {
-            Spacer()
-            FilterToggleButton(
-                filterState: filterState,
-                filteredSessionsCount: 42,
-                onToggle: { }
-            )
-        }
-        .padding()
-        .background(Theme.Colors.background)
-    }
-}
-#endif
+

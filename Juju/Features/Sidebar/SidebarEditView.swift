@@ -104,17 +104,4 @@ struct SidebarEditView: View {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct SidebarEditView_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack {
-            Spacer()
-            SidebarEditView()
-                .environmentObject(SidebarStateManager())
-        }
-        .background(Color.gray.opacity(0.2))
-    }
-}
-#endif
+

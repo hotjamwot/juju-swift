@@ -282,14 +282,7 @@ struct NotesModalView: View {
     }
 }
     
-// MARK: - Preview
-struct NotesModalView_Previews: PreviewProvider {
-    static var previews: some View {
-        SimplePreviewHelpers.notesModal {
-            NotesModalView(viewModel: NotesViewModel.preview)
-        }
-    }
-}
+
 
 // MARK: - Add Phase Dialog Extension
 private extension View {

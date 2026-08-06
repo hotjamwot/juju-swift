@@ -87,11 +87,4 @@ struct SidebarView: View {
     }
 }
 
-// MARK: ──  Preview
 
-struct SidebarView_Previews: PreviewProvider {
-    static var previews: some View {
-        SidebarView(selectedView: .constant(.charts))
-            .frame(minWidth: 400, minHeight: 800)
-    }
-}

@@ -281,16 +281,3 @@ struct SessionCalendarChartView: View {
     }
 }
 
-#Preview(body: {
-    let mockSessions: [WeeklySession] = [
-        WeeklySession(day: "Monday", startHour: 9.0, endHour: 12.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film", action: "Draft intro chapter"),
-        WeeklySession(day: "Monday", startHour: 14.0, endHour: 16.0, projectName: "Writing", projectColor: "#800080", projectEmoji: "✍️", activitySFSymbol: "pencil", action: "Research for chapter two"),
-        WeeklySession(day: "Tuesday", startHour: 10.0, endHour: 11.5, projectName: "Admin", projectColor: "#0000FF", projectEmoji: "📋", activitySFSymbol: "folder", action: nil),
-        WeeklySession(day: "Wednesday", startHour: 13.0, endHour: 17.0, projectName: "Film", projectColor: "#FFA500", projectEmoji: "🎬", activitySFSymbol: "film", action: "Shipped the feature"),
-        WeeklySession(day: "Monday", startHour: 23.0, endHour: 24.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones", action: nil),
-        WeeklySession(day: "Tuesday", startHour: 0.0, endHour: 1.0, projectName: "Music", projectColor: "#00FF00", projectEmoji: "🎵", activitySFSymbol: "headphones", action: nil)
-    ]
-    return SessionCalendarChartView(sessions: mockSessions)
-        .frame(width: 800, height: 350)
-        .padding()
-})

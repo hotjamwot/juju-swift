@@ -455,30 +455,3 @@ struct PhaseDropDelegate: DropDelegate {
     }
 }
 
-    // MARK: - Preview
-#if DEBUG
-@available(macOS 12.0, *)
-struct ProjectSidebarEditView_Previews: PreviewProvider {
-    static var previews: some View {
-        let sampleProject = Project(
-            id: UUID().uuidString,
-            name: "Sample Project",
-            color: "#8E44AD",
-            about: "This is a sample project for preview purposes.",
-            order: 0,
-            emoji: "🎨",
-            phases: [
-                Phase(name: "Planning", order: 0, archived: false),
-                Phase(name: "Development", order: 1, archived: false),
-                Phase(name: "Testing", order: 2, archived: false)
-            ]
-        )
-
-        return ProjectSidebarEditView(project: sampleProject)
-            .environmentObject(SidebarStateManager())
-            .environmentObject(ProjectsViewModel())
-            .frame(width: 420, height: 900)
-            .padding()
-    }
-}
-#endif

@@ -341,35 +341,3 @@ struct ActivityTypeRowView: View {
     }
 }
 
-// MARK: - Preview
-
-#if DEBUG
-@available(macOS 12.0, *)
-struct ActivityTypeView_Previews: PreviewProvider {
-    static var previews: some View {
-        ActivityTypeView()
-            .frame(width: 800, height: 800)
-            .previewDisplayName("Live Data (from file)")
-
-        // Preview with mock data
-        let mockActivityTypes: [ActivityType] = [
-            .previewWriting, .previewEditing,
-            ActivityType(id: "coding", name: "Coding", sfSymbol: "chevron.left.forwardslash.chevron.right", description: "Writing and debugging code", archived: true)
-        ]
-
-        List(mockActivityTypes) { activityType in
-            ActivityTypeRowView(activityType: activityType)
-        }
-        .frame(width: 650, height: 600)
-        .previewDisplayName("Mock Data (for UI testing)")
-
-        List {
-             Text("No Activity Types Yet")
-                .foregroundColor(Theme.Colors.textSecondary)
-                .padding(40)
-        }
-        .frame(width: 650, height: 600)
-        .previewDisplayName("Empty State")
-    }
-}
-#endif

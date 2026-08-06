@@ -386,18 +386,3 @@ private struct NarrativeMetricCard<Content: View>: View {
     }
 }
 
-// MARK: - Preview
-
-struct OverviewDashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        OverviewDashboardView(
-            chartDataPreparer: ChartDataPreparer(),
-            sessionManager: SessionManager.shared,
-            projectsViewModel: ProjectsViewModel.shared,
-            narrativeEngine: NarrativeEngine()
-        )
-        .frame(width: 1200, height: 1200)
-        .background(Theme.Colors.background)
-        .preferredColorScheme(.dark)
-    }
-}
