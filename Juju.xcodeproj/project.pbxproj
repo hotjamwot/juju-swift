@@ -71,6 +71,8 @@
 		66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F448432EEC9186008FA5DD /* SidebarView.swift */; };
 		77F001032F40000300E9BB4A /* SessionDataParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F001022F40000200E9BB4A /* SessionDataParserTests.swift */; };
 		77F001092F40000A00E9BB4A /* PhaseDataIntegrityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */; };
+		90217888d98ec84e246b3e1f /* ArraySessionExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49fda83b446e382782b6734d /* ArraySessionExtensionsTests.swift */; };
+		e856b04462d8b42641d98400 /* SessionRecordFilteringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35b7c68a2a188eaf174b84c8 /* SessionRecordFilteringTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -152,6 +154,8 @@
 		77F001012F40000100E9BB4A /* JujuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JujuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		77F001022F40000200E9BB4A /* SessionDataParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDataParserTests.swift; sourceTree = "<group>"; };
 		77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhaseDataIntegrityTests.swift; sourceTree = "<group>"; };
+		49fda83b446e382782b6734d /* ArraySessionExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArraySessionExtensionsTests.swift; sourceTree = "<group>"; };
+		35b7c68a2a188eaf174b84c8 /* SessionRecordFilteringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordFilteringTests.swift; sourceTree = "<group>"; };
 		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -442,6 +446,8 @@
 			children = (
 				66A2486B2FA6527D004DE871 /* ProjectStoryDerivationTests.swift */,
 				77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */,
+				49fda83b446e382782b6734d /* ArraySessionExtensionsTests.swift */,
+				35b7c68a2a188eaf174b84c8 /* SessionRecordFilteringTests.swift */,
 				77F001022F40000200E9BB4A /* SessionDataParserTests.swift */,
 			);
 			path = JujuTests;
@@ -566,6 +572,8 @@
 			files = (
 				66A2486C2FA6527D004DE871 /* ProjectStoryDerivationTests.swift in Sources */,
 				77F001092F40000A00E9BB4A /* PhaseDataIntegrityTests.swift in Sources */,
+				90217888d98ec84e246b3e1f /* ArraySessionExtensionsTests.swift in Sources */,
+				e856b04462d8b42641d98400 /* SessionRecordFilteringTests.swift in Sources */,
 				77F001032F40000300E9BB4A /* SessionDataParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
