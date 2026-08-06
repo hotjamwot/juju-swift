@@ -650,6 +650,22 @@ struct SessionsRowView: View {
             .frame(height: Theme.Row.height + Theme.Row.separatorHeight)
             .background(Theme.Colors.surface)
             .cornerRadius(Theme.Row.cornerRadius)
+            // Selection indicator border for bulk edit mode
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
+                    .stroke(isBulkEditing && isSelected ? Theme.Colors.accentColor : Color.clear, lineWidth: 2)
+            )
+            // Selection checkmark badge for bulk edit mode
+            .overlay(alignment: .topTrailing) {
+                if isBulkEditing && isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.Colors.accentColor)
+                        .background(Circle().fill(Theme.Colors.surface))
+                        .padding(Theme.Spacing.xs)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
             // Pulse bar overlay at the bottom of the row
             .overlay(alignment: .bottom) {
                 PulseBarView(
@@ -661,6 +677,8 @@ struct SessionsRowView: View {
                 .animation(.easeInOut(duration: 0.25), value: currentSession.startDate)
                 .animation(.easeInOut(duration: 0.25), value: currentSession.endDate)
             }
+            .animation(.easeInOut(duration: 0.15), value: isSelected)
+            .animation(.easeInOut(duration: 0.15), value: isBulkEditing)
             .onHover { hovering in
                 isHovering = hovering
             }

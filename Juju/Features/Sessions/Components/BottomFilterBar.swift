@@ -40,6 +40,7 @@ public class FilterExportState: ObservableObject {
     // Filter state
     @Published var projectFilter: String = "All"
     @Published var activityTypeFilter: String = "All"
+    @Published var phaseFilter: String = "All"
     @Published var selectedDateFilter: SessionsDateFilter = .thisWeek
     @Published var customDateRange: DateRange? = nil
     
@@ -65,6 +66,7 @@ public class FilterExportState: ObservableObject {
     func clearFilters() {
         projectFilter = "All"
         activityTypeFilter = "All"
+        phaseFilter = "All"
         selectedDateFilter = .thisWeek
         customDateRange = nil
     }
@@ -144,6 +146,7 @@ struct BottomFilterBar: View {
     let onCustomDateRangeChange: (DateRange?) -> Void
     let onProjectFilterChange: (String) -> Void
     let onActivityTypeFilterChange: (String) -> Void
+    let onPhaseFilterChange: (String) -> Void
     let onConfirmFilters: () -> Void
     let onClose: () -> Void
     let onBulkEditToggle: (() -> Void)? // Callback for toggling bulk edit mode
@@ -165,6 +168,7 @@ struct BottomFilterBar: View {
         onCustomDateRangeChange: @escaping (DateRange?) -> Void,
         onProjectFilterChange: @escaping (String) -> Void,
         onActivityTypeFilterChange: @escaping (String) -> Void,
+        onPhaseFilterChange: @escaping (String) -> Void,
         onConfirmFilters: @escaping () -> Void,
         onClose: @escaping () -> Void,
         onBulkEditToggle: (() -> Void)? = nil
@@ -178,6 +182,7 @@ struct BottomFilterBar: View {
         self.onCustomDateRangeChange = onCustomDateRangeChange
         self.onProjectFilterChange = onProjectFilterChange
         self.onActivityTypeFilterChange = onActivityTypeFilterChange
+        self.onPhaseFilterChange = onPhaseFilterChange
         self.onConfirmFilters = onConfirmFilters
         self.onClose = onClose
         self.onBulkEditToggle = onBulkEditToggle
@@ -227,6 +232,9 @@ struct BottomFilterBar: View {
             // Activity Type Dropdown
             filterActivityTypeDropdown()
             
+            // Phase Dropdown
+            filterPhaseDropdown()
+            
             // Date Filter Dropdown
             filterDateDropdown()
             
@@ -258,15 +266,24 @@ struct BottomFilterBar: View {
     }
     
     // MARK: - Bulk Edit Toggle Button
+    /// When not in bulk edit mode: shows "Bulk Edit" with pencil icon to enter bulk edit.
+    /// When in bulk edit mode: shows "# selected" with a tick icon to confirm bulk edit changes.
     private var bulkEditToggleButton: some View {
         Button(action: {
             onBulkEditToggle?()
         }) {
             HStack(spacing: Theme.spacingExtraSmall) {
-                Image(systemName: "pencil")
-                    .font(Theme.Fonts.caption)
-                Text("Bulk Edit")
-                    .font(Theme.Fonts.caption)
+                if filterState.isBulkEditing {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(Theme.Fonts.caption)
+                    Text("\(filterState.selectedSessionIDs.count) selected")
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                } else {
+                    Image(systemName: "pencil")
+                        .font(Theme.Fonts.caption)
+                    Text("Bulk Edit")
+                        .font(Theme.Fonts.caption)
+                }
             }
             .foregroundColor(Theme.Colors.accentColor)
             .padding(.horizontal, Theme.spacingSmall)
@@ -278,7 +295,7 @@ struct BottomFilterBar: View {
                     .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2))
             )
         }
-        .help("Enter bulk edit mode")
+        .help(filterState.isBulkEditing ? "Apply bulk edits and exit bulk edit mode" : "Enter bulk edit mode")
         .buttonStyle(.plain)
     }
     
@@ -286,14 +303,8 @@ struct BottomFilterBar: View {
     @ViewBuilder
     private var bulkEditControls: some View {
         HStack(spacing: Theme.spacingSmall) {
-            // Selection count
-            Text("\(filterState.selectedSessionIDs.count) selected")
-                .font(Theme.Fonts.caption.weight(.semibold))
-                .foregroundColor(Theme.Colors.accentColor)
-                .padding(.horizontal, Theme.spacingSmall)
-                .padding(.vertical, Theme.spacingExtraSmall)
-                .background(Theme.Colors.accentColor.opacity(0.1))
-                .cornerRadius(Theme.Design.cornerRadius)
+            // Bulk Edit Confirm button (shows selected count and acts as confirm)
+            bulkEditToggleButton
             
             Divider()
                 .frame(height: 20)
@@ -308,23 +319,6 @@ struct BottomFilterBar: View {
             bulkMoodButton()
             
             Spacer()
-            
-            // Save & Exit button (icon only)
-            Button(action: {
-                filterState.requestManualRefresh()
-            }) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(Theme.Fonts.subheader)
-                    .foregroundColor(Theme.Colors.accentColor)
-                    .padding(.horizontal, Theme.spacingSmall)
-                    .padding(.vertical, Theme.spacingExtraSmall)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                            .fill(Theme.Colors.accentColor.opacity(0.1))
-                    )
-            }
-            .help("Apply bulk edits and exit bulk edit mode")
-            .buttonStyle(.plain)
             
             // Cancel button (icon only)
             Button(action: {
@@ -612,6 +606,103 @@ struct BottomFilterBar: View {
         .frame(minWidth: 240)
     }
     
+    // MARK: - Filter Phase Dropdown
+    @ViewBuilder
+    private func filterPhaseDropdown() -> some View {
+        // Determine which phases to show:
+        // - If a project is selected, show only that project's phases
+        // - Otherwise, show phases from all active projects
+        let availablePhases: [(phase: Phase, project: Project)] = {
+            if filterState.projectFilter != "All" {
+                // Only show phases from the selected project
+                guard let project = projects.first(where: { $0.id == filterState.projectFilter }) else {
+                    return []
+                }
+                return project.phases
+                    .filter { !$0.archived }
+                    .map { ($0, project) }
+            } else {
+                // Show phases from all active projects
+                return projects
+                    .filter { !$0.archived }
+                    .flatMap { project in
+                        project.phases
+                            .filter { !$0.archived }
+                            .map { ($0, project) }
+                    }
+            }
+        }()
+        
+        Menu {
+            Button(action: { onPhaseFilterChange("All") }) {
+                Text("All Phases")
+            }
+            Button(action: { onPhaseFilterChange("Uncategorized") }) {
+                HStack {
+                    Text("Uncategorized")
+                        .font(Theme.Fonts.body)
+                        .foregroundColor(Theme.Colors.textPrimary)
+                    Text("(no phase)")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            ForEach(availablePhases, id: \.phase.id) { item in
+                Button(action: { onPhaseFilterChange(item.phase.id) }) {
+                    HStack {
+                        Circle()
+                            .fill(item.project.swiftUIColor)
+                            .frame(width: 8, height: 8)
+                        Text(item.phase.name)
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        if filterState.projectFilter == "All" {
+                            Text(item.project.name)
+                                .font(Theme.Fonts.caption)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        } label: {
+            HStack {
+                if filterState.phaseFilter == "All" {
+                    Text("All Phases")
+                } else if filterState.phaseFilter == "Uncategorized" {
+                    HStack {
+                        Text("Uncategorized")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textPrimary)
+                    }
+                } else {
+                    if let phase = availablePhases.first(where: { $0.phase.id == filterState.phaseFilter }) {
+                        Text(phase.phase.name)
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    } else {
+                        Text("❌")
+                        Text("Phase not found: \(filterState.phaseFilter)")
+                            .foregroundColor(Theme.Colors.error)
+                    }
+                }
+                Image(systemName: "chevron.down")
+                    .font(Theme.Fonts.caption)
+            }
+            .foregroundColor(Theme.Colors.textPrimary)
+            .padding(.horizontal, Theme.spacingSmall)
+            .padding(.vertical, Theme.spacingSmall)
+            .background(Theme.Colors.divider.opacity(0.2))
+            .cornerRadius(Theme.Design.cornerRadius)
+        }
+        .frame(minWidth: 200)
+    }
+    
     // MARK: - Filter Date Dropdown
     @ViewBuilder
     private func filterDateDropdown() -> some View {
@@ -772,6 +863,7 @@ struct BottomFilterBar_Previews: PreviewProvider {
                 onCustomDateRangeChange: { _ in },
                 onProjectFilterChange: { _ in },
                 onActivityTypeFilterChange: { _ in },
+                onPhaseFilterChange: { _ in },
                 onConfirmFilters: { },
                 onClose: { }
             )

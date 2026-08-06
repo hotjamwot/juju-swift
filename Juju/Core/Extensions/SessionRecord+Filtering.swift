@@ -100,6 +100,32 @@ extension SessionRecord {
         return self.activityTypeID == activityTypeID
     }
     
+    /// Check if session has a specific project phase
+    ///
+    /// **AI Context**: This method is used for filtering sessions by project phase ID.
+    /// It supports the Sessions Tab phase filter and phase-based reporting.
+    ///
+    /// **Business Rules**:
+    /// - Uses exact string comparison for projectPhaseID
+    /// - Case-sensitive matching
+    /// - Returns false for nil projectPhaseID values
+    ///
+    /// **Performance Notes**:
+    /// - String comparison is highly optimized
+    /// - Single comparison per session
+    /// - Minimal memory allocation
+    ///
+    /// **Edge Cases**:
+    /// - Nil projectPhaseID values return false
+    /// - Empty projectPhaseID strings return false
+    ///
+    /// - Parameters:
+    ///   - phaseID: Project phase identifier to check against
+    /// - Returns: True if session has the specified phase, false otherwise
+    func hasPhase(_ phaseID: String) -> Bool {
+        return self.projectPhaseID == phaseID
+    }
+    
     /// Check if session duration is valid (end time after start time)
     ///
     /// **AI Context**: This method validates that a session has a logical time progression.

@@ -114,6 +114,42 @@ extension Array where Element == SessionRecord {
         return self.filter { $0.activityTypeID == activityTypeID }
     }
     
+    /// Filter sessions by project phase ID
+    ///
+    /// **AI Context**: This method filters sessions to include only those with a specific
+    /// project phase. It supports the Sessions Tab phase filter, allowing users to find
+    /// all sessions in a given phase (e.g. "Planning", "Execution", "Review").
+    ///
+    /// **Business Rules**:
+    /// - Uses exact string comparison for projectPhaseID
+    /// - Case-sensitive matching
+    /// - Returns empty array if no sessions match
+    /// - Special handling for "Uncategorized" to match nil/empty projectPhaseID
+    ///
+    /// **Performance Notes**:
+    /// - Single pass through array (O(n))
+    /// - Uses optimized string comparison
+    /// - Minimal memory allocation (filter creates new array)
+    ///
+    /// **Edge Cases**:
+    /// - Empty array returns empty array
+    /// - Non-existent phaseID returns empty array
+    /// - Nil projectPhaseID values are excluded (except when filtering by "Uncategorized")
+    ///
+    /// - Parameters:
+    ///   - phaseID: Project phase identifier to filter by (use "Uncategorized" for nil/empty)
+    /// - Returns: Array of sessions with the specified phase
+    func filteredByPhase(_ phaseID: String) -> [SessionRecord] {
+        // Special case: "Uncategorized" should match sessions with nil or empty projectPhaseID
+        if phaseID == "Uncategorized" {
+            return self.filter { session in
+                return session.projectPhaseID == nil || session.projectPhaseID?.isEmpty == true
+            }
+        }
+        // Standard case: exact match for projectPhaseID
+        return self.filter { $0.projectPhaseID == phaseID }
+    }
+    
     /// Filter sessions by date interval
     ///
     /// **AI Context**: This method filters sessions to include only those within a specific

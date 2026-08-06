@@ -222,9 +222,14 @@ final class NarrativeEngine: ObservableObject {
 
     /// Computes the average weekly hours over a rolling 12-month window,
     /// considering only weeks with at least one session, excluding the current partial week.
+    /// Each historical week is measured from Monday to the same weekday offset as today
+    /// (e.g., if today is Thursday, each week is Mon→Thu), so the comparison is fair.
     private func calculateAverageWeeklyHours() -> Double {
         let calendar = Calendar.current
         let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let weekday = calendar.component(.weekday, from: today)
+        let daysSinceMonday = (weekday + 5) % 7
 
         // Start of current week (Monday)
         let currentWeekStart = mondayBasedWeekInterval(containing: now, calendar: calendar).start
@@ -232,18 +237,29 @@ final class NarrativeEngine: ObservableObject {
             return 0
         }
 
-        // Iterate over complete weeks within the rolling 12-month window
+        // Find the first Monday on or before windowStart
+        let windowWeekday = calendar.component(.weekday, from: windowStart)
+        let windowDaysSinceMonday = (windowWeekday + 5) % 7
+        guard let firstMonday = calendar.date(byAdding: .day, value: -windowDaysSinceMonday, to: windowStart) else {
+            return 0
+        }
+
+        // Iterate over Mondays within the rolling 12-month window,
+        // computing partial weeks (Mon → today's weekday offset) for each.
         var weekHours: [Double] = []
-        var cursor = windowStart
+        var monday = firstMonday
 
-        while cursor < currentWeekStart {
-            let weekInterval = mondayBasedWeekInterval(containing: cursor, calendar: calendar)
-            let weekStart = max(weekInterval.start, windowStart)
-            let weekEnd = min(weekInterval.end, currentWeekStart)
+        while monday < currentWeekStart {
+            guard let partialWeekEnd = calendar.date(byAdding: .day, value: daysSinceMonday + 1, to: monday) else {
+                monday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
+                continue
+            }
 
-            // Skip partial weeks at window boundaries
+            let weekStart = max(monday, windowStart)
+            let weekEnd = min(partialWeekEnd, currentWeekStart)
+
             guard weekStart < weekEnd else {
-                cursor = weekInterval.end
+                monday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
                 continue
             }
 
@@ -254,7 +270,7 @@ final class NarrativeEngine: ObservableObject {
                 weekHours.append(hours)
             }
 
-            cursor = weekInterval.end
+            monday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
         }
 
         guard !weekHours.isEmpty else { return 0 }

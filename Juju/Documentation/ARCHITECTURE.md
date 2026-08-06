@@ -358,7 +358,10 @@ struct ActivityDistributionItem: Identifiable {
 /// - Top activities / projects are for the LAST 30 DAYS (rolling window).
 /// - Delta compares the week against the average active week
 ///   over a rolling 12-month window (weeks with at least one session,
-///   excluding the current partial week).
+///   excluding the current partial week). Each historical week is
+///   measured Monday → today's weekday offset (e.g., if today is
+///   Thursday, each week is Mon→Thu), matching the current week's
+///   partial-day range so the comparison is fair.
 
 struct ActivitySummary: Equatable {
     let name: String

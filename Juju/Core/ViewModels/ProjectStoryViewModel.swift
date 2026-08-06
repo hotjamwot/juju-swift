@@ -73,6 +73,10 @@ final class ProjectStoryViewModel: ObservableObject {
         let recentActionLines: [String]
         /// Weekly density buckets for mood sparkline rendering.
         let weeklyDensity: [DensityBucket]
+        /// Most common activity type ID across sessions in this lane (nil if none set).
+        let prevalentActivityTypeID: String?
+        /// Action lines from milestone sessions in this lane, in session order.
+        let milestoneActions: [String]
     }
 
     struct Chapter: Identifiable, Equatable {
@@ -111,7 +115,6 @@ final class ProjectStoryViewModel: ObservableObject {
     @Published private(set) var phaseLanes: [PhaseLane] = []
     @Published private(set) var projectDensity: [DensityBucket] = []
     @Published private(set) var projectSessions: [SessionRecord] = []
-    @Published private(set) var allMilestones: [Milestone] = []
     @Published private(set) var phaseBoundaries: [Date] = []
     @Published private(set) var items: [TimelineItem] = []
     @Published private(set) var isEmpty = true
@@ -187,7 +190,6 @@ final class ProjectStoryViewModel: ObservableObject {
             if case .chapter(let c) = item { return c }
             return nil
         }
-        allMilestones = chapters.flatMap(\.milestones).sorted { $0.date < $1.date }
         phaseBoundaries = chapters.dropFirst().map(\.startDate)
     }
 
@@ -445,6 +447,20 @@ final class ProjectStoryViewModel: ObservableObject {
             let avgMood: Double? = moods.isEmpty ? nil : Double(moods.reduce(0, +)) / Double(moods.count)
             let milestoneCount = sorted.filter(\.isMilestone).count
 
+            let activityCounts = sorted.reduce(into: [String: Int]()) { counts, session in
+                if let activityTypeID = session.activityTypeID {
+                    counts[activityTypeID, default: 0] += 1
+                }
+            }
+            let prevalentActivityTypeID = activityCounts.max { $0.value < $1.value }?.key
+
+            let milestoneActions: [String] = sorted
+                .filter(\.isMilestone)
+                .compactMap { session in
+                    let action = (session.action ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    return action.isEmpty ? nil : action
+                }
+
             // Recent distinct non-empty action lines, newest first, max 3.
             // Milestones are excluded here — they have their own Notable Moments section.
             var seen = Set<String>()
@@ -475,15 +491,19 @@ final class ProjectStoryViewModel: ObservableObject {
                 averageMood: avgMood,
                 milestoneCount: milestoneCount,
                 recentActionLines: Array(actionLines),
-                weeklyDensity: density
+                weeklyDensity: density,
+                prevalentActivityTypeID: prevalentActivityTypeID,
+                milestoneActions: milestoneActions
             )
         }
 
-        // Sort by total duration descending; pin "Unphased" to the bottom.
+        // Sort by project phase order ascending; pin "Unphased" to the bottom.
         return lanes.sorted { lhs, rhs in
             if lhs.id == "__unphased__" { return false }
             if rhs.id == "__unphased__" { return true }
-            return lhs.totalDurationMinutes > rhs.totalDurationMinutes
+            let lhsIndex = lhs.phaseIndex ?? Int.max
+            let rhsIndex = rhs.phaseIndex ?? Int.max
+            return lhsIndex < rhsIndex
         }
     }
 }

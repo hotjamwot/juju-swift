@@ -7,7 +7,7 @@
 #   make install  — copy the built .app to ~/Downloads
 #   make run      — open the app from ~/Downloads
 #   make release  — copy the built .app to /Applications (for final releases)
-#   make clean    — remove the app from ~/Downloads
+#   make clean    — remove the app from ~/Downloads and the build/ directory
 
 PROJECT = Juju.xcodeproj
 SCHEME  = Juju
@@ -42,3 +42,4 @@ release: build
 
 clean:
 	@if [ -d "$(DST)" ]; then rm -rf "$(DST)" && echo "Removed $(DST)"; fi
+	@if [ -d "build" ]; then rm -rf build && echo "Removed build/"; fi

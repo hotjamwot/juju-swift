@@ -18,7 +18,6 @@ struct ProjectStoryView: View {
     @StateObject private var sessionManager = SessionManager.shared
 
     @StateObject private var viewModel: ProjectStoryViewModel
-    @State private var highlightedMilestoneSessionID: String? = nil
     @State private var highlightedPhaseID: String? = nil
 
     init(projectID: String, onExit: @escaping () -> Void) {
@@ -59,20 +58,7 @@ struct ProjectStoryView: View {
                                 projectColorHex: header.colorHex,
                                 projectStart: header.startDate,
                                 projectEnd: header.endDate,
-                                highlightedPhaseID: $highlightedPhaseID,
-                                highlightedSessionID: highlightedMilestoneSessionID
-                            )
-                        }
-
-                        // 3) Notable moments
-                        if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
-                            ProjectStoryNotableMomentsView(
-                                milestones: viewModel.allMilestones,
-                                projectColorHex: header.colorHex,
-                                highlightedSessionID: $highlightedMilestoneSessionID,
-                                onHoverPhase: { phaseID in
-                                    highlightedPhaseID = phaseID
-                                }
+                                highlightedPhaseID: $highlightedPhaseID
                             )
                         }
                     }
@@ -289,7 +275,6 @@ private struct ProjectStoryBraidView: View {
     let projectStart: Date?
     let projectEnd: Date?
     @Binding var highlightedPhaseID: String?
-    var highlightedSessionID: String? = nil  // from Notable Moments hover
 
     private let df: DateFormatter = {
         let f = DateFormatter()
@@ -299,10 +284,6 @@ private struct ProjectStoryBraidView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text("The Braid")
-                .font(Theme.Fonts.caption.weight(.semibold))
-                .foregroundColor(Theme.Colors.textSecondary)
-
             // Spine — chronological session bars
             spine
 
@@ -347,7 +328,6 @@ private struct ProjectStoryBraidView: View {
         GeometryReader { geo in
             ZStack(alignment: .bottomLeading) {
                 let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
-                let hasSessionHighlight = highlightedSessionID != nil
 
                 if let start = projectStart, let end = projectEnd, end > start {
                     let totalSpan = end.timeIntervalSince(start)
@@ -362,10 +342,7 @@ private struct ProjectStoryBraidView: View {
                         let w = max(2.0, geo.size.width * CGFloat(wFrac))
                         let h = barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes)
 
-                        let isSessionHighlighted = highlightedSessionID == s.id
                         let barOpacity: Double = {
-                            if isSessionHighlighted { return 1.0 }
-                            if hasSessionHighlight { return 0.2 }
                             if let highlightedPhaseID {
                                 return phaseID(for: s) == highlightedPhaseID ? 1.0 : 0.18
                             }
@@ -373,15 +350,10 @@ private struct ProjectStoryBraidView: View {
                         }()
 
                         RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
-                            .fill(barFill(for: s, isHighlighted: isSessionHighlighted))
+                            .fill(barFill(for: s, isHighlighted: false))
                             .opacity(barOpacity)
                             .frame(width: w, height: h)
                             .position(x: x + w / 2, y: geo.size.height - h / 2 - 4)
-                            .onHover { hovering in
-                                if hovering {
-                                    highlightedPhaseID = phaseID(for: s)
-                                }
-                            }
                     }
                 } else {
                     // Fallback: single-session or zero-span — render evenly spaced.
@@ -392,10 +364,8 @@ private struct ProjectStoryBraidView: View {
 
                     HStack(alignment: .bottom, spacing: gap) {
                         ForEach(sessions, id: \.id) { s in
-                            let isSessionHighlighted = highlightedSessionID == s.id
                             RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
-                                .fill(barFill(for: s, isHighlighted: isSessionHighlighted))
-                                .opacity(hasSessionHighlight ? (isSessionHighlighted ? 1.0 : 0.2) : 1.0)
+                                .fill(barFill(for: s, isHighlighted: false))
                                 .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
                         }
                     }
@@ -404,7 +374,8 @@ private struct ProjectStoryBraidView: View {
         }
         .frame(height: 72)
         .padding(.vertical, Theme.Spacing.xs)
-        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.leading, PhaseLaneRow.labelWidth + Theme.Spacing.xs)
+        .padding(.trailing, Theme.Spacing.sm)
         .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Row.cornerRadius)
     }
@@ -421,6 +392,8 @@ private struct ProjectStoryBraidView: View {
         }
         .font(Theme.Fonts.caption)
         .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
+        .padding(.leading, PhaseLaneRow.labelWidth + Theme.Spacing.xs)
+        .padding(.trailing, Theme.Spacing.sm)
     }
 
     private var labelStart: String {
@@ -473,6 +446,7 @@ private struct ProjectStoryBraidView: View {
 /// One row in the Braid's lanes section: a phase title on the left, and a
 /// date-positioned track of marks on the right.
 private struct PhaseLaneRow: View {
+    static let labelWidth: CGFloat = 80
     let lane: ProjectStoryViewModel.PhaseLane
     let projectColorHex: String
     let projectStart: Date?
@@ -485,17 +459,17 @@ private struct PhaseLaneRow: View {
         HStack(spacing: Theme.Spacing.xs) {
             Text(lane.title)
                 .font(Theme.Fonts.caption)
-                .foregroundColor(Theme.Colors.textSecondary)
+                .foregroundColor(Theme.Colors.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .frame(width: 80, alignment: .leading)
+                .frame(width: PhaseLaneRow.labelWidth, alignment: .leading)
 
             GeometryReader { geo in
                 ZStack {
                     // Track line
                     Capsule()
                         .fill(Theme.Colors.divider.opacity(0.3))
-                        .frame(height: 2)
+                        .frame(height: 3)
 
                     // Marks positioned by date
                     if let start = projectStart, let end = projectEnd, end > start {
@@ -504,15 +478,22 @@ private struct PhaseLaneRow: View {
                             let xFrac = totalSpan > 0 ? s.startDate.timeIntervalSince(start) / totalSpan : 0
                             let x = geo.size.width * CGFloat(xFrac)
 
-                            Capsule()
-                                .fill(markColor)
-                                .frame(width: 3, height: 10)
-                                .position(x: x, y: geo.size.height / 2)
+                            if s.isMilestone {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.Colors.milestone)
+                                    .position(x: x, y: geo.size.height / 2)
+                            } else {
+                                Capsule()
+                                    .fill(markColor)
+                                    .frame(width: 3, height: 14)
+                                    .position(x: x, y: geo.size.height / 2)
+                            }
                         }
                     }
                 }
             }
-            .frame(height: 14)
+            .frame(height: Theme.Spacing.xl)
         }
         .opacity(isHighlighted ? 1.0 : (anyPhaseHighlighted ? 0.35 : 1.0))
         .onHover { hovering in
@@ -582,6 +563,12 @@ private struct PhaseDetailPanel: View {
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.milestone)
                 }
+
+                if let activityName = prevalentActivityName {
+                    Text("• Mostly \(activityName)")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
             }
 
             if !lane.recentActionLines.isEmpty {
@@ -591,9 +578,24 @@ private struct PhaseDetailPanel: View {
                         .foregroundColor(Theme.Colors.textSecondary)
 
                     ForEach(lane.recentActionLines, id: \.self) { line in
-                        Text("“\(line)”")
+                        Text("\"\(line)\"")
                             .font(Theme.Fonts.body)
                             .foregroundColor(Theme.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            if !lane.milestoneActions.isEmpty {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    Text("Milestones:")
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+
+                    ForEach(lane.milestoneActions, id: \.self) { action in
+                        Text("★ \(action)")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.milestone)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -626,113 +628,17 @@ private struct PhaseDetailPanel: View {
         return String(format: "%.1f", mood)
     }
 
+    private var prevalentActivityName: String? {
+        guard let id = lane.prevalentActivityTypeID else { return nil }
+        return ActivityTypeManager.shared.getActivityType(id: id)?.name
+    }
+
     private var phaseColor: Color {
         if lane.phaseIndex == nil {
             return Color(hex: projectColorHex).opacity(0.40).lightenedByLuminance()
         }
         let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
         return phaseColors[safe: lane.phaseIndex ?? 0] ?? Color(hex: projectColorHex)
-    }
-}
-
-// MARK: - Notable Moments
-
-private struct ProjectStoryNotableMomentsView: View {
-    let milestones: [ProjectStoryViewModel.Milestone]
-    let projectColorHex: String
-    var highlightedSessionID: Binding<String?>? = nil
-    var onHoverPhase: (String?) -> Void = { _ in }
-
-    private let df: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "d MMM yyyy"
-        return f
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacingMedium) {
-            Text("Notable moments")
-                .font(Theme.Fonts.subheader)
-                .foregroundColor(Theme.Colors.textPrimary)
-
-            VStack(spacing: Theme.spacingSmall) {
-                ForEach(milestones) { m in
-                    NotableMomentCard(
-                        milestone: m,
-                        projectColorHex: projectColorHex,
-                        dateText: df.string(from: m.date),
-                        isHighlighted: highlightedSessionID?.wrappedValue == m.id,
-                        onHover: { hovering in
-                            highlightedSessionID?.wrappedValue = hovering ? m.id : nil
-                        },
-                        onHoverPhase: onHoverPhase
-                    )
-                }
-            }
-        }
-        .padding(.top, Theme.spacingLarge)
-    }
-}
-
-private struct NotableMomentCard: View {
-    let milestone: ProjectStoryViewModel.Milestone
-    let projectColorHex: String
-    let dateText: String
-    let isHighlighted: Bool
-    let onHover: (Bool) -> Void
-    var onHoverPhase: (String?) -> Void = { _ in }
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                Rectangle()
-                    .fill(isHighlighted ? Theme.Colors.milestone : Color.lightenedHex(projectColorHex))
-                    .frame(width: 3)
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        PhasePill(title: milestone.phaseTitle, colorHex: projectColorHex)
-                        Text(dateText)
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textSecondary.opacity(0.65))
-                        Spacer()
-                    }
-
-                    Text(milestone.action)
-                        .font(Theme.Fonts.body)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(isHighlighted ? Theme.Colors.surface.opacity(0.85) : Theme.Colors.surface.opacity(0.65))
-            .cornerRadius(Theme.Row.cornerRadius)
-
-            Image(systemName: "star.fill")
-                .font(Theme.Fonts.caption)
-                .foregroundColor(isHighlighted ? Theme.Colors.milestoneHighlight : Color.lightenedHex(projectColorHex))
-                .padding(Theme.Spacing.sm)
-        }
-        .onHover { hovering in
-            onHover(hovering)
-            onHoverPhase(hovering ? milestone.phaseID : nil)
-        }
-    }
-}
-
-private struct PhasePill: View {
-    let title: String
-    let colorHex: String
-
-    var body: some View {
-        Text(title)
-            .font(Theme.Fonts.caption.weight(.semibold))
-            .foregroundColor(Color.lightenedHex(colorHex))
-            .padding(.horizontal, Theme.Spacing.xs)
-            .padding(.vertical, Theme.Spacing.xxs)
-            .background(Color.lightenedHex(colorHex).opacity(0.15))
-            .cornerRadius(999)
     }
 }
 
@@ -852,7 +758,6 @@ private extension Array {
 /// Wrapper that uses a pre-built view model (for preview purposes).
 private struct ProjectStoryPreviewCanvas: View {
     @StateObject private var viewModel: ProjectStoryViewModel
-    @State private var highlightedMilestoneSessionID: String? = nil
     @State private var highlightedPhaseID: String? = nil
 
     init(viewModel: ProjectStoryViewModel) {
@@ -886,19 +791,7 @@ private struct ProjectStoryPreviewCanvas: View {
                                 projectColorHex: header.colorHex,
                                 projectStart: header.startDate,
                                 projectEnd: header.endDate,
-                                highlightedPhaseID: $highlightedPhaseID,
-                                highlightedSessionID: highlightedMilestoneSessionID
-                            )
-                        }
-
-                        if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
-                            ProjectStoryNotableMomentsView(
-                                milestones: viewModel.allMilestones,
-                                projectColorHex: header.colorHex,
-                                highlightedSessionID: $highlightedMilestoneSessionID,
-                                onHoverPhase: { phaseID in
-                                    highlightedPhaseID = phaseID
-                                }
+                                highlightedPhaseID: $highlightedPhaseID
                             )
                         }
                     }

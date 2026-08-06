@@ -236,6 +236,11 @@ public struct SessionsView: View {
             sessions = sessions.filteredByActivityType(filterState.activityTypeFilter)
         }
         
+        // Apply phase filter using Array+SessionExtensions if not "All"
+        if filterState.phaseFilter != "All" {
+            sessions = sessions.filteredByPhase(filterState.phaseFilter)
+        }
+        
         // Apply date filtering based on selected filter
         let filteredByDate = applyDateFilter(to: sessions)
         
@@ -351,6 +356,9 @@ public struct SessionsView: View {
             }
             return
         }
+
+        // Don't refresh the session list while in bulk edit mode — only refresh on confirm.
+        guard !filterState.isBulkEditing else { return }
 
         guard editingSessionID != sessionID else { return }
 
@@ -495,10 +503,17 @@ public struct SessionsView: View {
             onCustomDateRangeChange: handleCustomDateRangeChange,
             onProjectFilterChange: handleProjectFilterChange,
             onActivityTypeFilterChange: handleActivityTypeFilterChange,
+            onPhaseFilterChange: handlePhaseFilterChange,
             onConfirmFilters: confirmFilters,
             onClose: { filterState.isExpanded = false },
             onBulkEditToggle: {
-                filterState.enterBulkEditMode(firstSessionID: nil)
+                if filterState.isBulkEditing {
+                    // Confirm bulk edit changes and exit bulk edit mode
+                    handleBulkEditConfirm()
+                } else {
+                    // Enter bulk edit mode
+                    filterState.enterBulkEditMode(firstSessionID: nil)
+                }
             }
         )
     }
@@ -588,6 +603,9 @@ public struct SessionsView: View {
         .onChange(of: filterState.activityTypeFilter) { _, _ in
             Task { await MainActor.run { updateSessionCount() } }
         }
+        .onChange(of: filterState.phaseFilter) { _, _ in
+            Task { await MainActor.run { updateSessionCount() } }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .projectsDidChange)) { _ in
             handleProjectsChange()
         }
@@ -619,66 +637,67 @@ public struct SessionsView: View {
     }
     
     private func handleManualRefresh() {
-        if filterState.isBulkEditing {
-            Task {
-                let selectedIDs = filterState.selectedSessionIDs
-                let sessions = sessionManager.allSessions.filter { selectedIDs.contains($0.id) }
+        Task {
+            await applyFiltersPreservingState()
+            await MainActor.run { updateSessionCount() }
+        }
+    }
+    
+    /// Apply pending bulk edits to all selected sessions, then exit bulk edit mode and refresh.
+    private func handleBulkEditConfirm() {
+        Task {
+            let selectedIDs = filterState.selectedSessionIDs
+            let sessions = sessionManager.allSessions.filter { selectedIDs.contains($0.id) }
+            
+            let pendingProjectID = filterState.pendingBulkProjectID
+            let pendingPhaseID = filterState.pendingBulkPhaseID
+            let pendingMood = filterState.pendingBulkMood
+            
+            for session in sessions {
+                let resolvedProjectID = pendingProjectID ?? session.projectID
+                let resolvedPhaseID = pendingPhaseID ?? session.projectPhaseID
+                let resolvedMood = pendingMood ?? session.mood
                 
-                let pendingProjectID = filterState.pendingBulkProjectID
-                let pendingPhaseID = filterState.pendingBulkPhaseID
-                let pendingMood = filterState.pendingBulkMood
-                
-                for session in sessions {
-                    let resolvedProjectID = pendingProjectID ?? session.projectID
-                    let resolvedPhaseID = pendingPhaseID ?? session.projectPhaseID
-                    let resolvedMood = pendingMood ?? session.mood
-                    
-                    let projectName: String
-                    if let pid = pendingProjectID,
-                       let project = projectsViewModel.projects.first(where: { $0.id == pid }) {
-                        projectName = project.name
-                    } else if let sessionProject = projectsViewModel.projects.first(where: { $0.id == session.projectID }) {
-                        projectName = sessionProject.name
-                    } else {
-                        projectName = session.projectID
-                    }
-                    
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "yyyy-MM-dd"
-                    
-                    let timeFormatter = DateFormatter()
-                    timeFormatter.dateFormat = "HH:mm"
-                    
-                    let success = SessionManager.shared.updateSessionFull(
-                        id: session.id,
-                        date: dateFormatter.string(from: session.startDate),
-                        startTime: timeFormatter.string(from: session.startDate),
-                        endTime: timeFormatter.string(from: session.endDate),
-                        projectName: projectName,
-                        notes: session.notes,
-                        mood: resolvedMood,
-                        activityTypeID: session.activityTypeID,
-                        projectPhaseID: resolvedPhaseID,
-                        action: session.action,
-                        isMilestone: session.isMilestone,
-                        projectID: resolvedProjectID
-                    )
-                    if !success {
-                        print("❌ Failed to bulk update session \(session.id)")
-                    }
+                let projectName: String
+                if let pid = pendingProjectID,
+                   let project = projectsViewModel.projects.first(where: { $0.id == pid }) {
+                    projectName = project.name
+                } else if let sessionProject = projectsViewModel.projects.first(where: { $0.id == session.projectID }) {
+                    projectName = sessionProject.name
+                } else {
+                    projectName = session.projectID
                 }
                 
-                await MainActor.run {
-                    filterState.exitBulkEditMode()
-                    updateSessionCount()
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                
+                let timeFormatter = DateFormatter()
+                timeFormatter.dateFormat = "HH:mm"
+                
+                let success = SessionManager.shared.updateSessionFull(
+                    id: session.id,
+                    date: dateFormatter.string(from: session.startDate),
+                    startTime: timeFormatter.string(from: session.startDate),
+                    endTime: timeFormatter.string(from: session.endDate),
+                    projectName: projectName,
+                    notes: session.notes,
+                    mood: resolvedMood,
+                    activityTypeID: session.activityTypeID,
+                    projectPhaseID: resolvedPhaseID,
+                    action: session.action,
+                    isMilestone: session.isMilestone,
+                    projectID: resolvedProjectID
+                )
+                if !success {
+                    print("❌ Failed to bulk update session \(session.id)")
                 }
-                await applyFiltersPreservingState()
             }
-        } else {
-            Task {
-                await applyFiltersPreservingState()
-                await MainActor.run { updateSessionCount() }
+            
+            await MainActor.run {
+                filterState.exitBulkEditMode()
+                updateSessionCount()
             }
+            await applyFiltersPreservingState()
         }
     }
     
@@ -768,6 +787,10 @@ public struct SessionsView: View {
     
     private func handleActivityTypeFilterChange(_ activityType: String) {
         filterState.activityTypeFilter = activityType
+    }
+    
+    private func handlePhaseFilterChange(_ phase: String) {
+        filterState.phaseFilter = phase
     }
     
     private func confirmFilters() {
