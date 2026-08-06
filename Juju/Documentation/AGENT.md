@@ -210,22 +210,29 @@ private func tooltipX(in size: CGSize) -> CGFloat {
 ```
 
 ### Cross-Highlight Pattern (Sibling View Communication)
-When two sibling views need to react to the same hover state (e.g., hovering a Notable Moment highlights a bar in the intensity chart):
+When two sibling views need to react to the same hover state (e.g., hovering a Notable Moment highlights a bar in the ProjectStory Braid's spine):
 
 1. **Lift** a shared `@State` property to the **parent** view
 2. **Pass a binding** to the source view (e.g., `NotableMomentsView`)
-3. **Pass the value** to the target view (e.g., `IntensityChartView`)
+3. **Pass the value** to the target view (e.g., `ProjectStoryBraidView`)
 4. The source writes to the binding on hover; the target reads it to adjust rendering
 
 ```swift
 // In parent view:
 @State private var highlightedSessionID: String? = nil
+@State private var highlightedPhaseID: String? = nil
 
 // Source view (writes):
-NotableMomentsView(highlightedSessionID: $highlightedSessionID)
+NotableMomentsView(
+    highlightedSessionID: $highlightedSessionID,
+    onHoverPhase: { highlightedPhaseID = $0 }
+)
 
 // Target view (reads):
-IntensityChartView(highlightedSessionID: highlightedSessionID)
+ProjectStoryBraidView(
+    highlightedSessionID: highlightedSessionID,
+    highlightedPhaseID: $highlightedPhaseID
+)
 ```
 
 ### SwiftUI Preview Pattern for Complex Views
@@ -299,8 +306,8 @@ do {
 | **Target** | `JujuTests` — macOS **unit test bundle** (not UI tests) |
 | **Host app** | `Juju.app` — tests load with `TEST_HOST` / `BUNDLE_LOADER` so `@testable import Juju` resolves |
 | **Location** | `JujuTests/` at repo root (sibling of `Juju/`) |
-| **Current focus** | (1) Session **CSV integrity** via `SessionDataParser`. (2) **Phase integrity**: `SessionPhaseIntegrity.clearingPhaseReferences` and `DataValidator.validateSession(_:projectList:)` with in-memory `Project` / `SessionRecord` fixtures — see `JujuTests/PhaseDataIntegrityTests.swift`. |
-| **Main files** | `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift` |
+| **Current focus** | (1) Session **CSV integrity** via `SessionDataParser`. (2) **Phase integrity**: `SessionPhaseIntegrity.clearingPhaseReferences` and `DataValidator.validateSession(_:projectList:)` with in-memory `Project` / `SessionRecord` fixtures — see `JujuTests/PhaseDataIntegrityTests.swift`. (3) **ProjectStory derivation**: `deriveTimelineItems`, `deriveWeeklyDensity`, and `derivePhaseLanes` (the Braid's lane model) — see `JujuTests/ProjectStoryDerivationTests.swift`. |
+| **Main files** | `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift`, `ProjectStoryDerivationTests.swift` |
 
 ### How to run
 

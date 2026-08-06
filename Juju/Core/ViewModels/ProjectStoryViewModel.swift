@@ -51,6 +51,30 @@ final class ProjectStoryViewModel: ObservableObject {
         let phaseIndex: Int? // Index into the project's phases array for color lookup; nil for unphased
     }
 
+    /// One row in the Braid timeline. A lane is *not* a contiguous time span —
+    /// it's a facet (phase / sub-project / collaborator) whose sessions may be
+    /// scattered across the whole project. The lane carries everything the
+    /// PhaseDetailPanel needs on hover.
+    struct PhaseLane: Identifiable, Equatable {
+        let id: String                 // phaseID, or "unphased" for nil/unknown
+        let title: String
+        let isArchivedPhase: Bool
+        let phaseIndex: Int?           // Index into project.phases for color lookup; nil for unphased
+        let sessions: [SessionRecord]  // Chronological
+        let startDate: Date
+        let endDate: Date
+        let totalDurationMinutes: Int
+        let sessionCount: Int
+        let averageMood: Double?
+        let milestoneCount: Int
+        /// Most recent distinct non-empty action lines (max 3), newest first.
+        /// Surfaces `SessionRecord.action` for non-milestone sessions — the
+        /// narrative texture that the previous view hid entirely.
+        let recentActionLines: [String]
+        /// Weekly density buckets for mood sparkline rendering.
+        let weeklyDensity: [DensityBucket]
+    }
+
     struct Chapter: Identifiable, Equatable {
         let id: String
         let phaseID: String?
@@ -84,6 +108,7 @@ final class ProjectStoryViewModel: ObservableObject {
     @Published private(set) var header: Header?
     @Published private(set) var summary: SummaryStats?
     @Published private(set) var phaseTimeline: [PhaseSegment] = []
+    @Published private(set) var phaseLanes: [PhaseLane] = []
     @Published private(set) var projectDensity: [DensityBucket] = []
     @Published private(set) var projectSessions: [SessionRecord] = []
     @Published private(set) var allMilestones: [Milestone] = []
@@ -149,6 +174,7 @@ final class ProjectStoryViewModel: ObservableObject {
         isEmpty = sessions.isEmpty
         summary = Self.deriveSummaryStats(from: sessions, project: project)
         phaseTimeline = Self.derivePhaseTimeline(from: sessions, project: project)
+        phaseLanes = Self.derivePhaseLanes(from: sessions, project: project, calendar: calendar)
         projectDensity = Self.deriveWeeklyDensity(from: sessions, calendar: calendar)
         projectSessions = sessions
         items = Self.deriveTimelineItems(
@@ -366,8 +392,99 @@ final class ProjectStoryViewModel: ObservableObject {
                 phaseIndex: currentPhaseIndex
             ))
         }
-        
+
         return segments
+    }
+
+    /// Derive one `PhaseLane` per phase used by the project's sessions.
+    ///
+    /// Unlike `derivePhaseTimeline`, lanes do NOT assume phases are contiguous
+    /// or chronological. A lane is a facet (phase / sub-project / collaborator)
+    /// whose sessions may be scattered across the whole project span. This is
+    /// the honest representation for users who use phases as sub-projects,
+    /// collaborators, or "design throughout" tracks.
+    ///
+    /// Lanes are sorted by total duration descending — the dominant facet
+    /// sits at the top of the Braid. Unphased sessions (nil or unknown
+    /// phaseID) collapse into a single "Unphased" lane at the bottom.
+    nonisolated static func derivePhaseLanes(
+        from sessions: [SessionRecord],
+        project: Project,
+        calendar: Calendar
+    ) -> [PhaseLane] {
+        guard !sessions.isEmpty else { return [] }
+
+        let phasesByID = Dictionary(uniqueKeysWithValues: project.phases.map { ($0.id, $0) })
+        var phaseIndexByID: [String: Int] = [:]
+        for (index, phase) in project.phases.enumerated() {
+            phaseIndexByID[phase.id] = index
+        }
+
+        func groupKey(for phaseID: String?) -> String {
+            guard let phaseID, phasesByID[phaseID] != nil else { return "__unphased__" }
+            return phaseID
+        }
+
+        func resolveInfo(_ key: String) -> (title: String, archived: Bool, phaseID: String?, phaseIndex: Int?) {
+            if key == "__unphased__" { return ("Unphased", false, nil, nil) }
+            let phase = phasesByID[key]
+            return (phase?.name ?? "Unphased", phase?.archived ?? false, key, phaseIndexByID[key])
+        }
+
+        var groups: [String: [SessionRecord]] = [:]
+        for s in sessions {
+            groups[groupKey(for: s.projectPhaseID), default: []].append(s)
+        }
+
+        let lanes: [PhaseLane] = groups.map { (key, groupSessions) in
+            let sorted = groupSessions.sorted { $0.startDate < $1.startDate }
+            let info = resolveInfo(key)
+
+            let totalMinutes = sorted.reduce(0) { $0 + max($1.durationMinutes, 0) }
+            let moods = sorted.compactMap(\.mood)
+            let avgMood: Double? = moods.isEmpty ? nil : Double(moods.reduce(0, +)) / Double(moods.count)
+            let milestoneCount = sorted.filter(\.isMilestone).count
+
+            // Recent distinct non-empty action lines, newest first, max 3.
+            // Milestones are excluded here — they have their own Notable Moments section.
+            var seen = Set<String>()
+            let actionLines: [String] = sorted
+                .reversed()
+                .compactMap { s -> String? in
+                    guard !s.isMilestone else { return nil }
+                    let line = (s.action ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !line.isEmpty, !seen.contains(line) else { return nil }
+                    seen.insert(line)
+                    return line
+                }
+                .prefix(3)
+                .map { $0 }
+
+            let density = deriveWeeklyDensity(from: sorted, calendar: calendar)
+
+            return PhaseLane(
+                id: key,
+                title: info.title,
+                isArchivedPhase: info.archived,
+                phaseIndex: info.phaseIndex,
+                sessions: sorted,
+                startDate: sorted.first!.startDate,
+                endDate: sorted.max(by: { $0.endDate < $1.endDate })!.endDate,
+                totalDurationMinutes: totalMinutes,
+                sessionCount: sorted.count,
+                averageMood: avgMood,
+                milestoneCount: milestoneCount,
+                recentActionLines: Array(actionLines),
+                weeklyDensity: density
+            )
+        }
+
+        // Sort by total duration descending; pin "Unphased" to the bottom.
+        return lanes.sorted { lhs, rhs in
+            if lhs.id == "__unphased__" { return false }
+            if rhs.id == "__unphased__" { return true }
+            return lhs.totalDurationMinutes > rhs.totalDurationMinutes
+        }
     }
 }
 

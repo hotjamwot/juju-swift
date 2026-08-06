@@ -1,6 +1,12 @@
 /// ProjectStoryView.swift
 /// Purpose: Read-only narrative timeline for a single project.
 /// AI Notes: Pure presentation; consumes ProjectStoryViewModel-derived items.
+///
+/// "The Braid" — a dual-track timeline. The top track (spine) is a
+/// chronological bar chart of sessions coloured by phase. The bottom tracks
+/// are one lane per phase with marks positioned by date — honest about the
+/// fact that phases aren't always chronological (they can be sub-projects,
+/// collaborators, or interleaved).
 
 import SwiftUI
 
@@ -13,6 +19,7 @@ struct ProjectStoryView: View {
 
     @StateObject private var viewModel: ProjectStoryViewModel
     @State private var highlightedMilestoneSessionID: String? = nil
+    @State private var highlightedPhaseID: String? = nil
 
     init(projectID: String, onExit: @escaping () -> Void) {
         self.projectID = projectID
@@ -44,35 +51,28 @@ struct ProjectStoryView: View {
                             ProjectStorySummaryRowView(summary: summary, projectColorHex: header.colorHex)
                         }
 
-                         // 2) Phase timeline bar + milestone pins + labels/ticks
-                         if let header = viewModel.header, !viewModel.phaseTimeline.isEmpty {
-                             ProjectStoryPhaseTimelineView(
-                                 segments: viewModel.phaseTimeline,
-                                 phaseBoundaries: viewModel.phaseBoundaries,
-                                 projectColorHex: header.colorHex,
-                                 headerStartDate: header.startDate,
-                                 headerEndDate: header.endDate
-                             )
-                         }
-
-                        // 3) Full-project intensity + mood chart
+                        // 2) The Braid — spine + phase lanes + detail panel
                         if let header = viewModel.header, !viewModel.projectSessions.isEmpty {
-                            ProjectStoryIntensityMoodChartView(
+                            ProjectStoryBraidView(
                                 sessions: viewModel.projectSessions,
-                                orderedPhaseIDs: viewModel.phaseTimeline.map(\.id),
+                                lanes: viewModel.phaseLanes,
                                 projectColorHex: header.colorHex,
+                                projectStart: header.startDate,
+                                projectEnd: header.endDate,
+                                highlightedPhaseID: $highlightedPhaseID,
                                 highlightedSessionID: highlightedMilestoneSessionID
                             )
                         }
 
-
-
-                        // 5) Notable moments
+                        // 3) Notable moments
                         if let header = viewModel.header, !viewModel.allMilestones.isEmpty {
                             ProjectStoryNotableMomentsView(
                                 milestones: viewModel.allMilestones,
                                 projectColorHex: header.colorHex,
-                                highlightedSessionID: $highlightedMilestoneSessionID
+                                highlightedSessionID: $highlightedMilestoneSessionID,
+                                onHoverPhase: { phaseID in
+                                    highlightedPhaseID = phaseID
+                                }
                             )
                         }
                     }
@@ -277,363 +277,371 @@ private struct StoryMetricCard: View {
     }
 }
 
-private struct ProjectStoryPhaseTimelineView: View {
-    let segments: [ProjectStoryViewModel.PhaseSegment]
-    let phaseBoundaries: [Date]
-    let projectColorHex: String
-    let headerStartDate: Date?
-    let headerEndDate: Date?
+// MARK: - The Braid
 
-    @State private var hoveredSegmentID: String?
-    @State private var showPhaseTooltip: Bool = false
+/// The core "Braid" component: a chronological session spine on top, with one
+/// lane per phase beneath. Hovering a lane highlights its bars in the spine
+/// and reveals a pinned `PhaseDetailPanel`.
+private struct ProjectStoryBraidView: View {
+    let sessions: [SessionRecord]
+    let lanes: [ProjectStoryViewModel.PhaseLane]
+    let projectColorHex: String
+    let projectStart: Date?
+    let projectEnd: Date?
+    @Binding var highlightedPhaseID: String?
+    var highlightedSessionID: String? = nil  // from Notable Moments hover
+
+    private let df: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM yyyy"
+        return f
+    }()
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text("Phase timeline")
+            Text("The Braid")
                 .font(Theme.Fonts.caption.weight(.semibold))
                 .foregroundColor(Theme.Colors.textSecondary)
 
-            GeometryReader { geo in
-                ZStack {
-                    // Layer 1 — Bar itself
-                    HStack(spacing: 0) {
-                        ForEach(segments.indices, id: \.self) { idx in
-                            let seg = segments[idx]
-                            let isHovered = hoveredSegmentID == seg.id
+            // Spine — chronological session bars
+            spine
 
-                            Rectangle()
-                                .fill(phaseColor(index: seg.phaseIndex ?? 0, for: seg))
-                                .opacity(seg.isArchivedPhase ? 0.45 : (isHovered ? 1.0 : 0.85))
-                                .frame(width: max(1, geo.size.width * seg.fractionOfTotal))
-                                .overlay(alignment: .top) {
-                                    if showPhaseTooltip, isHovered {
-                                        phaseTooltip(for: seg)
-                                            .offset(y: -8)
-                                            .fixedSize()
-                                            .allowsHitTesting(false)
-                                    }
-                                }
-                                .zIndex(showPhaseTooltip && isHovered ? 10 : 0)
-                                .onHover { hovering in
-                                    if hovering {
-                                        hoveredSegmentID = seg.id
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [segID = seg.id] in
-                                            if hoveredSegmentID == segID {
-                                                withAnimation(.easeOut(duration: 0.1)) {
-                                                    showPhaseTooltip = true
-                                                }
-                                            }
-                                        }
-                                    } else if hoveredSegmentID == seg.id {
-                                        showPhaseTooltip = false
-                                        hoveredSegmentID = nil
-                                    }
-                                }
+            // Phase lanes — one row per phase, marks positioned by date
+            VStack(spacing: Theme.Spacing.xxs) {
+                ForEach(lanes) { lane in
+                    PhaseLaneRow(
+                        lane: lane,
+                        projectColorHex: projectColorHex,
+                        projectStart: projectStart,
+                        projectEnd: projectEnd,
+                        isHighlighted: highlightedPhaseID == lane.id,
+                        anyPhaseHighlighted: highlightedPhaseID != nil,
+                        onHover: { id in
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                highlightedPhaseID = id
+                            }
                         }
-                    }
-                    .frame(height: 34)
-                    .background(Theme.Colors.surface.opacity(0.5))
-                    .cornerRadius(Theme.Design.blockCornerRadius)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius))
+                    )
                 }
             }
-            .frame(height: 34)
 
-            // Layer 3 — Phase labels beneath segments (suppressed if narrow)
-            GeometryReader { geo in
-                ZStack(alignment: .topLeading) {
-                    ForEach(segments.indices, id: \.self) { idx in
-                        let seg = segments[idx]
-                        let startFrac = startFraction(for: idx)
-                        let w = geo.size.width * seg.fractionOfTotal
-                        let mid = geo.size.width * (startFrac + (seg.fractionOfTotal / 2))
+            // Axis labels — start / mid / end
+            axisLabels
 
-                        if w >= 50 {
-                            Text(seg.title)
-                                .font(Theme.Fonts.caption)
-                                .foregroundColor(Theme.Colors.textSecondary)
-                                .position(x: mid, y: 8)
-                        }
-                    }
-                }
+            // Pinned detail panel for the highlighted phase
+            if let highlightedPhaseID,
+               let lane = lanes.first(where: { $0.id == highlightedPhaseID }) {
+                PhaseDetailPanel(lane: lane, projectColorHex: projectColorHex)
+                    .transition(.opacity)
             }
-            .frame(height: 16)
-
-            // Date ticks beneath labels (start/end + phase boundaries)
-            ProjectStoryTimelineTicksView(
-                projectStart: headerStartDate,
-                projectEnd: headerEndDate,
-                phaseBoundaries: phaseBoundaries,
-                projectColorHex: projectColorHex
-            )
         }
-        .padding(.vertical, Theme.Spacing.sm)
-        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(Theme.Spacing.sm)
         .background(Theme.Colors.surface.opacity(0.6))
+        .cornerRadius(Theme.Row.cornerRadius)
+        .animation(.easeOut(duration: 0.15), value: highlightedPhaseID)
+    }
+
+    // MARK: Spine
+
+    private var spine: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .bottomLeading) {
+                let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
+                let hasSessionHighlight = highlightedSessionID != nil
+
+                if let start = projectStart, let end = projectEnd, end > start {
+                    let totalSpan = end.timeIntervalSince(start)
+
+                    ForEach(sessions, id: \.id) { s in
+                        let sStart = s.startDate.timeIntervalSince(start)
+                        let sEnd = s.endDate.timeIntervalSince(start)
+                        let xFrac = totalSpan > 0 ? sStart / totalSpan : 0
+                        let wFrac = totalSpan > 0 ? (sEnd - sStart) / totalSpan : 0
+
+                        let x = geo.size.width * CGFloat(xFrac)
+                        let w = max(2.0, geo.size.width * CGFloat(wFrac))
+                        let h = barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes)
+
+                        let isSessionHighlighted = highlightedSessionID == s.id
+                        let barOpacity: Double = {
+                            if isSessionHighlighted { return 1.0 }
+                            if hasSessionHighlight { return 0.2 }
+                            if let highlightedPhaseID {
+                                return phaseID(for: s) == highlightedPhaseID ? 1.0 : 0.18
+                            }
+                            return 1.0
+                        }()
+
+                        RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+                            .fill(barFill(for: s, isHighlighted: isSessionHighlighted))
+                            .opacity(barOpacity)
+                            .frame(width: w, height: h)
+                            .position(x: x + w / 2, y: geo.size.height - h / 2 - 4)
+                            .onHover { hovering in
+                                if hovering {
+                                    highlightedPhaseID = phaseID(for: s)
+                                }
+                            }
+                    }
+                } else {
+                    // Fallback: single-session or zero-span — render evenly spaced.
+                    let count = max(sessions.count, 1)
+                    let gap: CGFloat = 1
+                    let raw = (geo.size.width / CGFloat(count)) - gap
+                    let barW = max(1.5, raw)
+
+                    HStack(alignment: .bottom, spacing: gap) {
+                        ForEach(sessions, id: \.id) { s in
+                            let isSessionHighlighted = highlightedSessionID == s.id
+                            RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+                                .fill(barFill(for: s, isHighlighted: isSessionHighlighted))
+                                .opacity(hasSessionHighlight ? (isSessionHighlighted ? 1.0 : 0.2) : 1.0)
+                                .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: 72)
+        .padding(.vertical, Theme.Spacing.xs)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .background(Theme.Colors.surface.opacity(0.5))
         .cornerRadius(Theme.Row.cornerRadius)
     }
 
-    @ViewBuilder
-    private func phaseTooltip(for seg: ProjectStoryViewModel.PhaseSegment) -> some View {
-        let minutes = seg.durationMinutes
-        let hours = Double(minutes) / 60.0
-        let percentage = seg.fractionOfTotal * 100
+    // MARK: Axis Labels
 
-                TooltipContainer {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                        Text(seg.title)
-                            .font(Theme.Fonts.caption)
-                            .foregroundColor(Theme.Colors.textPrimary)
-
-                Text(String(format: "%.1fh (%.0f%%)", hours, percentage))
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.accentColor)
-
-                if seg.isArchivedPhase {
-                    Text("Archived phase")
-                        .font(Theme.Fonts.caption)
-                        .foregroundColor(Theme.Colors.textSecondary)
-                }
-            }
+    private var axisLabels: some View {
+        HStack {
+            Text(labelStart)
+            Spacer()
+            Text(labelMid)
+            Spacer()
+            Text(labelEnd)
         }
-    }
-
-    private func phaseColor(index: Int, for seg: ProjectStoryViewModel.PhaseSegment) -> Color {
-        ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 30)[safe: index] ?? Color(hex: projectColorHex)
-    }
-
-    private func startFraction(for index: Int) -> CGFloat {
-        guard index > 0 else { return 0 }
-        let sum = segments.prefix(index).reduce(0.0) { $0 + $1.fractionOfTotal }
-        return CGFloat(sum)
-    }
-}
-
-
-private struct ProjectStoryTimelineTicksView: View {
-    let projectStart: Date?
-    let projectEnd: Date?
-    let phaseBoundaries: [Date]
-    let projectColorHex: String
-
-    private let df: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM yyyy"
-        return f
-    }()
-
-    var body: some View {
-        GeometryReader { geo in
-            if let start = projectStart, let end = projectEnd, end > start {
-                HStack(spacing: 0) {
-                    let allDates = [start] + phaseBoundaries + [end]
-                    let allLabels = allDates.map { df.string(from: $0) }
-
-                    ForEach(Array(allDates.enumerated()), id: \.offset) { idx, date in
-                        if idx == 0 {
-                            VStack {
-                                Text(allLabels[idx])
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        } else {
-                            let previousDate = allDates[idx-1]
-                            let previousFraction = fraction(previousDate, start: start, end: end)
-                            let currentFraction = fraction(date, start: start, end: end)
-                            Spacer(minLength: 0)
-                                .frame(width: geo.size.width * (currentFraction - previousFraction))
-                            VStack {
-                                Text(allLabels[idx])
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                    }
-                }
-                .frame(width: geo.size.width, height: 12)
-            } else {
-                // When start/end aren't provided, render boundary labels at even spacing.
-                ZStack(alignment: .topLeading) {
-                    ForEach(Array(phaseBoundaries.enumerated()), id: \.offset) { idx, d in
-                        let t = CGFloat(idx + 1) / CGFloat(max(phaseBoundaries.count + 1, 1))
-                        tick(x: geo.size.width * t, text: df.string(from: d))
-                    }
-                }
-            }
-        }
-        .frame(height: 12)
-    }
-
-    private func fraction(_ date: Date, start: Date, end: Date) -> CGFloat {
-        let total = end.timeIntervalSince(start)
-        guard total > 0 else { return 0 }
-        return CGFloat(min(max(date.timeIntervalSince(start) / total, 0), 1))
-    }
-
-    private func tick(x: CGFloat, text: String, alignTrailing: Bool = false) -> some View {
-        Text(text)
-            .font(Theme.Fonts.caption)
-            .foregroundColor(Theme.Colors.textSecondary.opacity(0.55))
-            .position(x: x + (alignTrailing ? -18 : 18), y: 6)
-    }
-}
-
-private struct ProjectStoryIntensityMoodChartView: View {
-    let sessions: [SessionRecord]
-    let orderedPhaseIDs: [String]
-    let projectColorHex: String
-    var highlightedSessionID: String? = nil
-
-    private let phaseIndexByID: [String: Int]
-
-    init(sessions: [SessionRecord], orderedPhaseIDs: [String], projectColorHex: String, highlightedSessionID: String? = nil) {
-        self.sessions = sessions
-        self.orderedPhaseIDs = orderedPhaseIDs
-        self.projectColorHex = projectColorHex
-        self.highlightedSessionID = highlightedSessionID
-        self.phaseIndexByID = Dictionary(uniqueKeysWithValues: orderedPhaseIDs.enumerated().map { ($0.element, $0.offset) })
-    }
-
-    private let df: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM yyyy"
-        return f
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            GeometryReader { geo in
-                ZStack(alignment: .bottomLeading) {
-                    let maxMinutes = max(sessions.map(\.durationMinutes).max() ?? 1, 1)
-                    let hasHighlight = highlightedSessionID != nil
-
-                    // Chronological bar chart: each bar is positioned proportionally
-                    // to its start date within the overall session time range.
-                    if let start = sessionStartDate, let end = sessionEndDate, end > start {
-                        let totalSpan = end.timeIntervalSince(start)
-
-                        ForEach(sessions, id: \.id) { s in
-                            let sStart = s.startDate.timeIntervalSince(start)
-                            let sEnd = s.endDate.timeIntervalSince(start)
-                            let xFrac = totalSpan > 0 ? sStart / totalSpan : 0
-                            let wFrac = totalSpan > 0 ? (sEnd - sStart) / totalSpan : 0
-
-                            let x = geo.size.width * CGFloat(xFrac)
-                            let w = max(2.0, geo.size.width * CGFloat(wFrac))
-                            let h = barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes)
-
-                            let isHighlighted = highlightedSessionID == s.id
-                            let barOpacity: Double = {
-                                if !hasHighlight { return 1.0 }
-                                return isHighlighted ? 1.0 : 0.2
-                            }()
-
-                            RoundedRectangle(cornerRadius: 1)
-                                .fill(barFill(for: s, projectColorHex: projectColorHex, isHighlighted: isHighlighted))
-                                .opacity(barOpacity)
-                                .frame(width: w, height: h)
-                                .position(x: x + w / 2, y: geo.size.height - h / 2 - 4)
-                        }
-                    } else {
-                        // Fallback: single-session or zero-span — render as before, evenly spaced.
-                        let count = max(sessions.count, 1)
-                        let gap: CGFloat = 1
-                        let raw = (geo.size.width / CGFloat(count)) - gap
-                        let barW = max(1.5, raw)
-
-                        HStack(alignment: .bottom, spacing: gap) {
-                            ForEach(sessions, id: \.id) { s in
-                                let isHighlighted = highlightedSessionID == s.id
-                                RoundedRectangle(cornerRadius: 1)
-                                    .fill(barFill(for: s, projectColorHex: projectColorHex, isHighlighted: isHighlighted))
-                                    .opacity(hasHighlight ? (isHighlighted ? 1.0 : 0.2) : 1.0)
-                                    .frame(width: barW, height: barHeight(minutes: s.durationMinutes, maxMinutes: maxMinutes))
-                            }
-                        }
-                    }
-                }
-            }
-            .frame(height: 72)
-            .padding(.vertical, Theme.Spacing.xs)
-            .padding(.horizontal, Theme.Spacing.sm)
-            .background(Theme.Colors.surface.opacity(0.6))
-            .cornerRadius(Theme.Row.cornerRadius)
-
-            HStack {
-                Text(labelStart)
-                Spacer()
-                Text(labelMid)
-                Spacer()
-                Text(labelEnd)
-            }
-            .font(Theme.Fonts.caption)
-            .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-        }
-        .padding(.bottom, Theme.spacingLarge)
+        .font(Theme.Fonts.caption)
+        .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
     }
 
     private var labelStart: String {
-        if let d = sessionStartDate { return df.string(from: d) }
+        if let d = projectStart { return df.string(from: d) }
         return ""
     }
 
     private var labelEnd: String {
-        if let d = sessionEndDate { return df.string(from: d) }
+        if let d = projectEnd { return df.string(from: d) }
         return ""
     }
 
     private var labelMid: String {
-        guard let start = sessionStartDate, let end = sessionEndDate, end > start else { return "" }
+        guard let start = projectStart, let end = projectEnd, end > start else { return "" }
         let mid = start.addingTimeInterval((end.timeIntervalSince(start) / 2))
         return df.string(from: mid)
     }
 
-    private var sessionStartDate: Date? {
-        sessions.min(by: { $0.startDate < $1.startDate })?.startDate
-    }
-
-    private var sessionEndDate: Date? {
-        sessions.max(by: { $0.endDate < $1.endDate })?.endDate
-    }
+    // MARK: Helpers
 
     private func barHeight(minutes: Int, maxMinutes: Int) -> CGFloat {
         let t = CGFloat(Swift.max(minutes, 0)) / CGFloat(Swift.max(maxMinutes, 1))
         return 6 + (t * (48 - 6))
     }
 
-    private func barFill(for session: SessionRecord, projectColorHex: String, isHighlighted: Bool = false) -> Color {
+    private func barFill(for session: SessionRecord, isHighlighted: Bool) -> Color {
         if session.isMilestone {
-            // Glow brighter when highlighted by a Notable Moment hover
             return isHighlighted ? Theme.Colors.milestoneHighlight : Theme.Colors.milestone
         }
-
         let base = Color(hex: projectColorHex)
-        let phaseIndex = session.projectPhaseID.flatMap { phaseIndexByID[$0] }
-
-        // Unphased sessions use muted project color
-        if phaseIndex == nil {
-            return lightenIfNeeded(base.opacity(0.40))
+        guard let lane = lanes.first(where: { $0.sessions.contains(where: { $0.id == session.id }) }) else {
+            return base.opacity(0.40).lightenedByLuminance()
         }
-
+        if lane.phaseIndex == nil {
+            return base.opacity(0.40).lightenedByLuminance()
+        }
         let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
-        let phaseColor = phaseColors[safe: phaseIndex ?? 0] ?? base
-        return lightenIfNeeded(phaseColor)
+        let phaseColor = phaseColors[safe: lane.phaseIndex ?? 0] ?? base
+        return phaseColor.lightenedByLuminance()
     }
 
-    /// If the resulting color is too dark to be visible against the dark
-    /// surface background, blend it toward white to guarantee contrast.
-    private func lightenIfNeeded(_ color: Color) -> Color {
-        color.lightenedByLuminance()
+    private func phaseID(for session: SessionRecord) -> String? {
+        // Returns the lane id ("__unphased__" or a real phaseID) for cross-highlight
+        lanes.first(where: { $0.sessions.contains(where: { $0.id == session.id }) })?.id
     }
-
 }
+
+// MARK: - Phase Lane Row
+
+/// One row in the Braid's lanes section: a phase title on the left, and a
+/// date-positioned track of marks on the right.
+private struct PhaseLaneRow: View {
+    let lane: ProjectStoryViewModel.PhaseLane
+    let projectColorHex: String
+    let projectStart: Date?
+    let projectEnd: Date?
+    let isHighlighted: Bool
+    let anyPhaseHighlighted: Bool
+    let onHover: (String?) -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Text(lane.title)
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: 80, alignment: .leading)
+
+            GeometryReader { geo in
+                ZStack {
+                    // Track line
+                    Capsule()
+                        .fill(Theme.Colors.divider.opacity(0.3))
+                        .frame(height: 2)
+
+                    // Marks positioned by date
+                    if let start = projectStart, let end = projectEnd, end > start {
+                        let totalSpan = end.timeIntervalSince(start)
+                        ForEach(lane.sessions) { s in
+                            let xFrac = totalSpan > 0 ? s.startDate.timeIntervalSince(start) / totalSpan : 0
+                            let x = geo.size.width * CGFloat(xFrac)
+
+                            Capsule()
+                                .fill(markColor)
+                                .frame(width: 3, height: 10)
+                                .position(x: x, y: geo.size.height / 2)
+                        }
+                    }
+                }
+            }
+            .frame(height: 14)
+        }
+        .opacity(isHighlighted ? 1.0 : (anyPhaseHighlighted ? 0.35 : 1.0))
+        .onHover { hovering in
+            onHover(hovering ? lane.id : nil)
+        }
+    }
+
+    private var markColor: Color {
+        if lane.phaseIndex == nil {
+            return Color(hex: projectColorHex).opacity(0.40).lightenedByLuminance()
+        }
+        let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
+        return phaseColors[safe: lane.phaseIndex ?? 0] ?? Color(hex: projectColorHex)
+    }
+}
+
+// MARK: - Phase Detail Panel
+
+/// A pinned strip (not a floating tooltip — safer inside a ScrollView) showing
+/// the highlighted phase's details: date range, total time, mood, milestones,
+/// and recent action lines.
+private struct PhaseDetailPanel: View {
+    let lane: ProjectStoryViewModel.PhaseLane
+    let projectColorHex: String
+
+    private let df: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d MMM yyyy"
+        return f
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Circle()
+                    .fill(phaseColor)
+                    .frame(width: 8, height: 8)
+
+                Text(lane.title)
+                    .font(Theme.Fonts.subheader)
+                    .foregroundColor(Theme.Colors.textPrimary)
+
+                Spacer()
+
+                if lane.isArchivedPhase {
+                    Text("Archived")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .padding(.horizontal, Theme.Spacing.xs)
+                        .padding(.vertical, Theme.Spacing.xxs)
+                        .background(Theme.Colors.surface)
+                        .cornerRadius(999)
+                }
+            }
+
+            Text("\(dateRangeText) · \(weeksText) · \(durationText) across \(lane.sessionCount) sessions")
+                .font(Theme.Fonts.caption)
+                .foregroundColor(Theme.Colors.textSecondary)
+
+            HStack(spacing: Theme.Spacing.sm) {
+                Text("Avg mood \(moodText)")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+
+                if lane.milestoneCount > 0 {
+                    Text("★ \(lane.milestoneCount) milestones")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.milestone)
+                }
+            }
+
+            if !lane.recentActionLines.isEmpty {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    Text("Recent action lines:")
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+
+                    ForEach(lane.recentActionLines, id: \.self) { line in
+                        Text("“\(line)”")
+                            .font(Theme.Fonts.body)
+                            .foregroundColor(Theme.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.sm)
+        .background(Theme.Colors.surface.opacity(0.7))
+        .cornerRadius(Theme.Row.cornerRadius)
+    }
+
+    private var dateRangeText: String {
+        "\(df.string(from: lane.startDate)) → \(df.string(from: lane.endDate))"
+    }
+
+    private var weeksText: String {
+        let weeks = max(Calendar.current.dateComponents([.weekOfYear], from: lane.startDate, to: lane.endDate).weekOfYear ?? 0, 1)
+        return "\(weeks) weeks"
+    }
+
+    private var durationText: String {
+        let h = lane.totalDurationMinutes / 60
+        let m = lane.totalDurationMinutes % 60
+        if h == 0 { return "\(m)m" }
+        if m == 0 { return "\(h)h" }
+        return "\(h)h \(m)m"
+    }
+
+    private var moodText: String {
+        guard let mood = lane.averageMood else { return "—" }
+        return String(format: "%.1f", mood)
+    }
+
+    private var phaseColor: Color {
+        if lane.phaseIndex == nil {
+            return Color(hex: projectColorHex).opacity(0.40).lightenedByLuminance()
+        }
+        let phaseColors = ColorFamily.projectHueRotated(baseHex: projectColorHex, stepDegrees: 18)
+        return phaseColors[safe: lane.phaseIndex ?? 0] ?? Color(hex: projectColorHex)
+    }
+}
+
+// MARK: - Notable Moments
 
 private struct ProjectStoryNotableMomentsView: View {
     let milestones: [ProjectStoryViewModel.Milestone]
     let projectColorHex: String
     var highlightedSessionID: Binding<String?>? = nil
+    var onHoverPhase: (String?) -> Void = { _ in }
 
     private let df: DateFormatter = {
         let f = DateFormatter()
@@ -656,7 +664,8 @@ private struct ProjectStoryNotableMomentsView: View {
                         isHighlighted: highlightedSessionID?.wrappedValue == m.id,
                         onHover: { hovering in
                             highlightedSessionID?.wrappedValue = hovering ? m.id : nil
-                        }
+                        },
+                        onHoverPhase: onHoverPhase
                     )
                 }
             }
@@ -671,6 +680,7 @@ private struct NotableMomentCard: View {
     let dateText: String
     let isHighlighted: Bool
     let onHover: (Bool) -> Void
+    var onHoverPhase: (String?) -> Void = { _ in }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -706,6 +716,7 @@ private struct NotableMomentCard: View {
         }
         .onHover { hovering in
             onHover(hovering)
+            onHoverPhase(hovering ? milestone.phaseID : nil)
         }
     }
 }
@@ -842,6 +853,7 @@ private extension Array {
 private struct ProjectStoryPreviewCanvas: View {
     @StateObject private var viewModel: ProjectStoryViewModel
     @State private var highlightedMilestoneSessionID: String? = nil
+    @State private var highlightedPhaseID: String? = nil
 
     init(viewModel: ProjectStoryViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -867,21 +879,14 @@ private struct ProjectStoryPreviewCanvas: View {
                             ProjectStorySummaryRowView(summary: summary, projectColorHex: header.colorHex)
                         }
 
-                        if let header = viewModel.header, !viewModel.phaseTimeline.isEmpty {
-                            ProjectStoryPhaseTimelineView(
-                                segments: viewModel.phaseTimeline,
-                                phaseBoundaries: viewModel.phaseBoundaries,
-                                projectColorHex: header.colorHex,
-                                headerStartDate: header.startDate,
-                                headerEndDate: header.endDate
-                            )
-                        }
-
                         if let header = viewModel.header, !viewModel.projectSessions.isEmpty {
-                            ProjectStoryIntensityMoodChartView(
+                            ProjectStoryBraidView(
                                 sessions: viewModel.projectSessions,
-                                orderedPhaseIDs: viewModel.phaseTimeline.map(\.id),
+                                lanes: viewModel.phaseLanes,
                                 projectColorHex: header.colorHex,
+                                projectStart: header.startDate,
+                                projectEnd: header.endDate,
+                                highlightedPhaseID: $highlightedPhaseID,
                                 highlightedSessionID: highlightedMilestoneSessionID
                             )
                         }
@@ -890,7 +895,10 @@ private struct ProjectStoryPreviewCanvas: View {
                             ProjectStoryNotableMomentsView(
                                 milestones: viewModel.allMilestones,
                                 projectColorHex: header.colorHex,
-                                highlightedSessionID: $highlightedMilestoneSessionID
+                                highlightedSessionID: $highlightedMilestoneSessionID,
+                                onHoverPhase: { phaseID in
+                                    highlightedPhaseID = phaseID
+                                }
                             )
                         }
                     }
@@ -903,4 +911,3 @@ private struct ProjectStoryPreviewCanvas: View {
         .background(Theme.Colors.background)
     }
 }
-

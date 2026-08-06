@@ -166,5 +166,65 @@ final class ProjectStoryDerivationTests: XCTestCase {
         XCTAssertEqual(c.density[0].totalDurationMinutes, 180)
         XCTAssertNotNil(c.density[0].averageMood)
     }
+
+    // MARK: - Phase Lanes (The Braid)
+
+    func testDerivePhaseLanes_groupsByPhaseWithoutAssumingChronology() {
+        let ph1 = Phase(id: "ph1", name: "Design", order: 0, archived: false)
+        let ph2 = Phase(id: "ph2", name: "Build", order: 1, archived: false)
+        let project = Project(id: "p1", name: "X", color: "#000000", about: nil, order: 0, emoji: "📁", phases: [ph1, ph2])
+
+        // Interleaved: design, build, design, build — phases are NOT contiguous.
+        let s1 = session(id: "a", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: "ph1")
+        let s2 = session(id: "b", start: d(2026, 1, 2), end: d(2026, 1, 2, 13), phaseID: "ph2")
+        let s3 = session(id: "c", start: d(2026, 1, 3), end: d(2026, 1, 3, 13), phaseID: "ph1")
+        let s4 = session(id: "d", start: d(2026, 1, 4), end: d(2026, 1, 4, 13), phaseID: "ph2")
+
+        let lanes = ProjectStoryViewModel.derivePhaseLanes(
+            from: [s1, s2, s3, s4], project: project, calendar: calendar
+        )
+
+        XCTAssertEqual(lanes.count, 2)
+        // Each lane should contain both its sessions, even though they're interleaved.
+        let designLane = lanes.first { $0.id == "ph1" }!
+        let buildLane = lanes.first { $0.id == "ph2" }!
+        XCTAssertEqual(designLane.sessionCount, 2)
+        XCTAssertEqual(buildLane.sessionCount, 2)
+        XCTAssertEqual(designLane.sessions.map { $0.id }, ["a", "c"]) // chronological within lane
+        XCTAssertEqual(buildLane.sessions.map { $0.id }, ["b", "d"])
+    }
+
+    func testDerivePhaseLanes_surfacesRecentActionLinesFromNonMilestones() {
+        let ph = Phase(id: "ph1", name: "Build", order: 0, archived: false)
+        let project = Project(id: "p1", name: "X", color: "#000000", about: nil, order: 0, emoji: "📁", phases: [ph])
+
+        let s1 = session(id: "a", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: "ph1", action: "First action")
+        let s2 = session(id: "b", start: d(2026, 1, 2), end: d(2026, 1, 2, 13), phaseID: "ph1", action: "Second action")
+        let s3 = session(id: "c", start: d(2026, 1, 3), end: d(2026, 1, 3, 13), phaseID: "ph1", action: "First action") // duplicate
+        let s4 = session(id: "d", start: d(2026, 1, 4), end: d(2026, 1, 4, 13), phaseID: "ph1", action: "Shipped", isMilestone: true)
+
+        let lanes = ProjectStoryViewModel.derivePhaseLanes(
+            from: [s1, s2, s3, s4], project: project, calendar: calendar
+        )
+        let lane = lanes.first!
+        // Newest first, deduped, milestones excluded, max 3.
+        // "First action" appears on Jan 1 and Jan 3 — the newest occurrence (Jan 3)
+        // is kept, so it comes before "Second action" (Jan 2).
+        XCTAssertEqual(lane.recentActionLines, ["First action", "Second action"])
+        XCTAssertEqual(lane.milestoneCount, 1)
+    }
+
+    func testDerivePhaseLanes_unphasedPinnedToBottom() {
+        let ph = Phase(id: "ph1", name: "Build", order: 0, archived: false)
+        let project = Project(id: "p1", name: "X", color: "#000000", about: nil, order: 0, emoji: "📁", phases: [ph])
+
+        let s1 = session(id: "a", start: d(2026, 1, 1), end: d(2026, 1, 1, 13), phaseID: nil)
+        let s2 = session(id: "b", start: d(2026, 1, 2), end: d(2026, 1, 2, 13), phaseID: "ph1")
+
+        let lanes = ProjectStoryViewModel.derivePhaseLanes(
+            from: [s1, s2], project: project, calendar: calendar
+        )
+        XCTAssertEqual(lanes.last?.id, "__unphased__")
+    }
 }
 

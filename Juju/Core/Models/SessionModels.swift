@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Session Record (Clean Model)
-public struct SessionRecord: Identifiable, Codable {
+public struct SessionRecord: Identifiable, Codable, Equatable {
     public let id: String
     public let startDate: Date
     public let endDate: Date

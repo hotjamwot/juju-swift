@@ -114,6 +114,8 @@ UI Components → ViewModels → Managers → File I/O
 
 #### SessionRecord Struct
 
+`SessionRecord` conforms to `Identifiable`, `Codable`, and `Equatable` (synthesized — all properties are Equatable).
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `id` | String | ✅ | Unique identifier |
@@ -662,7 +664,7 @@ Hover → onHover/onContinuousHover → Set @State hoveredItem
 - **TooltipRow**: Color dot + emoji + name + hours
 - **TooltipDivider**: Matched divider styling
 
-Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, `YearlyActivityTypeBarChartView`, `ProjectStoryPhaseTimelineView`.
+Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, `YearlyActivityTypeBarChartView`.
 
 **Rule**: Never create inline tooltip styling. Always reuse these shared components.
 
@@ -830,11 +832,11 @@ Juju/
 ## 📖 ProjectStory Feature
 
 ### Overview
-ProjectStory provides a read-only narrative timeline for individual projects, showing how work evolved over time through phases, sessions, and milestones.
+ProjectStory provides a read-only narrative timeline for individual projects, showing how work evolved over time through phases, sessions, and milestones. The current design is **"The Braid"** — a dual-track timeline that handles the reality that phases are not always chronological (they can be sub-projects, collaborators, or interleaved).
 
 ### Architecture Flow
 ```
-Project → ProjectStoryViewModel → Timeline Items (Chapters + Gaps) → ProjectStoryView
+Project → ProjectStoryViewModel → Timeline Items (Chapters + Gaps) + PhaseLanes → ProjectStoryView
 ```
 
 ### Data Derivation Pipeline
@@ -844,12 +846,13 @@ Project → ProjectStoryViewModel → Timeline Items (Chapters + Gaps) → Proje
    - `ProjectsViewModel.projects` - Project + phase definitions
    - `Calendar` - For weekly density bucketing
 
-2. **Derivation Steps** (in `ProjectStoryViewModel.deriveTimelineItems`):
-   - **Phase Grouping**: Sessions grouped by `projectPhaseID` (nil/unknown → "Unphased")
+2. **Derivation Steps** (in `ProjectStoryViewModel`):
+   - **Phase Grouping** (`deriveTimelineItems`): Sessions grouped by `projectPhaseID` (nil/unknown → "Unphased")
    - **Chapter Creation**: One chapter per phase with aggregated data
    - **Density Calculation**: Weekly aggregation of session duration + mood
    - **Milestone Extraction**: Filter sessions with `isMilestone=true` and non-empty action
    - **Timeline Assembly**: Chapters sorted by start date, gaps inserted at future thresholds
+   - **Phase Lane Derivation** (`derivePhaseLanes`): One `PhaseLane` per phase used by the project's sessions. Unlike `derivePhaseTimeline`, lanes do **not** assume phases are contiguous or chronological — a lane is a facet (phase / sub-project / collaborator) whose sessions may be scattered across the whole project span. Lanes are sorted by total duration descending, with the unphased lane pinned to the bottom.
 
 ### Data Models
 
@@ -858,7 +861,8 @@ Project → ProjectStoryViewModel → Timeline Items (Chapters + Gaps) → Proje
 | `Chapter` | A phase period with sessions, density, and milestones |
 | `Milestone` | A significant session with action description |
 | `DensityBucket` | Weekly session aggregation (duration, mood, count) |
-| `PhaseSegment` | Visual segment for phase timeline bar |
+| `PhaseSegment` | Visual segment for the (legacy) phase timeline bar — kept for backward compatibility, no longer used by the view |
+| `PhaseLane` | One row in the Braid: a phase facet with chronological sessions, stats, recent action lines, and weekly density |
 | `Gap` | A future period with no sessions (for timeline visualization) |
 
 ### Timeline Items Enum
@@ -874,23 +878,30 @@ enum TimelineItem {
 **ProjectStoryView**:
 - Header with project name, emoji, dates, and duration
 - Summary stats row (total time, sessions, mood, phases)
-- Phase timeline bar with colored segments per phase (**hoverable** — shows tooltip with phase name, hours, and percentage)
-- Intensity/mood chart showing session bars over time (**cross-highlightable** — milestone bars brighten when Notable Moment cards are hovered)
-- Notable moments section listing milestone sessions (**hoverable** — triggers cross-highlight in intensity chart)
+- **`ProjectStoryBraidView`** (the core Braid component):
+  - **Spine** (top track): chronological session bars, positioned by date, height scaled by duration, coloured by phase (milestone bars in gold)
+  - **Phase lanes** (bottom tracks): one `PhaseLaneRow` per phase — a fixed-width title label + a track of small date-positioned marks
+  - **Axis labels**: start / mid / end dates (`MMM yyyy`)
+  - **`PhaseDetailPanel`**: a pinned strip shown when a phase is highlighted, with date range, total time, avg mood, milestone count, and up to 3 recent distinct non-milestone action lines
+- Notable moments section listing milestone sessions (**hoverable** — triggers cross-highlight in the Braid's spine and phase lanes)
 
 ### Interactive Features
 
-**Phase Timeline Tooltip**:
-- Each segment in the phase timeline bar is hoverable via `onHover`
-- After 0.25s delay, a `TooltipContainer` appears showing phase name, hours, and percentage of total time
-- Hovered segment brightens to full opacity while siblings stay at 0.85
-- Uses `@State hoveredSegmentID` + `showPhaseTooltip` for state management
+**Phase Lane Hover**:
+- Hovering a `PhaseLaneRow` sets `highlightedPhaseID` (lifted to `ProjectStoryView` as `@State`)
+- The spine dims non-matching bars to 18% opacity; the matching lane's bars stay at full opacity
+- The lane row itself dims to 35% opacity if another phase is highlighted
+- A pinned `PhaseDetailPanel` appears below the lanes with `.transition(.opacity)` and `.animation(.easeOut(duration: 0.15), value: highlightedPhaseID)`
+
+**Spine Bar Hover**:
+- Hovering a session bar in the spine sets `highlightedPhaseID` to that session's phase, cross-highlighting its lane
 
 **Milestone Cross-Highlight**:
 - A shared `@State highlightedMilestoneSessionID: String?` lives in the parent view (`ProjectStoryView` or preview canvas)
-- Passed as a binding to `ProjectStoryNotableMomentsView` and as a value to `ProjectStoryIntensityMoodChartView`
-- Hovering a Notable Moment card sets the highlighted ID; the intensity chart dims all non-matching bars to 20% opacity
+- Passed as a binding to `ProjectStoryNotableMomentsView` and as a value to `ProjectStoryBraidView`
+- Hovering a Notable Moment card sets the highlighted ID; the spine dims all non-matching bars to 20% opacity
 - The matching milestone bar glows brighter (from `#F5A623` to `#FFD060`)
+- The Notable Moment card also calls `onHoverPhase(milestone.phaseID)` so the Braid highlights that phase's lane too
 - The Notable Moment card itself also highlights: accent bar turns gold, background brightens, star icon glows
 
 ### Reactive Updates

@@ -354,6 +354,8 @@ DaySessionInfoPanel(dayStack: hoveredDay)
 
 **Used by**: 90-Day Timeline Chart (`Session90DayTimelineView` → `DaySessionInfoPanel`).
 
+**Pinned Panel Variant — ProjectStory Braid**: The Braid's `PhaseDetailPanel` is a pinned strip (not a floating tooltip) shown inside the ScrollView when a phase lane is hovered. Hover state (`highlightedPhaseID`) is lifted to `ProjectStoryView` as `@State` and passed as a `@Binding` to `ProjectStoryBraidView`. The panel appears with `.transition(.opacity)` and `.animation(.easeOut(duration: 0.15), value: highlightedPhaseID)`. This is preferred over a floating tooltip inside a ScrollView because it doesn't risk clipping or coordinate drift.
+
 ### Collapsible Dashboard Panel Pattern
 Use `VStack` with a tappable header and conditionally-rendered detail panel for collapsible sections in the dashboard:
 
@@ -390,5 +392,5 @@ var body: some View {
 
 ---
 
-**Last Updated**: May 2026  
+**Last Updated**: Aug 2026  
 **For AI Tools**: Copilot, Cline, Cursor

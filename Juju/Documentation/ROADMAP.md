@@ -11,7 +11,7 @@
 | **App** | Fully working and functional |
 | **Data Storage** | CSV/JSON files, no Core Data or cloud |
 | **Platform** | macOS (SwiftUI) |
-| **Tests** | Unit tests for CSV parsing and phase data integrity |
+| **Tests** | Unit tests for CSV parsing, phase data integrity, and ProjectStory derivation (phase lanes) |
 
 ---
 
@@ -48,13 +48,15 @@
 - Archive support
 - SF Symbols for activity type icons (replaced emoji with native system icons)
 
-### Project Story
+### Project Story ("The Braid")
 
 - Read-only narrative timeline for individual projects
+- **The Braid** dual-track timeline: a chronological session spine on top, with one lane per phase beneath (marks positioned by date — honest about non-chronological phases)
 - Phase-based chapter grouping
-- Density/mood charts
+- Pinned `PhaseDetailPanel` on phase hover showing date range, total time, avg mood, milestone count, and recent non-milestone action lines
+- Notable Moments cross-highlight phases in the Braid
 - Milestone extraction
-- Working but UI is ongoing
+- Phase lane derivation (`derivePhaseLanes`) + `PhaseLane` model
 
 ### UI/UX
 
@@ -91,9 +93,9 @@
 
 ### Project Story UI
 
-- **Status**: Working, but UI refinements still in progress
+- **Status**: The Braid overhaul is complete (Aug 2026). Known minor bugs under review.
 - **Scope**: Visual polish, layout improvements, edge case handling
-- **What works**: Timeline derivation, phase segments, milestone extraction, density calculation
+- **What works**: The Braid timeline (spine + phase lanes + detail panel), phase lane derivation, milestone extraction, density calculation, Notable Moments cross-highlight
 
 #### Dashboard changes
 
