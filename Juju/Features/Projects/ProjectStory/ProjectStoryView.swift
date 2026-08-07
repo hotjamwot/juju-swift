@@ -258,8 +258,9 @@ private struct StoryMetricCard: View {
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.surface.opacity(0.7))
-        .cornerRadius(Theme.Row.cornerRadius)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .subtleShadow()
     }
 }
 
@@ -317,8 +318,9 @@ private struct ProjectStoryBraidView: View {
             }
         }
         .padding(Theme.Spacing.sm)
-        .background(Theme.Colors.surface.opacity(0.6))
-        .cornerRadius(Theme.Row.cornerRadius)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .subtleShadow()
         .animation(.easeOut(duration: 0.15), value: highlightedPhaseID)
     }
 
@@ -376,8 +378,8 @@ private struct ProjectStoryBraidView: View {
         .padding(.vertical, Theme.Spacing.xs)
         .padding(.leading, PhaseLaneRow.labelWidth + Theme.Spacing.xs)
         .padding(.trailing, Theme.Spacing.sm)
-        .background(Theme.Colors.surface.opacity(0.5))
-        .cornerRadius(Theme.Row.cornerRadius)
+        .background(Theme.Colors.background)
+        .cornerRadius(Theme.Design.blockCornerRadius)
     }
 
     // MARK: Axis Labels
@@ -602,8 +604,9 @@ private struct PhaseDetailPanel: View {
             }
         }
         .padding(Theme.Spacing.sm)
-        .background(Theme.Colors.surface.opacity(0.7))
-        .cornerRadius(Theme.Row.cornerRadius)
+        .background(Theme.Colors.surface)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .subtleShadow()
     }
 
     private var dateRangeText: String {

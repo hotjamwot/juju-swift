@@ -383,6 +383,76 @@ var body: some View {
 
 ---
 
+## 📜 SCROLLABLE CONTAINER PATTERN (BOUNDED LISTS)
+
+**[AI_MARKER_REUSE]** Reusable pattern for making a list scroll **inside** a fixed-height container instead of growing the page or hiding overflow. Use this whenever a chart/card could receive more rows than fit (e.g. many projects, many activity types, long tag lists).
+
+### Where the pieces live
+
+| Piece | Location | Role |
+|-------|----------|------|
+| `DistributionChartScrollView` | `Juju/Shared/TooltipViews.swift` | Generic bounded `ScrollView` that renders all rows at a fixed height and publishes each row's viewport-relative frame |
+| `DistributionRowFrameKey` | `Juju/Shared/TooltipViews.swift` | `PreferenceKey` carrying `[Int: CGRect]` — row index → frame in the scroll view's coordinate space |
+| `DistributionScrollSpace` | `Juju/Shared/TooltipViews.swift` | Private enum holding the named coordinate space string (kept outside the generic view because generic types can't hold static stored properties) |
+| `Theme.DashboardLayout.distributionRowMinHeight` | `Juju/Shared/Theme.swift` | Minimum row height (30pt). Rows never compress below this — overflow triggers scrolling instead |
+| `Theme.DashboardLayout.distributionCardHeight` | `Juju/Shared/Theme.swift` | Fixed card height (340pt) that bounds the scroll view |
+
+### How it works
+
+1. **Bound the container** — the parent gives the chart a fixed `.frame(height:)` (e.g. `distributionCardHeight`). The chart's internal `ScrollView` then scrolls when content exceeds that height.
+2. **Render all rows** — `DistributionChartScrollView` iterates the full data array (no `prefix`/cap). Each row is forced to `rowHeight` so rows never squash.
+3. **Publish row frames** — each row's `GeometryReader` reports its frame in the named coordinate space anchored to the `ScrollView` (via `.coordinateSpace(name:)`). Because the space is anchored to the scroll view, frames are **viewport-relative** — they follow the scroll position automatically.
+4. **Position the tooltip** — the chart reads the accumulated frames via `.onPreferenceChange(DistributionRowFrameKey.self)` and places its floating tooltip at the hovered row's frame. No manual scroll-offset math needed.
+
+### Usage example
+
+```swift
+struct MyChartView: View {
+    let data: [MyItem]          // MyItem: Identifiable
+    @State private var hoveredIndex: Int? = nil
+    @State private var showTooltip = false
+    @State private var rowFrames: [Int: CGRect] = [:]
+
+    var body: some View {
+        DistributionChartScrollView(
+            data: data,
+            rowHeight: Theme.DashboardLayout.distributionRowMinHeight,
+            spacing: Theme.Spacing.sm
+        ) { item, index in
+            row(for: item, index: index)
+        }
+        .onPreferenceChange(DistributionRowFrameKey.self) { frames in
+            rowFrames = frames
+        }
+        .overlay {
+            GeometryReader { proxy in
+                if showTooltip, let index = hoveredIndex, let frame = rowFrames[index] {
+                    tooltip(for: data[index])
+                        .fixedSize()
+                        .position(
+                            x: min(max(frame.midX, 90), max(90, proxy.size.width - 90)),
+                            y: frame.midY - 20
+                        )
+                        .allowsHitTesting(false)
+                }
+            }
+        }
+    }
+}
+```
+
+### Rules
+
+- **Always bound the height** at the call site (`.frame(height:)`). Without a fixed height the `ScrollView` grows to fit and never scrolls.
+- **Rows must be `Identifiable`** — the generic requires it for `ForEach`.
+- **Tooltip hover scope is up to you** — attach `.onHover` to the whole row or just the label. The yearly charts attach it to the item-name label only, so the tooltip appears when hovering the name, not the bar.
+- **Clamp the tooltip** horizontally against the overlay's `proxy.size.width` so it never clips off the card edge.
+- **Don't cap the data** — pass the full array. The scroll view handles overflow; capping reintroduces the "not shown" problem this pattern solves.
+
+**Used by**: Yearly Project Distribution Chart (`YearlyProjectBarChartView`), Yearly Activity Type Distribution Chart (`YearlyActivityTypeBarChartView`).
+
+---
+
 ## 📖 QUICK REFERENCES
 
 - **ARCHITECTURE.md**: System design, data models, flows

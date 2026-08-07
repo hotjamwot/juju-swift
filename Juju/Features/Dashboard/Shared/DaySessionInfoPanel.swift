@@ -84,7 +84,8 @@ struct DaySessionInfoPanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.md)
         .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.blockCornerRadius)
+        .cornerRadius(Theme.Design.cornerRadius)
+        .subtleShadow()
         .animation(.easeOut(duration: 0.12), value: dayStack?.id)
     }
     
@@ -403,7 +404,7 @@ struct DaySessionInfoPanel: View {
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.xs)
         .background(
-            RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+            RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .fill(Theme.Colors.surface)
         )
     }

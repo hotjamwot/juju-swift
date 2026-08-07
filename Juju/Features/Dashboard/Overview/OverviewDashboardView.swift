@@ -34,7 +34,6 @@ struct OverviewDashboardView: View {
     private let calendarMinHeight: CGFloat = 400
     /// Height for the 90-day timeline — a time-of-day Y-axis needs more vertical room.
     private let stackedBarMinHeight: CGFloat = 280
-    private let distributionChartMinHeight: CGFloat = 340
     
     // MARK: - Spacing
     /// Space between a section header and its content
@@ -107,13 +106,13 @@ struct OverviewDashboardView: View {
                         YearlyProjectBarChartView(
                             data: chartDataPreparer.yearlyProjectTotals()
                         )
-                        .frame(minHeight: distributionChartMinHeight)
+                        .frame(height: Theme.DashboardLayout.distributionCardHeight)
                         
                         // Activity Types Distribution Chart
                         YearlyActivityTypeBarChartView(
                             data: chartDataPreparer.yearlyActivityTypeTotals()
                         )
-                        .frame(minHeight: distributionChartMinHeight)
+                        .frame(height: Theme.DashboardLayout.distributionCardHeight)
                     }
                     .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
@@ -383,6 +382,7 @@ private struct NarrativeMetricCard<Content: View>: View {
                 .fill(Theme.Colors.surface)
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
+        .subtleShadow()
     }
 }
 

@@ -16,9 +16,9 @@ struct TooltipContainer<Content: View>: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(Theme.Colors.surface)
-            .cornerRadius(8)
+            .cornerRadius(Theme.Design.blockCornerRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
                     .stroke(Theme.Colors.divider.opacity(0.6), lineWidth: 1)
             )
             .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 6, x: 0, y: 3)
@@ -59,5 +59,66 @@ struct TooltipDivider: View {
         Divider()
             .background(Theme.Colors.divider.opacity(0.4))
             .padding(.vertical, 1)
+    }
+}
+
+// MARK: - Distribution Chart Row Frames
+
+/// Coordinate space name for the yearly distribution charts' scrollable list.
+/// Anchored to the scroll view so row frames resolve viewport-relative
+/// (following scroll position) — the tooltip can then position itself directly
+/// from the reported rows without extra math. Kept outside the generic view
+/// because generic types cannot hold static stored properties.
+private enum DistributionScrollSpace {
+    static let name = "DistributionChartScrollView"
+}
+
+/// Preference key used by the yearly distribution charts to track each row's
+/// frame within the scrollable chart content. `DistributionChartScrollView`
+/// reads the accumulated frames so the floating tooltip can be positioned over
+/// the hovered row even after the internal scroll view has been scrolled.
+struct DistributionRowFrameKey: PreferenceKey {
+    static var defaultValue: [Int: CGRect] = [:]
+
+    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+/// A scrollable, bounded row list for the yearly distribution charts.
+///
+/// The list's content frames are published through `DistributionRowFrameKey`
+/// in the `scrollSpace` coordinate space (anchored to the ScrollView), so
+/// tooltips can track rows while scrolling. The row content (name, bar, hours)
+/// is provided by the `rowContent` closure, keeping the shared
+/// scroll/tooltip mechanics in one place.
+struct DistributionChartScrollView<RowContent: View, RowData: Identifiable>: View {
+    let data: [RowData]
+    let rowHeight: CGFloat
+    let spacing: CGFloat
+    @ViewBuilder var rowContent: (RowData, Int) -> RowContent
+
+    var body: some View {
+        ScrollView(.vertical) {
+            LazyVStack(spacing: spacing) {
+                ForEach(Array(data.enumerated()), id: \.element.id) { index, rowData in
+                    rowContent(rowData, index)
+                        .frame(height: rowHeight)
+                        .id(index)
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear.preference(
+                                    key: DistributionRowFrameKey.self,
+                                    value: [index: geo.frame(in: .named(DistributionScrollSpace.name))]
+                                )
+                            }
+                        )
+                }
+            }
+        }
+        // Anchor the named space to the ScrollView so row frames resolve
+        // viewport-relative (following scroll position) — the tooltip can then
+        // position itself directly from the reported rows without extra math.
+        .coordinateSpace(name: DistributionScrollSpace.name)
     }
 }

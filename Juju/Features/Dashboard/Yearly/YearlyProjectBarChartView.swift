@@ -9,12 +9,14 @@ import SwiftUI
 
 /// Displays a horizontal bar chart showing project distribution for the current year.
 /// Shows project names and emojis on the left with left-aligned bars on the right.
+/// Renders ALL projects; when there are more than fit the card, the list scrolls
+/// internally instead of cutting projects off.
 /// On hover, shows an activity type breakdown tooltip matching the 90-day chart style.
 struct YearlyProjectBarChartView: View {
     let data: [YearlyProjectChartData]
     @State private var hoveredIndex: Int? = nil
     @State private var showTooltip: Bool = false
-    @State private var tooltipPosition: CGPoint = .zero
+    @State private var rowFrames: [Int: CGRect] = [:]
     
     static let sampleData: [YearlyProjectChartData] = [
         YearlyProjectChartData(projectName: "Writing Project", color: "#E100FF", emoji: "✍️", totalHours: 200.0, percentage: 40.0, activityBreakdown: []),
@@ -28,96 +30,85 @@ struct YearlyProjectBarChartView: View {
             if data.isEmpty {
                 NoDataPlaceholder(minHeight: 200)
             } else {
-                GeometryReader { geometry in
-                    let maxHours = data.map { $0.totalHours }.max() ?? 1
-                    let chartWidth = geometry.size.width - 220
-                    
-                    let maxVisibleProjects = 13
-                    let visibleData = Array(data.prefix(maxVisibleProjects))
-                    let hiddenData = Array(data.dropFirst(maxVisibleProjects))
-                    
-                    let totalSpacing = CGFloat(visibleData.count - 1) * Theme.Spacing.sm
-                    let availableHeight = geometry.size.height - totalSpacing
-                    let itemHeight = max(30, availableHeight / CGFloat(visibleData.count))
-                    
-                    ZStack(alignment: .topLeading) {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            ForEach(Array(visibleData.enumerated()), id: \.offset) { index, projectData in
-                                HStack(spacing: Theme.spacingMedium) {
-                                    HStack(spacing: Theme.spacingSmall) {
-                                        Text(projectData.emoji)
-                                            .font(Theme.Fonts.header)
-                                        
-                                        Text(projectData.projectName)
-                                            .font(Theme.Fonts.caption.weight(.semibold))
-                                            .foregroundColor(Theme.Colors.textPrimary)
-                                            .lineLimit(1)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                    Rectangle()
-                                        .fill(projectData.colorSwiftUI.opacity(hoveredIndex == index ? 1.0 : 0.85))
-                                        .frame(width: chartWidth * CGFloat(projectData.totalHours / maxHours), height: 6)
-                                        .cornerRadius(Theme.Design.blockCornerRadius)
-                                        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
-                                    
-                                    Text("\(projectData.totalHours, specifier: "%.1f") h")
-                                        .font(Theme.Fonts.caption)
-                                        .foregroundColor(Theme.Colors.textSecondary)
-                                        .frame(width: 40, alignment: .trailing)
-                                }
-                                .frame(height: itemHeight)
-                                .onHover { hovering in
-                                    if hovering {
-                                        hoveredIndex = index
-                                        showTooltip = true
-                                    } else if hoveredIndex == index {
-                                        showTooltip = false
-                                        hoveredIndex = nil
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Tooltip overlay
-                        if showTooltip, let index = hoveredIndex, index < visibleData.count {
-                            let projectData = visibleData[index]
-                            tooltipContent(for: projectData)
+                let maxHours = data.map { $0.totalHours }.max() ?? 1
+                
+                DistributionChartScrollView(
+                    data: data,
+                    rowHeight: Theme.DashboardLayout.distributionRowMinHeight,
+                    spacing: Theme.Spacing.sm
+                ) { projectData, index in
+                    row(for: projectData, index: index, maxHours: maxHours)
+                }
+                .onPreferenceChange(DistributionRowFrameKey.self) { frames in
+                    rowFrames = frames
+                }
+                .padding(.vertical, Theme.Spacing.xs)
+                // Keep the tooltip anchored to the chart card.
+                .overlay {
+                    GeometryReader { proxy in
+                        if showTooltip, let index = hoveredIndex, index < data.count,
+                           let frame = rowFrames[index] {
+                            tooltipContent(for: data[index])
                                 .fixedSize()
-                                .position(x: geometry.size.width * 0.35, y: CGFloat(index) * (itemHeight + Theme.Spacing.sm) + itemHeight / 2 - 20)
+                                .position(
+                                    x: min(max(frame.midX, 90), max(90, proxy.size.width - 90)),
+                                    y: frame.midY - 20
+                                )
                                 .allowsHitTesting(false)
                                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         }
-                        
-                        // Hidden projects summary
-                        if !hiddenData.isEmpty {
-                            VStack {
-                                Spacer()
-                                HStack {
-                                    Spacer()
-                                    HStack(spacing: Theme.spacingSmall) {
-                                        Text("Projects not shown:")
-                                            .font(Theme.Fonts.caption)
-                                            .foregroundColor(Theme.Colors.textSecondary)
-                                        
-                                        Text(hiddenData.map { $0.projectName }.joined(separator: ", "))
-                                            .font(Theme.Fonts.caption.weight(.semibold))
-                                            .foregroundColor(Theme.Colors.textPrimary)
-                                            .lineLimit(2)
-                                    }
-                                    .frame(maxWidth: geometry.size.width * 0.45)
-                                    .padding(.bottom, 10)
-                                }
-                            }
-                            .frame(height: itemHeight)
-                        }
                     }
                 }
-                .padding(.vertical, Theme.Spacing.xs)
             }
         }
         .padding(Theme.DashboardLayout.chartPadding)
+        .background(Theme.Colors.surface)
         .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
+        .subtleShadow()
+        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
+    }
+    
+    // MARK: - Row
+    
+    @ViewBuilder
+    private func row(for projectData: YearlyProjectChartData, index: Int, maxHours: Double) -> some View {
+        GeometryReader { geometry in
+            let chartWidth = geometry.size.width - 220
+            HStack(spacing: Theme.spacingMedium) {
+                // Tooltip triggers only when hovering the item name, not the bar.
+                HStack(spacing: Theme.spacingSmall) {
+                    Text(projectData.emoji)
+                        .font(Theme.Fonts.header)
+                    
+                    Text(projectData.projectName)
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                        .lineLimit(1)
+                }
+                .frame(width: 160, alignment: .leading)
+                .contentShape(Rectangle())
+                .onHover { hovering in
+                    if hovering {
+                        hoveredIndex = index
+                        showTooltip = true
+                    } else if hoveredIndex == index {
+                        showTooltip = false
+                        hoveredIndex = nil
+                    }
+                }
+                
+                Rectangle()
+                    .fill(projectData.colorSwiftUI.opacity(hoveredIndex == index ? 1.0 : 0.85))
+                    .frame(width: max(0, chartWidth) * CGFloat(projectData.totalHours / maxHours), height: 6)
+                    .cornerRadius(Theme.Design.blockCornerRadius)
+                
+                Text("\(projectData.totalHours, specifier: "%.1f") h")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+                    .frame(width: 40, alignment: .trailing)
+            }
+            .frame(maxHeight: .infinity, alignment: .leading)
+        }
     }
     
     // MARK: - Tooltip
@@ -132,7 +123,7 @@ struct YearlyProjectBarChartView: View {
                 
                 Text(String(format: "%.1fh total", projectData.totalHours))
                     .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.accentColor)
+                    .foregroundColor(Theme.Colors.textPrimary)
                 
                 if !projectData.activityBreakdown.isEmpty {
                     TooltipDivider()
@@ -157,5 +148,3 @@ struct YearlyProjectBarChartView: View {
         }
     }
 }
-
-

@@ -1,0 +1,48 @@
+# Juju Development Rulebook
+
+This file is auto-loaded by Cline at the start of every session. It tells you where to look and what to do. Read the referenced docs only when needed to save tokens.
+
+## 📚 Documentation Index
+
+| Task | Read This |
+|------|-----------|
+| Add a feature / fix a bug | `Juju/Documentation/AGENT.md` |
+| Understand data models / architecture | `Juju/Documentation/ARCHITECTURE.md` |
+| Code patterns / threading / conventions | `Juju/Documentation/SWIFT_PATTERNS.md` |
+| Project status / what's done / in progress | `Juju/Documentation/ROADMAP.md` |
+| What changed recently | `Juju/Documentation/CHANGELOG.md` |
+
+## 🚨 Non-Negotiable Rules (Always Follow)
+
+1. **Never use `try?` or `try!`** — Always handle errors with `do/catch` + `ErrorHandler.shared.handleError(error, context:)`
+2. **Never add SwiftUI Previews** — `#Preview` and `PreviewProvider` are intentionally removed. Do not re-introduce them.
+3. **Always use `projectID`, never `projectName`** — IDs are UUIDs
+4. **Never block the main thread with I/O** — Use async/await
+5. **Always post notifications after state changes** — UI won't update otherwise
+6. **Use `@MainActor` for SwiftUI-bound ViewModels**
+7. **Views are pure presentation** — No business logic in views; use ViewModels
+8. **Use `chartOverlay` for chart hover detection** — Never ZStack sibling overlays
+9. **Reuse `TooltipContainer`/`TooltipRow`/`TooltipDivider`** — Never inline tooltip styling
+10. **Use `SessionManager.shared.allSessions` as source of truth** — Don't re-fetch or duplicate session data
+
+## ⚡ Quick Reference
+
+- **Architecture**: MVVM + Managers + SwiftUI
+- **Data Storage**: CSV/JSON files only (no Core Data or cloud)
+- **Threading**: `@MainActor` for UI, async/await for background
+- **Tests**: `JujuTests` target, run with `xcodebuild -scheme Juju -destination 'platform=macOS' test`
+
+## 🔍 When to Read Full Docs
+
+- **Adding a new feature** → Read `AGENT.md` fully (step-by-step workflow)
+- **Modifying data models or persistence** → Read `ARCHITECTURE.md` (data models section)
+- **Writing new Swift code** → Read `SWIFT_PATTERNS.md` (naming, threading, patterns)
+- **Checking project status** → Read `ROADMAP.md`
+- **Only if you need to know what changed** → Read `CHANGELOG.md`
+
+## 🧪 Testing
+
+- Tests live in `JujuTests/` at repo root
+- Run: `xcodebuild -scheme Juju -destination 'platform=macOS' test`
+- If you change CSV parsing, phase integrity, or ProjectStory derivation, extend the corresponding test file
+- Test files: `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift`, `ProjectStoryDerivationTests.swift`

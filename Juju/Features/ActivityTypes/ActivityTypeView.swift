@@ -230,7 +230,7 @@ struct ActivityTypeRowView: View {
             }
             .frame(height: Theme.Row.height)
             .background(
-                isHovering ? Theme.Colors.surface.opacity(0.9) : Theme.Colors.surface.opacity(0.7)
+                isHovering ? Theme.Colors.surface : Theme.Colors.background
             )
             .cornerRadius(Theme.Row.cornerRadius)
             .contentShape(Rectangle())

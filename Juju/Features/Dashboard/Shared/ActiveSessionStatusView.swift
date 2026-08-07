@@ -32,6 +32,7 @@ struct ActiveSessionStatusView: View {
         }
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
+        .subtleShadow()
         .onAppear {
             applySmartDefaults()
         }

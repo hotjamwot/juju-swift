@@ -28,6 +28,22 @@ import AppKit
 /// - 8pt grid system. Every gap is a multiple of 4.
 /// - Generous outer padding (48pt) creates breathing room.
 /// - No card borders. Depth comes from the subtle step between background and surface.
+///
+/// CARD RULES (important — read before touching any card or panel):
+/// - Cards use `Theme.Colors.surface` at FULL opacity. Never dilute cards with
+///   `.opacity(0.5)` / `.opacity(0.7)` — the surface is already a subtle step from
+///   background, and dimming it further makes cards invisible.
+/// - Card corner radius is ALWAYS `Theme.Design.cornerRadius` (12pt). Do not invent
+///   new radii for cards. The only exception is compact nested elements (chips,
+///   pills, blocks) which use `Theme.Design.blockCornerRadius` (5pt).
+/// - Card depth comes from the background step + `subtleShadow()`. If you feel
+///   a card is hard to distinguish from the background, apply `subtleShadow()`
+///   or increase the surface step — never add a border.
+/// - Cards sit on `Theme.Colors.background`. Nested elements WITHIN a card use
+///   `Theme.Colors.background` for contrast (e.g. the spine inside the Braid),
+///   not additional opacity tricks.
+/// - Never use hardcoded corner radii like `6`, `8`, `10` for cards.
+///   Search for `cornerRadius(` and ask: "is this a card or a block?"
 public struct Theme {
 
     // MARK: - Colors
@@ -40,7 +56,12 @@ public struct Theme {
 
         /// Chart and panel surface — same warmth, significantly lower chroma.
         /// Almost neutral so it doesn't compete with project colours sitting on top.
-        /// Xcode asset: "Surface" → #1E1C1A
+        ///
+        /// IMPORTANT: This is the card surface. It must be bright enough to read as
+        /// a clear step above background (≈7 RGB units) but not so bright it competes
+        /// with text or project colours. If you feel cards are hard to see, do NOT
+        /// apply opacity — use `subtleShadow()` or brighten this asset.
+        /// Xcode asset: "Surface" → #25221F
         public static let surface = Color("Surface")
 
         /// Primary text — warm cream. Not pure white; not yellow. Sits naturally
@@ -233,8 +254,10 @@ extension Theme {
 extension Theme {
     public struct Design {
         /// Standard corner radius — 12pt for cards, containers, dialogs.
+        /// This is the ONLY card radius. Do not introduce new card radii.
         public static let cornerRadius = CGFloat(12)
         /// Reduced corner radius for blocks, bars, buttons, and compact elements — editorial, not "bubbly".
+        /// Use for chips, pills, small interactive elements. NOT for cards.
         public static let blockCornerRadius = CGFloat(5)
         /// Standard animation duration.
         public static let animationDuration = 0.2
@@ -258,6 +281,15 @@ extension Theme {
         /// Gap between narrative strip and dashboard charts.
         public static let narrativeToContentGap: CGFloat = 24
 
+        /// Minimum row height for the yearly distribution charts. Rows never get
+        /// shorter than this — once the list is taller than the card, the chart's
+        /// internal scroll view activates instead of compressing rows.
+        public static let distributionRowMinHeight: CGFloat = 30
+        /// Fixed card height for the yearly distribution charts. When there are
+        /// more projects/activity types than fit, the chart scrolls internally
+        /// rather than hiding or cutting off the overflow.
+        public static let distributionCardHeight: CGFloat = 340
+
         public static let breakpoints = (
             small: 800,
             medium: 1200,
@@ -269,6 +301,9 @@ extension Theme {
     public struct Row {
         public static let height: CGFloat = 44
         public static let expandedHeight: CGFloat = 90
+        /// Rows are NOT cards — they are compact list items. This radius is intentionally
+        /// smaller than `Theme.Design.cornerRadius`. Prefer the card modifier (`cardStyle()`)
+        /// for anything that behaves as a card or panel.
         public static let cornerRadius: CGFloat = 10
         public static let hoverOpacity: CGFloat = 0.08   // Reduced — more subtle than before
         public static let separatorHeight: CGFloat = 1
@@ -298,7 +333,7 @@ extension Theme {
 // All colours are sRGB. Dark mode only — Juju has no light mode.
 //
 // "Background"   Any: #1A1714  (r:0.102 g:0.090 b:0.078)
-// "Surface"      Any: #1E1C1A  (r:0.118 g:0.110 b:0.102)
+// "Surface"      Any: #25221F  (r:0.145 g:0.133 b:0.121)
 // "textPrimary"  Any: #EAE4DA  (r:0.918 g:0.894 b:0.855)
 // "textSecondary"Any: #7A7268  (r:0.478 g:0.447 b:0.408)
 // "Divider"      Any: rgba(234,228,218, 0.10)
@@ -391,14 +426,29 @@ extension View {
     }
 
     /// Dashboard card — surface background, standard corner radius, no border.
+    /// The canonical card style. Use this for ALL cards and panels.
+    /// Card depth = surface step + subtle shadow. Never add borders to cards.
     func dashboardCard() -> some View {
         self
             .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .subtleShadow()
             .dashboardPadding()
     }
 
+    /// Standard card style for dashboard/project story cards.
+    /// Equivalent to `dashboardCard()` but without the outer padding —
+    /// use when you want to control padding at the call site.
+    /// Surface is FULL OPACITY — never apply opacity to card surfaces.
+    func cardStyle() -> some View {
+        self
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .subtleShadow()
+    }
+
     /// Subtle shadow for depth — uses divider colour family.
+    /// This is the ONLY shadow style. It provides lift without borders.
     func subtleShadow() -> some View {
         self.shadow(color: Theme.Colors.divider.opacity(0.3), radius: 8, x: 0, y: 4)
     }

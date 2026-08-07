@@ -406,17 +406,6 @@ struct ProjectSidebarEditView: View {
     }
 }
 
-// MARK: - View Extension for Card Styling
-private extension View {
-    /// Applies a consistent card-style container: surface background, rounded corners, subtle shadow
-    func cardStyle() -> some View {
-        self
-            .background(Theme.Colors.surface)
-            .cornerRadius(Theme.Design.cornerRadius)
-            .shadow(color: Theme.Colors.divider.opacity(0.15), radius: 6, x: 0, y: 2)
-    }
-}
-
 // MARK: - Drag and Drop Delegate
 struct PhaseDropDelegate: DropDelegate {
     let index: Int
