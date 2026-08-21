@@ -383,6 +383,7 @@ private struct NarrativeMetricCard<Content: View>: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius))
         .subtleShadow()
+        .hoverLift()
     }
 }
 

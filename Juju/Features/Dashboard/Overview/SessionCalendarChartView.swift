@@ -91,6 +91,13 @@ struct SessionCalendarChartView: View {
         )
         .cornerRadius(Theme.Design.cornerRadius * 0.5)
         .annotation(position: .overlay, alignment: .center) {
+            if hoveredSession?.id == session.id {
+                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius * 0.5)
+                    .stroke(Theme.Colors.warmAccent.opacity(0.35), lineWidth: 2)
+                    .allowsHitTesting(false)
+            }
+        }
+        .annotation(position: .overlay, alignment: .center) {
             VStack(spacing: 2) {
                 Image(systemName: session.activitySFSymbol)
                     .font(Theme.Fonts.caption)
@@ -237,24 +244,24 @@ struct SessionCalendarChartView: View {
                             .contentShape(Rectangle())
                             .onContinuousHover { phase in
                                 switch phase {
-                                case .active(let location):
-                                    if let matched = sessionAt(location: location, proxy: proxy) {
-                                        withAnimation(.easeOut(duration: 0.1)) {
-                                            hoveredSession = matched
-                                            showTooltip = true
-                                            tooltipPosition = location
-                                        }
-                                    } else {
-                                        withAnimation(.easeOut(duration: 0.1)) {
-                                            showTooltip = false
-                                            hoveredSession = nil
-                                        }
+                        case .active(let location):
+                                if let matched = sessionAt(location: location, proxy: proxy) {
+                                    withAnimation(Theme.Design.spring) {
+                                        hoveredSession = matched
+                                        showTooltip = true
+                                        tooltipPosition = location
                                     }
-                                case .ended:
-                                    withAnimation(.easeOut(duration: 0.1)) {
+                                } else {
+                                    withAnimation(Theme.Design.spring) {
                                         showTooltip = false
                                         hoveredSession = nil
                                     }
+                                }
+                            case .ended:
+                                withAnimation(Theme.Design.spring) {
+                                    showTooltip = false
+                                    hoveredSession = nil
+                                }
                                 }
                             }
                         

@@ -66,7 +66,7 @@ struct YearlyActivityTypeBarChartView: View {
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
         .subtleShadow()
-        .animation(.easeInOut(duration: Theme.Design.animationDuration), value: hoveredIndex)
+        .animation(Theme.Design.spring, value: hoveredIndex)
     }
     
     // MARK: - Row
@@ -100,7 +100,8 @@ struct YearlyActivityTypeBarChartView: View {
                 
                 Rectangle()
                     .fill(Theme.Colors.textPrimary.opacity(hoveredIndex == index ? 1.0 : 0.85))
-                    .frame(width: max(0, chartWidth) * CGFloat(activityData.totalHours / maxHours), height: 6)
+                    .frame(width: max(0, chartWidth) * CGFloat(activityData.totalHours / maxHours), height: hoveredIndex == index ? 8 : 6)
+                    .animation(Theme.Design.spring, value: hoveredIndex)
                     .cornerRadius(Theme.Design.blockCornerRadius)
                 
                 Text("\(activityData.totalHours, specifier: "%.1f") h")

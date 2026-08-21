@@ -272,7 +272,7 @@ extension Theme {
         /// Use for chips, pills, small interactive elements. NOT for cards.
         public static let blockCornerRadius = CGFloat(8)
         /// Standard spring curve for all hover and selection interactions.
-        public static let spring = Spring(response: 0.35, dampingRatio: 0.7)
+        public static let spring = Animation.spring(response: 0.35, dampingFraction: 0.7)
         /// Standard animation duration.
         public static let animationDuration = 0.2
     }

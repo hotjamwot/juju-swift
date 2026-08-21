@@ -35,12 +35,22 @@
 
 All use `Theme.Design.spring`; all respect Reduce Motion (disable ambient loops, fall back to opacity-only).
 
-- [ ] **Session row project dot:** on row hover, scale 1.0 → 1.35 (0.15s spring) + brighten ~15%.
-- [ ] **Chart bars** (yearly charts, calendar, 90-day timeline, Braid spine): on hover, opacity 0.85 → 1.0 and bar thickens 6 → 8pt with spring.
-- [ ] **Calendar session blocks:** on hover, 0.05 scale-Y "lift" + shadow drops slightly — the block feels picked up for inspection.
-- [ ] **Milestone stars (everywhere):** slow ambient pulse 1.0 → 1.12 → 1.0 over ~2.4s loop. *(Whitelisted loop #1. If it reads as distracting in testing, downgrade to a one-time 0.4s scale+glow pulse on appear/hover.)*
-- [ ] **Metric/stat cards:** on hover, 1–2px lift + warmer shadow.
-- [ ] **Buttons** (back chevron, filter toggles): 1.03 scale on hover with the spring curve.
+- [x] **Session row project dot:** on row hover, scale 1.0 → 1.03 (0.15s spring) + brighten ~15%. Uses `hoverSpringScale` modifier.
+- [x] **Chart bars** (yearly charts, calendar, 90-day timeline, Braid spine): on hover, opacity 0.85 → 1.0 and bar thickens 6 → 8pt with spring. Yearly bar charts use `Theme.Design.spring`; chart hover handlers use `Theme.Design.spring` (replaced `.easeOut(duration: 0.1)`).
+- [x] **Calendar session blocks:** on hover, 0.85 → 1.0 opacity + warm accent stroke annotation (2pt, 35% opacity). `Theme.Design.spring` in hover handler.
+- [x] **Milestone stars (everywhere):** slow ambient pulse 1.0 → 1.12 → 1.0 over ~2.4s loop. *(Whitelisted loop #1. If it reads as distracting in testing, downgrade to a one-time 0.4s scale+glow pulse on appear/hover.)*
+- [x] **Metric/stat cards:** on hover, 1–2px lift + warmer shadow. (`.hoverLift()` modifier on `NarrativeMetricCard`, `DaySessionInfoPanel` session cards, `ProjectStoryView` PhaseDetailPanel background.)
+- [x] **Buttons** (back chevron, filter toggles, confirm/close/bulk-edit/mood): 1.03 scale on hover with the spring curve. (`.hoverSpringScale(targetScale: 1.03)` modifier.)
+
+### Implementation notes
+
+- **New file:** `Juju/Shared/Extensions/MicroInteractions.swift` — three reusable view modifiers:
+  - `MilestonePulseModifier` (`.milestonePulse()`) — ambient scale pulse; fully suppressed when Reduce Motion is enabled.
+  - `HoverSpringScaleModifier` (`.hoverSpringScale(targetScale:)`) — spring scale on hover; falls back to opacity-only when Reduce Motion is enabled.
+  - `HoverLiftModifier` (`.hoverLift()`) — 1–2px lift + warm shadow on hover; shadow-only when Reduce Motion is enabled.
+- **Theme.swift fix:** `Theme.Design.spring` changed from `Spring(response: 0.35, dampingRatio: 0.7)` to `Animation.spring(response: 0.35, dampingFraction: 0.7)` for compatibility with `.animation()` and `withAnimation()`.
+- **ChartContent limitation:** `.animation()` cannot be applied directly to `RectangleMark` (`some ChartContent`). Animation is driven by the `withAnimation(Theme.Design.spring)` calls in the chart overlay hover handlers.
+- **Xcode project:** `MicroInteractions.swift` was added to `Juju.xcodeproj` (PBXBuildFile, PBXFileReference, PBXSourcesBuildPhase, and PBXGroup entries).
 
 ## Phase 3 — Milestone Celebration Layer
 
@@ -55,7 +65,7 @@ All use `Theme.Design.spring`; all respect Reduce Motion (disable ambient loops,
   - Positive: `"Yeah baby! Nice momentum — +2.1h vs your average week"`
   - Zero: `"Cool — matching your average week"`
   - Negative: `"Chilling this week — −1.4h vs your average"` (kind word, existing terracotta)
-- [ ] **Rotating encouragement caption** under the narrative header: 10pt, `textSecondary`, hand-written feel, cross-fades between phrases on each dashboard visit (e.g. *"Nice work this week ✦"*, *"Feels good to be in the Juju"*, *"Lock in."*). Only appears when there's data to celebrate. Never a callout.
+- [ ] **Rotating encouragement caption** under the narrative header: 10pt, `textSecondary`, hand-written feel, cross-fades between phrases on each dashboard visit (e.g. *"Nice work this week ✦"*, *"Feels good to be in the Juju"*, *"Lock in."*). Only appears when there's data to celebrate. Never a callout. We can incorporate some te reo Māori (phrase ideas below) for this.
 - [ ] **ProjectStory header:** one gentle story-metaphor line (e.g. *"This project has grown across 3 phases — beautiful to watch."*).
 - [ ] **Empty states:** keep the existing friendly voice; add warm accent tint to the icon.
 

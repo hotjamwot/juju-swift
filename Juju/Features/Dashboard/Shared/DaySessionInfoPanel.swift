@@ -353,6 +353,7 @@ struct DaySessionInfoPanel: View {
                         Image(systemName: "star.fill")
                             .font(Theme.Fonts.caption)
                             .foregroundColor(Theme.Colors.milestone)
+                            .milestonePulse()
                     }
                 }
             }
@@ -407,6 +408,7 @@ struct DaySessionInfoPanel: View {
             RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
                 .fill(Theme.Colors.surface)
         )
+        .hoverLift()
     }
     
     // MARK: - Timeline Bar

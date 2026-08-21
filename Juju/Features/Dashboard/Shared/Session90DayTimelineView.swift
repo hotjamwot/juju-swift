@@ -85,6 +85,13 @@ struct Session90DayTimelineView: View {
                     )
                 )
                 .cornerRadius(sliverCornerRadius)
+                .annotation(position: .overlay, alignment: .center) {
+                    if isDayHovered(session.date) {
+                        RoundedRectangle(cornerRadius: sliverCornerRadius + 1)
+                            .stroke(Theme.Colors.warmAccent.opacity(0.25), lineWidth: 1)
+                            .allowsHitTesting(false)
+                    }
+                }
             }
         }
         .chartXScale(domain: xDomain)
@@ -123,11 +130,11 @@ struct Session90DayTimelineView: View {
                         switch phase {
                         case .active(let location):
                             let hovered = dayAt(location: location, proxy: proxy)
-                            withAnimation(.easeOut(duration: 0.1)) {
+                            withAnimation(Theme.Design.spring) {
                                 hoveredDay = hovered
                             }
                         case .ended:
-                            withAnimation(.easeOut(duration: 0.1)) {
+                            withAnimation(Theme.Design.spring) {
                                 hoveredDay = nil
                             }
                         }

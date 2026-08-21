@@ -94,6 +94,7 @@ struct ProjectStoryView: View {
                     .cornerRadius(Theme.Design.blockCornerRadius)
             }
             .buttonStyle(.plain)
+            .hoverSpringScale(targetScale: 1.1)
             .pointingHandOnHover()
             
             Spacer()
@@ -298,11 +299,11 @@ private struct ProjectStoryBraidView: View {
                         projectEnd: projectEnd,
                         isHighlighted: highlightedPhaseID == lane.id,
                         anyPhaseHighlighted: highlightedPhaseID != nil,
-                        onHover: { id in
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                highlightedPhaseID = id
+                            onHover: { id in
+                                withAnimation(Theme.Design.spring) {
+                                    highlightedPhaseID = id
+                                }
                             }
-                        }
                     )
                 }
             }
@@ -321,7 +322,7 @@ private struct ProjectStoryBraidView: View {
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Design.cornerRadius)
         .subtleShadow()
-        .animation(.easeOut(duration: 0.15), value: highlightedPhaseID)
+        .animation(Theme.Design.spring, value: highlightedPhaseID)
     }
 
     // MARK: Spine
@@ -480,12 +481,13 @@ private struct PhaseLaneRow: View {
                             let xFrac = totalSpan > 0 ? s.startDate.timeIntervalSince(start) / totalSpan : 0
                             let x = geo.size.width * CGFloat(xFrac)
 
-                            if s.isMilestone {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Theme.Colors.milestone)
-                                    .position(x: x, y: geo.size.height / 2)
-                            } else {
+            if s.isMilestone {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.Colors.milestone)
+                    .milestonePulse()
+                    .position(x: x, y: geo.size.height / 2)
+            } else {
                                 Capsule()
                                     .fill(markColor)
                                     .frame(width: 3, height: 14)

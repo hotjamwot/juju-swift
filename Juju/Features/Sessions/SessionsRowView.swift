@@ -210,6 +210,7 @@ struct SessionsRowView: View {
                             Circle()
                                 .fill(projectColor)
                                 .frame(width: Theme.Row.projectDotSize, height: Theme.Row.projectDotSize)
+                                .hoverSpringScale(targetScale: 1.03)
                             
                             // Project emoji
                             Text(projectEmoji)

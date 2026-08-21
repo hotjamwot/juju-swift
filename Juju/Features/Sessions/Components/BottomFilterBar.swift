@@ -295,9 +295,10 @@ struct BottomFilterBar: View {
                     .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2))
             )
         }
-        .help(filterState.isBulkEditing ? "Apply bulk edits and exit bulk edit mode" : "Enter bulk edit mode")
-        .buttonStyle(.plain)
-    }
+         .help(filterState.isBulkEditing ? "Apply bulk edits and exit bulk edit mode" : "Enter bulk edit mode")
+         .buttonStyle(.plain)
+         .hoverSpringScale(targetScale: 1.03)
+     }
     
     // MARK: - Bulk Edit Controls
     @ViewBuilder
@@ -334,9 +335,10 @@ struct BottomFilterBar: View {
                             .fill(Theme.Colors.divider.opacity(0.2))
                     )
             }
-            .help("Exit bulk edit mode without saving")
-            .buttonStyle(.plain)
-        }
+         .help("Exit bulk edit mode without saving")
+         .buttonStyle(.plain)
+         .hoverSpringScale(targetScale: 1.03)
+     }
         .padding(.horizontal, Theme.spacingMedium)
         .padding(.vertical, Theme.spacingSmall)
         .background(Theme.Colors.surface)
@@ -480,8 +482,9 @@ struct BottomFilterBar: View {
             .background(Theme.Colors.divider.opacity(0.2))
             .cornerRadius(Theme.Design.cornerRadius)
         }
-        .buttonStyle(.plain)
-        .popover(isPresented: $showingBulkMoodPopover) {
+         .buttonStyle(.plain)
+         .hoverSpringScale(targetScale: 1.03)
+         .popover(isPresented: $showingBulkMoodPopover) {
             MoodSelectionPopover(
                 currentMood: filterState.pendingBulkMood,
                 onMoodSelected: { mood in
@@ -758,9 +761,10 @@ struct BottomFilterBar: View {
                     .fill(Theme.Colors.interactive.opacity(0.1))
             )
         }
-        .help("Apply current filters to update session list")
-        .buttonStyle(.plain)
-    }
+         .help("Apply current filters to update session list")
+         .buttonStyle(.plain)
+         .hoverSpringScale(targetScale: 1.03)
+     }
     
     // MARK: - Close Button
     private var CloseButton: some View {
@@ -774,9 +778,10 @@ struct BottomFilterBar: View {
                         .fill(Theme.Colors.divider.opacity(0.2))
                 )
         }
-        .help("Hide filter bar")
-        .buttonStyle(.plain)
-    }
+         .help("Hide filter bar")
+         .buttonStyle(.plain)
+         .hoverSpringScale(targetScale: 1.03)
+     }
     
     // MARK: - Custom Date Range Picker
     private var CustomDateRangePicker: some View {
