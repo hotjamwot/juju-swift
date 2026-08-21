@@ -3,15 +3,12 @@ import Combine
 import Foundation
 
 // MARK: - PulseBarView (Integrated into SessionsRowView)
-/// Visual time-of-day pulse bar for sessions
-/// Shows when a session happened within the day and how long it lasted
-/// Always visible, purely decorative, does not affect row height or interactability
+/// Full-height time-of-day block: a subtle project-colour column from start to end time
 struct PulseBarView: View {
     let startTime: String
     let endTime: String
     let projectColor: Color
     
-    // Day window: 07:00 to 23:00 (16 hours)
     private let dayStartHour = 7.0
     private let dayEndHour = 23.0
     private let dayDurationHours: Double = 16.0
@@ -19,31 +16,22 @@ struct PulseBarView: View {
     var body: some View {
         GeometryReader { geometry in
             let usableWidth = geometry.size.width
-            let baselineY = geometry.size.height - 2 // Position baseline at bottom
+            let usableHeight = geometry.size.height
             
-            // Baseline bar (faint) - spans entire usable width with subtle glow
-            Rectangle()
-                .fill(projectColor.opacity(0.16))
-                .frame(height: 2)
-                .position(x: usableWidth / 2, y: baselineY)            
-            // Pulse segment (active) - positioned and sized based on session time
             if let startX = pulseXPosition(usableWidth: usableWidth, timeString: startTime),
                let endX = pulseXPosition(usableWidth: usableWidth, timeString: endTime) {
-                let width = max(0, endX - startX)
+                let width = max(4, endX - startX)
+                let centerX = startX + width / 2
                 
                 Rectangle()
-                    .fill(projectColor.opacity(0.45))
-                    .frame(width: width, height: 2)
+                    .fill(projectColor.opacity(0.12))
+                    .frame(width: width, height: usableHeight)
                     .cornerRadius(2)
-                    .position(x: startX + (width / 2), y: baselineY - 1) // Center the pulse between start and end
-                    .animation(.easeInOut(duration: 0.25), value: startTime)
-                    .animation(.easeInOut(duration: 0.25), value: endTime)
+                    .position(x: centerX, y: usableHeight / 2)
             }
         }
-        .frame(height: 6) // Total height: 3px baseline + 3px pulse
     }
     
-    /// Calculate X position for the pulse segment based on time string
     private func pulseXPosition(usableWidth: CGFloat, timeString: String) -> CGFloat? {
         guard let components = timeStringToComponents(timeString) else {
             return nil
@@ -57,8 +45,6 @@ struct PulseBarView: View {
         return position
     }
     
-    
-    /// Parse time string (HH:mm:ss) to hour and minute components
     private func timeStringToComponents(_ timeString: String) -> (hour: Int, minute: Int)? {
         let components = timeString.components(separatedBy: ":")
         
@@ -68,7 +54,6 @@ struct PulseBarView: View {
             return nil
         }
         
-        // Validate hour and minute ranges
         guard hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 else {
             return nil
         }
@@ -653,27 +638,27 @@ struct SessionsRowView: View {
             // Selection indicator border for bulk edit mode
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                    .stroke(isBulkEditing && isSelected ? Theme.Colors.accentColor : Color.clear, lineWidth: 2)
+                    .stroke(isBulkEditing && isSelected ? Theme.Colors.interactive : Color.clear, lineWidth: 2)
             )
             // Selection checkmark badge for bulk edit mode
             .overlay(alignment: .topTrailing) {
                 if isBulkEditing && isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(Theme.Colors.accentColor)
+                        .foregroundColor(Theme.Colors.interactive)
                         .background(Circle().fill(Theme.Colors.surface))
                         .padding(Theme.Spacing.xs)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            // Pulse bar overlay at the bottom of the row
-            .overlay(alignment: .bottom) {
+            // Session time block — full-height subtle column from start to end time
+            .overlay {
                 PulseBarView(
                     startTime: formatTime(currentSession.startDate),
                     endTime: formatTime(currentSession.endDate),
                     projectColor: projectColor
                 )
-                .padding(.horizontal, Theme.Row.contentPadding) // Match row's horizontal padding
+                .padding(.horizontal, Theme.Row.contentPadding)
                 .animation(.easeInOut(duration: 0.25), value: currentSession.startDate)
                 .animation(.easeInOut(duration: 0.25), value: currentSession.endDate)
             }
@@ -720,7 +705,7 @@ struct SessionsRowView: View {
     }
     
     private var projectColor: Color {
-        project?.swiftUIColor ?? Theme.Colors.accentColor
+        project?.swiftUIColor ?? Theme.Colors.interactive
     }
     
     private var projectEmoji: String {
@@ -1195,7 +1180,7 @@ struct DateTimePickerPopover: View {
             }
             .padding(.top, 8)
         }
-        .padding(16)
+        .padding(Theme.spacingMedium)
         .frame(width: 280)
     }
     
@@ -1278,8 +1263,8 @@ struct NotesSelectionPopover: View {
                     Text("Enter session notes...")
                         .font(Theme.Fonts.body)
                         .foregroundColor(Theme.Colors.textSecondary.opacity(0.6))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
+                    .padding(.horizontal, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.xxs)
                 }
                 TextEditor(text: $editedNotes)
                     .font(Theme.Fonts.body)
@@ -1287,9 +1272,9 @@ struct NotesSelectionPopover: View {
                     .frame(height: 100)
                     .scrollContentBackground(.hidden)
                     .background(Theme.Colors.surface)
-                    .cornerRadius(8)
+                    .cornerRadius(Theme.Design.blockCornerRadius)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: 1)
                     )
                     .padding(0)
@@ -1314,9 +1299,9 @@ struct NotesSelectionPopover: View {
             }
             .padding(.top, 8)
         }
-        .padding(16)
+        .padding(Theme.spacingMedium)
         .frame(width: 400)
-        .cornerRadius(12)
+        .cornerRadius(Theme.Design.cornerRadius)
         .shadow(radius: 10)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

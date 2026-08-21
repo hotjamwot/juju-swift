@@ -258,7 +258,7 @@ struct BottomFilterBar: View {
             RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
                 .stroke(Theme.Colors.divider, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 8, x: 0, y: 2)
         .animation(.easeInOut(duration: 0.3), value: isHovering)
         .onHover { hovering in
             isHovering = hovering
@@ -285,13 +285,13 @@ struct BottomFilterBar: View {
                         .font(Theme.Fonts.caption)
                 }
             }
-            .foregroundColor(Theme.Colors.accentColor)
+            .foregroundColor(Theme.Colors.interactive)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingExtraSmall)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                    .stroke(Theme.Colors.accentColor.opacity(0.4), lineWidth: 1)
-                    .background(Theme.Colors.accentColor.opacity(0.08))
+                    .stroke(Theme.Colors.interactive.opacity(0.4), lineWidth: 1)
+                    .background(Theme.Colors.interactive.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2))
             )
         }
@@ -342,10 +342,10 @@ struct BottomFilterBar: View {
         .background(Theme.Colors.surface)
         .cornerRadius(Theme.Row.cornerRadius)
         .overlay(
-            RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
-                .stroke(Theme.Colors.accentColor.opacity(0.4), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
+                    .stroke(Theme.Colors.interactive.opacity(0.4), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 8, x: 0, y: 2)
     }
     
     // MARK: - Bulk Project Dropdown
@@ -364,7 +364,7 @@ struct BottomFilterBar: View {
                         Text(project.name)
                         if filterState.pendingBulkProjectID == project.id {
                             Image(systemName: "checkmark")
-                                .foregroundColor(Theme.Colors.accentColor)
+                                .foregroundColor(Theme.Colors.interactive)
                         }
                     }
                 }
@@ -407,7 +407,7 @@ struct BottomFilterBar: View {
                             Text(phase.name)
                             if filterState.pendingBulkPhaseID == phase.id {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(Theme.Colors.accentColor)
+                                    .foregroundColor(Theme.Colors.interactive)
                             }
                         }
                     }
@@ -750,12 +750,12 @@ struct BottomFilterBar: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(Theme.Fonts.header)
             }
-            .foregroundColor(Theme.Colors.accentColor)
+            .foregroundColor(Theme.Colors.interactive)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingExtraSmall)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Design.cornerRadius / 2)
-                    .fill(Theme.Colors.accentColor.opacity(0.1))
+                    .fill(Theme.Colors.interactive.opacity(0.1))
             )
         }
         .help("Apply current filters to update session list")

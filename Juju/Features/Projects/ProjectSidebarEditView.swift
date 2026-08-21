@@ -264,7 +264,7 @@ struct ProjectSidebarEditView: View {
             Spacer()
             Text(tempIsArchived ? "Archived" : "Active")
                 .font(Theme.Fonts.caption)
-                .foregroundColor(tempIsArchived ? Theme.Colors.error : Color.green.opacity(0.8))
+                .foregroundColor(tempIsArchived ? Theme.Colors.error : Theme.Colors.positive)
         }
         .padding(Theme.spacingLarge)
         .cardStyle()

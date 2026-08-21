@@ -38,7 +38,7 @@ struct SessionCalendarChartView: View {
         RuleMark(
             y: .value("Hour", hour)
         )
-        .foregroundStyle(Color.gray.opacity(0.3))
+        .foregroundStyle(Theme.Colors.divider.opacity(0.3))
         .lineStyle(StrokeStyle(lineWidth: 1.0, dash: [3, 6]))
     }
     
@@ -67,7 +67,7 @@ struct SessionCalendarChartView: View {
                 yStart: .value("Current Time", currentHour + (currentMinute / 60.0) - 0.01),
                 yEnd: .value("Current Time", currentHour + (currentMinute / 60.0) + 0.01)
             )
-            .foregroundStyle(Theme.Colors.accentColor)
+            .foregroundStyle(Theme.Colors.interactive)
         } else {
             return RectangleMark(
                 yStart: .value("Current Time", currentHour + (currentMinute / 60.0) - 0.01),

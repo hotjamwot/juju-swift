@@ -12,7 +12,7 @@ public struct PrimaryButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.body.weight(.semibold))
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Theme.spacingMedium)
             .frame(height: 36)
             .background(isEnabled ? backgroundColor : Theme.Colors.interactive.opacity(0.5))
             .foregroundColor(isEnabled ? Theme.Colors.background : Theme.Colors.background.opacity(0.7))
@@ -33,7 +33,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.body)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Theme.spacingMedium)
             .frame(height: 36)
             .background(isEnabled ? Theme.Colors.surface : Theme.Colors.surface.opacity(0.5))
             .foregroundColor(isEnabled ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
@@ -96,7 +96,7 @@ public struct FilterButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.caption)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, Theme.spacingSmall)
             .frame(height: 28)
             .background(
                 isSelected ? Theme.Colors.interactive :
@@ -183,7 +183,7 @@ public extension ButtonStyle where Self == PrimaryButtonStyle {
 
     /// A primary button style with a destructive/danger appearance.
     static var destructive: PrimaryButtonStyle {
-        PrimaryButtonStyle(backgroundColor: .red)
+        PrimaryButtonStyle(backgroundColor: Theme.Colors.error)
     }
 }
 
@@ -236,8 +236,8 @@ public struct ConfirmationSecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(Theme.Fonts.body)
             .foregroundColor(Theme.Colors.textPrimary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Theme.spacingMedium)
+            .padding(.vertical, Theme.Spacing.xs)
             .background(Theme.Colors.divider.opacity(0.3))
             .cornerRadius(Theme.Design.blockCornerRadius)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -251,9 +251,9 @@ public struct ConfirmationDangerButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.body.weight(.semibold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .foregroundColor(Theme.Colors.background)
+            .padding(.horizontal, Theme.spacingMedium)
+            .padding(.vertical, Theme.Spacing.xs)
             .background(Theme.Colors.error)
             .cornerRadius(Theme.Design.blockCornerRadius)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)

@@ -28,7 +28,7 @@ struct FilterToggleButton: View {
                         // Upward chevron with hover effect
                         Image(systemName: "chevron.up")
                             .font(Theme.Fonts.caption)
-                            .foregroundColor(isButtonHovering ? Theme.Colors.accentColor : Theme.Colors.textSecondary)
+                            .foregroundColor(isButtonHovering ? Theme.Colors.interactive : Theme.Colors.textSecondary)
                     }
                     .padding(.horizontal, Theme.spacingMedium)
                     .padding(.vertical, Theme.spacingSmall)
@@ -40,7 +40,7 @@ struct FilterToggleButton: View {
                         RoundedRectangle(cornerRadius: Theme.Row.cornerRadius)
                             .stroke(Theme.Colors.divider, lineWidth: isButtonHovering ? 1.5 : 1) // Thicker border on hover
                     )
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 1)
+                    .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 1)
                     .scaleEffect(isButtonHovering ? 1.02 : 1.0) // Subtle scale on hover
                     .animation(.easeInOut(duration: 0.2), value: isButtonHovering)
                 }

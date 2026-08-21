@@ -35,7 +35,7 @@ import AppKit
 ///   background, and dimming it further makes cards invisible.
 /// - Card corner radius is ALWAYS `Theme.Design.cornerRadius` (12pt). Do not invent
 ///   new radii for cards. The only exception is compact nested elements (chips,
-///   pills, blocks) which use `Theme.Design.blockCornerRadius` (5pt).
+        ///   pills, blocks) which use `Theme.Design.blockCornerRadius` (8pt).
 /// - Card depth comes from the background step + `subtleShadow()`. If you feel
 ///   a card is hard to distinguish from the background, apply `subtleShadow()`
 ///   or increase the surface step — never add a border.
@@ -73,8 +73,8 @@ public struct Theme {
         /// Xcode asset: "textSecondary" → #7A7268
         public static let textSecondary = Color("textSecondary")
 
-        /// Divider — very low opacity warm white. Hairline rules only.
-        /// Xcode asset: "Divider" → rgba(234, 228, 218, 0.10)
+        /// Divider — low opacity warm white. Hairline rules only.
+        /// Xcode asset: "Divider" → rgba(234, 228, 218, 0.18)
         public static let divider = Color("Divider")
 
         /// Error — retained for destructive actions only.
@@ -100,11 +100,20 @@ public struct Theme {
         /// Milestone highlight — brighter gold for active/hovered milestone states.
         public static let milestoneHighlight: Color = Color(hex: "FFD060")
 
-        /// Positive delta — green for upward comparative trends.
-        public static let positive: Color = Color.green
+        /// Positive delta — warm sage for upward comparative trends.
+        public static let positive: Color = Color(hex: "7FA86C")
 
-        /// Negative delta — red for downward comparative trends.
-        public static let negative: Color = Color.red.opacity(0.8)
+        /// Negative delta — soft terracotta for downward comparative trends.
+        public static let negative: Color = Color(hex: "C97B6B")
+
+        /// Live indicator — desaturated coral for active/live elements.
+        public static let liveIndicator: Color = Color(hex: "E08A6D")
+
+        /// Warm accent — warmer tint of textPrimary for hover glows and subtle warmth.
+        public static let warmAccent: Color = Color(hex: "F0E6DD")
+
+        /// Glow — soft radial highlight for celebrations.
+        public static let glow: Color = Color(hex: "FFF8F0")
 
         /// Interactive off-white — used for buttons, selected states, focus rings.
         /// Same colour family as textPrimary but slightly brighter.
@@ -203,6 +212,9 @@ public struct Theme {
         /// for dedicated micro-chrome: badges, chart labels, timestamps.
         /// Use sparingly — prefer 12pt body for all readable text.
         public static let caption = Font.system(size: 10, weight: .regular, design: .default)
+
+        /// 12pt regular. Friendly weight for encouragement and affirmation lines.
+        public static let affirmation = Font.system(size: 12, weight: .regular, design: .default)
     }
 
     // MARK: - Spacing
@@ -258,7 +270,9 @@ extension Theme {
         public static let cornerRadius = CGFloat(12)
         /// Reduced corner radius for blocks, bars, buttons, and compact elements — editorial, not "bubbly".
         /// Use for chips, pills, small interactive elements. NOT for cards.
-        public static let blockCornerRadius = CGFloat(5)
+        public static let blockCornerRadius = CGFloat(8)
+        /// Standard spring curve for all hover and selection interactions.
+        public static let spring = Spring(response: 0.35, dampingRatio: 0.7)
         /// Standard animation duration.
         public static let animationDuration = 0.2
     }
@@ -304,7 +318,7 @@ extension Theme {
         /// Rows are NOT cards — they are compact list items. This radius is intentionally
         /// smaller than `Theme.Design.cornerRadius`. Prefer the card modifier (`cardStyle()`)
         /// for anything that behaves as a card or panel.
-        public static let cornerRadius: CGFloat = 10
+        public static let cornerRadius: CGFloat = 12
         public static let hoverOpacity: CGFloat = 0.08   // Reduced — more subtle than before
         public static let separatorHeight: CGFloat = 1
         public static let projectDotSize: CGFloat = 6
@@ -336,7 +350,7 @@ extension Theme {
 // "Surface"      Any: #25221F  (r:0.145 g:0.133 b:0.121)
 // "textPrimary"  Any: #EAE4DA  (r:0.918 g:0.894 b:0.855)
 // "textSecondary"Any: #7A7268  (r:0.478 g:0.447 b:0.408)
-// "Divider"      Any: rgba(234,228,218, 0.10)
+// "Divider"      Any: rgba(234,228,218, 0.18)
 // "Error"        Any: #B02A21  (unchanged)
 // "AppAccentColor" Any: #EAE4DA (updated June 2026 to match textPrimary — was #E100FF.
 //                              Kept for legacy call sites, not for new uses.)
@@ -450,7 +464,15 @@ extension View {
     /// Subtle shadow for depth — uses divider colour family.
     /// This is the ONLY shadow style. It provides lift without borders.
     func subtleShadow() -> some View {
-        self.shadow(color: Theme.Colors.divider.opacity(0.3), radius: 8, x: 0, y: 4)
+        self.shadow(color: Theme.Colors.divider.opacity(0.15), radius: 14, x: 0, y: 8)
+    }
+
+    func shadowSoft() -> some View {
+        self.shadow(color: Theme.Colors.divider.opacity(0.10), radius: 20, x: 0, y: 10)
+    }
+
+    func shadowWarm() -> some View {
+        self.shadow(color: Theme.Colors.warmAccent.opacity(0.12), radius: 16, x: 0, y: 8)
     }
 
     /// Full-bleed dashboard container with background fill.

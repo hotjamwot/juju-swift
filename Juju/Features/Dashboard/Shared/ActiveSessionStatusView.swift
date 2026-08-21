@@ -45,16 +45,16 @@ struct ActiveSessionStatusView: View {
             // Live indicator — small pulsing dot
             HStack(spacing: Theme.Spacing.xs) {
                 Circle()
-                    .fill(Theme.Colors.accentColor)
+                    .fill(Theme.Colors.liveIndicator)
                     .frame(width: 6, height: 6)
                     .overlay(
                         Circle()
-                            .fill(Theme.Colors.accentColor.opacity(0.4))
+                            .fill(Theme.Colors.liveIndicator.opacity(0.4))
                             .frame(width: 12, height: 12)
                     )
                 Text("Live")
                     .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.accentColor)
+                    .foregroundColor(Theme.Colors.liveIndicator)
             }
             
             // Subtle divider
@@ -201,11 +201,11 @@ struct ActiveSessionStatusView: View {
                             in: 0...10,
                             step: 1
                         )
-                        .tint(Theme.Colors.accentColor)
+                        .tint(Theme.Colors.interactive)
                         
                         Text("\(sessionManager.currentMood ?? 5)")
                             .font(Theme.Fonts.narrative.weight(.semibold))
-                            .foregroundColor(Theme.Colors.accentColor)
+                            .foregroundColor(Theme.Colors.interactive)
                             .frame(width: 24, alignment: .trailing)
                             .monospacedDigit()
                     }

@@ -226,7 +226,7 @@ struct NotesModalView: View {
                                 in: 0...10
                             )
                             .labelsHidden()
-                            .tint(Theme.Colors.accentColor)
+                            .tint(Theme.Colors.interactive)
 
                             HStack {
                                 Text("0").font(Theme.Fonts.caption).foregroundColor(Theme.Colors.textSecondary)
@@ -240,7 +240,7 @@ struct NotesModalView: View {
                         if let mood = viewModel.mood {
                             Text("\(mood)")
                                 .font(Theme.Fonts.body)
-                                .foregroundColor(Theme.Colors.accentColor)
+                                .foregroundColor(Theme.Colors.interactive)
                                 .frame(width: 40, alignment: .trailing)
                         } else {
                             Text("-")
@@ -318,7 +318,7 @@ private struct AddPhaseDialogModifier: ViewModifier {
                 Group {
                     if isPresented {
                         GeometryReader { geometry in
-                            Color.black.opacity(0.3)
+                            Theme.Colors.background.opacity(0.3)
                                 .ignoresSafeArea()
                                 .onTapGesture {
                                     onCancel()

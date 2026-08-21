@@ -97,8 +97,8 @@ struct InlineSelectionPopover<Item: SelectionItem>: View {
             .frame(minHeight: 80, maxHeight: 240)
         }
         .frame(minWidth: 200, maxWidth: 240)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
         .onDisappear {
             // Clear focus when popover disappears to prevent blue outline
             selectedID = nil
@@ -280,8 +280,8 @@ struct MoodSelectionPopover: View {
             .frame(minHeight: 80, maxHeight: 200)
         }
         .frame(minWidth: 140, maxWidth: 160)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
         .onDisappear {
             // Clear focus when popover disappears to prevent blue outline
             isFocused = false
@@ -433,8 +433,8 @@ struct PhaseSelectionPopover: View {
             .frame(minHeight: 80, maxHeight: 240)
         }
         .frame(minWidth: 200, maxWidth: 240)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Phase Selection Row
@@ -545,10 +545,10 @@ struct ActionSelectionPopover: View {
                 .buttonStyle(PrimaryButtonStyle())
             }
         }
-        .padding(16)
+        .padding(Theme.spacingMedium)
         .frame(minWidth: 240, maxWidth: 320)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
         .onAppear {
             isTextFieldFocused = true
         }
@@ -619,8 +619,8 @@ struct InlineTimePicker: View {
         }
         .padding(12)
         .frame(minWidth: 160, maxWidth: 200)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
     }
     
     private func saveTime() {
@@ -710,8 +710,8 @@ struct InlineDatePicker: View {
         }
         .padding(12)
         .frame(minWidth: 160, maxWidth: 200)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .cornerRadius(Theme.Design.blockCornerRadius)
+        .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 2)
     }
     
     private func saveDate() {

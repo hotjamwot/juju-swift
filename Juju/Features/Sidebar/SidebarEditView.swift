@@ -9,7 +9,7 @@ struct SidebarEditView: View {
         ZStack(alignment: .trailing) {
             // Background dimming (optional - keeping it subtle)
             if sidebarState.isVisible {
-                Color.black.opacity(0.05)
+                Theme.Colors.background.opacity(0.05)
                     .ignoresSafeArea()
                     .onTapGesture {
                         sidebarState.hide()
