@@ -108,7 +108,7 @@ struct ActivityTypeView: View {
                 .accessibilityHint(viewModel.showArchivedActivityTypes ? "Hides archived activity types" : "Shows archived activity types")
             }
             .padding(.bottom, Theme.spacingLarge)
-            .padding(.leading, Theme.spacingLarge),
+             .padding(.leading, Theme.spacingLarge),
             alignment: .bottomLeading
         )
         .background(Theme.Colors.background)
@@ -166,8 +166,9 @@ struct ActivityTypeRowView: View {
                             .foregroundColor(Theme.Colors.textSecondary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Theme.Colors.divider.opacity(0.3))
+                            .background(Theme.Colors.surface)
                             .clipShape(Capsule())
+                            .shadow(color: Theme.Colors.divider.opacity(0.15), radius: 4, x: 0, y: 2)
 
                         Button(action: {
                             // Restore activity type

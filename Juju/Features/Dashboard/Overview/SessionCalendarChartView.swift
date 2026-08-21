@@ -97,6 +97,15 @@ struct SessionCalendarChartView: View {
                     .allowsHitTesting(false)
             }
         }
+        .annotation(position: .overlay, alignment: .topTrailing) {
+            if session.isMilestone {
+                Circle()
+                    .fill(Theme.Colors.milestoneHighlight)
+                    .frame(width: 4, height: 4)
+                    .offset(x: 4, y: 1)
+                    .allowsHitTesting(false)
+            }
+        }
         .annotation(position: .overlay, alignment: .center) {
             VStack(spacing: 2) {
                 Image(systemName: session.activitySFSymbol)

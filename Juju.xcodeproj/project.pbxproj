@@ -74,6 +74,7 @@
 		77F001092F40000A00E9BB4A /* PhaseDataIntegrityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F001082F40000A00E9BB4A /* PhaseDataIntegrityTests.swift */; };
 		90217888d98ec84e246b3e1f /* ArraySessionExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49fda83b446e382782b6734d /* ArraySessionExtensionsTests.swift */; };
 		e856b04462d8b42641d98400 /* SessionRecordFilteringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35b7c68a2a188eaf174b84c8 /* SessionRecordFilteringTests.swift */; };
+		58D7D671D2254C3BADED68D6 /* JujuPhrases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D7D661D2254C3BADED68D6 /* JujuPhrases.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -159,6 +160,7 @@
 		49fda83b446e382782b6734d /* ArraySessionExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArraySessionExtensionsTests.swift; sourceTree = "<group>"; };
 		35b7c68a2a188eaf174b84c8 /* SessionRecordFilteringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecordFilteringTests.swift; sourceTree = "<group>"; };
 		A1234567890123456789012G /* Juju.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Juju.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		58D7D661D2254C3BADED68D6 /* JujuPhrases.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JujuPhrases.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -309,6 +311,7 @@
 				66B147FC2EA8EA4B00E9BB4A /* Managers */,
 				66B147FF2EA8EA4B00E9BB4A /* Models */,
 				66B148012EA8EA4B00E9BB4A /* ViewModels */,
+			58D7D661D2254C3BADED68D6 /* JujuPhrases.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -601,6 +604,7 @@
 				66A51B1E2EF03779007E2343 /* FilterToggleButton.swift in Sources */,
 				66F448442EEC9186008FA5DD /* SidebarView.swift in Sources */,
 				668122432F0FACAB00956B32 /* NarrativeEngine.swift in Sources */,
+				58D7D671D2254C3BADED68D6 /* JujuPhrases.swift in Sources */,
 				66D9D0D12EEED25E00D06502 /* ProjectManager.swift in Sources */,
 				66B1484B2EA8EA4B00E9BB4A /* JujuUtils.swift in Sources */,
 				66A51B1F2EF03779007E2343 /* BottomFilterBar.swift in Sources */,

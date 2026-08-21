@@ -10,8 +10,6 @@ extension Date {
 }
 
 // MARK: - Overview Dashboard View
-
-/// Overview (weekly) dashboard — the single dashboard view for the app.
 ///
 /// Charts float freely at their natural height with consistent horizontal margins.
 /// Narrative metric cards use an explicit `surface` background for depth.
@@ -29,6 +27,7 @@ struct OverviewDashboardView: View {
     
     // MARK: - Hover state
     @State private var hoveredDay: DayStack? = nil
+    @State private var encouragementPhrase: Phrase?
     
     // MARK: - Ideal heights
     private let calendarMinHeight: CGFloat = 400
@@ -57,13 +56,19 @@ struct OverviewDashboardView: View {
                 // Active Session Bar + Narrative Summary — grouped together
                 // with a tighter gap so the live session bar feels connected
                 // to the narrative engine below it.
-                VStack(spacing: Theme.Spacing.md) {
+                VStack(spacing: Theme.Spacing.lg) {
                     if sessionManager.activeSession != nil {
                         ActiveSessionStatusView(sessionManager: sessionManager)
                             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     }
-                    
-                    // Narrative Summary — THIS WEEK | FOCUS | PROJECT as metric cards
+
+                    if let phrase = encouragementPhrase {
+                        ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.vertical, Theme.Spacing.xl)
+                    }
+
                     NarrativeSummaryCard(narrativeEngine: narrativeEngine)
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
@@ -146,6 +151,7 @@ struct OverviewDashboardView: View {
                 await refreshDashboardData()
                 isLoading = false
             }
+            encouragementPhrase = narrativeEngine.encouragement() ?? JujuPhrases.warmWelcome() ?? JujuPhrases.catalog.first!
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionDidStart)) { _ in
             Task { await refreshDashboardData() }
@@ -320,18 +326,19 @@ private struct NarrativeSummaryCard: View {
     @ViewBuilder
     private func deltaView(delta: Double) -> some View {
         if delta == 0 {
-            Text("Same as avg week")
-                .font(Theme.Fonts.caption)
+            Text("Cool — matching your average week")
+                .font(Theme.Fonts.affirmation)
                 .foregroundColor(Theme.Colors.textSecondary)
         } else {
             let sign = delta > 0 ? "+" : ""
             let color: Color = delta > 0 ? Theme.Colors.positive : Theme.Colors.negative
+            let prefix: String = delta > 0 ? "Yeah baby! Nice momentum — " : "Chilling this week — "
             HStack(spacing: Theme.Spacing.micro) {
                 Image(systemName: delta > 0 ? "arrow.up" : "arrow.down")
                     .font(Theme.Fonts.caption)
                     .foregroundColor(color)
-                Text("\(sign)\(String(format: "%.1f", delta))h vs avg week")
-                    .font(Theme.Fonts.caption)
+                Text("\(prefix)\(sign)\(String(format: "%.1f", delta))h vs your average")
+                    .font(Theme.Fonts.affirmation)
                     .foregroundColor(color)
             }
         }

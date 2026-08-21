@@ -229,8 +229,9 @@ struct SessionsRowView: View {
                                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.8))
                                     .padding(.horizontal, Theme.Spacing.xxs)
                                     .padding(.vertical, Theme.Spacing.micro)
-                                    .background(Theme.Colors.divider.opacity(0.3))
+                                    .background(Theme.Colors.surface)
                                     .clipShape(Capsule())
+                                    .shadow(color: Theme.Colors.divider.opacity(0.15), radius: 4, x: 0, y: 2)
                             }
                         }
                         .padding(.horizontal, Theme.Row.contentPadding)
@@ -648,6 +649,7 @@ struct SessionsRowView: View {
                         .font(.system(size: 14))
                         .foregroundColor(Theme.Colors.interactive)
                         .background(Circle().fill(Theme.Colors.surface))
+                        .shadow(color: Theme.Colors.divider.opacity(0.15), radius: 4, x: 0, y: 2)
                         .padding(Theme.Spacing.xs)
                         .transition(.scale.combined(with: .opacity))
                 }

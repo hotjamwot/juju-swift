@@ -41,6 +41,7 @@ struct FilterToggleButton: View {
                             .stroke(Theme.Colors.divider, lineWidth: isButtonHovering ? 1.5 : 1) // Thicker border on hover
                     )
                     .shadow(color: Theme.Colors.divider.opacity(0.25), radius: 4, x: 0, y: 1)
+                    .shadowSoft()
                     .scaleEffect(isButtonHovering ? 1.02 : 1.0) // Subtle scale on hover
                     .animation(.easeInOut(duration: 0.2), value: isButtonHovering)
                 }

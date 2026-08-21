@@ -19,7 +19,7 @@ struct ProjectStoryView: View {
 
     @StateObject private var viewModel: ProjectStoryViewModel
     @State private var highlightedPhaseID: String? = nil
-
+    
     init(projectID: String, onExit: @escaping () -> Void) {
         self.projectID = projectID
         self.onExit = onExit
@@ -144,16 +144,16 @@ private struct ProjectStoryHeaderView: View {
                     .foregroundColor(Theme.Colors.textPrimary)
             }
 
-            if let about = header.about?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !about.isEmpty {
-                Text(about)
-                    .font(Theme.Fonts.body)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Theme.Spacing.micro)
-            }
+             if let about = header.about?.trimmingCharacters(in: .whitespacesAndNewlines),
+                !about.isEmpty {
+                  Text(about)
+                      .font(Theme.Fonts.body)
+                      .foregroundColor(Theme.Colors.textSecondary)
+                      .fixedSize(horizontal: false, vertical: true)
+                      .padding(.top, Theme.Spacing.micro)
+              }
 
-            HStack(spacing: Theme.Spacing.sm) {
+              HStack(spacing: Theme.Spacing.sm) {
                 if let start = header.startDate {
                     Text("Started \(dateFormatter.string(from: start))")
                         .font(Theme.Fonts.caption)

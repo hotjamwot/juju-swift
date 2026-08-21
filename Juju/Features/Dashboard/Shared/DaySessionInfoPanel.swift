@@ -138,6 +138,12 @@ struct DaySessionInfoPanel: View {
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.milestone)
                 }
+                .padding(.horizontal, Theme.Spacing.xs)
+                .padding(.vertical, 2)
+                .background(
+                    Capsule()
+                        .fill(Theme.Colors.milestone.opacity(0.08))
+                )
             }
         }
         .padding(.vertical, Theme.Spacing.xs)
@@ -345,7 +351,8 @@ struct DaySessionInfoPanel: View {
                             .padding(.vertical, 2)
                             .background(
                                 Capsule()
-                                    .fill(Theme.Colors.background)
+                                    .fill(Theme.Colors.surface)
+                                    .shadow(color: Theme.Colors.divider.opacity(0.15), radius: 4, x: 0, y: 2)
                             )
                     }
                     

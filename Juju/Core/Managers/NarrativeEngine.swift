@@ -148,6 +148,99 @@ final class NarrativeEngine: ObservableObject {
         currentHeadline?.headlineText ?? "Loading your story..."
     }
 
+    func encouragement() -> Phrase? {
+        guard let summary = weekSummary, summary.totalHours > 0 else { return nil }
+
+        let sessions = sessionManager.allSessions
+
+        if hasMilestoneThisWeek(from: sessions) {
+            return JujuPhrases.milestone()
+        }
+
+        if hasActiveStreak(minDays: 3, from: sessions) {
+            return JujuPhrases.encouragement()
+        }
+
+        if hasProificProject(sessions: sessions) {
+            return JujuPhrases.encouragement()
+        }
+
+        if highAverageMood(sessions: sessions) {
+            return JujuPhrases.encouragement()
+        }
+
+        if summary.deltaHours > 1 {
+            return JujuPhrases.encouragement()
+        } else if summary.deltaHours < -1 {
+            return JujuPhrases.encouragement()
+        }
+
+        return JujuPhrases.encouragement()
+    }
+
+    // MARK: - Private
+
+    private func hasActiveStreak(minDays: Int = 3, from sessions: [SessionRecord]) -> Bool {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        var streak = 0
+        var checkDate = today
+
+        for _ in 0..<30 {
+            let dayStart = checkDate
+            guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+                checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate) ?? checkDate
+                continue
+            }
+            let hasSession = sessions.contains { $0.startDate >= dayStart && $0.startDate < dayEnd }
+            if hasSession {
+                streak += 1
+            } else if streak > 0 {
+                break
+            }
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
+            checkDate = previous
+        }
+        return streak >= minDays
+    }
+
+    private func hasMilestoneThisWeek(from sessions: [SessionRecord]) -> Bool {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let weekday = calendar.component(.weekday, from: today)
+        let daysSinceMonday = (weekday + 5) % 7
+        guard let weekStart = calendar.date(byAdding: .day, value: -daysSinceMonday, to: today),
+              let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) else {
+            return false
+        }
+        return sessions.contains { $0.isMilestone && $0.startDate >= weekStart && $0.startDate < weekEnd }
+    }
+
+    private func hasProificProject(sessions: [SessionRecord]) -> Bool {
+        let calendar = Calendar.current
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())) ?? Date()
+        guard let start = calendar.date(byAdding: .day, value: -30, to: endOfToday) else { return false }
+        let recent = sessions.filter { $0.startDate >= start && $0.startDate < endOfToday }
+
+        var projectCounts: [String: Int] = [:]
+        for session in recent {
+            projectCounts[session.projectID, default: 0] += 1
+        }
+        return projectCounts.values.max() ?? 0 > 5
+    }
+
+    private func highAverageMood(sessions: [SessionRecord]) -> Bool {
+        let calendar = Calendar.current
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())) ?? Date()
+        guard let start = calendar.date(byAdding: .day, value: -30, to: endOfToday) else { return false }
+        let recent = sessions.filter { $0.startDate >= start && $0.startDate < endOfToday }
+
+        let moods = recent.compactMap { $0.mood }
+        guard !moods.isEmpty else { return false }
+        let avg = Double(moods.reduce(0, +)) / Double(moods.count)
+        return avg >= 7.0
+    }
+
     // MARK: - Private
 
     private func _generateHeadline(for period: ChartTimePeriod, referenceDate: Date = Date()) -> NarrativeHeadline {

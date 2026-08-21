@@ -94,6 +94,7 @@ struct WeeklySession: Identifiable {
     let projectEmoji: String
     let activitySFSymbol: String
     let action: String?
+    let isMilestone: Bool
     var duration: Double { endHour - startHour }
 }
 
@@ -121,7 +122,7 @@ struct ActivityTypePieSlice: Identifiable, Equatable {
 ///
 /// Carried on `DayStack` so `DaySessionInfoPanel` can resolve project
 /// colours, names, and emoji without hitting the disk per session card.
-struct DayProjectInfo: Identifiable {
+struct DayProjectInfo: Identifiable, Equatable {
     let id: String           // projectID
     let name: String
     let color: String        // hex
@@ -133,7 +134,7 @@ struct DayProjectInfo: Identifiable {
 /// Carries the raw session records for the day so `DaySessionInfoPanel` can
 /// show per-session details when the day column is hovered. Built by
 /// `ChartDataPreparer.prepare90DayTimeline`.
-struct DayStack: Identifiable {
+struct DayStack: Identifiable, Equatable {
     let date: Date
     /// True when this day contains a milestone session (set by ChartDataPreparer)
     var isMilestone: Bool = false
@@ -175,6 +176,7 @@ struct DayTimelineSession: Identifiable {
     let projectName: String
     let projectColor: String      // hex
     let projectEmoji: String
+    let isMilestone: Bool
     
     var duration: Double { endHour - startHour }
 }

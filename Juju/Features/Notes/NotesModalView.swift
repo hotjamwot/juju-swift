@@ -5,6 +5,7 @@ struct NotesModalView: View {
     @FocusState private var isActionTextFieldFocused: Bool
     @State private var showingAddPhaseDialog = false
     @State private var newPhaseName = ""
+    @State private var notePhrase: Phrase?
     
     init(viewModel: NotesViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
@@ -25,6 +26,7 @@ struct NotesModalView: View {
                     isActionTextFieldFocused = true // Focus the Action field
                 }
             }
+            notePhrase = JujuPhrases.encouragement() ?? JujuPhrases.warmWelcome()
         }
         .onChange(of: viewModel.shouldFocusActionField) { newValue in
             if newValue {
@@ -76,7 +78,11 @@ struct NotesModalView: View {
             }
             .font(Theme.Fonts.hero)
             .foregroundColor(Theme.Colors.textPrimary)
-
+        
+            if let phrase = notePhrase {
+                ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
         
         }
         .frame(maxWidth: .infinity)

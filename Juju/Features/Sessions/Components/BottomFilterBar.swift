@@ -387,8 +387,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .frame(minWidth: 120)
         .help("Set project for all selected sessions")
@@ -432,8 +433,9 @@ struct BottomFilterBar: View {
             .foregroundColor(sameProjectInfo.same ? Theme.Colors.textPrimary : Theme.Colors.textSecondary.opacity(0.5))
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .disabled(!sameProjectInfo.same)
         .frame(minWidth: 100)
@@ -479,8 +481,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
          .buttonStyle(.plain)
          .hoverSpringScale(targetScale: 1.03)
@@ -540,8 +543,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .frame(minWidth: 240)
     }
@@ -603,8 +607,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .frame(minWidth: 240)
     }
@@ -700,8 +705,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .frame(minWidth: 200)
     }
@@ -724,8 +730,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textPrimary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingSmall)
-            .background(Theme.Colors.divider.opacity(0.2))
+            .background(Theme.Colors.surface)
             .cornerRadius(Theme.Design.cornerRadius)
+            .shadowSoft()
         }
         .frame(minWidth: 120)
     }
@@ -737,6 +744,9 @@ struct BottomFilterBar: View {
             .foregroundColor(Theme.Colors.textSecondary)
             .padding(.horizontal, Theme.spacingSmall)
             .padding(.vertical, Theme.spacingExtraSmall)
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.blockCornerRadius)
+            .shadowSoft()
     }
     
     // MARK: - Confirm Button (no text label, just icon)

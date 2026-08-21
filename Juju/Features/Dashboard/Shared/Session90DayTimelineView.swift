@@ -39,6 +39,16 @@ struct Session90DayTimelineView: View {
         return first...last
     }
     
+    /// Set of dates that are milestone days — used for glow and sliver tint.
+    private var milestoneDates: Set<Date> {
+        Set(dayStacks.filter { $0.isMilestone }.map { $0.date })
+    }
+    
+    /// Is the given day a milestone day?
+    private func isMilestoneDay(_ date: Date) -> Bool {
+        milestoneDates.contains(Calendar.current.startOfDay(for: date))
+    }
+    
     // MARK: - Body
     
     var body: some View {
@@ -89,6 +99,22 @@ struct Session90DayTimelineView: View {
                     if isDayHovered(session.date) {
                         RoundedRectangle(cornerRadius: sliverCornerRadius + 1)
                             .stroke(Theme.Colors.warmAccent.opacity(0.25), lineWidth: 1)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .annotation(position: .overlay, alignment: .center) {
+                    if isDayHovered(session.date) && isMilestoneDay(session.date) {
+                        RoundedRectangle(cornerRadius: sliverCornerRadius)
+                            .fill(Theme.Colors.milestone.opacity(0.15))
+                            .allowsHitTesting(false)
+                    }
+                }
+                .annotation(position: .overlay, alignment: .topTrailing) {
+                    if session.isMilestone {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(Theme.Colors.milestoneHighlight)
+                            .offset(x: 4, y: 1)
                             .allowsHitTesting(false)
                     }
                 }
