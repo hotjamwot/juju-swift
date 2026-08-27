@@ -326,25 +326,25 @@ struct DayTimelineSession: Identifiable {
     var duration: Double { endHour - startHour }
 }
 
-/// Project distribution with per-activity-type breakdown (for hover tooltips).
+/// Project trend data: rolling last-90-days hours vs yearly average per
+/// 90-day period (rolling last-360-days total ÷ 4).
 struct YearlyProjectChartData: Identifiable {
     let id = UUID()
     let projectName: String
     let color: String
     let emoji: String
-    let totalHours: Double
-    let percentage: Double
-    let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)]
+    let recent90DaysHours: Double
+    let yearlyAvgPer90Days: Double
 }
 
-/// Activity type distribution with per-project breakdown (for hover tooltips).
+/// Activity type trend data: rolling last-90-days hours vs yearly average per
+/// 90-day period (rolling last-360-days total ÷ 4).
 struct ActivityDistributionItem: Identifiable {
     let id = UUID()
     let activityName: String
     let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
-    let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)]
+    let recent90DaysHours: Double
+    let yearlyAvgPer90Days: Double
 }
 ```
 
@@ -696,10 +696,13 @@ Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, 
 - Floating tooltip positioned using edge-aware helpers (`tooltipTooltipX`/`tooltipTooltipY`) that flip direction near chart boundaries
 - `onContinuousHover` `.ended` case clears hover state with animation
 
-#### Yearly Chart Cross-Breakdown Tooltips
-- `yearlyProjectTotals()`: Builds per-project per-activity-type breakdown dictionary in one O(n) pass
-- `yearlyActivityTypeTotals()`: Builds per-activity-type per-project breakdown dictionary in one O(n) pass
-- Breakdowns stored directly in chart data models; no separate lookup needed in views
+#### Trend Charts (dual-bar: last 90 days vs yearly average)
+- `yearlyProjectTotals()`: Builds per-project 90-day and 360-day totals in one O(n) pass over the rolling 360-day window
+- `yearlyActivityTypeTotals()`: Builds per-activity-type 90-day and 360-day totals in one O(n) pass over the rolling 360-day window
+- The 360-day total is divided by 4 at the model level (`yearlyAvgPer90Days`) so the two bars are directly comparable on one scale
+- Rolling windows (last 90 / 360 days including today), NOT calendar year — callers must pass ALL sessions; the preparer filters internally
+- Charts are purely visual: no on-chart numbers. Rows render name + two bars via shared `TrendBarPair` (solid = last 90 days, light = yearly avg) with `TrendChartLegend`
+- The ENTIRE row is the hover target (name + bars); hovering shows a numbers-only tooltip: both values plus a % trend delta
 
 #### Project Management Flow
 ```

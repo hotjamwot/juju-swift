@@ -21,11 +21,13 @@ import SwiftUI
 /// **AI Quick Find (Method Index)**:
 /// - Data Prep: prepareWeeklyData(), prepareAllTimeData(), prepare90DayTimeline()
 /// - Accessors: currentWeekSessionsForCalendar(), yearlyProjectTotals(), yearlyActivityTypeTotals()
-/// - Utilities: currentWeekInterval (computed), currentYearInterval (computed)
+/// - Utilities: currentWeekInterval (computed), last90DaysInterval / last360DaysInterval (computed)
 /// 
 /// **AI Gotchas**:
 /// - [GOTCHA] Input MUST be sessionManager.allSessions (pre-loaded); not lazily fetched
 /// - [GOTCHA] Filters archived projects from yearly charts but NOT from weekly (design choice)
+/// - [GOTCHA] Yearly charts use ROLLING windows (last 90 / 360 days), not calendar year —
+///   callers must pass all sessions; the preparer filters by window internally
 /// - [GOTCHA] Percentages calculated as: (total / grandTotal) * 100; handle division-by-zero
 /// - [GOTCHA] Monday-based weeks; week boundaries may differ from calendar view
 /// - [GOTCHA] Session minutes converted to hours; small sessions round to 0.0 hours visually
@@ -93,8 +95,24 @@ final class ChartDataPreparer: ObservableObject {
         return DateInterval(start: startOfDay, end: end)
     }
     
-    private var currentYearInterval: DateInterval {
-        calendar.dateInterval(of: .year, for: Date()) ?? DateInterval(start: Date(), end: Date())
+    /// Rolling last-90-days window (includes today).
+    private var last90DaysInterval: DateInterval {
+        rollingWindowInterval(days: 90)
+    }
+    
+    /// Rolling last-360-days window (includes today).
+    private var last360DaysInterval: DateInterval {
+        rollingWindowInterval(days: 360)
+    }
+    
+    /// A trailing window of `days` calendar days ending at the end of today.
+    private func rollingWindowInterval(days: Int) -> DateInterval {
+        let today = calendar.startOfDay(for: Date())
+        guard let start = calendar.date(byAdding: .day, value: -(days - 1), to: today),
+              let end = calendar.date(byAdding: .day, value: 1, to: today) else {
+            return DateInterval(start: today, end: today)
+        }
+        return DateInterval(start: start, end: end)
     }
     
     // MARK: - Accessors
@@ -171,105 +189,107 @@ final class ChartDataPreparer: ObservableObject {
             // interval, otherwise the continuation is not shown.
             if rawEndHour > startHour {
                 let day = dayFormatter.string(from: session.startDate)
-                return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone)]
+                return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone, phaseName: project?.phases.first(where: { $0.id == session.projectPhaseID })?.name, notes: session.notes)]
             } else {
                 guard let endDate = calendar.date(byAdding: .day, value: 1, to: session.startDate),
                       currentWeekInterval.contains(endDate) else {
-                    // End day is outside the current week; only show the start day
-                    // bubble, clipped to 24:00.
                     let day = dayFormatter.string(from: session.startDate)
-                    return [WeeklySession(day: day, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone)]
+                    return [WeeklySession(day: day, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone, phaseName: project?.phases.first(where: { $0.id == session.projectPhaseID })?.name, notes: session.notes)]
                 }
                 let startDay = dayFormatter.string(from: session.startDate)
                 let endDay = dayFormatter.string(from: endDate)
                 return [
-                    WeeklySession(day: startDay, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone),
-                    WeeklySession(day: endDay, startHour: 0.0, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone)
+                    WeeklySession(day: startDay, startHour: startHour, endHour: 24.0, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone, phaseName: project?.phases.first(where: { $0.id == session.projectPhaseID })?.name, notes: session.notes),
+                    WeeklySession(day: endDay, startHour: 0.0, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone, phaseName: project?.phases.first(where: { $0.id == session.projectPhaseID })?.name, notes: session.notes)
                 ]
             }
         }
     }
     
+    /// Project trend totals: rolling last-90-days hours vs yearly average per
+    /// 90-day period (rolling last-360-days total ÷ 4).
+    ///
+    /// **AI Context**: Powers the dual-bar trend chart. Each session in the
+    /// 360-day window contributes to the baseline bucket, and additionally to
+    /// the 90-day bucket when it falls in the shorter window — a single O(n)
+    /// pass fills both. The 360-day total is divided by 4 at the model level
+    /// so the view renders two directly comparable bars on one scale.
+    ///
+    /// **Business Rules**:
+    /// - Rolling windows (last 90 / 360 days including today), NOT calendar year
+    /// - Archived projects excluded
+    /// - Items sorted by 360-day total (descending) for stable ordering
     func yearlyProjectTotals() -> [YearlyProjectChartData] {
         let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.filter { !$0.archived }.map { ($0.id, $0) })
-        let activeProjectIDs = Set(projectLookup.keys)
-        let activityTypeManager = ActivityTypeManager.shared
-        let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
         
-        // First pass: project totals
-        var totals: [String: Double] = [:]
-        // Second pass: project → activityType → hours (for breakdown tooltips)
-        var projectActivityBreakdown: [String: [String: Double]] = [:]
+        let window90 = last90DaysInterval
+        let window360 = last360DaysInterval
         
-        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
-            guard activeProjectIDs.contains(session.projectID) else { continue }
+        // 360-day totals (baseline) and 90-day totals (recent) in one pass
+        var totals360: [String: Double] = [:]
+        var totals90: [String: Double] = [:]
+        
+        for session in viewModel.sessions where window360.contains(session.startDate) {
+            guard projectLookup[session.projectID] != nil else { continue }
             let hours = Double(session.durationMinutes) / 60.0
-            totals[session.projectID, default: 0] += hours
-            let activityID = session.activityTypeID ?? ActivityType.uncategorizedID
-            projectActivityBreakdown[session.projectID, default: [:]][activityID, default: 0] += hours
+            totals360[session.projectID, default: 0] += hours
+            if window90.contains(session.startDate) {
+                totals90[session.projectID, default: 0] += hours
+            }
         }
         
-        let total = totals.values.reduce(0, +)
-        return totals.compactMap { (projectID, hours) in
-            guard hours > 0, let project = projectLookup[projectID] else { return nil }
-            let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)] =
-                (projectActivityBreakdown[projectID] ?? [:])
-                    .compactMap { (activityID, actHours) in
-                        guard actHours > 0 else { return nil }
-                        let activity = activityLookup[activityID] ?? activityTypeManager.getUncategorizedActivityType()
-                        return (activityName: activity.name, sfSymbol: activity.sfSymbol, hours: actHours)
-                    }
-                    .sorted { $0.hours > $1.hours }
-            
+        return totals360.compactMap { (projectID, hours360) in
+            guard hours360 > 0, let project = projectLookup[projectID] else { return nil }
             return YearlyProjectChartData(
                 projectName: project.name,
                 color: project.color,
                 emoji: project.emoji,
-                totalHours: hours,
-                percentage: total > 0 ? hours / total * 100 : 0,
-                activityBreakdown: activityBreakdown
+                recent90DaysHours: totals90[projectID] ?? 0,
+                yearlyAvgPer90Days: hours360 / 4
             )
-        }.sorted { $0.totalHours > $1.totalHours }
+        }.sorted { $0.yearlyAvgPer90Days > $1.yearlyAvgPer90Days }
     }
     
+    /// Activity type trend totals: rolling last-90-days hours vs yearly average
+    /// per 90-day period (rolling last-360-days total ÷ 4).
+    ///
+    /// **AI Context**: Mirrors `yearlyProjectTotals()` — one O(n) pass fills
+    /// both the 360-day baseline and the 90-day recent buckets; the 360-day
+    /// total is divided by 4 so the view renders two comparable bars.
+    ///
+    /// **Business Rules**:
+    /// - Rolling windows (last 90 / 360 days including today), NOT calendar year
+    /// - Items sorted by 360-day total (descending) for stable ordering
     func yearlyActivityTypeTotals() -> [ActivityDistributionItem] {
         let activityTypeManager = ActivityTypeManager.shared
         let activityLookup = Dictionary(uniqueKeysWithValues: activityTypeManager.getActiveActivityTypes().map { ($0.id, $0) })
-        let projectLookup = Dictionary(uniqueKeysWithValues: viewModel.projects.filter { !$0.archived }.map { ($0.id, $0) })
         
-        // First pass: activity type totals
-        var totals: [String: Double] = [:]
-        // Second pass: activityType → project → hours (for breakdown tooltips)
-        var activityProjectBreakdown: [String: [String: Double]] = [:]
+        let window90 = last90DaysInterval
+        let window360 = last360DaysInterval
         
-        for session in viewModel.sessions where currentYearInterval.contains(session.startDate) {
+        // 360-day totals (baseline) and 90-day totals (recent) in one pass
+        var totals360: [String: Double] = [:]
+        var totals90: [String: Double] = [:]
+        
+        for session in viewModel.sessions where window360.contains(session.startDate) {
             let id = session.activityTypeID ?? ActivityType.uncategorizedID
             let hours = Double(session.durationMinutes) / 60.0
-            totals[id, default: 0] += hours
-            // Track per-project breakdown even for archived projects so the tooltip is accurate
-            activityProjectBreakdown[id, default: [:]][session.projectID, default: 0] += hours
+            totals360[id, default: 0] += hours
+            if window90.contains(session.startDate) {
+                totals90[id, default: 0] += hours
+            }
         }
         
-        let total = totals.values.reduce(0, +)
-        return totals.compactMap { (id, hours) in
-            guard hours > 0 else { return nil }
+        return totals360.compactMap { (id, hours360) in
+            guard hours360 > 0 else { return nil }
             let activity = activityLookup[id] ?? activityTypeManager.getUncategorizedActivityType()
-            let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)] =
-                (activityProjectBreakdown[id] ?? [:])
-                    .compactMap { (projectID, projHours) in
-                        guard projHours > 0, let project = projectLookup[projectID] else { return nil }
-                        return (projectName: project.name, emoji: project.emoji, color: project.color, hours: projHours)
-                    }
-                    .sorted { $0.hours > $1.hours }
-            
             return ActivityDistributionItem(
                 activityName: activity.name,
                 sfSymbol: activity.sfSymbol,
-                totalHours: hours,
-                percentage: total > 0 ? hours / total * 100 : 0,
-                projectBreakdown: projectBreakdown
+                recent90DaysHours: totals90[id] ?? 0,
+                yearlyAvgPer90Days: hours360 / 4
             )
-        }.sorted { $0.totalHours > $1.totalHours }
+        }.sorted { $0.yearlyAvgPer90Days > $1.yearlyAvgPer90Days }
     }
     
     // MARK: - 90-Day Timeline

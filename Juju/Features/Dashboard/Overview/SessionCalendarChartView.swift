@@ -90,13 +90,6 @@ struct SessionCalendarChartView: View {
             )
         )
         .cornerRadius(Theme.Design.cornerRadius * 0.5)
-        .annotation(position: .overlay, alignment: .center) {
-            if hoveredSession?.id == session.id {
-                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius * 0.5)
-                    .stroke(Theme.Colors.warmAccent.opacity(0.35), lineWidth: 2)
-                    .allowsHitTesting(false)
-            }
-        }
         .annotation(position: .overlay, alignment: .topTrailing) {
             if session.isMilestone {
                 Circle()
@@ -145,6 +138,27 @@ struct SessionCalendarChartView: View {
                         .foregroundColor(Theme.Colors.textPrimary)
                         .lineLimit(2)
                 }
+                
+                if let phaseName = session.phaseName, !phaseName.isEmpty {
+                    HStack(spacing: Theme.Spacing.xxs) {
+                        Image(systemName: "play.circle")
+                            .font(Theme.Fonts.caption)
+                        Text(phaseName)
+                            .font(Theme.Fonts.caption)
+                    }
+                    .padding(.horizontal, Theme.Spacing.xxs)
+                    .padding(.vertical, Theme.Spacing.micro)
+                    .background(Theme.Colors.divider.opacity(0.2))
+                    .clipShape(Capsule())
+                }
+                
+                let notesPreview = session.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !notesPreview.isEmpty {
+                    Text(String(notesPreview.prefix(80)))
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                        .lineLimit(2)
+                }
             }
         }
     }
@@ -152,7 +166,7 @@ struct SessionCalendarChartView: View {
     // MARK: - Tooltip Positioning
     
     private let tooltipWidth: CGFloat = 200
-    private let tooltipHeight: CGFloat = 60
+    private let tooltipHeight: CGFloat = 90
     private let tooltipPadding: CGFloat = 14
     
     private func tooltipTooltipX(in size: CGSize) -> CGFloat {
@@ -189,8 +203,8 @@ struct SessionCalendarChartView: View {
         
         return sessions.first { session in
             session.day == day &&
-            hour >= session.startHour &&
-            hour <= session.endHour
+            hour >= session.startHour - 0.1 &&
+            hour <= session.endHour + 0.1
         }
     }
     
@@ -249,41 +263,43 @@ struct SessionCalendarChartView: View {
                 .chartXScale(domain: weekDays)
                 .chartOverlay { proxy in
                     GeometryReader { geo in
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onContinuousHover { phase in
-                                switch phase {
-                        case .active(let location):
-                                if let matched = sessionAt(location: location, proxy: proxy) {
-                                    withAnimation(Theme.Design.spring) {
-                                        hoveredSession = matched
-                                        showTooltip = true
-                                        tooltipPosition = location
+                        ZStack {
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onContinuousHover { phase in
+                                    switch phase {
+                                    case .active(let location):
+                                        let matched = sessionAt(location: location, proxy: proxy)
+                                        if let matched, hoveredSession?.id != matched.id {
+                                            withAnimation(Theme.Design.spring) {
+                                                hoveredSession = matched
+                                                showTooltip = true
+                                                tooltipPosition = location
+                                            }
+                                        } else if matched == nil, hoveredSession != nil {
+                                            withAnimation(Theme.Design.spring) {
+                                                showTooltip = false
+                                                hoveredSession = nil
+                                            }
+                                        }
+                                    case .ended:
+                                        withAnimation(Theme.Design.spring) {
+                                            showTooltip = false
+                                            hoveredSession = nil
+                                        }
                                     }
-                                } else {
-                                    withAnimation(Theme.Design.spring) {
-                                        showTooltip = false
-                                        hoveredSession = nil
-                                    }
                                 }
-                            case .ended:
-                                withAnimation(Theme.Design.spring) {
-                                    showTooltip = false
-                                    hoveredSession = nil
-                                }
-                                }
+                            
+                            if showTooltip, let session = hoveredSession {
+                                tooltipContent(for: session)
+                                    .fixedSize()
+                                    .position(
+                                        x: tooltipTooltipX(in: geo.size),
+                                        y: tooltipTooltipY(in: geo.size)
+                                    )
+                                    .allowsHitTesting(false)
+                                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                             }
-                        
-                        // Floating tooltip overlay
-                        if showTooltip, let session = hoveredSession {
-                            tooltipContent(for: session)
-                                .fixedSize()
-                                .position(
-                                    x: tooltipTooltipX(in: geo.size),
-                                    y: tooltipTooltipY(in: geo.size)
-                                )
-                                .allowsHitTesting(false)
-                                .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         }
                     }
                 }

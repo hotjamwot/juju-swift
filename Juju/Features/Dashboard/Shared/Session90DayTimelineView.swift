@@ -147,6 +147,7 @@ struct Session90DayTimelineView: View {
         .chartPlotStyle { plotArea in
             plotArea
                 .background(.clear)
+                .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
         }
         .chartOverlay { proxy in
             GeometryReader { geo in
@@ -156,8 +157,14 @@ struct Session90DayTimelineView: View {
                         switch phase {
                         case .active(let location):
                             let hovered = dayAt(location: location, proxy: proxy)
-                            withAnimation(Theme.Design.spring) {
-                                hoveredDay = hovered
+                            if let hovered, hoveredDay?.id != hovered.id {
+                                withAnimation(Theme.Design.spring) {
+                                    hoveredDay = hovered
+                                }
+                            } else if hovered == nil, hoveredDay != nil {
+                                withAnimation(Theme.Design.spring) {
+                                    hoveredDay = nil
+                                }
                             }
                         case .ended:
                             withAnimation(Theme.Design.spring) {
@@ -165,17 +172,6 @@ struct Session90DayTimelineView: View {
                             }
                         }
                     }
-                
-                // Subtle highlight behind today's column.
-                if let today = dayStacks.first(where: { Calendar.current.isDateInToday($0.date) }) {
-                    if let x = proxy.position(forX: today.date) {
-                        Rectangle()
-                            .fill(Theme.Colors.divider.opacity(0.08))
-                            .frame(width: 20, height: geo.size.height)
-                            .position(x: x, y: geo.size.height / 2)
-                            .allowsHitTesting(false)
-                    }
-                }
             }
         }
     }

@@ -661,6 +661,7 @@ struct SessionsRowView: View {
                     endTime: formatTime(currentSession.endDate),
                     projectColor: projectColor
                 )
+                .allowsHitTesting(false) // Cosmetic only — never blocks clicks on row controls
                 .padding(.horizontal, Theme.Row.contentPadding)
                 .animation(.easeInOut(duration: 0.25), value: currentSession.startDate)
                 .animation(.easeInOut(duration: 0.25), value: currentSession.endDate)

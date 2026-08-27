@@ -85,6 +85,73 @@ struct DistributionRowFrameKey: PreferenceKey {
     }
 }
 
+// MARK: - Trend Chart Components
+
+/// Legend for the dual-bar trend charts: solid swatch = last 90 days,
+/// light swatch = yearly average per 90-day period.
+struct TrendChartLegend: View {
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            HStack(spacing: Theme.Spacing.xxs) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Theme.Colors.textPrimary)
+                    .frame(width: 12, height: 5)
+                Text("Last 90 days")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+            }
+            HStack(spacing: Theme.Spacing.xxs) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Theme.Colors.textPrimary.opacity(0.3))
+                    .frame(width: 12, height: 5)
+                Text("Yearly avg")
+                    .font(Theme.Fonts.caption)
+                    .foregroundColor(Theme.Colors.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(.bottom, Theme.Spacing.xs)
+    }
+}
+
+/// A pair of directly comparable horizontal bars for trend charts.
+///
+/// Top bar (solid): hours in the rolling last 90 days.
+/// Bottom bar (light): yearly average per 90-day period (360-day total ÷ 4).
+/// Both scale against the same `maxHours` so relative lengths are meaningful.
+struct TrendBarPair: View {
+    let recentHours: Double
+    let averageHours: Double
+    let maxHours: Double
+    let availableWidth: CGFloat
+    /// Base colour for both bars; the average bar is rendered at low opacity.
+    let color: Color
+    let isHovered: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            // Recent (solid) bar
+            Rectangle()
+                .fill(color.opacity(isHovered ? 1.0 : 0.85))
+                .frame(
+                    width: availableWidth * CGFloat(min(recentHours / maxHours, 1)),
+                    height: isHovered ? 5 : 4
+                )
+                .cornerRadius(Theme.Design.blockCornerRadius)
+            
+            // Yearly average (light) bar
+            Rectangle()
+                .fill(color.opacity(0.3))
+                .frame(
+                    width: availableWidth * CGFloat(min(averageHours / maxHours, 1)),
+                    height: isHovered ? 5 : 4
+                )
+                .cornerRadius(Theme.Design.blockCornerRadius)
+        }
+        .animation(Theme.Design.spring, value: isHovered)
+    }
+}
+
 /// A scrollable, bounded row list for the yearly distribution charts.
 ///
 /// The list's content frames are published through `DistributionRowFrameKey`

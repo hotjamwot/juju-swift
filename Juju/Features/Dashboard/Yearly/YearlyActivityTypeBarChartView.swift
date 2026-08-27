@@ -7,12 +7,14 @@
 
 import SwiftUI
 
-/// Displays a horizontal bar chart showing activity type distribution for the current year.
-/// Shows activity names and emojis on the left with left-aligned bars on right using consistent accent color.
-/// Only displays active (non-archived) activity types.
-/// Renders ALL activity types; when there are more than fit the card, the list scrolls
-/// internally instead of cutting activities off.
-/// On hover, shows a project breakdown tooltip matching the 90-day chart style.
+/// Displays a dual-bar trend chart for activity types: for each activity, a
+/// solid bar shows hours logged in the rolling last 90 days and a lighter bar
+/// shows the yearly average per 90-day period (last 360 days ÷ 4). Comparing
+/// the two bars reveals whether recent focus is above or below the yearly norm.
+/// Purely visual — no on-chart numbers. Hovering anywhere on a row shows a
+/// tooltip with the values and trend delta.
+/// Renders ALL activity types; when there are more than fit the card, the list
+/// scrolls internally instead of cutting activities off.
 struct YearlyActivityTypeBarChartView: View {
     let data: [ActivityDistributionItem]
     @State private var hoveredIndex: Int? = nil
@@ -20,10 +22,10 @@ struct YearlyActivityTypeBarChartView: View {
     @State private var rowFrames: [Int: CGRect] = [:]
     
     static let sampleData: [ActivityDistributionItem] = [
-        ActivityDistributionItem(activityName: "Writing", sfSymbol: "pencil", totalHours: 200.0, percentage: 40.0, projectBreakdown: []),
-        ActivityDistributionItem(activityName: "Editing", sfSymbol: "scissors", totalHours: 150.0, percentage: 30.0, projectBreakdown: []),
-        ActivityDistributionItem(activityName: "Planning", sfSymbol: "brain.head.profile", totalHours: 100.0, percentage: 20.0, projectBreakdown: []),
-        ActivityDistributionItem(activityName: "Admin", sfSymbol: "folder", totalHours: 50.0, percentage: 10.0, projectBreakdown: [])
+        ActivityDistributionItem(activityName: "Writing", sfSymbol: "pencil", recent90DaysHours: 62.5, yearlyAvgPer90Days: 50.0),
+        ActivityDistributionItem(activityName: "Editing", sfSymbol: "scissors", recent90DaysHours: 30.0, yearlyAvgPer90Days: 37.5),
+        ActivityDistributionItem(activityName: "Planning", sfSymbol: "brain.head.profile", recent90DaysHours: 28.0, yearlyAvgPer90Days: 25.0),
+        ActivityDistributionItem(activityName: "Admin", sfSymbol: "folder", recent90DaysHours: 8.0, yearlyAvgPer90Days: 12.5)
     ]
     
     var body: some View {
@@ -31,7 +33,10 @@ struct YearlyActivityTypeBarChartView: View {
             if data.isEmpty {
                 NoDataPlaceholder(minHeight: 200)
             } else {
-                let maxHours = data.map { $0.totalHours }.max() ?? 1
+                TrendChartLegend()
+                
+                // Scale both bars against the largest value of either kind.
+                let maxHours = data.map { max($0.recent90DaysHours, $0.yearlyAvgPer90Days) }.max() ?? 1
                 
                 DistributionChartScrollView(
                     data: data,
@@ -74,9 +79,9 @@ struct YearlyActivityTypeBarChartView: View {
     @ViewBuilder
     private func row(for activityData: ActivityDistributionItem, index: Int, maxHours: Double) -> some View {
         GeometryReader { geometry in
-            let chartWidth = geometry.size.width - 220
+            // Name column (160) + spacing; the rest belongs to the bars.
+            let chartWidth = geometry.size.width - 172
             HStack(spacing: Theme.spacingMedium) {
-                // Tooltip triggers only when hovering the item name, not the bar.
                 HStack(spacing: Theme.spacingSmall) {
                     Image(systemName: activityData.sfSymbol)
                         .font(Theme.Fonts.header)
@@ -87,34 +92,41 @@ struct YearlyActivityTypeBarChartView: View {
                         .lineLimit(1)
                 }
                 .frame(width: 160, alignment: .leading)
-                .contentShape(Rectangle())
-                .onHover { hovering in
-                    if hovering {
-                        hoveredIndex = index
-                        showTooltip = true
-                    } else if hoveredIndex == index {
-                        showTooltip = false
-                        hoveredIndex = nil
-                    }
-                }
                 
-                Rectangle()
-                    .fill(Theme.Colors.textPrimary.opacity(hoveredIndex == index ? 1.0 : 0.85))
-                    .frame(width: max(0, chartWidth) * CGFloat(activityData.totalHours / maxHours), height: hoveredIndex == index ? 8 : 6)
-                    .animation(Theme.Design.spring, value: hoveredIndex)
-                    .cornerRadius(Theme.Design.blockCornerRadius)
-                
-                Text("\(activityData.totalHours, specifier: "%.1f") h")
-                    .font(Theme.Fonts.caption)
-                    .foregroundColor(Theme.Colors.textSecondary)
-                    .frame(width: 40, alignment: .trailing)
+                TrendBarPair(
+                    recentHours: activityData.recent90DaysHours,
+                    averageHours: activityData.yearlyAvgPer90Days,
+                    maxHours: maxHours,
+                    availableWidth: max(0, chartWidth),
+                    color: Theme.Colors.textPrimary,
+                    isHovered: hoveredIndex == index
+                )
             }
+            // The whole row is the hover target — bars included.
             .frame(maxHeight: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                if hovering {
+                    hoveredIndex = index
+                    showTooltip = true
+                } else if hoveredIndex == index {
+                    showTooltip = false
+                    hoveredIndex = nil
+                }
+            }
         }
     }
     
     // MARK: - Tooltip
     
+    /// Percentage difference of the last 90 days vs the yearly average.
+    /// Nil when there is no baseline to compare against.
+    private func trendDelta(for activityData: ActivityDistributionItem) -> Double? {
+        guard activityData.yearlyAvgPer90Days > 0 else { return nil }
+        return (activityData.recent90DaysHours - activityData.yearlyAvgPer90Days) / activityData.yearlyAvgPer90Days * 100
+    }
+    
+    /// Numbers-only tooltip: the two comparable values plus the trend delta.
     @ViewBuilder
     private func tooltipContent(for activityData: ActivityDistributionItem) -> some View {
         TooltipContainer {
@@ -123,21 +135,34 @@ struct YearlyActivityTypeBarChartView: View {
                     .font(Theme.Fonts.caption.weight(.semibold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
-                Text(String(format: "%.1fh total", activityData.totalHours))
-                    .font(Theme.Fonts.caption.weight(.semibold))
-                    .foregroundColor(Theme.Colors.textPrimary)
+                HStack(spacing: 6) {
+                    Text("Last 90 days")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Spacer(minLength: 8)
+                    Text(String(format: "%.1fh", activityData.recent90DaysHours))
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                }
                 
-                if !activityData.projectBreakdown.isEmpty {
-                    TooltipDivider()
-                    
-                    ForEach(activityData.projectBreakdown, id: \.projectName) { proj in
-                        TooltipRow(
-                            color: Color(hex: proj.color),
-                            emoji: proj.emoji,
-                            name: proj.projectName,
-                            hours: proj.hours
-                        )
+                HStack(spacing: 6) {
+                    Text("Yearly avg")
+                        .font(Theme.Fonts.caption)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                    Spacer(minLength: 8)
+                    Text(String(format: "%.1fh", activityData.yearlyAvgPer90Days))
+                        .font(Theme.Fonts.caption.weight(.semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                
+                if let delta = trendDelta(for: activityData) {
+                    HStack(spacing: 4) {
+                        Image(systemName: delta >= 0 ? "arrow.up" : "arrow.down")
+                            .font(Theme.Fonts.caption)
+                        Text(String(format: "%.0f%% vs yearly avg", abs(delta)))
+                            .font(Theme.Fonts.caption)
                     }
+                    .foregroundColor(delta >= 0 ? Theme.Colors.positive : Theme.Colors.negative)
                 }
             }
         }

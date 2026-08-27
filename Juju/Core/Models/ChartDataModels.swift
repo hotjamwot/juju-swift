@@ -12,25 +12,31 @@ struct ChartDataPoint: Identifiable {
 
 /// Consolidated activity distribution item — used across yearly, monthly, and pie charts.
 /// Replaces the previous `YearlyActivityTypeChartData`, `YearlyActivityTypeDataPoint`, and `MonthlyActivityTypeDataPoint`.
+///
+/// Trend comparison: `recent90DaysHours` is the rolling last-90-days total and
+/// `yearlyAvgPer90Days` is the rolling last-360-days total ÷ 4 (average per
+/// 90-day period), so the two values are directly comparable on one bar scale.
 struct ActivityDistributionItem: Identifiable {
     let id = UUID()
     let activityName: String
     let sfSymbol: String
-    let totalHours: Double
-    let percentage: Double
-    /// Breakdown of hours by project within this activity type (for tooltips)
-    let projectBreakdown: [(projectName: String, emoji: String, color: String, hours: Double)]
+    /// Hours logged in the rolling last 90 days.
+    let recent90DaysHours: Double
+    /// Average hours per 90-day period across the rolling last 360 days (360-day total ÷ 4).
+    let yearlyAvgPer90Days: Double
 }
 
+/// Trend comparison data for one project: last-90-days hours vs yearly average
+/// per 90-day period (last 360 days ÷ 4), directly comparable on one bar scale.
 struct YearlyProjectChartData: Identifiable {
     let id = UUID()
     let projectName: String
     let color: String
     let emoji: String
-    let totalHours: Double
-    let percentage: Double
-    /// Breakdown of hours by activity type within this project (for tooltips)
-    let activityBreakdown: [(activityName: String, sfSymbol: String, hours: Double)]
+    /// Hours logged in the rolling last 90 days.
+    let recent90DaysHours: Double
+    /// Average hours per 90-day period across the rolling last 360 days (360-day total ÷ 4).
+    let yearlyAvgPer90Days: Double
     
     var colorSwiftUI: Color {
         Color(hex: color)
@@ -95,6 +101,8 @@ struct WeeklySession: Identifiable {
     let activitySFSymbol: String
     let action: String?
     let isMilestone: Bool
+    let phaseName: String?
+    let notes: String
     var duration: Double { endHour - startHour }
 }
 

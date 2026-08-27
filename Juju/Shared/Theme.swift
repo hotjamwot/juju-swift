@@ -439,6 +439,18 @@ extension View {
             .padding(.vertical, Theme.DashboardLayout.chartPadding)
     }
 
+    /// Chart container with card background — surface fill, standard corner radius, subtle shadow.
+    /// Wraps a chart section (header + chart) in a background card while preserving
+    /// the existing chart container padding.
+    func chartCard() -> some View {
+        self
+            .background(Theme.Colors.surface)
+            .cornerRadius(Theme.Design.cornerRadius)
+            .subtleShadow()
+            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+            .padding(.vertical, Theme.DashboardLayout.chartPadding)
+    }
+
     /// Dashboard card — surface background, standard corner radius, no border.
     /// The canonical card style. Use this for ALL cards and panels.
     /// Card depth = surface step + subtle shadow. Never add borders to cards.

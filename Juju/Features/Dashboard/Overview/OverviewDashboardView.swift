@@ -40,15 +40,6 @@ struct OverviewDashboardView: View {
     /// Space between the bottom of one section and the next section's header
     private let sectionGap: CGFloat = Theme.Spacing.xxl + 8  // ~56pt
     
-    // MARK - Date Intervals
-    private var currentYearInterval: DateInterval {
-        let today = Date()
-        guard let year = Calendar.current.dateInterval(of: .year, for: today) else {
-            return DateInterval(start: today, end: today)
-        }
-        return year
-    }
-    
     // MARK - Body
     var body: some View {
         ScrollView(.vertical) {
@@ -76,18 +67,16 @@ struct OverviewDashboardView: View {
                 // Weekly Calendar Chart — day/hour session blocks
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("This Week")
-                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     SessionCalendarChartView(
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
                     .frame(minHeight: calendarMinHeight)
-                    .chartContainer()
                 }
+                .chartCard()
                 
                 // 90-Day Timeline — when sessions happened across the day
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("90-Day Overview")
-                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     VStack(spacing: Theme.Spacing.sm) {
                         Session90DayTimelineView(
                             dayStacks: chartDataPreparer.current90DayStacks,
@@ -99,12 +88,12 @@ struct OverviewDashboardView: View {
                         // Info panel — full width, shows hovered day's sessions
                         DaySessionInfoPanel(dayStack: hoveredDay)
                     }
-                    .chartContainer()
                 }
+                .chartCard()
                 
-                // Yearly Distribution Charts — side-by-side
+                // Trend Charts — last 90 days vs yearly average, side-by-side
                 VStack(spacing: headerToContentGap) {
-                    chartSectionHeader("Yearly Totals")
+                    chartSectionHeader("Trends")
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     HStack(spacing: Theme.Spacing.lg) {
                         // Project Distribution Chart
@@ -178,17 +167,15 @@ struct OverviewDashboardView: View {
     /// Extracted from inline closures to eliminate ~60 lines of duplication.
     private func refreshDashboardData() async {
         await MainActor.run {
-            let yearlySessions = sessionManager.allSessions.filter { session in
-                currentYearInterval.contains(session.startDate)
-            }
-            
+            // [GOTCHA] Trend charts use rolling 90/360-day windows and filter
+            // internally — they need ALL sessions, not a pre-filtered subset.
             chartDataPreparer.prepareWeeklyData(
                 sessions: sessionManager.allSessions,
                 projects: projectsViewModel.projects
             )
             
             chartDataPreparer.prepareAllTimeData(
-                sessions: yearlySessions,
+                sessions: sessionManager.allSessions,
                 projects: projectsViewModel.projects
             )
             
