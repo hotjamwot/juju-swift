@@ -54,10 +54,19 @@ struct OverviewDashboardView: View {
                     }
 
                     if let phrase = encouragementPhrase {
-                        ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.vertical, Theme.Spacing.xl)
+                        ZStack {
+                            // Full-width flow field: two independently
+                            // seeded halves so timings never mirror.
+                            HStack(spacing: 0) {
+                                JujuFlowField(seed: 1)
+                                JujuFlowField(seed: 2)
+                            }
+
+                            ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                        .padding(.vertical, Theme.Spacing.xl)
                     }
 
                     NarrativeSummaryCard(narrativeEngine: narrativeEngine)

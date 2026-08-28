@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - MicroInteractions
 
-/// Reusable view modifiers for Phase 2 micro-interactions.
+/// Reusable view modifiers for micro-interactions.
 ///
 /// All interactions use `Theme.Design.spring` and respect `accessibilityReduceMotion`:
 /// - With Reduce Motion ON: ambient loops are disabled; hover states fall back to

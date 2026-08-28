@@ -67,7 +67,7 @@ struct JujuPhrases {
         Phrase(teReo: "Tēnā koe, e te kaihanga", englishGloss: "Greetings, maker", tags: [.greeting, .afternoon]),
 
         // General greetings
-        Phrase(teReo: "Kia ora", englishGloss: "Hello / thanks / be well", tags: [.greeting]),
+        Phrase(teReo: "Kia ora", englishGloss: "Hello", tags: [.greeting]),
         Phrase(teReo: "Nau mai, hoki mai", englishGloss: "Welcome back", tags: [.greeting, .encouragement]),
         Phrase(teReo: "I te wā onamata…", englishGloss: "In ancient times…", tags: [.greeting]),
 
