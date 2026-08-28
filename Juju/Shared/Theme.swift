@@ -290,8 +290,9 @@ extension Theme {
         public static let chartCornerRadius: CGFloat = 12
         /// Border width — 0 for the borderless look.
         public static let chartBorderWidth: CGFloat = 0
-        /// Internal padding inside each chart's plot area.
-        public static let chartInnerPadding: CGFloat = 16
+        /// Internal padding inside each chart's plot area. Generous enough that
+        /// hovered marks and their tooltips don't clip against the card edges.
+        public static let chartInnerPadding: CGFloat = 24
         /// Gap between narrative strip and dashboard charts.
         public static let narrativeToContentGap: CGFloat = 24
 
@@ -442,10 +443,17 @@ extension View {
     /// Chart container with card background — surface fill, standard corner radius, subtle shadow.
     /// Wraps a chart section (header + chart) in a background card while preserving
     /// the existing chart container padding.
+    ///
+    /// IMPORTANT: Uses a filled RoundedRectangle for the background instead of
+    /// `.cornerRadius()` — `cornerRadius` CLIPS children, which would cut off
+    /// floating tooltips and the DaySessionInfoPanel that intentionally overflow
+    /// the card. The rounded background draws without clipping.
     func chartCard() -> some View {
         self
-            .background(Theme.Colors.surface)
-            .cornerRadius(Theme.Design.cornerRadius)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius)
+                    .fill(Theme.Colors.surface)
+            )
             .subtleShadow()
             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
             .padding(.vertical, Theme.DashboardLayout.chartPadding)

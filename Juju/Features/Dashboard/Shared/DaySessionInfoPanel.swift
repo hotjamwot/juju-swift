@@ -21,14 +21,21 @@ struct DaySessionInfoPanel: View {
     
     // MARK: - Timeline Constants
     
+    /// Worst-case panel height (cards above AND below the rail + rail + gaps + padding).
+    /// Used by OverviewDashboardView to size the Trends swap container so the panel
+    /// can replace the trend charts at the exact same size — no layout pushdown.
+    static let panelMaxHeight: CGFloat = 420
+    
     /// Padding added to each side of the session time range (in hours).
     private let timelinePaddingHours: Double = 0.5
     /// Height of the thin timeline bar in points.
     private let barHeight: CGFloat = 2
     /// Fixed height for every session card (above or below the rail).
     private let cardHeight: CGFloat = 118
-    /// Vertical gap between cards and the timeline bar.
-    private let cardToBarGap: CGFloat = 52
+    /// Vertical gap between cards and the timeline bar. Keep symmetric so the
+    /// rail stays EXACTLY centred — the layout reserves both card slots at all
+    /// times, so changing session count never shifts the rail up or down.
+    private let cardToBarGap: CGFloat = 44
     /// Small gap between connector line and card/rail edge.
     private let connectorInset: CGFloat = 2
     
@@ -81,11 +88,11 @@ struct DaySessionInfoPanel: View {
                 placeholder
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // No background of its own: the swap container shows EITHER the trend
+        // charts OR this panel (never both), so the card's own surface is the
+        // only background — no card-within-a-card seam.
         .padding(Theme.Spacing.md)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.Design.cornerRadius)
-        .subtleShadow()
         .animation(.easeOut(duration: 0.12), value: dayStack?.id)
     }
     
@@ -103,19 +110,16 @@ struct DaySessionInfoPanel: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             summaryBar(day)
             
-            if day.sessions.isEmpty {
-                Text("No sessions")
-                    .font(Theme.Fonts.narrative)
-                    .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
-                    .padding(.vertical, Theme.Spacing.xxs)
-            } else {
-                timelineContainer(day.sessions)
-            }
+            // ALWAYS render the timeline with fixed symmetric slots — empty days
+            // show an empty rail, so nothing shifts as the hovered day changes.
+            timelineContainer(day.sessions)
         }
     }
     
     @ViewBuilder
     private func summaryBar(_ day: DayStack) -> some View {
+        // Compact pill, pinned to the upper-left. Milestone badge sits inline
+        // so the pill hugs its content instead of stretching into a full bar.
         HStack(spacing: Theme.Spacing.sm) {
             Text(day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
                 .font(Theme.Fonts.caption)
@@ -127,8 +131,6 @@ struct DaySessionInfoPanel: View {
                     .foregroundColor(Theme.Colors.textSecondary.opacity(0.8))
             }
             
-            Spacer()
-            
             if day.isMilestone {
                 HStack(spacing: Theme.Spacing.micro) {
                     Image(systemName: "star.fill")
@@ -138,20 +140,15 @@ struct DaySessionInfoPanel: View {
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.milestone)
                 }
-                .padding(.horizontal, Theme.Spacing.xs)
-                .padding(.vertical, 2)
-                .background(
-                    Capsule()
-                        .fill(Theme.Colors.milestone.opacity(0.08))
-                )
             }
         }
         .padding(.vertical, Theme.Spacing.xs)
         .padding(.horizontal, Theme.Spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+            Capsule()
                 .fill(Theme.Colors.background)
         )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     // MARK: - Timeline Container
@@ -179,9 +176,12 @@ struct DaySessionInfoPanel: View {
             let cardBackgroundWidth = cardW + Theme.Spacing.sm * 2
             let hasAbove = !aboveSessions.isEmpty
             let hasBelow = !belowSessions.isEmpty
-            let topGap = hasAbove ? cardToBarGap : Theme.Spacing.lg
-            let bottomGap = hasBelow ? cardToBarGap : Theme.Spacing.lg
-            let railY = (hasAbove ? cardHeight : 0) + topGap + barHeight / 2
+            // Fixed symmetric slots — the rail is ALWAYS at the vertical centre
+            // of the container whether the day has sessions above, below, both
+            // or none. Only the cards change; the rail never moves.
+            let topGap = cardToBarGap
+            let bottomGap = cardToBarGap
+            let railY = cardHeight + topGap + barHeight / 2
             let aboveCardTopY: CGFloat = 0
             let belowCardTopY = railY + barHeight / 2 + bottomGap
             let belowCardY = belowCardTopY + cardHeight / 2
@@ -191,6 +191,13 @@ struct DaySessionInfoPanel: View {
             let belowPositions = resolvedCardPositions(for: belowSessions, width: width, range: range, cardBackgroundWidth: cardBackgroundWidth)
             
             ZStack(alignment: .topLeading) {
+                // Empty-day hint — the rail still renders (fixed slots), just empty
+                if sorted.isEmpty {
+                    Text("No sessions")
+                        .font(Theme.Fonts.narrative)
+                        .foregroundColor(Theme.Colors.textSecondary.opacity(0.5))
+                        .frame(width: width, height: timelineTotalHeight)
+                }
                 // Time markers — subtle hour ticks along the rail
                 timeMarkers(width: width, railY: railY, range: range)
                 
@@ -309,7 +316,7 @@ struct DaySessionInfoPanel: View {
                 }
             }
         }
-        .frame(height: panelHeight(hasAbove: !aboveSessions.isEmpty, hasBelow: !belowSessions.isEmpty))
+        .frame(height: timelineTotalHeight)
     }
     
     // MARK: - Session Card
@@ -605,13 +612,12 @@ struct DaySessionInfoPanel: View {
         }
     }
     
-    /// Fixed panel height: above cards + gap + rail + gap + below cards.
-    private func panelHeight(hasAbove: Bool, hasBelow: Bool) -> CGFloat {
-        let topSection = (hasAbove ? cardHeight : 0) + cardToBarGap
-        let bottomSection = (hasBelow ? cardHeight : 0) + cardToBarGap
-        return topSection + barHeight + bottomSection
+    /// Fixed total height of the timeline region — both card slots + gaps + rail.
+    /// Constant by construction, so the rail never shifts with session count.
+    private var timelineTotalHeight: CGFloat {
+        cardHeight * 2 + cardToBarGap * 2 + barHeight
     }
-    
+
     // MARK: - Formatting
     
     private func formattedHours(_ hours: Double) -> String {

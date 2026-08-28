@@ -66,7 +66,7 @@ This view answers one simple question:
 ---
 
 #### Day Session Info Panel
-A compact info panel shown under the 90-day stacked bar that lists sessions for the hovered day and visually connects each session card to the timeline rail. Key behaviors:
+A compact info panel that cross-fades in over the merged Trends card (replacing the trend charts at the same fixed size) and lists sessions for the hovered day, visually connecting each session card to the timeline rail. Key behaviors:
 - Connectors prefer a vertical-first routing: straight vertical from the rail, then a horizontal run to the card's left edge.
 - Cards are anchored 20px to the right of their timeline anchor so connectors can start vertical-only from the rail.
 - When a card lies left of its anchor the connector pivots at ~28px from the rail to avoid running underneath the card.

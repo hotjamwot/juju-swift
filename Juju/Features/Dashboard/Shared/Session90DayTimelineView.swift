@@ -19,8 +19,12 @@ struct Session90DayTimelineView: View {
     
     // MARK: - Constants
     
-    /// Fixed time-of-day Y-axis range — matches SessionCalendarChartView.
-    private let yDomain: ClosedRange<Double> = 6.0...23.0
+    /// Fixed time-of-day Y-axis range. Insets the extreme gridlines by half an
+    /// hour (5.5 / 23.5) so the "6am" and "11pm" axis labels sit fully INSIDE
+    /// the chart frame — at an exact 6...23 domain they overhang the top/bottom
+    /// edge and visibly poke over the card (cards no longer clip children).
+    /// Matches SessionCalendarChartView's domain.
+    private let yDomain: ClosedRange<Double> = 5.5...23.5
     /// Hour grid line positions.
     private let gridHours: [Double] = [6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 23.0]
     /// Background opacity for un-hovered slivers.
@@ -30,13 +34,19 @@ struct Session90DayTimelineView: View {
     
     // MARK: - Derived Data
     
-    /// Chart X-domain — first/last day from the day stacks.
+    /// Chart X-domain — first/last day from the day stacks, extended 3 days on
+    /// each side. With 90 daily columns, small extensions inset the edge
+    /// slivers negligibly; a wide margin gives each edge column real breathing
+    /// room, like the calendar chart's categorical columns. Hover mapping is
+    /// unaffected: `dayAt` snaps to the nearest day within half a day, so the
+    /// margin zones resolve to "no day".
     private var xDomain: ClosedRange<Date> {
         guard let first = dayStacks.first?.date, let last = dayStacks.last?.date else {
             let today = Calendar.current.startOfDay(for: Date())
             return today...Calendar.current.date(byAdding: .day, value: 1, to: today)!
         }
-        return first...last
+        let edgePadding = TimeInterval(3 * 24 * 3600)
+        return first.addingTimeInterval(-edgePadding)...last.addingTimeInterval(edgePadding)
     }
     
     /// Set of dates that are milestone days — used for glow and sliver tint.
@@ -83,6 +93,9 @@ struct Session90DayTimelineView: View {
             }
             
             // Session slivers — thin vertical blocks at their time-of-day.
+            // Hover effect is a plain brightness shift on the mark itself —
+            // no annotation overlays (they toggled in/out on every column
+            // change and made the highlight flicker).
             ForEach(sessions) { session in
                 RectangleMark(
                     x: .value("Day", session.date),
@@ -95,20 +108,6 @@ struct Session90DayTimelineView: View {
                     )
                 )
                 .cornerRadius(sliverCornerRadius)
-                .annotation(position: .overlay, alignment: .center) {
-                    if isDayHovered(session.date) {
-                        RoundedRectangle(cornerRadius: sliverCornerRadius + 1)
-                            .stroke(Theme.Colors.warmAccent.opacity(0.25), lineWidth: 1)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .annotation(position: .overlay, alignment: .center) {
-                    if isDayHovered(session.date) && isMilestoneDay(session.date) {
-                        RoundedRectangle(cornerRadius: sliverCornerRadius)
-                            .fill(Theme.Colors.milestone.opacity(0.15))
-                            .allowsHitTesting(false)
-                    }
-                }
                 .annotation(position: .overlay, alignment: .topTrailing) {
                     if session.isMilestone {
                         Image(systemName: "star.fill")
@@ -144,11 +143,7 @@ struct Session90DayTimelineView: View {
                 }
             }
         }
-        .chartPlotStyle { plotArea in
-            plotArea
-                .background(.clear)
-                .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
-        }
+        .chartPlotStyle { $0.background(.clear) }
         .chartOverlay { proxy in
             GeometryReader { geo in
                 Color.clear
@@ -158,22 +153,29 @@ struct Session90DayTimelineView: View {
                         case .active(let location):
                             let hovered = dayAt(location: location, proxy: proxy)
                             if let hovered, hoveredDay?.id != hovered.id {
-                                withAnimation(Theme.Design.spring) {
+                                // Short ease — a spring on chart state makes the
+                                // marks wobble as the highlight moves column to column.
+                                withAnimation(.easeInOut(duration: 0.15)) {
                                     hoveredDay = hovered
                                 }
                             } else if hovered == nil, hoveredDay != nil {
-                                withAnimation(Theme.Design.spring) {
+                                withAnimation(.easeInOut(duration: 0.15)) {
                                     hoveredDay = nil
                                 }
                             }
                         case .ended:
-                            withAnimation(Theme.Design.spring) {
+                            withAnimation(.easeInOut(duration: 0.15)) {
                                 hoveredDay = nil
                             }
                         }
                     }
             }
         }
+        // Real layout padding OUTSIDE the chart — padding the plot area itself
+        // shrinks the frame post-layout and clips the marks. Generous vertical
+        // padding keeps the time-of-day labels well inside the card.
+        .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding * 2)
+        .padding(.vertical, Theme.Spacing.lg)
     }
     
     // MARK: - Helpers

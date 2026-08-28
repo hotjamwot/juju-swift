@@ -165,8 +165,11 @@ struct SessionCalendarChartView: View {
     
     // MARK: - Tooltip Positioning
     
-    private let tooltipWidth: CGFloat = 200
-    private let tooltipHeight: CGFloat = 90
+    // Estimated tooltip footprint used by the edge-aware clamping helpers.
+    // Deliberately generous — the tooltip can grow tall with action/phase/notes,
+    // and overestimating keeps it fully inside the chart instead of clipped.
+    private let tooltipWidth: CGFloat = 220
+    private let tooltipHeight: CGFloat = 150
     private let tooltipPadding: CGFloat = 14
     
     private func tooltipTooltipX(in size: CGSize) -> CGFloat {
@@ -255,11 +258,6 @@ struct SessionCalendarChartView: View {
                         }
                     }
                 }
-                .chartPlotStyle { plotArea in
-                    plotArea
-                        .background(.clear)
-                        .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
-                }
                 .chartXScale(domain: weekDays)
                 .chartOverlay { proxy in
                     GeometryReader { geo in
@@ -271,19 +269,21 @@ struct SessionCalendarChartView: View {
                                     case .active(let location):
                                         let matched = sessionAt(location: location, proxy: proxy)
                                         if let matched, hoveredSession?.id != matched.id {
-                                            withAnimation(Theme.Design.spring) {
+                                            // Short ease — a spring on chart state makes
+                                            // the marks wobble as hover moves between blocks.
+                                            withAnimation(.easeInOut(duration: 0.15)) {
                                                 hoveredSession = matched
                                                 showTooltip = true
                                                 tooltipPosition = location
                                             }
                                         } else if matched == nil, hoveredSession != nil {
-                                            withAnimation(Theme.Design.spring) {
+                                            withAnimation(.easeInOut(duration: 0.15)) {
                                                 showTooltip = false
                                                 hoveredSession = nil
                                             }
                                         }
                                     case .ended:
-                                        withAnimation(Theme.Design.spring) {
+                                        withAnimation(.easeInOut(duration: 0.15)) {
                                             showTooltip = false
                                             hoveredSession = nil
                                         }
@@ -303,6 +303,10 @@ struct SessionCalendarChartView: View {
                         }
                     }
                 }
+                // Real layout padding OUTSIDE the chart — padding the plot area
+                // itself shrinks the frame post-layout and clips the marks.
+                .padding(.horizontal, Theme.DashboardLayout.chartInnerPadding)
+                .padding(.vertical, Theme.Spacing.xs)
             }
         }
         .onAppear {

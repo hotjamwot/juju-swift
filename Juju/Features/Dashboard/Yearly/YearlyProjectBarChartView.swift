@@ -33,8 +33,8 @@ struct YearlyProjectBarChartView: View {
             if data.isEmpty {
                 NoDataPlaceholder(minHeight: 200)
             } else {
-                TrendChartLegend()
-                
+                // Legend is rendered ONCE by the parent merged Trends card
+                // (OverviewDashboardView) — both charts share one container.
                 // Scale both bars against the largest value of either kind.
                 let maxHours = data.map { max($0.recent90DaysHours, $0.yearlyAvgPer90Days) }.max() ?? 1
                 
@@ -68,9 +68,9 @@ struct YearlyProjectBarChartView: View {
             }
         }
         .padding(Theme.DashboardLayout.chartPadding)
-        .background(Theme.Colors.surface)
-        .cornerRadius(Theme.DashboardLayout.chartCornerRadius)
-        .subtleShadow()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Presentation-only view: card chrome is applied by the parent merged
+        // Trends card (see OverviewDashboardView) so both charts share one surface.
         .animation(Theme.Design.spring, value: hoveredIndex)
     }
     
@@ -79,8 +79,10 @@ struct YearlyProjectBarChartView: View {
     @ViewBuilder
     private func row(for projectData: YearlyProjectChartData, index: Int, maxHours: Double) -> some View {
         GeometryReader { geometry in
-            // Name column (160) + spacing; the rest belongs to the bars.
-            let chartWidth = geometry.size.width - 172
+            // Name column (160) + HStack spacing (Theme.spacingMedium = 16) = 176;
+            // the rest belongs to the bars. Keep in sync with the spacing constant
+            // or the longest bar overflows the row's right edge and gets clipped.
+            let chartWidth = geometry.size.width - 176
             HStack(spacing: Theme.spacingMedium) {
                 HStack(spacing: Theme.spacingSmall) {
                     Text(projectData.emoji)

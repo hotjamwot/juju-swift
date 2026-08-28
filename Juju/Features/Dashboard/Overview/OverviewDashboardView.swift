@@ -32,7 +32,7 @@ struct OverviewDashboardView: View {
     // MARK: - Ideal heights
     private let calendarMinHeight: CGFloat = 400
     /// Height for the 90-day timeline — a time-of-day Y-axis needs more vertical room.
-    private let stackedBarMinHeight: CGFloat = 280
+    private let stackedBarMinHeight: CGFloat = 340
     
     // MARK: - Spacing
     /// Space between a section header and its content
@@ -64,51 +64,74 @@ struct OverviewDashboardView: View {
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                 }
                 
-                // Weekly Calendar Chart — day/hour session blocks
+                // Weekly Calendar Chart — day/hour session blocks.
+                // Section header sits OUTSIDE the card (editorial style, matching Trends).
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("This Week")
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
                     SessionCalendarChartView(
                         sessions: chartDataPreparer.currentWeekSessionsForCalendar()
                     )
                     .frame(minHeight: calendarMinHeight)
+                    .chartCard()
                 }
-                .chartCard()
                 
-                // 90-Day Timeline — when sessions happened across the day
+                // 90-Day Timeline — when sessions happened across the day.
+                // Hover state is lifted via `hoveredDay` and consumed by the
+                // DaySessionInfoPanel swap in the Trends section below.
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("90-Day Overview")
-                    VStack(spacing: Theme.Spacing.sm) {
-                        Session90DayTimelineView(
-                            dayStacks: chartDataPreparer.current90DayStacks,
-                            sessions: chartDataPreparer.current90DayTimeline,
-                            hoveredDay: $hoveredDay
-                        )
-                        .frame(minHeight: stackedBarMinHeight)
-                        
-                        // Info panel — full width, shows hovered day's sessions
-                        DaySessionInfoPanel(dayStack: hoveredDay)
-                    }
+                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    Session90DayTimelineView(
+                        dayStacks: chartDataPreparer.current90DayStacks,
+                        sessions: chartDataPreparer.current90DayTimeline,
+                        hoveredDay: $hoveredDay
+                    )
+                    .frame(minHeight: stackedBarMinHeight)
+                    .chartCard()
                 }
-                .chartCard()
                 
-                // Trend Charts — last 90 days vs yearly average, side-by-side
+                // Trend Charts — one merged card (projects | activity types side-by-side).
+                // When a 90-day day is hovered, the DaySessionInfoPanel cross-fades in
+                // and REPLACES the trends content inside the same fixed-size container,
+                // so nothing on the page is pushed down.
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("Trends")
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                    HStack(spacing: Theme.Spacing.lg) {
-                        // Project Distribution Chart
-                        YearlyProjectBarChartView(
-                            data: chartDataPreparer.yearlyProjectTotals()
-                        )
-                        .frame(height: Theme.DashboardLayout.distributionCardHeight)
-                        
-                        // Activity Types Distribution Chart
-                        YearlyActivityTypeBarChartView(
-                            data: chartDataPreparer.yearlyActivityTypeTotals()
-                        )
-                        .frame(height: Theme.DashboardLayout.distributionCardHeight)
+                    ZStack {
+                        // EITHER the trends OR the info panel — never both.
+                        // A cross-fade swap, so the panel needs no background of
+                        // its own (no card-within-a-card seam) and nothing shifts.
+                        if hoveredDay == nil {
+                            VStack(spacing: 0) {
+                                // ONE shared legend for both charts
+                                TrendChartLegend()
+                                    .padding(.horizontal, Theme.DashboardLayout.chartPadding)
+                                
+                                HStack(spacing: 0) {
+                                    // Project Distribution Chart
+                                    YearlyProjectBarChartView(
+                                        data: chartDataPreparer.yearlyProjectTotals()
+                                    )
+                                    // Activity Types Distribution Chart
+                                    YearlyActivityTypeBarChartView(
+                                        data: chartDataPreparer.yearlyActivityTypeTotals()
+                                    )
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(.opacity)
+                        } else {
+                            DaySessionInfoPanel(dayStack: hoveredDay)
+                                .transition(.opacity)
+                        }
                     }
-                    .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                    .frame(height: max(
+                        Theme.DashboardLayout.distributionCardHeight,
+                        DaySessionInfoPanel.panelMaxHeight
+                    ))
+                    .chartCard()
+                    .animation(.easeInOut(duration: 0.18), value: hoveredDay != nil)
                 }
             }
             .padding(.vertical, Theme.DashboardLayout.dashboardPadding)

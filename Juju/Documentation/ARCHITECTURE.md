@@ -671,7 +671,7 @@ Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, 
 
 **Rule**: Never create inline tooltip styling. Always reuse these shared components.
 
-**Exception — 90-Day Chart Info Panel**: The 90-Day Timeline Chart does not use a floating tooltip. Instead, hover state is lifted to the parent (`OverviewDashboardView`) via a `@Binding var hoveredDay: DayStack?`. A `DaySessionInfoPanel` view sits below the chart and displays a horizontal timeline rail with per-session cards (activity type, action, notes preview, phase pill, time range, duration, milestone badge) for the hovered day. Cards alternate above and below the timeline bar and are positioned proportionally to their start time within a fixed 6am–11pm window.
+**Exception — 90-Day Chart Info Panel**: The 90-Day Timeline Chart does not use a floating tooltip. Instead, hover state is lifted to the parent (`OverviewDashboardView`) via a `@Binding var hoveredDay: DayStack?`. The `DaySessionInfoPanel` does NOT sit below the chart — it cross-fades in over the merged Trends card at the bottom of the dashboard, replacing the trend charts inside the same fixed-height container (`max(distributionCardHeight, DaySessionInfoPanel.panelMaxHeight)`). This removes all layout pushdown when hovering. The panel displays a horizontal timeline rail with per-session cards (activity type, action, notes preview, phase pill, time range, duration, milestone badge) for the hovered day. Cards alternate above and below the timeline bar and are positioned proportionally to their start time within a fixed 6am–11pm window. The panel is presentation-only — its card chrome (surface + shadow) is supplied by the parent swap container.
 
 **Chart hover detection pattern**: Always use `chartOverlay { proxy in }` with `ChartProxy.value(atX:atY:)` for coordinate conversion. Never use a ZStack sibling with manual `plotFrame` math — it causes coordinate drift and misaligned tooltips.
 
@@ -681,8 +681,10 @@ Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, 
 - Sessions render as thin vertical slivers (`RectangleMark`s) positioned by decimal start/end hour within their calendar-day column
 - Y-axis: fixed 6am–11pm (`6.0...23.0`), matching the weekly calendar chart; grid lines at 6/9/12/15/18/21/23 with 12-hour am/pm labels
 - X-axis: 90-day lookback window with automatic date labels (`MMM d`)
-- Hover anywhere in a day column (not just a sliver) sets the `@Binding var hoveredDay: DayStack?` — slivers in the hovered day brighten to full opacity
-- `DaySessionInfoPanel` sits below the chart, showing the horizontal timeline rail with alternating above/below session cards for the hovered day
+- Hover anywhere in a day column (not just a sliver) sets the `@Binding var hoveredDay: DayStack?` — slivers in the hovered day brighten to full opacity (plain mark brightness: hovered 1.0, rest 0.85). NO annotation overlays for the highlight — conditional annotations pop in/out on every column change and flicker
+- Hover state changes use a short `.easeInOut(0.15)` — NEVER a spring on chart state (spring overshoot wobbles the rendered marks)
+- X-domain extends 3 days past each edge day so edge columns get real breathing margins; Y domain is `5.5...23.5` (extreme gridlines inset so axis labels stay inside the frame)
+- `DaySessionInfoPanel` cross-fades in over the merged Trends card (fixed-height swap container sized by `DaySessionInfoPanel.panelMaxHeight`), showing the horizontal timeline rail with alternating above/below session cards for the hovered day — no layout pushdown
 - Cross-midnight sessions split into two slivers: one clipped to 24:00 on the start day and a continuation from 0:00 on the next day
 - Data source: `DayTimelineSession` built by `ChartDataPreparer.prepare90DayTimeline()`; `DayStack.sessions` powers the info panel and `DayStack.projects` provides per-project colour/name lookup (avoids file I/O per session card)
 - Today's column gets a subtle divider-tint highlight behind its slivers
@@ -692,16 +694,16 @@ Reused identically by: `SessionCalendarChartView`, `YearlyProjectBarChartView`, 
 - Uses `chartOverlay { proxy in }` for hover detection — the overlay lives **inside** the Chart's coordinate space, ensuring pixel-to-value conversion is accurate
 - `ChartProxy.value(atX:)` and `proxy.value(atY:)` convert hover pixel positions directly to chart domain values (day name, hour)
 - **Important**: Never use a ZStack sibling overlay with manual `plotFrame` mapping — the Chart's coordinate space can drift from the ZStack's. Always use `chartOverlay` for hover detection in SwiftUI Charts
-- Hovered session gets full opacity (1.0), others 0.85
-- Floating tooltip positioned using edge-aware helpers (`tooltipTooltipX`/`tooltipTooltipY`) that flip direction near chart boundaries
-- `onContinuousHover` `.ended` case clears hover state with animation
+- Hovered session gets full opacity (1.0), others 0.85 (plain mark brightness, no annotation overlays)
+- Hover state changes use a short `.easeInOut(0.15)` — never a spring on chart state (spring overshoot wobbles the marks)
+- Floating tooltip positioned using edge-aware helpers (`tooltipTooltipX`/`tooltipTooltipY`) that flip direction near chart boundaries; `chartCard()` uses a non-clipping rounded background so tooltips can float past the card edge
 
 #### Trend Charts (dual-bar: last 90 days vs yearly average)
 - `yearlyProjectTotals()`: Builds per-project 90-day and 360-day totals in one O(n) pass over the rolling 360-day window
 - `yearlyActivityTypeTotals()`: Builds per-activity-type 90-day and 360-day totals in one O(n) pass over the rolling 360-day window
 - The 360-day total is divided by 4 at the model level (`yearlyAvgPer90Days`) so the two bars are directly comparable on one scale
 - Rolling windows (last 90 / 360 days including today), NOT calendar year — callers must pass ALL sessions; the preparer filters internally
-- Charts are purely visual: no on-chart numbers. Rows render name + two bars via shared `TrendBarPair` (solid = last 90 days, light = yearly avg) with `TrendChartLegend`
+- Charts are purely visual: no on-chart numbers. Rows render name + two bars via shared `TrendBarPair` (solid = last 90 days, light = yearly avg). BOTH charts live in ONE merged "Trends" card with a SINGLE shared `TrendChartLegend` rendered by the parent (`OverviewDashboardView`)
 - The ENTIRE row is the hover target (name + bars); hovering shows a numbers-only tooltip: both values plus a % trend delta
 
 #### Project Management Flow
