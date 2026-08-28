@@ -58,8 +58,8 @@ struct OverviewDashboardView: View {
                             // Full-width flow field: two independently
                             // seeded halves so timings never mirror.
                             HStack(spacing: 0) {
-                                JujuFlowField(seed: 1)
-                                JujuFlowField(seed: 2)
+                                JujuFlowField(seed: 1, phraseEdge: .trailing)
+                                JujuFlowField(seed: 2, phraseEdge: .leading)
                             }
 
                             ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
