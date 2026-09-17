@@ -154,6 +154,28 @@ class SessionsViewModel: ObservableObject {
 | **List Rendering** | Lazy load via `List` + `ForEach` | Don't render all at once |
 | **Cache Access** | Use `CacheManager` for invalidation | Don't bypass notification system |
 
+### Sparse, Idle-Safe Animation (Ambience Pattern)
+
+Use this for UI motion that should be *recurring but infrequent* (a beat every few seconds),
+especially in a lightweight, menu-tray app. It guarantees the idle gaps are truly idle and that
+nothing lingers when the view goes away — a deliberate alternative to a continuous `TimelineView`.
+
+- **Own the cadence in a small `ObservableObject` controller**, held by the view via `@StateObject`
+  (e.g. `JujuAmbienceController` in `Shared/JujuAmbience.swift`).
+- **Drive it with `Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true)`** and only mutate
+  `@Published` state when a transition is actually due, so the seconds between firings don't re-render.
+- **Tie teardown to the view**: call `controller.stop()` in `.onDisappear` and `invalidate()` the
+  timer in the controller's `deinit`. Because the controller is a `@StateObject`, closing the window
+  (or leaving the section) destroys it and stops the timer — zero cost in the dormant profile.
+- **Respect Reduce Motion** (`@Environment(.accessibilityReduceMotion)`): skip the perpetual pulse and
+  fall back to a plain short opacity ease (`0.2s`).
+- **Tween with `withAnimation(...)`** around each state write to animate the visible change
+  (e.g. `Circle().opacity(controller.brightness)`).
+
+**Antipattern**: don't use `TimelineView(.animation(minimumInterval: ...))` for a normally-idle,
+sparse pulse — it ticks continuously while the view is alive, which contradicts Juju's ethos (idle
+gaps should be genuinely idle). Reserve `TimelineView` for things that genuinely move every frame.
+
 ---
 
 ## 🧪 TESTING PATTERN

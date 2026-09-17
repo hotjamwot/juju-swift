@@ -54,19 +54,13 @@ struct OverviewDashboardView: View {
                     }
 
                     if let phrase = encouragementPhrase {
-                        ZStack {
-                            // Full-width flow field: two independently
-                            // seeded halves so timings never mirror.
-                            HStack(spacing: 0) {
-                                JujuFlowField(seed: 1, phraseEdge: .trailing)
-                                JujuFlowField(seed: 2, phraseEdge: .leading)
-                            }
-
-                            ShimmerTeReoText(text: phrase.teReo, gloss: phrase.englishGloss)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                        .padding(.vertical, Theme.Spacing.xl)
+                        // The "settled page" ambience: greeting + a hairline rule
+                        // with three warm atoms that fire sparingly. It eases in
+                        // on open and again on return to this dashboard section.
+                        JujuAmbience(text: phrase.teReo, gloss: phrase.englishGloss)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
+                            .padding(.vertical, Theme.Spacing.xl)
                     }
 
                     NarrativeSummaryCard(narrativeEngine: narrativeEngine)

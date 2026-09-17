@@ -656,6 +656,26 @@ DashboardRootView → SessionManager (loadAllSessions) → [SessionRecord] (allS
   UI Display → Views (consume chart data) → User Interface
 ```
 
+#### Dashboard Greeting Ambience (`Shared/JujuAmbience.swift`)
+The top of `OverviewDashboardView` frames the greeting (Te reo + gloss via
+`ShimmerTeReoText`) with the "settled page" treatment: a hairline `Divider` rule
+with three tiny warm atoms (Theme `glow`/`warmAccent`) resting on it. It is pure
+presentation — no data, no hit testing.
+
+- **Entrance**: the group eases in with `Theme.Design.spring` on dashboard open and
+  again on return (supported for free because `switch selected` in
+  `DashboardRootView` rebuilds `OverviewDashboardView` each time). Falls back to a
+  plain `0.2s` opacity fade with Reduce Motion.
+- **Sparse pulse**: one atom fires every ~4s, driven by a single repeating 1s
+  `Timer` in `JujuAmbienceController` that only mutates published state when a
+  transition is due — so the intervening seconds are idle (no `TimelineView`, no
+  continuous rendering).
+- **Lightweight / dormant guarantee**: the view owns the controller as a
+  `@StateObject` and invalidates the timer on `.onDisappear` and in the
+  controller's `deinit`. Closing the dashboard window (or leaving the section)
+  tears the view down and stops the timer, so this costs nothing while the app
+  sits in the menu tray.
+
 #### Tooltip Pattern (Unified Across All Charts)
 ```
 Hover → onHover/onContinuousHover → Set @State hoveredItem
