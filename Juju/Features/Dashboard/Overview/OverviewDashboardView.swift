@@ -54,13 +54,12 @@ struct OverviewDashboardView: View {
                     }
 
                     if let phrase = encouragementPhrase {
-                        // The "settled page" ambience: greeting + a hairline rule
-                        // with three warm atoms that fire sparingly. It eases in
-                        // on open and again on return to this dashboard section.
+                        // The "thought constellation": two independent neural clusters
+                        // flanking the calm central greeting. Eases in on open
+                        // and again on return to this dashboard section.
                         JujuAmbience(text: phrase.teReo, gloss: phrase.englishGloss)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
-                            .padding(.vertical, Theme.Spacing.xl)
                     }
 
                     NarrativeSummaryCard(narrativeEngine: narrativeEngine)
