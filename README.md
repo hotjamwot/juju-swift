@@ -145,7 +145,7 @@ The Xcode target **JujuTests** contains **unit tests only** (no UI tests). They 
 
 `xcodebuild -scheme Juju -destination 'platform=macOS' test`
 
-Details for contributors and AI tooling: **Documentation/AGENT.md** (section **Testing**).
+Details for contributors and AI tooling: **Documentation/AGENTS.md** (section **Testing**).
 
 ---
 

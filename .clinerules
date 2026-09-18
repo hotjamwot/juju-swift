@@ -1,48 +1,31 @@
 # Juju Development Rulebook
 
-This file is auto-loaded by Cline at the start of every session. It tells you where to look and what to do. Read the referenced docs only when needed to save tokens.
+Read [Juju/Documentation/AGENTS.md](Juju/Documentation/AGENTS.md) before changing code. Read the other documentation files only when their topic applies.
 
-## 📚 Documentation Index
+## Documentation index
 
-| Task | Read This |
-|------|-----------|
-| Add a feature / fix a bug | `Juju/Documentation/AGENT.md` |
-| Understand data models / architecture | `Juju/Documentation/ARCHITECTURE.md` |
-| Code patterns / threading / conventions | `Juju/Documentation/SWIFT_PATTERNS.md` |
-| Project status / what's done / in progress | `Juju/Documentation/ROADMAP.md` |
-| What changed recently | `Juju/Documentation/CHANGELOG.md` |
+| Need | Read |
+| --- | --- |
+| Add a feature or fix a bug | `Juju/Documentation/AGENTS.md` |
+| Understand models, flows, or persistence | `Juju/Documentation/ARCHITECTURE.md` |
+| Review Swift conventions or reusable patterns | `Juju/Documentation/SWIFT_PATTERNS.md` |
+| Check recent history | `Juju/Documentation/CHANGELOG.md` |
 
-## 🚨 Non-Negotiable Rules (Always Follow)
+## Non-negotiable rules
 
-1. **Never use `try?` or `try!`** — Always handle errors with `do/catch` + `ErrorHandler.shared.handleError(error, context:)`
-2. **Never add SwiftUI Previews** — `#Preview` and `PreviewProvider` are intentionally removed. Do not re-introduce them.
-3. **Always use `projectID`, never `projectName`** — IDs are UUIDs
-4. **Never block the main thread with I/O** — Use async/await
-5. **Always post notifications after state changes** — UI won't update otherwise
-6. **Use `@MainActor` for SwiftUI-bound ViewModels**
-7. **Views are pure presentation** — No business logic in views; use ViewModels
-8. **Use `chartOverlay` for chart hover detection** — Never ZStack sibling overlays
-9. **Reuse `TooltipContainer`/`TooltipRow`/`TooltipDivider`** — Never inline tooltip styling
-10. **Use `SessionManager.shared.allSessions` as source of truth** — Don't re-fetch or duplicate session data
+1. Use `projectID`, never `projectName`, as a key.
+2. Use `SessionManager.allSessions` after loading sessions.
+3. Keep Views presentation-only and UI state on the main actor.
+4. Keep business logic and persistence in Managers.
+5. Do not block the main thread with I/O.
+6. Validate before persistence and use `JujuError`/`ErrorHandler` for failures.
+7. Post notifications after successful shared-state changes.
+8. Use `chartOverlay` for chart hover detection and reuse shared tooltip components.
+9. Do not add SwiftUI previews.
 
-## ⚡ Quick Reference
+## Verification
 
-- **Architecture**: MVVM + Managers + SwiftUI
-- **Data Storage**: CSV/JSON files only (no Core Data or cloud)
-- **Threading**: `@MainActor` for UI, async/await for background
-- **Tests**: `JujuTests` target, run with `xcodebuild -scheme Juju -destination 'platform=macOS' test`
-
-## 🔍 When to Read Full Docs
-
-- **Adding a new feature** → Read `AGENT.md` fully (step-by-step workflow)
-- **Modifying data models or persistence** → Read `ARCHITECTURE.md` (data models section)
-- **Writing new Swift code** → Read `SWIFT_PATTERNS.md` (naming, threading, patterns)
-- **Checking project status** → Read `ROADMAP.md`
-- **Only if you need to know what changed** → Read `CHANGELOG.md`
-
-## 🧪 Testing
-
-- Tests live in `JujuTests/` at repo root
-- Run: `xcodebuild -scheme Juju -destination 'platform=macOS' test`
-- If you change CSV parsing, phase integrity, or ProjectStory derivation, extend the corresponding test file
-- Test files: `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift`, `ProjectStoryDerivationTests.swift`
+- Tests live in `JujuTests/`.
+- Run `xcodebuild -scheme Juju -destination 'platform=macOS' test`.
+- Extend the relevant test file when changing parsing, validation, migration, filtering, or derivation.
+- Current test files: `SessionDataParserTests.swift`, `PhaseDataIntegrityTests.swift`, `ProjectStoryDerivationTests.swift`, `JujuAmbienceTests.swift`, `SessionRecordFilteringTests.swift`, and `ArraySessionExtensionsTests.swift`.

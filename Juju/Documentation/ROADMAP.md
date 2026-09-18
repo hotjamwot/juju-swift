@@ -115,7 +115,7 @@
 - **Priority**: Medium
 - **Coverage**: Session CSV parsing + phase data integrity have test coverage
 - **Gaps**: Manager-level tests, dashboard/ProjectStory unit tests, UI tests
-- **Pattern**: See AGENT.md → Testing section
+- **Pattern**: See AGENTS.md → Testing section
 
 ---
 
