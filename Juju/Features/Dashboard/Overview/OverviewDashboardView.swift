@@ -39,11 +39,14 @@ struct OverviewDashboardView: View {
     private let headerToContentGap: CGFloat = Theme.Spacing.xs
     /// Space between the bottom of one section and the next section's header
     private let sectionGap: CGFloat = Theme.Spacing.xxl + 8  // ~56pt
+    /// Tighter gap between the 90-Day Overview card and the Trends header, so
+    /// the DaySessionInfoPanel shown on day-hover stays visible without scrolling.
+    private let overviewToTrendsGap: CGFloat = Theme.Spacing.xl  // 32pt
     
     // MARK - Body
     var body: some View {
         ScrollView(.vertical) {
-            LazyVStack(spacing: sectionGap) {
+            LazyVStack(spacing: 0) {
                 // Active Session Bar + Narrative Summary — grouped together
                 // with a tighter gap so the live session bar feels connected
                 // to the narrative engine below it.
@@ -77,6 +80,7 @@ struct OverviewDashboardView: View {
                     .frame(minHeight: calendarMinHeight)
                     .chartCard()
                 }
+                .padding(.top, sectionGap)
                 
                 // 90-Day Timeline — when sessions happened across the day.
                 // Hover state is lifted via `hoveredDay` and consumed by the
@@ -92,11 +96,14 @@ struct OverviewDashboardView: View {
                     .frame(minHeight: stackedBarMinHeight)
                     .chartCard()
                 }
+                .padding(.top, sectionGap)
                 
                 // Trend Charts — one merged card (projects | activity types side-by-side).
                 // When a 90-day day is hovered, the DaySessionInfoPanel cross-fades in
                 // and REPLACES the trends content inside the same fixed-size container,
                 // so nothing on the page is pushed down.
+                // Uses a tighter top gap than `sectionGap` so the hovered-day info
+                // panel stays visible without scrolling.
                 VStack(spacing: headerToContentGap) {
                     chartSectionHeader("Trends")
                         .padding(.horizontal, Theme.DashboardLayout.dashboardPadding)
@@ -135,6 +142,7 @@ struct OverviewDashboardView: View {
                     .chartCard()
                     .animation(.easeInOut(duration: 0.18), value: hoveredDay != nil)
                 }
+                .padding(.top, overviewToTrendsGap)
             }
             .padding(.vertical, Theme.DashboardLayout.dashboardPadding)
         }
@@ -254,21 +262,28 @@ private struct NarrativeSummaryCard: View {
 
                 // Card 2: Focus Activity Types (top 3)
                 NarrativeMetricCard(title: "FOCUS", iconName: "target") {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        let maxHours = summary.topActivities.map(\.hours).max() ?? 1
                         ForEach(summary.topActivities.prefix(3)) { activity in
-                            HStack(spacing: Theme.Spacing.xxs) {
-                                Image(systemName: activity.sfSymbol)
-                                    .font(Theme.Fonts.caption)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                                    .frame(width: 14, alignment: .center)
-                                Text(activity.name)
-                                    .font(Theme.Fonts.narrative)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                    .lineLimit(1)
-                                Spacer(minLength: 4)
-                                Text(formatCompactHours(activity.hours))
-                                    .font(Theme.Fonts.narrativeAccent)
-                                    .foregroundColor(Theme.Colors.textPrimary)
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: Theme.Spacing.xxs) {
+                                    Image(systemName: activity.sfSymbol)
+                                        .font(Theme.Fonts.caption)
+                                        .foregroundColor(Theme.Colors.textSecondary)
+                                        .frame(width: 14, alignment: .center)
+                                    Text(activity.name)
+                                        .font(Theme.Fonts.narrative)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                        .lineLimit(1)
+                                    Spacer(minLength: 4)
+                                    Text(formatCompactHours(activity.hours))
+                                        .font(Theme.Fonts.narrativeAccent)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                }
+                                NarrativeBar(
+                                    fraction: maxHours > 0 ? activity.hours / maxHours : 0,
+                                    color: Theme.Colors.textPrimary.opacity(0.35)
+                                )
                             }
                         }
                         // If no activities, show placeholder
@@ -282,20 +297,27 @@ private struct NarrativeSummaryCard: View {
 
                 // Card 3: Top Projects (top 3)
                 NarrativeMetricCard(title: "PROJECT", iconName: "folder") {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        let maxHours = summary.topProjects.map(\.hours).max() ?? 1
                         ForEach(summary.topProjects.prefix(3)) { project in
-                            HStack(spacing: Theme.Spacing.xxs) {
-                                Text(project.emoji)
-                                    .font(Theme.Fonts.caption)
-                                    .frame(width: 14, alignment: .center)
-                                Text(project.name)
-                                    .font(Theme.Fonts.narrative)
-                                    .foregroundColor(Theme.Colors.textPrimary)
-                                    .lineLimit(1)
-                                Spacer(minLength: 4)
-                                Text(formatCompactHours(project.hours))
-                                    .font(Theme.Fonts.narrativeAccent)
-                                    .foregroundColor(Theme.Colors.textPrimary)
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: Theme.Spacing.xxs) {
+                                    Text(project.emoji)
+                                        .font(Theme.Fonts.caption)
+                                        .frame(width: 14, alignment: .center)
+                                    Text(project.name)
+                                        .font(Theme.Fonts.narrative)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                        .lineLimit(1)
+                                    Spacer(minLength: 4)
+                                    Text(formatCompactHours(project.hours))
+                                        .font(Theme.Fonts.narrativeAccent)
+                                        .foregroundColor(Theme.Colors.textPrimary)
+                                }
+                                NarrativeBar(
+                                    fraction: maxHours > 0 ? project.hours / maxHours : 0,
+                                    color: Color(hex: project.color).opacity(0.85)
+                                )
                             }
                         }
                         // If no projects, show placeholder
@@ -354,6 +376,33 @@ private struct NarrativeSummaryCard: View {
                     .foregroundColor(color)
             }
         }
+    }
+}
+
+/// A proportional mini-bar for narrative rows — full-width track on the
+/// card background with a filled portion scaled to `fraction` (0…1).
+/// Editorial, not chart-like: thin (4pt), block-radius ends, no numbers.
+private struct NarrativeBar: View {
+    let fraction: Double
+    let color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+                    .fill(Theme.Colors.background)
+                    .frame(height: 4)
+                RoundedRectangle(cornerRadius: Theme.Design.blockCornerRadius)
+                    .fill(color)
+                    .frame(
+                        width: max(0, proxy.size.width * CGFloat(min(max(fraction, 0), 1))),
+                        height: 4
+                    )
+                    .animation(Theme.Design.spring, value: fraction)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        }
+        .frame(height: 4)
     }
 }
 

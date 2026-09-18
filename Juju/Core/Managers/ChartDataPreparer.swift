@@ -187,6 +187,9 @@ final class ChartDataPreparer: ObservableObject {
             // (clipped to 24:00) and one on the end day (from 0:00 to the
             // actual end hour). The end day must also fall in the current week
             // interval, otherwise the continuation is not shown.
+            // NOTE: Hours are intentionally NOT clamped here — the calendar
+            // view clamps slivers to its visible domain (5.5...23.5) at render
+            // time so tooltips and daily totals keep true session times.
             if rawEndHour > startHour {
                 let day = dayFormatter.string(from: session.startDate)
                 return [WeeklySession(day: day, startHour: startHour, endHour: rawEndHour, projectName: projectName, projectColor: projectColor, projectEmoji: projectEmoji, activitySFSymbol: activitySFSymbol, action: session.action, isMilestone: session.isMilestone, phaseName: project?.phases.first(where: { $0.id == session.projectPhaseID })?.name, notes: session.notes)]
@@ -297,7 +300,12 @@ final class ChartDataPreparer: ObservableObject {
     /// Build per-session sliver data and per-day stacks for the 90-day timeline.
     ///
     /// Emits one `DayTimelineSession` per session, positioned by decimal
-    /// start/end hour within its calendar-day column. Sessions that cross
+    /// start/end hour within its calendar-day column, clamped to the visible
+    /// time-of-day domain (5.5...23.5, matching the chart's Y-scale).
+    /// Slivers fully outside that range (e.g. overnight 0–5:30am) are
+    /// omitted from the timeline so nothing renders outside the chart
+    /// container; the full records remain in `DayStack` for the hover panel.
+    /// Sessions that cross
     /// midnight are split into two slivers: one clipped to 24:00 on the
     /// start day and a continuation from 0:00 on the following day (when
     /// that day falls inside the 90-day range).
@@ -347,11 +355,22 @@ final class ChartDataPreparer: ObservableObject {
             // Drop zero-duration sessions (same start and end instant).
             guard rawEndHour != startHour else { continue }
             
+            // Clamp slivers to the visible time-of-day domain (5.5...23.5,
+            // matching the chart's Y-scale). Slivers fully outside it are
+            // omitted so overnight sessions never render outside the chart
+            // container; the full session records remain in DayStack for the
+            // hover info panel.
             func addSliver(day: Date, start: Double, end: Double) {
+                let lower = 5.5
+                let upper = 23.5
+                guard end > lower, start < upper else { return }
+                let clampedStart = max(start, lower)
+                let clampedEnd = min(end, upper)
+                guard clampedEnd > clampedStart else { return }
                 timeline.append(DayTimelineSession(
                     date: day,
-                    startHour: start,
-                    endHour: end,
+                    startHour: clampedStart,
+                    endHour: clampedEnd,
                     projectID: session.projectID,
                     projectName: project?.name ?? session.projectID,
                     projectColor: project?.color ?? "#999999",

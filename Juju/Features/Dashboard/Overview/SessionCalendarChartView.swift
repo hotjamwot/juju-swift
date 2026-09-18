@@ -77,12 +77,16 @@ struct SessionCalendarChartView: View {
         }
     }
     
-    // Session rectangle for a specific session with compact annotation
-    private func sessionRectangle(for session: WeeklySession) -> some ChartContent {
+    // Session rectangle for a specific session with compact annotation.
+    // Slivers are clamped to the visible time-of-day domain (5.5...23.5,
+    // matching the chart's Y-scale) at render time so overnight sessions
+    // never draw outside the chart container. Raw hours stay on the model
+    // so tooltips and daily totals keep true session times.
+    private func sessionRectangle(for session: WeeklySession, visibleStart: Double, visibleEnd: Double) -> some ChartContent {
         RectangleMark(
             x: .value("Day", session.day),
-            yStart: .value("Start Hour", session.startHour),
-            yEnd:   .value("End Hour",   session.endHour)
+            yStart: .value("Start Hour", visibleStart),
+            yEnd:   .value("End Hour",   visibleEnd)
         )
         .foregroundStyle(
             Color(hex: session.projectColor).opacity(
@@ -92,10 +96,44 @@ struct SessionCalendarChartView: View {
         .cornerRadius(Theme.Design.cornerRadius * 0.5)
         .annotation(position: .overlay, alignment: .topTrailing) {
             if session.isMilestone {
-                Circle()
-                    .fill(Theme.Colors.milestoneHighlight)
-                    .frame(width: 4, height: 4)
-                    .offset(x: 4, y: 1)
+                // Star badge with a soft gold halo so milestones read as
+                // celebrations, not data dots. Dark disc keeps the star
+                // legible over any project colour.
+                ZStack {
+                    Circle()
+                        .fill(Color.black.opacity(0.55))
+                        .frame(width: 16, height: 16)
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(Theme.Colors.milestoneHighlight)
+                        .shadow(
+                            color: Theme.Colors.milestone.opacity(0.9),
+                            radius: 4, x: 0, y: 0
+                        )
+                }
+                .offset(x: 6, y: -2)
+                .allowsHitTesting(false)
+            }
+        }
+        .annotation(position: .overlay) {
+            // Milestone colour glow: a gold frame hugging the full session
+            // block. A second RectangleMark cannot share the same channel
+            // values, so this overlay draws the ring instead.
+            if session.isMilestone {
+                RoundedRectangle(cornerRadius: Theme.Design.cornerRadius * 0.5)
+                    .strokeBorder(
+                        Theme.Colors.milestoneHighlight.opacity(
+                            hoveredSession?.id == session.id ? 1.0 : 0.85
+                        ),
+                        lineWidth: hoveredSession?.id == session.id ? 2.5 : 1.5
+                    )
+                    .shadow(
+                        color: Theme.Colors.milestone.opacity(
+                            hoveredSession?.id == session.id ? 0.8 : 0.45
+                        ),
+                        radius: hoveredSession?.id == session.id ? 8 : 5,
+                        x: 0, y: 0
+                    )
                     .allowsHitTesting(false)
             }
         }
@@ -113,6 +151,18 @@ struct SessionCalendarChartView: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 2)
         }
+    }
+
+    /// Visible portion of a session within the chart's Y-domain
+    /// (5.5...23.5). Nil when fully outside (e.g. overnight blocks).
+    private func visibleHours(for session: WeeklySession) -> (start: Double, end: Double)? {
+        let lower = 5.5
+        let upper = 23.5
+        guard session.endHour > lower, session.startHour < upper else { return nil }
+        let start = max(session.startHour, lower)
+        let end = min(session.endHour, upper)
+        guard end > start else { return nil }
+        return (start, end)
     }
     
     // MARK: - Tooltip Content
@@ -154,10 +204,10 @@ struct SessionCalendarChartView: View {
                 
                 let notesPreview = session.notes.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !notesPreview.isEmpty {
-                    Text(String(notesPreview.prefix(80)))
+                    Text(String(notesPreview.prefix(220)))
                         .font(Theme.Fonts.caption)
                         .foregroundColor(Theme.Colors.textSecondary)
-                        .lineLimit(2)
+                        .lineLimit(3)
                 }
             }
         }
@@ -228,7 +278,9 @@ struct SessionCalendarChartView: View {
                     currentTimeIndicator()
                     
                     ForEach(Array(sessions.enumerated()), id: \.offset) { index, session in
-                        sessionRectangle(for: session)
+                        if let visible = visibleHours(for: session) {
+                            sessionRectangle(for: session, visibleStart: visible.start, visibleEnd: visible.end)
+                        }
                     }
                 }
                 .chartYScale(domain: 5.5 ... 23.5)
@@ -292,7 +344,8 @@ struct SessionCalendarChartView: View {
                             
                             if showTooltip, let session = hoveredSession {
                                 tooltipContent(for: session)
-                                    .fixedSize()
+                                    .frame(width: tooltipWidth)
+                                    .fixedSize(horizontal: false, vertical: true)
                                     .position(
                                         x: tooltipTooltipX(in: geo.size),
                                         y: tooltipTooltipY(in: geo.size)
